@@ -5,6 +5,13 @@ truth. This lists every place the other material disagrees with it. "Fix" is the
 line with the PDF; **ASK** marks items Peter must decide because the PDF is silent, says "still in development",
 or conflicts with one of his later decisions.*
 
+## Peter's rulings (2026-10-25)
+
+- **B8 → verdict `choice`.** Tool calls are out of scope (future work: they test say/do, not analogical reasoning).
+- **C1 → greedy** assignment, as in the PDF.
+- **B7 and the overall reward → TBD**; Peter will define how the scorers combine. Scorers stay separate until then.
+- B6 stands as written: nothing after `not_governed` is scored.
+
 ## A. The v7 worked example (`context/schema/benchbook-analogical-pipeline-example-v7.yaml`)
 
 It is the same journalist/raft example as the PDF (pp. 14-18), but the names follow an earlier draft.
