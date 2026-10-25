@@ -181,7 +181,13 @@ def shortcut_cues(rows) -> dict:
     for p in sorted(pos):
         sub = [r for r in rows if r["cues"]["gold_position"] == p]
         acc_by_pos[p] = family_bootstrap(sub, choice_correct, 300)
+    by_arm = {a: sum(bool(r["cues"]["gold_is_hand_up"]) for r in u if r["arm"] == a) / max(1, sum(r["arm"] == a for r in u))
+              for a in sorted({r["arm"] for r in u})}
     flags = []
+    for a, v in by_arm.items():
+        if a != "none" and v >= 0.5 and v > hand_up + 0.15:
+            flags.append(f"gold is a hand-up move (ask/refuse) in {v:.0%} of `{a}`-arm scenarios (vs {hand_up:.0%} overall): "
+                         "an arm-conditional cue a model could learn")
     if top_n / n > chance_pos + 0.2:
         flags.append(f"gold is option #{top_pos + 1} in {top_n / n:.0%} of scenario-arms (chance ~{chance_pos:.0%})")
     if hand_up > 0.5:
@@ -194,7 +200,7 @@ def shortcut_cues(rows) -> dict:
     if mf is not None and mf > 0.6:
         flags.append(f"the model picks its first-listed option in {mf:.0%} of replies")
     return {"n_scenario_arms": n, "gold_position_counts": dict(sorted(pos.items())), "n_options_counts": dict(nopt),
-            "gold_move_counts": dict(moves), "gold_hand_up_rate": hand_up, "gold_longest_rate": longest,
+            "gold_move_counts": dict(moves), "gold_hand_up_rate": hand_up, "gold_hand_up_by_arm": by_arm, "gold_longest_rate": longest,
             "gold_shortest_rate": shortest, "chance_longest": chance_longest,
             "gold_len_over_mean_other": float(np.mean(ratio)) if ratio else None,
             "model_first_option_rate": mf, "acc_by_gold_position": acc_by_pos, "flags": flags}

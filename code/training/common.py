@@ -54,6 +54,7 @@ def smoke_golden(tokenizer, n: int = 4) -> list[dict]:
     (Test fixtures only; never training data.)"""
     fx = Path(__file__).resolve().parents[1] / "bench" / "fixtures" / "pdf_example"
     reply = (fx / "journalist.reply.yaml").read_text()
+    reply = reply[reply.index("kind: fact_enumeration"):]      # drop the fixture's comment header
     out = []
     for i in range(n):
         msgs = [{"role": "system", "content": "EQUITIES: civilian_life, mission_effect (smoke)"},

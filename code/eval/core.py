@@ -293,7 +293,7 @@ async def run_sample(ctx: Context, item: Item, idx: int, done: set | None = None
             ep = ctx.backend.build_episode(sc, item.arm, settings, ctx.lib)
             out = await ctx.backend.run(ep, settings)
         raw = out.raw_text
-        parsed = parse_reply(raw)
+        parsed = parse_reply(raw, noref=item.arm == "none")
         key = sc.answer_key(item.arm)
         scores, score_error = None, None
         try:
@@ -347,7 +347,7 @@ def rescore(ctx: Context, only_failed: bool = True) -> int:
         item = Item(r["scenario"], r["arm"], r["analogical_prompt"], r["mode"])
         settings = ctx.settings(item, r["seed"])
         ep = ctx.backend.build_episode(sc, item.arm, settings, ctx.lib)
-        parsed = parse_reply((ctx.run_dir / r["raw_path"]).read_text())
+        parsed = parse_reply((ctx.run_dir / r["raw_path"]).read_text(), noref=item.arm == "none")
         try:
             r["scores"] = ctx.backend.score_reply(parsed, sc.answer_key(item.arm), ep.served, ctx.judge)
             r["score_error"] = None

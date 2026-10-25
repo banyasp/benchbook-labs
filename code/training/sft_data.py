@@ -56,7 +56,8 @@ def golden_record(ep, out, id_: str | None = None, meta: dict | None = None) -> 
 
 def verify(rec: dict) -> tuple[bool, str]:
     """The format verifier: the whole assistant text (prefill + completion) must parse strictly."""
-    p = parse_reply((rec.get("prefill") or "") + rec["completion"])
+    p = parse_reply((rec.get("prefill") or "") + rec["completion"],
+                    noref=(rec.get("meta") or {}).get("arm") == "none")
     if p.strict_ok:
         return True, "ok"
     why = []

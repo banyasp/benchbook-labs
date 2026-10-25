@@ -149,9 +149,8 @@ def apply(intervention: str, raw: str, decisive: str, resume_at: str) -> str | N
 
 
 def full_text(partial: str, out) -> str:
-    """Harnesses differ on whether raw_text of a continuation includes the partial; accept both."""
-    t = out.raw_text
-    return t if t.startswith(partial[:80]) else partial + t
+    """harness.continue_episode: raw_text of the result = partial (opener prepended if missing) + new text."""
+    return out.raw_text
 
 
 # ------------------------------------------------------------------ selection
@@ -180,7 +179,7 @@ def select(recs, arms, modes, max_samples, seed=0) -> list[dict]:
 async def one(ctx: Context, rec: dict, interv: str, rep: int, resume_at: str) -> dict | None:
     item = Item(rec["scenario"], rec["arm"], rec["analogical_prompt"], rec["mode"])
     raw = (ctx.run_dir / rec["raw_path"]).read_text()
-    parsed = parse_reply(raw)
+    parsed = parse_reply(raw, noref=item.arm == "none")
     dec = (parsed.steps["verdict"].get("decisive") or [None])[0]
     if interv != "control" and interv != "swap_revised" and dec is None:
         return None

@@ -70,7 +70,7 @@ def placeholder_choice_reward(lib, judge, backend, settings_extra=None) -> Rewar
             st = backend.make_settings(mode=ex["mode"], analogical_prompt=ex["analogical_prompt"], **(settings_extra or {}))
             cache[k] = backend.build_episode(sc, ex["arm"], st, lib)
         ep = cache[k]
-        parsed = parse_reply((getattr(ep, "prefill", "") or "") + completion)
+        parsed = parse_reply((getattr(ep, "prefill", "") or "") + completion, noref=ex["arm"] == "none")
         if (parsed.steps.get("verdict") or {}).get("choice") is None:
             return 0.0
         v = score_names.get(backend.score_reply(parsed, sc.answer_key(ex["arm"]), ep.served, judge), "choice")
