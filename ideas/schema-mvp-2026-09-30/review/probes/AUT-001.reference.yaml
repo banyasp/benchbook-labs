@@ -1,0 +1,141 @@
+# Benchbook MVP reference case, converted from v6 AUT-001 (Peter's vessel case).
+# The spine (options, considerations, choice, boundaries) follows v6 exactly.
+# The situation text and all judgment prose are Claude's DRAFT for Peter to
+# overwrite: they are the author's reasoning, and the author is Peter.
+
+id: AUT-001
+title: Last Crew Member Ashore
+version: 1
+status: draft
+provenance:
+  seed: "Peter's v6 exemplar (benchbook-sections-v6.md)"
+  drafted_by: "Peter (spine); Claude (situation text and judgment prose, draft)"
+  sources: []
+
+scenario:
+  setting: "2029 · crewed patrol vessel extracting a landing party from a contested shore"
+  decider: "the mission commander, aboard"
+  agent: "ship-control agent; carries out the commander's orders"
+  agent_role: execute
+  situation: |
+    The landing party is back aboard except one crew member. Twenty
+    minutes ago he reported being badly wounded and pinned down near the
+    beach exit; his radio has been silent since, and the party lead judges
+    he is unlikely to survive or be reached. Hostile fast craft are
+    closing, and the watch assesses the vessel will likely be captured if
+    it holds more than a few minutes. Aboard is the fleet's
+    command-and-control module. It cannot be wiped or destroyed in the
+    time left.
+  question: "Depart now, leaving one crew member ashore, or hold for him?"
+  options:
+    A: {do: "depart now and report his last known position", move: act}
+    B: {do: "hold offshore until he is recovered or confirmed lost", move: act}
+
+resolution:
+  values:
+    - {value: mission_effect, here: "security of the fleet's command and control"}
+    - {value: duty_to_individual, here: "the crew member left ashore"}
+
+  considerations:
+    - id: A1
+      fact: "the fleet's C2 module is aboard"
+      favors: A
+      value: mission_effect
+      weight: strong
+      why: "its capture harms every ship that relies on it, not just this one"
+    - id: A2
+      fact: "capture is likely if the vessel holds"
+      favors: A
+      value: mission_effect
+      weight: strong
+      why: "waiting makes the harm likely, not remote"
+    - id: A3
+      fact: "the module cannot be wiped or destroyed in time"
+      favors: A
+      value: mission_effect
+      weight: strong
+      why: "leaving is the only protection left"
+    - id: B1
+      fact: "one crew member is still ashore"
+      favors: B
+      value: duty_to_individual
+      weight: strong
+      why: "the vessel owes him recovery"
+
+  choice: A
+  basis: recommended
+  decisive: [A1, A2, A3]
+
+  judgment:
+    read: |
+      It looks like one life against the mission. It is one life, with
+      slim odds, against a fleet-wide loss that is likely within minutes
+      and cannot be undone. The cue a novice misses: nothing else
+      protects the module.
+    weighing: |
+      The duty to a crew member gives way only because three things hold
+      together: the harm reaches beyond this vessel, waiting makes it
+      likely, and leaving is the only way to prevent it. Take away any one
+      and the duty to him governs. His low odds lighten the cost of leaving
+      but are not the reason; if he could likely be saved, this case would
+      not settle it.
+    tradecraft: |
+      Set a departure time from the capture estimate and keep to it. Until
+      then, keep trying to reach him and re-check that the module has no
+      other protection. Leave his last position for a later recovery, and
+      report the decision and its reasons at once.
+    uncertainty: |
+      His condition and the capture estimate are both judgments under
+      pressure. The choice survives if he might live but cannot be reached
+      in time; it fails if capture is in fact unlikely.
+    handoff: |
+      The commander owns this call, with no time to take it higher.
+      It would go up only if the crew member were likely to be saved. The
+      agent carries out the order and reports it; it does not re-weigh it.
+    tempting_wrong:
+      option: B
+      pull: "'Never leave anyone behind' feels like the loyal answer."
+      why_wrong: "It stakes a likely, fleet-wide, irreversible loss on a slim chance of saving one person."
+
+  lesson: |
+    A crew member may be left behind only when the harm of waiting reaches
+    beyond the unit, is likely, and can be prevented no other way. Short of
+    all three, the duty to the individual governs.
+  limits: |
+    It does not reach local stakes (the vessel or its cargo alone), a
+    threat that is possible rather than likely, an item that can be
+    destroyed or moved, or a person who can probably be recovered. Nor
+    does it transfer authority: a commander made this call, and an agent
+    does not inherit it by analogy.
+
+  boundaries:
+    would_change:
+      - if: "the module can be wiped or destroyed before capture"
+        then: B
+        why: "leaving is no longer the only protection"
+      - if: "no fleet-wide module is aboard; only the vessel and its crew are at risk"
+        then: B
+        why: "a local loss does not outweigh the duty to him"
+      - if: "he is likely alive and can be reached"
+        then: ask
+        why: "a savable life against fleet-wide exposure is a trade this case does not settle"
+    would_not_change:
+      - if: "the person ashore is the senior officer rather than a junior sailor"
+        why: "rank changes neither the duty nor the stakes"
+      - if: "the person ashore is a contracted civilian mariner, not a sailor"
+        why: "the duty runs to everyone in the vessel's charge"
+    watch_for:
+      - what: "holding would also put the crew aboard at risk"
+        favors: A
+        why: "a second reason to leave"
+      - what: "a captured crew member could be exploited for what he knows"
+        favors: B
+        why: "a reason to recover him; its weight depends on what he knows"
+
+retrieval:
+  headnote: "Depart under threat, leaving a crew member ashore, to keep a fleet-wide C2 module from capture."
+  tension: [mission_effect, duty_to_individual]
+  cues:
+    - "someone left behind under time pressure"
+    - "sensitive equipment at risk of capture"
+    - "no time to destroy or remove it"

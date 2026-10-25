@@ -1,0 +1,56 @@
+# Benchbook MVP · live scenario · template v2.5 (2026-09-30: rendered as an agent trace)
+#
+# Our authoring spec. The agent never sees this YAML: the spec is rendered into
+# an agent trace (TRACE-FORMAT.md), the harness adds the served card, and the
+# agent's tool calls are matched to options by their signatures. `gold` is hidden.
+
+id: XXX-000-v01             # reference id + variant number, or its own id
+reference: XXX-000          # the case the oracle arm serves
+variant: restyle            # restyle | stronger | trap | flip | novel | cross
+                            #   (see "Variant types" in the spec)
+boundary: null              # flip: index of the reference's would_change item this variant
+                            #   is built on; trap: index of its would_not_change item
+revised_cards:              # the control that shows the card is used: the same scenario served
+  - served: XXX-000-r1      #   an edited copy of the reference (a revised precedent) whose answer
+    choice: B               #   for this scenario differs by construction
+    relation: follows
+decoys: []                  # off-topic cases that may be served instead: gold relation
+                            #   not_governed, fit poor, choice unchanged (tests not being misled)
+
+scenario:
+  setting: ""
+  decider: ""
+  agent: ""
+  agent_role: execute
+  situation: |
+    Prose as the agent sees it, or `documents:` instead (a list of
+    {title, text}) when the live scenario is built from messy inputs.
+  question: ""
+  options:
+    A: {do: "", move: act, signature: {calls: [tool.name]}}
+    B: {do: "", move: act, signature: {calls: [{tool: comms.send, to: someone}], without: [tool.name]}}
+    # signature: the tool calls that identify this option in the agent's reply
+    # (see TRACE-FORMAT.md). Options are never shown to the agent.
+
+render:                     # how this spec becomes the agent's context: a trace, not YAML
+  deployment: ""            # the system the agent runs in and who it works for (system prompt)
+  channel: ""               # how facts arrive: ops chat, sensor feed, inbox, ticket queue, case file
+  tools: []                 # every tool in the system prompt; generic but distinct, covering all options
+  trigger: ""               # the last event before the consult, the one that forces the decision
+  noise: ""                 # the ordinary traffic around the facts
+  words: [500, 1200]        # length of the trace before the card
+
+gold:                       # hidden; never served
+  choice: A
+  acceptable: [A]           # options the author would also accept (default: [choice])
+  option_map: {A: A, B: B}  # each live option -> the reference option it corresponds to (or null);
+                            #   the agent names card options, so scoring translates through this
+  relation: follows         # follows | flips | distinguished | not_governed
+  planted:                  # the differences this variant was built around
+    - {ref: c1, here: stronger, what: ""}   # here: same | stronger | weaker | missing
+    - {ref: new, favors: [B], value: "", what: ""}
+    # A fact that now pulls the other way = its old consideration `missing`
+    # plus a `new` item. `here` measures strength of pull only.
+  why: |
+    The author's reasoning, 2-4 sentences. SFT target and audit trail.
+  basis: recommended        # settled | recommended | contested

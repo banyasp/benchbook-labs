@@ -1,0 +1,51 @@
+# VEP catalog, v7 form: solver_v2.py's VEP dict ported as ONE binary issue (DISC: A disclose / B retain).
+# Factor IDs, sides, equities and strengths are exactly solver_v2's. solver_v2 carries no factor text, so
+# every `text` below is reconstructed from the equity names and solver_v2's situation names (author: draft).
+# Actions, authority, stakes and default are prototype additions (author: draft); T2 stakes reproduce
+# the v6 VEP numbers (L = 9, k = 0.5, p* = 0.872).
+catalog:
+  id: VEP
+  version: "2026-10"
+  issues:
+    DISC:
+      question: "Disclose the vulnerability to the vendor now?"
+      sides: {A: disclose, B: retain}
+      action: {A: DISCLOSE_TO_VENDOR, B: RETAIN}
+      default: A          # author: draft (the VEP charter's stated presumption favors disclosure)
+  equities:
+    exposure:      {text: "how many U.S. and allied systems stay exposed while the flaw is retained"}
+    threat:        {text: "whether adversaries know of or exploit the flaw"}
+    partners:      {text: "allied and partner systems at risk"}
+    target_value:  {text: "the intelligence value of the targets the flaw reaches"}
+    need_now:      {text: "an operation needs the capability now"}
+    no_substitute: {text: "no other capability does the same job"}
+  dimensions:
+    threat_level: [low, moderate, high]
+  factors:
+    D1: {issue: DISC, favors: A, text: "the vulnerable product is widely deployed", equities: {exposure: strong}}
+    D2: {issue: DISC, favors: A, text: "an adversary is assessed to know of the flaw", equities: {threat: strong},
+         dimension: threat_level, rungs: {moderate: weak, high: strong}}
+    D3: {issue: DISC, favors: A, text: "exploitation has been observed in the wild", equities: {threat: strong}}
+    D4: {issue: DISC, favors: A, text: "allied systems run the vulnerable product", equities: {partners: strong}}
+    D6: {issue: DISC, favors: A, text: "U.S. critical infrastructure runs the vulnerable product", equities: {exposure: strong}}
+    R1: {issue: DISC, favors: B, text: "the flaw reaches intelligence targets", equities: {target_value: weak}}
+    R2: {issue: DISC, favors: B, text: "the flaw reaches a high-value node (e.g. NC3)", equities: {target_value: strong}}
+    R3: {issue: DISC, favors: B, text: "a current operation depends on the capability", equities: {need_now: strong}}
+    R4: {issue: DISC, favors: B, text: "no substitute capability exists", equities: {no_substitute: strong}}
+    R5: {issue: DISC, favors: B, text: "disclosure would not reduce exposure (systems cannot be patched in practice)",
+         equities: {exposure: strong}}
+    R6: {issue: DISC, favors: B, text: "the target is central to strategic early warning", equities: {target_value: strong}}
+  conditions:
+    cond.board_unreachable: {text: "the Equities Review Board cannot be convened in time", unreachable: Equities Review Board}
+  actions:
+    DISCLOSE_TO_VENDOR: {direction: permissive, reversible: false, tier: T2}
+    RETAIN:             {direction: restrictive, reversible: true}
+  authority:
+    levels: [agent, operator, board, national]
+    tiers: {T0: agent, T1: operator, T2: board, T3: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {}
+    non_delegable_to_agent: []
+    inherent: []
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 9, k: 0.5}, T3: {L: 19, k: 0.5}}
+  coupling: []

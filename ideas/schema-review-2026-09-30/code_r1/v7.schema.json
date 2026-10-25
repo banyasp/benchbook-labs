@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchbook.local/v7.schema.json",
+  "title": "Benchbook v7: catalog or decision record (SPEC-v7-v1 sections 1-2)",
+  "type": "object",
+  "oneOf": [
+    {"required": ["catalog"], "properties": {"catalog": {"$ref": "#/$defs/catalog"}}},
+    {"required": ["record"], "properties": {"record": {"$ref": "#/$defs/record"}}}
+  ],
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "side": {"type": "string", "pattern": "^[A-Z]$"},
+    "strength": {"enum": ["weak", "strong"]},
+    "equityMap": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/strength"}},
+    "tag": {"type": "string", "pattern": "^([A-Za-z0-9_-]+(@[A-Za-z0-9_]+)?|cond\\.[A-Za-z0-9_.-]+)$"},
+    "condition": {"type": "string", "pattern": "^cond\\.[A-Za-z0-9_.-]+$"},
+    "tier": {"type": "string", "pattern": "^T[0-9]+$"},
+    "likelihood": {"enum": ["almost_no_chance", "very_unlikely", "unlikely", "even", "likely", "very_likely", "almost_certain"]},
+
+    "catalog": {
+      "type": "object",
+      "required": ["id", "version", "issues", "equities", "factors", "actions", "authority", "stakes"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "version": {"type": "string"},
+        "issues": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/issue"}},
+        "equities": {"type": "object", "additionalProperties": {"type": "object", "properties": {
+          "text": {"type": "string"}, "residue": {"type": "array", "items": {"type": "string"}}}}},
+        "dimensions": {"type": "object", "additionalProperties": {"oneOf": [
+          {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          {"type": "object", "required": ["rungs"], "properties": {
+            "rungs": {"type": "array", "items": {"type": "string"}, "minItems": 1}, "mirror": {"type": "boolean"}}}]}},
+        "factors": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/factor"}},
+        "conditions": {"type": ["object", "null"], "propertyNames": {"$ref": "#/$defs/condition"},
+          "additionalProperties": {"type": "object", "required": ["text"], "properties": {
+            "text": {"type": "string"}, "unreachable": {"type": "string"}}}},
+        "actions": {"type": "object", "additionalProperties": {"type": "object", "required": ["direction"], "properties": {
+          "direction": {"enum": ["permissive", "restrictive"]}, "reversible": {"type": "boolean"},
+          "tier": {"$ref": "#/$defs/tier"}}}},
+        "authority": {"type": "object", "required": ["levels", "tiers", "roles"], "properties": {
+          "levels": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "tiers": {"type": "object", "propertyNames": {"$ref": "#/$defs/tier"}, "additionalProperties": {"type": "string"}},
+          "roles": {"type": "object", "properties": {
+            "none": {"type": "null"}, "recommend": {"type": ["string", "null"]},
+            "execute": {"type": ["string", "null"]}, "decide": {"type": ["string", "null"]}},
+            "additionalProperties": {"type": ["string", "null"]}},
+          "tier_floors": {"type": ["object", "null"], "additionalProperties": {"$ref": "#/$defs/tier"}},
+          "non_delegable_to_agent": {"type": ["array", "null"], "items": {"type": "string"}},
+          "inherent": {"type": ["array", "null"], "items": {"type": "string"}}}},
+        "stakes": {"type": "object", "propertyNames": {"$ref": "#/$defs/tier"}, "additionalProperties": {
+          "type": "object", "required": ["L", "k"], "properties": {
+            "L": {"type": "number", "exclusiveMinimum": 0}, "k": {"type": "number", "minimum": 0}}}},
+        "coupling": {"type": ["array", "null"], "items": {"type": "object", "required": ["if", "then"], "properties": {
+          "if": {"type": "object", "minProperties": 1, "maxProperties": 1, "additionalProperties": {"$ref": "#/$defs/side"}},
+          "then": {"type": "object", "minProperties": 1, "maxProperties": 1, "additionalProperties": {"$ref": "#/$defs/side"}}}}}
+      }
+    },
+    "issue": {
+      "type": "object", "required": ["question", "sides", "action", "default"],
+      "properties": {
+        "question": {"type": "string"},
+        "sides": {"type": "object", "minProperties": 2, "maxProperties": 2, "propertyNames": {"$ref": "#/$defs/side"}},
+        "action": {"type": "object", "minProperties": 2, "maxProperties": 2, "propertyNames": {"$ref": "#/$defs/side"},
+                   "additionalProperties": {"type": "string"}},
+        "default": {"$ref": "#/$defs/side"}
+      }
+    },
+    "factor": {
+      "type": "object", "required": ["issue", "favors", "text", "equities"],
+      "properties": {
+        "issue": {"type": "string"}, "favors": {"$ref": "#/$defs/side"}, "text": {"type": "string"},
+        "equities": {"$ref": "#/$defs/equityMap"},
+        "dimension": {"type": "string"},
+        "rungs": {"type": "object", "minProperties": 1, "additionalProperties": {"oneOf": [
+          {"$ref": "#/$defs/strength"}, {"$ref": "#/$defs/equityMap"}]}},
+        "knockout": {"type": "boolean"}, "conjunctive": {"type": "boolean"},
+        "mirror_of": {"type": "string"}, "flag": {"type": "string"}
+      },
+      "dependentRequired": {"rungs": ["dimension"], "dimension": ["rungs"]}
+    },
+
+    "record": {
+      "type": "object",
+      "required": ["id", "catalog", "provenance", "situation", "resolution"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "title": {"type": "string"},
+        "catalog": {"type": "string", "pattern": "^[A-Za-z0-9_-]+@[A-Za-z0-9._-]+$"},
+        "provenance": {"type": "object", "required": ["kind", "gold_kind"], "properties": {
+          "kind": {"enum": ["authored", "adjudicated", "investigated", "teaching"]},
+          "gold_kind": {"enum": ["ruling", "review_finding", "recommendation", "teaching"]},
+          "seed": {"type": "string"},
+          "authority": {"type": "object", "properties": {
+            "source": {"type": "string"}, "rank": {"type": "number"},
+            "status": {"enum": ["current", "revised", "superseded", "withdrawn"]}}}}},
+        "units": {"type": "array", "items": {"type": "object", "required": ["id"], "properties": {
+          "id": {"type": "string"}, "text": {"type": "string"}}}},
+        "situation": {"$ref": "#/$defs/situation"},
+        "resolution": {"$ref": "#/$defs/resolution"},
+        "guidance": {"$ref": "#/$defs/guidance"},
+        "review": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/review"}]}
+      }
+    },
+    "situation": {
+      "type": "object", "required": ["agent", "facts", "authority"],
+      "properties": {
+        "agent": {"type": "object", "required": ["role"], "properties": {
+          "role": {"enum": ["none", "recommend", "execute", "decide"]}, "serves": {"type": "string"}}},
+        "clock": {"type": "object"},
+        "facts": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+        "uncertain": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}, "minItems": 2}},
+        "authority": {"type": "object", "properties": {
+          "deciders": {"type": "array", "items": {"type": "object", "required": ["holder", "holds"], "properties": {
+            "holder": {"type": "string"}, "holds": {"type": "array", "items": {"type": "string"}}}}},
+          "delegations": {"type": "array", "items": {"type": "object", "required": ["holds"], "properties": {
+            "to": {"type": "string"}, "holds": {"type": "array", "items": {"type": "string"}},
+            "when": {"type": "array", "items": {"$ref": "#/$defs/condition"}}, "source": {"type": "string"}}}},
+          "orders": {"type": "array", "items": {"type": "object", "required": ["directs"], "properties": {
+            "from": {"type": "string"},
+            "directs": {"type": "object", "required": ["issue", "side"], "properties": {
+              "issue": {"type": "string"}, "side": {"$ref": "#/$defs/side"}}},
+            "excludes": {"type": "array", "items": {"type": "string"}},
+            "active_when": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+            "disabled_by": {"type": "array", "items": {"$ref": "#/$defs/condition"}}}}}}},
+        "options": {"type": "array", "items": {"type": "object", "required": ["text", "plan"], "properties": {
+          "text": {"type": "string"}, "plan": {"type": "array", "items": {"$ref": "#/$defs/planAtom"}}}}}
+      }
+    },
+    "fact": {
+      "type": "object", "required": ["id", "text", "status", "tags"],
+      "properties": {
+        "id": {"type": "string"}, "text": {"type": "string"},
+        "status": {"enum": ["observed", "reported", "assessed", "alleged", "admitted", "found", "determination", "disputed", "rejected"]},
+        "likelihood": {"$ref": "#/$defs/likelihood"},
+        "confidence": {"enum": ["low", "moderate", "high"]},
+        "tags": {"type": "array", "items": {"$ref": "#/$defs/tag"}, "uniqueItems": true},
+        "about": {"type": "string"}, "use": {"enum": ["all", "credibility_only"]}, "source": {"type": "string"},
+        "independence_group": {"type": "string"},
+        "credibility": {"enum": ["credited", "discredited", "not_assessed"]},
+        "known_at_decision": {"type": "boolean"}, "note": {"type": "string"}
+      },
+      "if": {"properties": {"status": {"const": "assessed"}}},
+      "then": {"required": ["likelihood", "confidence"]}
+    },
+    "planAtom": {
+      "type": "object", "required": ["act"],
+      "oneOf": [
+        {"properties": {"act": {"const": "proceed"}}, "required": ["issue", "side"]},
+        {"properties": {"act": {"const": "route"}}, "required": ["issue"]},
+        {"properties": {"act": {"const": "contingent"}, "when": {"type": "array", "items": {"$ref": "#/$defs/condition"}},
+                        "then": {"type": "object", "required": ["issue", "side"]}}, "required": ["when", "then"]}
+      ],
+      "properties": {
+        "act": {"enum": ["proceed", "route", "contingent"]}, "issue": {"type": "string"}, "side": {"$ref": "#/$defs/side"},
+        "to": {"type": "string"}, "recommend": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/side"}]},
+        "because": {"enum": ["authorize", "inform", "flag"]}, "unit": {"type": "string"}
+      }
+    },
+    "resolution": {
+      "type": "object", "required": ["holdings", "plan", "status"],
+      "properties": {
+        "holdings": {"type": "array", "items": {"type": "object", "required": ["issue", "outcome", "reason", "force"], "properties": {
+          "issue": {"type": "string"}, "unit": {"type": "string"}, "outcome": {"$ref": "#/$defs/side"},
+          "reason": {"type": "array", "items": {"$ref": "#/$defs/tag"}, "minItems": 1},
+          "force": {"enum": ["required", "permitted"]}}}},
+        "routed": {"type": "array", "items": {"type": "object", "required": ["issue", "because"], "properties": {
+          "issue": {"type": "string"}, "because": {"enum": ["authorize", "inform", "flag"]}, "to": {"type": "string"}}}},
+        "plan": {"type": "array", "items": {"$ref": "#/$defs/planAtom"}},
+        "status": {"enum": ["settled", "contested"]},
+        "hidden_resolution": {"type": "object", "additionalProperties": {"$ref": "#/$defs/side"}},
+        "holding_text": {"type": "string"}
+      }
+    },
+    "guidance": {
+      "type": "object",
+      "properties": {
+        "flips": {"type": "array", "items": {"type": "object", "required": ["id", "change", "then"], "properties": {
+          "id": {"type": "string"}, "event": {"type": "string"},
+          "change": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[+-]"}},
+          "then": {"type": "object", "required": ["issue"], "oneOf": [
+            {"required": ["outcome"], "properties": {"outcome": {"$ref": "#/$defs/side"},
+                                                     "force": {"enum": ["required", "permitted"]}}},
+            {"required": ["route"], "properties": {"route": {"enum": ["authorize", "inform", "flag"]}}}]},
+          "reason": {"type": "array", "items": {"$ref": "#/$defs/tag"}}, "why": {"type": "string"}}}},
+        "anomaly_cues": {"type": "array", "items": {"type": "object", "required": ["what", "respond"], "properties": {
+          "what": {"type": "string"}, "respond": {"enum": ["flag", "authorize", "inform"]}}}},
+        "foil": {"type": "object"}, "teaching": {"type": "object"}
+      }
+    },
+    "review": {
+      "type": "object", "required": ["body", "decision_assessment", "result"],
+      "properties": {
+        "body": {"type": "string"}, "standard": {"type": "string"},
+        "decision_assessment": {"enum": ["acceptable", "unacceptable"]},
+        "result": {"enum": ["good", "bad", "mixed", "unknown"]},
+        "failure_mode": {"type": ["string", "null"]},
+        "findings": {"type": "array", "items": {"type": "object", "required": ["id", "text"]}}
+      }
+    }
+  }
+}

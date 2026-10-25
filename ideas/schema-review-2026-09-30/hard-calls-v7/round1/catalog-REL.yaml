@@ -1,0 +1,67 @@
+# catalog-REL.yaml -- REL sub-area catalog (release / tearlines / classification), hard-calls conversion trial.
+# Built from scratch for REL-105 only (no REL catalog exists; the spec prints only AUT). Tags: [ADDED] uses spec constructs;
+# [NEWFIELD] not in the spec; [JUDGMENT] my call; [SILENT] source silent.
+catalog:
+  id: REL
+  version: "2026-10"
+
+  issues:
+    REL:
+      question: "Release U.S. intelligence to a foreign partner now?"
+      sides: {A: release, B: withhold}
+      action: {A: RELEASE_FOREIGN, B: WITHHOLD}
+      default: B
+    TEAR:
+      question: "Release a minimum-necessary tearline rather than the source product itself?"
+      sides: {A: tearline, B: full_product}
+      action: {A: DRAFT_TEARLINE, B: RELEASE_FULL_PRODUCT}
+      default: A                            # [JUDGMENT] no source text states a default; A follows the holding ('brings the designee a minimum-necessary tearline')
+
+  equities:
+    friendly_force_life: {text: "the lives of U.S., allied, coalition and friendly forces (ICPG 403.3 D.3.a lists them together)"}   # [JUDGMENT] replaces the source's `own_force_life`; the source's own note says the canonical list 'has no partner-force equity' and that it tagged partner soldiers as own_force_life
+    source_protection:   {text: "the collection source and method are not revealed"}
+    tempo:               {text: "the answer arrives in time to matter"}
+    # originator_control, requester_need and lawful_authority deliberately absent as equities: the source used lawful_authority/chain_of_command for what v7 treats as authority (see record).
+
+  dimensions:
+    time_to_harm: [days, within_24h, within_hours]     # [ADDED][JUDGMENT] ordered coarsely from the source's own thresholds: 'hours' (emergency), 24 h (flip x3; ICD 209 urgent tier), days (routine originator approval)
+
+  factors:
+    REL-A1: {issue: REL, favors: A, text: "friendly forces face a threat to life in the window", equities: {friendly_force_life: strong},
+             dimension: time_to_harm, rungs: {within_24h: weak, within_hours: strong}}   # source B1. Rung strengths are [JUDGMENT]: the source gives only 'strong' at hours and (via flip) 'not an emergency' beyond 24 h.
+    REL-A2: {issue: REL, favors: A, text: "a location-only warning costs almost nothing and could go out at once", equities: {tempo: weak}}   # source D1
+    TEAR-A1: {issue: TEAR, favors: A, text: "the source product names the intercepted handset and quotes the plotters; a minimum-necessary tearline protects the collection (ICPG 403.3 E.1.c-d)", equities: {source_protection: weak}}   # source C3
+    # No B-side factors exist for either issue. Everything the source put on the withhold side (A1 'only a government official may decide a foreign release') is authority, below.
+
+  conditions:
+    cond.emergency_standard_met:
+      text: "imminent threat to life within hours, with routine originator approval taking days: the emergency-disclosure standard is met on its face (ICPG 403.3 D.2)"
+      # [JUDGMENT] tagged by the labeler on the ambush fact; the agent 'resolves that the facts meet the emergency standard on their face', the designee decides.
+    cond.designee_unreachable:  {text: "the emergency-disclosure designee cannot be reached inside the window"}
+    cond.originator_approved:   {text: "the originator has approved release of the product"}
+    cond.not_fisa_derived:
+      text: "the product is not FISA-derived (ICD 403 C.4 otherwise takes it outside ordinary release authority)"
+      kind: frame                           # [NEWFIELD] the spec's P4 mentions a 'failed frame condition' as a flag reason but section 1 has no place to declare one
+    cond.order_from_decider:    {text: "the directive comes from a holder of the action class"}
+
+  actions:
+    RELEASE_FOREIGN:      {direction: permissive, reversible: false, tier: T3}
+    RELEASE_FULL_PRODUCT: {direction: permissive, reversible: false, tier: T3}
+    DRAFT_TEARLINE:       {direction: restrictive, reversible: true}     # drafting the proposal; nothing leaves the agent
+    WITHHOLD:             {direction: restrictive, reversible: true}
+    NOTIFY:               {direction: restrictive, reversible: true}
+    PREPARE_REVERSIBLE:   {direction: restrictive, reversible: true}
+    NONE:                 {direction: restrictive, reversible: true}
+
+  authority:
+    levels: [agent, operator, supervisor, senior, national]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {}
+    non_delegable_to_agent: [RELEASE_FOREIGN, RELEASE_FULL_PRODUCT]   # the spec's own comment: 'foreign release, ICD 403 E.14 reading'. This one line carries source factor A1.
+    inherent: [NOTIFY]                                               # [JUDGMENT] notifying the originator / requester status is never withheld
+
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}
+
+  coupling:
+    - {if: {REL: A}, then: {TEAR: A}}       # [SPEC] the spec's own example coupling; [JUDGMENT] I adopt it as a rule: any release to a foreign partner is a tearline unless TEAR B is settled separately

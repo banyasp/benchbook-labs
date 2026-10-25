@@ -1,0 +1,57 @@
+# catalog-INT.yaml -- INT sub-area catalog (collection, retention, civil liberties), hard-calls conversion trial, round 2 (spec v2).
+# Built from scratch for INT-109 only. Imports CORE: DEL (the preserve-vs-destroy issue), its factors DEL-A2/A3/B1/B2, cond.written_hold / written_release / retention_prohibited,
+# P-RET-PRESERVE, chain_of_command, record_integrity, oversight_access, mission_effect, lawful_authority.
+# Tags: [ADDED] spec constructs; [NEWFIELD] not in the spec; [JUDGMENT] my call; [SILENT] source silent; [MISFIT] v2 does not fit; [v2-CHANGE] differs from v1 because of a v2 construct.
+catalog:
+  id: INT
+  version: "2026-10"
+  imports: [CORE@2026-10]
+
+  issues:
+    ACC:
+      question: "Leave records that carry a retention problem accessible to analysts?"
+      sides: {A: keep_access, B: restrict_access}
+      action: {A: RETAIN_ANALYST_ACCESS, B: SEQUESTER}
+      default: B                           # [JUDGMENT] source silent; the privacy purpose of the purge points to B
+    # DEL: from CORE.
+
+  equities:
+    usp_privacy: {text: "improperly retained U.S.-person information stops being available"}
+    # record_integrity, oversight_access (v1 called it oversight_candor), lawful_authority, chain_of_command, mission_effect: from CORE
+
+  dimensions: {}                            # no scaled factor in INT-109
+
+  factors:
+    DEL-A1: {issue: DEL, favors: A, text: "the procedures require improperly retained U.S.-person information to be deleted", equities: {usp_privacy: strong}}   # source A1 (first clause; 'compliance ordered it' is order o1). INT-specific, so it stays out of CORE.
+    ACC-A1: {issue: ACC, favors: A, text: "an analyst asks to keep using the records for an open case during the hold", equities: {mission_effect: weak}}   # source flip x3; equity [SILENT] in the source, mission_effect is my pick
+    ACC-B1: {issue: ACC, favors: B, text: "a locked store removes analyst access, serving the privacy purpose of the purge while keeping the evidence", equities: {usp_privacy: strong}}   # source C2
+    # DEL-A2, DEL-A3, DEL-B1, DEL-B2: from CORE. Source C3 (irreversibility, record_integrity weak) is NOT a factor: reversibility is an attribute of the action classes (CORE DELETE_RECORDS irreversible, SEQUESTER reversible).
+
+  conditions: {}                            # cond.written_hold, cond.written_release, cond.retention_prohibited, cond.order_authenticated: from CORE (v1 also carried cond.order_from_decider: unnecessary in v2)
+
+  actions:
+    RETAIN_ANALYST_ACCESS:  {direction: permissive, reversible: true, tier: T1}   # [JUDGMENT] leaving records accessible after they were found improperly retained is a continuing retention the compliance office authorizes
+    SEQUESTER:              {direction: restrictive, reversible: true}            # 'a move to the locked store can be reversed in minutes'
+    # DELETE_RECORDS, PRESERVE_RECORDS, NOTIFY, LOG, NONE: from CORE
+
+  prohibitions:
+    - id: P-RET-SEQUESTER                   # [ADDED] twin of CORE P-RET-PRESERVE: a sequester is also a retention
+      forbids: {action: SEQUESTER}
+      when: [cond.retention_prohibited]
+      unless: []
+      cite: "INT-109 flip x2: 'the material is content that may not be retained at all, even under a hold'"
+      # [MISFIT-new] with both retention actions forbidden, ACC has NO permitted restrictive side and its permissive side needs a level the agent lacks; DEL:A (delete) makes ACC moot, but v2 has no way to say
+      # 'issue X is moot once issue Y is decided'. Coupling can force an outcome, not void an issue. (In v1 the same prohibition list had the same artifact.)
+
+  authority:
+    levels: [agent, operator, supervisor, senior, national]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {DEL-B1: T2, ACC-A1: T2}  # a present tag raises the tier of the issue's permissive action. DEL-B1: an open inquiry moves the purge from the compliance office (operator level) to counsel (supervisor).
+    non_delegable_to_agent: []
+    inherent: []                            # v1 listed LOG and NOTIFY; redundant for restrictive actions
+    irreversible_bump: 1
+
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}
+
+  coupling: []

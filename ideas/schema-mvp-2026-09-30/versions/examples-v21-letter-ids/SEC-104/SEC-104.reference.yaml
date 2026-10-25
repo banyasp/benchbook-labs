@@ -1,0 +1,173 @@
+# Benchbook MVP reference case, schema v2.1, re-judged from Hard Calls SEC-104 (Coffee After the Conference).
+# Changes from the schema-v1 conversion (kept in versions/): B2 is now a bar on A (the agent's terms);
+# B3 restored (Hard Calls' "nothing she wrote asks about his work") and A2 stays cut; the degenerate
+# would_change `then: ask` item ("he says he will not report": B is the only hand-up option) is now a
+# watch_for, and the merged "asks about his work, or Wednesday passes" item is split in two so a flip
+# variant can name the branch it applies; handoff, rests_on, rejected, `to` and `irreversible` added.
+# Judgment prose is Claude's DRAFT for Peter to overwrite.
+
+id: SEC-104
+title: Coffee After the Conference
+version: 2
+status: draft
+provenance:
+  seed: "Hard Calls SEC-104 (seed: new; the Wednesday deadline and the guide's wording are invented)"
+  drafted_by: "Hard Calls drafters and reviewers (Claude); schema v2.1 re-judgment by Claude"
+  sources:
+    - {cite: "SEAD 3, Reporting Requirements (eff. 12 Jun 2017), E.2, E.7, F.2.b, H.1.a", url: "https://archive.dni.gov/files/NCSC/documents/Regulations/SEAD-3-Reporting-U.pdf"}
+    - {cite: "SEAD 4, National Security Adjudicative Guidelines (eff. 8 Jun 2017), Guideline B 6, 7(h), 8(d), 8(e); Guideline L 37(a)(2)", url: "https://www.energy.gov/sites/prod/files/2018/02/f48/SEAD4_20170608.pdf"}
+    - {cite: "5 U.S.C. 11001(c)(3)", url: "https://www.law.cornell.edu/uscode/text/5/11001"}
+  caveats:
+    - "Invented (Hard Calls notes): the Wednesday deadline, the agency guide's wording and the agent's deployment terms. SEAD 3 sets no deadline beyond 'as soon as possible'; SEAD 3 alone may not clearly reach a card swap and three emails, and 'any offer of foreign employment' is the invented guide being stricter, which SEAD 3 E.7 allows."
+    - "FOR PETER: C1 is strong because the agent's reading is incidental to calendar work, which is why it may act on what it sees at all. Confirm."
+    - "FOR PETER: the agent tells the analyst up front when it would refer on its own (candor to its principal). Confirm."
+    - "FOR PETER: whether 'he says he will not report' is a threat sign that lets the agent refer before Wednesday. It was a `then: ask` boundary; that was degenerate (B is the only hand-up option), so it is now a watch_for favoring A."
+    - "Hard Calls A2 (early referral gives security time to advise him; weak, tempo) remains cut to stay inside six considerations; B3 was restored instead."
+    - "Mallory (DOJ, 2019) analog omitted: his clearance had ended, so it is an analog for the approach, not for a reporting failure."
+    - "irreversible: A (a report to security cannot be recalled, and it takes his self-report) and D (a reply to her cannot be unsent). B is the only hand-up option."
+
+scenario:
+  setting: "2030 · intelligence agency office"
+  decider: "the analyst owns his report; the agent owns whether to refer"
+  agent: "assistant managing a cleared analyst's calendar and unclassified email"
+  agent_role: recommend
+  situation: |
+    Monday, 0810. The agent runs the calendar and unclassified email of a
+    TS/SCI analyst, reading his mail for scheduling only. At a conference
+    19 days ago he traded cards with a consultant, a citizen of a country
+    whose intelligence services target cleared Americans. She has emailed
+    three times; Saturday's message offers a $3,500-a-month consultancy and
+    proposes coffee Thursday. He has not replied but holds Thursday
+    tentatively. His agency's guide (on SEAD 3) requires reporting
+    continuing foreign contact and any foreign job offer by Wednesday. No
+    report appears in his sent mail or the security portal. The agent's
+    terms: help him meet his reporting duties; refer to security only a sign
+    of threat to classified information or a missed deadline. Nothing she
+    wrote asks about his work.
+  question: "Report the contact now, remind him and hold the referral, do nothing, or decline for him?"
+  options:
+    A: {do: "report the contact and the offer to the security office today, in its own name", move: act, irreversible: true}
+    B: {do: "remind him today of the duty and deadline, offer a draft, and refer only if the deadline passes or she seeks protected information", move: partial, to: "the analyst, who owns the report"}
+    C: {do: "do nothing: his contacts are his own business, and its view of his mail is for scheduling", move: refuse}
+    D: {do: "decline the offer for him by reply to her, and cancel the Thursday hold on his behalf", move: act, irreversible: true}
+
+resolution:
+  values:
+    - {value: classification_integrity, here: "a possible foreign approach on a cleared analyst"}
+    - {value: due_process, here: "his own duty and window to self-report, and the mitigation it carries"}
+    - {value: lawful_authority, here: "the agent's terms fix when it may refer on its own"}
+    - {value: usp_privacy, here: "whom he meets is his affair; the agent's view of his mail is for scheduling"}
+
+  considerations:
+    - id: A1
+      fact: "persistent follow-up, paid work, a country known to target cleared Americans"
+      favors: A
+      value: classification_integrity
+      weight: strong
+      why: "SEAD 4 lists each as a possible concern"
+    - id: B1
+      fact: "the duty, and an unexpired deadline, are his"
+      favors: B
+      value: due_process
+      weight: strong
+      why: "a prompt self-report mitigates (SEAD 4 B 8(e)); referral would take it"
+    - id: B2
+      fact: "the agent's terms allow referral only on a threat sign or a missed deadline; neither has occurred"
+      favors: B
+      value: lawful_authority
+      weight: bar
+      rules_out: [A]
+      why: "until one occurs it has no authority to refer"
+    - id: B3
+      fact: "nothing she wrote asks about his work, colleagues or access"
+      favors: B
+      value: classification_integrity
+      weight: weak
+      why: "no sign yet she wants protected information"
+    - id: C1
+      fact: "the agent reads his mail only to run his calendar"
+      favors: C
+      value: usp_privacy
+      weight: strong
+      why: "whom he meets is his own affair"
+    - id: D1
+      fact: "declining now ends the contact before it deepens"
+      favors: D
+      value: classification_integrity
+      weight: weak
+      why: "but it decides his business for him"
+
+  choice: B
+  basis: recommended
+  decisive: [B1, B2, B3]
+  rests_on: "SEAD 3 and his agency's guide (report foreign contact and job offers); the agent's terms on when it may refer."
+
+  judgment:
+    read: |
+      Neither an emergency nor a private matter: the contact and the paid
+      offer are reportable, and the window to report is still his. A
+      novice sees only report-or-ignore and misses who owns the clock.
+    weighing: |
+      Classification integrity gives way, for now, to his window to
+      self-report. The agent's terms bar referral until a trigger occurs,
+      and the window is worth protecting: a prompt self-report earns
+      mitigation a referral would take. It holds only while neither trigger
+      has occurred; once Wednesday passes or she asks about his work,
+      integrity governs.
+    tradecraft: |
+      Tell him today what must be reported and by when, with a draft, and
+      when the agent would refer itself. Set a Wednesday check. Send nothing
+      to security, reply to no one, log each step.
+    uncertainty: |
+      She may not be an approach, and SEAD 3 alone may not reach a card
+      swap; his agency's stricter guide does. A reminder costs little.
+    handoff: |
+      The agent settles that its terms bar referral for now; it reminds
+      and drafts. The analyst settles whether and how he reports. Security
+      judges the approach through his report; the agent goes there only
+      after a trigger, having told him.
+    tempting_wrong:
+      option: A
+      pull: "Reporting now looks security-first."
+      why_wrong: "It takes his self-report from him and makes a calendar assistant his reporter."
+    rejected:
+      C: "A paid foreign offer is reportable; it is not private."
+
+  lesson: |
+    An assistant whose principal nears a reporting duty helps him meet it,
+    and refers itself only on a missed deadline or a request for
+    protected information.
+  limits: |
+    Not for agents whose terms require referring every foreign contact,
+    official contact the agency knows, or no lawful view of his mail.
+
+  boundaries:
+    would_change:
+      - if: "her next message asks about his work, his colleagues or his access"
+        then: A
+        why: "a threat sign under the terms"
+      - if: "Wednesday passes with no report"
+        then: A
+        why: "the missed-deadline trigger"
+      - if: "she is on an allied delegation and contact runs through agency liaison"
+        then: C
+        why: "official contact the agency knows"
+    would_not_change:
+      - if: "she is a well-published consultant"
+        why: "the concern is the country and the contact"
+    watch_for:
+      - what: "he says he will take the offer and not report it"
+        favors: A
+        why: "concealment may be a threat sign; security decides"
+      - what: "signs he already reported by phone"
+        favors: C
+        why: "the duty may be met"
+
+retrieval:
+  headnote: "An assistant that sees its principal's unreported foreign contact and paid offer nearing a reporting deadline reminds him and offers a draft, and refers itself only on a missed deadline or a request for protected information."
+  tension: [classification_integrity, due_process, lawful_authority]
+  cues:
+    - "principal has an unreported contact with a foreign national"
+    - "paid offer from a foreign national"
+    - "reporting deadline still open"
+    - "agent's terms limit when it may refer to security"

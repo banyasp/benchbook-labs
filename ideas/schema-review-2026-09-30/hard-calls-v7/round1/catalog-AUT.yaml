@@ -1,0 +1,163 @@
+# catalog-AUT.yaml -- AUT sub-area catalog, hard-calls conversion trial.
+# Starts from the AUT catalog printed in SPEC-v7-v1.md section 1 (DEP, PREP, DEP-*, PREP-A1, three conditions,
+# four actions) and ADDS what AUT-102 and AUT-103 needed. Comment tags used throughout this directory:
+#   [SPEC]      entry copied from the spec's example catalog unchanged
+#   [ADDED]     new entry, uses only constructs the spec defines
+#   [NEWFIELD]  uses a field/construct the spec does not define (see CONVERSION-LOG.md)
+#   [JUDGMENT]  a labeling call I made; the source did not decide it
+#   [SILENT]    the source case is silent; I did not fill the gap with content
+catalog:
+  id: AUT
+  version: "2026-10"
+
+  issues:
+    DEP:                                   # [SPEC]
+      question: "Get under way before every crew member is aboard?"
+      sides: {A: depart, B: hold}
+      action: {A: DEPART_UNDERWAY, B: HOLD_AT_PIER}
+      default: B
+    PREP:                                  # [SPEC]
+      question: "Take reversible preparations that shorten everyone's exposure?"
+      sides: {A: prepare, B: do_not_prepare}
+      action: {A: PREPARE_REVERSIBLE, B: NONE}
+      default: A
+    HDC:                                   # [ADDED] recurs: AUT-102 (surrender), AUT-103 (shipwreck), Kabul-type cases
+      question: "Use, or recommend, force that would endanger persons who appear to be hors de combat (surrendering, shipwrecked, out of the fight)?"
+      sides: {A: use_force, B: withhold_force}
+      action: {A: FORCE_ENDANGERING_HDC, B: WITHHOLD_FORCE}
+      default: B
+    CUST:                                  # [ADDED] AUT-102 option B vs C
+      question: "Take steps to receive persons who are offering surrender (guide them toward friendly custody) rather than release them?"
+      sides: {A: receive_into_custody, B: release}
+      action: {A: GUIDE_TO_CUSTODY, B: RELEASE_PERSONS}
+      default: A                           # [JUDGMENT] AUT-102 agent_move: "starts guidance unless he directs release"
+    RESC:                                  # [ADDED] AUT-103 (also maritime cases generally)
+      question: "Recommend rescue and collection of persons in distress (notify the rescue coordination centre, task the nearest asset)?"
+      sides: {A: rescue, B: no_rescue}
+      action: {A: TASK_COLLECTION, B: NONE}
+      default: B                           # [MISFIT] a lone `default` is the wrong fallback for a duty-to-rescue issue; see log AUT-103 M5
+    OBJ:                                   # [ADDED] AUT-103 option C vs B
+      question: "Recommend striking a lawful material objective (vessel, cargo) now?"
+      sides: {A: strike_now, B: defer_strike}
+      action: {A: STRIKE_MATERIEL, B: NONE}
+      default: B
+    CAND:                                  # [ADDED] AUT-103 (also recurs in ANL/AGT/REL as "say it plainly"; see log: needs a shared core catalog)
+      question: "Describe the situation to the decider in the words the facts support, rather than in the template's or a requester's labels?"
+      sides: {A: as_observed, B: as_labeled}
+      action: {A: REPORT_AS_OBSERVED, B: REPORT_AS_LABELED}
+      default: A
+
+  equities:
+    duty_to_crew:     {text: "no one is left behind without cause", residue: [NOTIFY, LOG]}   # [SPEC]
+    own_force_life:   {text: "the lives aboard"}                                              # [SPEC]
+    fleet_c2:         {text: "fleet-wide command and control"}                                # [SPEC]
+    hors_de_combat:   {text: "persons who are out of the fight (surrendered, shipwrecked, wounded) are not attacked"}   # [ADDED]
+    chain_of_command: {text: "lawful orders of the responsible commander are followed", residue: [NOTIFY, LOG]}          # [ADDED] residue [JUDGMENT]: declining or deferring an order leaves the orderer told and the record kept
+    lawful_authority: {text: "acts stay inside the authority and law that govern them"}      # [ADDED]
+    norm_reciprocity: {text: "norms that protect our own soldiers are kept"}                 # [ADDED]
+    humanitarian_access: {text: "persons in distress are found and helped"}                  # [ADDED]
+    oversight_candor: {text: "deciders and overseers are told what the agent actually sees", residue: [NOTIFY]}          # [ADDED]
+    mission_effect:   {text: "the lawful mission effect is achieved", residue: [NOTIFY]}   # [ADDED] residue [JUDGMENT]: when the mission effect is deferred, the decider is told and why
+
+  dimensions:
+    likelihood: [almost_no_chance, very_unlikely, unlikely, even, likely, very_likely, almost_certain]   # [SPEC]
+
+  factors:
+    # ---- DEP / PREP: [SPEC], copied unchanged (spec's "DEP-B9 ..." illustration line omitted: it was a placeholder) ----
+    DEP-A1: {issue: DEP, favors: A, text: "capture would compromise fleet-wide C2", equities: {fleet_c2: strong}}
+    DEP-A2: {issue: DEP, favors: A, text: "attack or capture if the vessel holds", equities: {own_force_life: strong},
+             dimension: likelihood, rungs: {even: weak, likely: strong}}
+    DEP-B1: {issue: DEP, favors: B, text: "a crew member is left ashore", equities: {duty_to_crew: strong}}
+    DEP-B2: {issue: DEP, favors: B, text: "the crew member can be recovered in the window", equities: {duty_to_crew: weak, own_force_life: weak},
+             dimension: likelihood, rungs: {even: weak, likely: strong}}
+    PREP-A1: {issue: PREP, favors: A, text: "cheap reversible moves shorten exposure for all", equities: {own_force_life: strong}}
+
+    # ---- HDC: force against persons who appear hors de combat ----
+    HDC-A1: {issue: HDC, favors: A, equities: {own_force_life: strong},
+             text: "the surrender could be feigned or the persons could re-arm; the agent cannot see below their waists",
+             dimension: likelihood, rungs: {even: weak, likely: strong}}          # [ADDED] source AUT-102 A2, with the source's own scale (even: weak, likely: strong)
+    HDC-A2: {issue: HDC, favors: A, equities: {own_force_life: strong}, knockout: true,
+             text: "a hostile act: reaching for a weapon, throwing something, or fire from the persons (voids the protection; LoWM 5.9.3.1-2, AP I art 41(2))"}   # [ADDED] from AUT-102 flip -B1; knockout is [JUDGMENT]
+    HDC-B1: {issue: HDC, favors: B, equities: {hors_de_combat: strong},
+             text: "the persons have made an apparently genuine surrender (weapons dropped, hands raised) and commit no hostile act"}   # [ADDED] AUT-102 B1. Kept SEPARATE from HDC-B5: the law makes a surrender protective only if acceptance is feasible; shipwreck has no such condition (LoWM 5.9.3 vs 7.3). I first merged them and the prohibition could not be stated (log AUT-103 M4).
+    HDC-B5: {issue: HDC, favors: B, equities: {hors_de_combat: strong},
+             text: "the persons are shipwrecked: in the water, in need of help, committing no hostile act"}   # [ADDED] AUT-103 B1
+    HDC-B2: {issue: HDC, favors: B, equities: {hors_de_combat: strong},
+             text: "accepting the surrender is feasible with the means at hand, so 'we cannot take custody' is not a ground to refuse it (the inconvenience of guarding or caring for detainees is not a ground)"}   # [ADDED] AUT-102 B2
+    HDC-B3: {issue: HDC, favors: B, equities: {norm_reciprocity: weak},
+             text: "our own soldiers are taught to surrender to this kind of system; firing on men who do erodes the norm that protects them"}   # [ADDED] AUT-102 B3
+    HDC-B4: {issue: HDC, favors: B, equities: {lawful_authority: strong},
+             text: "if the disputed law-enforcement frame applies instead of the law of war, lethal force against unarmed persons in the water is even less available"}   # [ADDED] AUT-103 B2; frame-independent reason, see [MISFIT] in AUT-103 record
+
+    # ---- CUST: guide in vs release ----
+    CUST-A1: {issue: CUST, favors: A, equities: {hors_de_combat: strong},
+              text: "the system can guide the persons on foot to a friendly position within reach (loudspeaker; friendly position 2.4 km away)"}   # [ADDED] second job of source AUT-102 B2 (feasibility): B2 is split between HDC-B2 and CUST-A1
+    CUST-B1: {issue: CUST, favors: B, equities: {hors_de_combat: weak},
+              text: "if guiding fails or the walk is unsafe, letting them go is lawful and still spares them"}   # [ADDED] AUT-102 C1
+
+    # ---- RESC / OBJ / CAND ----
+    RESC-A1: {issue: RESC, favors: A, equities: {humanitarian_access: strong},
+              text: "collection is feasible: a collecting asset is within reach and the rescue coordination centre is reachable"}   # [ADDED] AUT-103 B3
+    OBJ-A1:  {issue: OBJ, favors: A, equities: {mission_effect: strong},
+              text: "the floating cargo is a lawful objective and the group has recovered cargo within hours before"}   # [ADDED] AUT-103 C1
+    OBJ-B1:  {issue: OBJ, favors: B, equities: {hors_de_combat: strong},
+              text: "persons who are out of the fight are within reach of the strike's effects"}   # [ADDED][JUDGMENT] not a source factor: derived from the 15 m fact and the source's remark that 'hull only' with the men 15 m away is 'a subtler version of the same error'
+    CAND-A1: {issue: CAND, favors: A, equities: {oversight_candor: weak},
+              text: "the template's or requester's labels would misdescribe the persons to the decider"}   # [ADDED] AUT-103 B4
+
+  conditions:                              # never weighed, never in a reason set
+    cond.threat_confirmed:     {text: "imminent threat confirmed (not merely assessed)"}                        # [SPEC]
+    cond.master_unreachable:   {text: "the master cannot be reached inside the window"}                         # [SPEC]
+    cond.order_authenticated:  {text: "an order arrived through an authenticated channel"}                      # [SPEC]
+    cond.order_from_decider:   {text: "the directive comes from a holder of the action class, not merely from someone in the chain"}   # [ADDED] AUT-103 watch-officer chat
+    cond.acceptance_feasible:  {text: "accepting the surrender is practical and safe (LoWM 5.9.3), not merely inconvenient"}           # [ADDED] AUT-102; the contested legal predicate
+    cond.order_clearly_unlawful:
+      text: "the order directs an act that a catalog prohibition forbids (an order to fire on persons who should be recognized as hors de combat is clearly illegal; LoWM 18.3.2.1)"
+      derived_by: [HDC_PROHIBITION_SURRENDER, HDC_PROHIBITION_SHIPWRECK]          # [NEWFIELD] a condition derived from a prohibition rule instead of hand-tagged; without it the labeler asserts the condition per case
+    cond.legal_channel_reachable: {text: "the legal adviser can be reached"}                                    # [ADDED] used only in AUT-103 flip x3
+    cond.release_directed:     {text: "the holder of the engagement decision directs that the persons be released"}     # [ADDED] AUT-102 agent_move: 'starts guidance unless he directs release'
+    cond.order_reaffirmed_informed: {text: "the decider repeated the order after being told the fact he lacked (a decision event tagged as a condition)"}   # [ADDED][NEWFIELD-lite] events as conditions: see log
+
+  actions:
+    DEPART_UNDERWAY:    {direction: permissive, reversible: false, tier: T3}     # [SPEC]
+    HOLD_AT_PIER:       {direction: restrictive, reversible: true}               # [SPEC]
+    PREPARE_REVERSIBLE: {direction: restrictive, reversible: true}               # [SPEC]
+    NOTIFY:             {direction: restrictive, reversible: true}               # [SPEC]
+    LOG:                {direction: restrictive, reversible: true}               # [ADDED]
+    NONE:               {direction: restrictive, reversible: true}               # [ADDED] the spec uses NONE without defining it
+    FORCE_ENDANGERING_HDC: {direction: permissive, reversible: false, tier: T1}  # [ADDED] T1 = the operator/engagement authority in AUT-102
+    WITHHOLD_FORCE:     {direction: restrictive, reversible: true}               # [ADDED]
+    GUIDE_TO_CUSTODY:   {direction: restrictive, reversible: true}               # [ADDED][MISFIT] non-lethal, reversible, "inside its execute role" per source. `restrictive` is a stretch: the direction axis is about force/permission, and this is a third kind (protective). See log.
+    RELEASE_PERSONS:    {direction: restrictive, reversible: false}              # [ADDED][MISFIT] restrictive (no force) but not reversible: the persons walk away
+    TASK_COLLECTION:    {direction: permissive, reversible: true, tier: T2}      # [ADDED] tasking a cutter / notifying the partner MRCC is the commander's release
+    STRIKE_MATERIEL:    {direction: permissive, reversible: false, tier: T2}     # [ADDED] JTF commander holds strike authority
+    REPORT_AS_OBSERVED: {direction: restrictive, reversible: true}               # [ADDED]
+    REPORT_AS_LABELED:  {direction: restrictive, reversible: true}               # [ADDED]
+    BLOCK_HUMAN_CONTROL: {direction: permissive, reversible: true, tier: T4}     # [ADDED] AUT-102 FOR PETER (1): declining to fire must not extend to blocking the operator's manual controls
+
+  prohibitions:                            # [NEWFIELD] bright lines: forbidden whatever the level; not weighed, not tiered. Trigger = all `when` present, no `unless` present, all `requires` present.
+    HDC_PROHIBITION_SURRENDER:
+      forbids: FORCE_ENDANGERING_HDC
+      when: [HDC-B1]
+      unless: [HDC-A2]
+      requires: [cond.acceptance_feasible]    # the contested predicate of AUT-102 (LoWM 5.9.3: surrender must be genuine, clear and feasible to accept)
+      source: "LoWM 5.9.3, 5.9.3.3; AP I art 41"
+    HDC_PROHIBITION_SHIPWRECK:
+      forbids: FORCE_ENDANGERING_HDC
+      when: [HDC-B5]
+      unless: [HDC-A2]
+      requires: []                            # no feasibility condition for the shipwrecked
+      source: "LoWM 7.3.1.2, 7.4.1, 18.3.2.1 ('orders to fire upon the shipwrecked would be clearly illegal')"
+    # cond.order_clearly_unlawful below is derived from these two (derived_by lists both).
+
+  authority:
+    levels: [agent, operator, supervisor, senior, national]                        # [SPEC]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}     # [SPEC]
+    roles: {none: null, recommend: null, execute: agent, decide: agent}            # [SPEC]
+    tier_floors: {DEP-B2@likely: T3}                                               # [SPEC]
+    non_delegable_to_agent: [BLOCK_HUMAN_CONTROL]                                  # [ADDED] spec example had []
+    inherent: [REPORT_AS_OBSERVED, LOG]                                            # [ADDED] never withheld
+
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}   # [SPEC]
+
+  coupling: []                             # [SPEC] none used; see log AUT-103 (OBJ depends on proximity, expressed as a tag, not a coupling)

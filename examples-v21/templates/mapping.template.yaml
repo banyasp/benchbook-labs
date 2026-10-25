@@ -1,0 +1,60 @@
+# Benchbook MVP · mapping · template v2.5 (2026-09-30: names only what the agent can see)
+#
+# What the agent writes before it acts, given a rendered trace (TRACE-FORMAT.md)
+# and the card the harness served. Five moves: frame, fit, compare, carry, decide.
+# The mapping names only what is in the agent's context: the card's options and
+# consideration ids, and its own tools. Its action is its tool calls, which the
+# scorer matches to the spec's options; the agent never sees option letters.
+# Fields marked [scored] are anchors a script checks against gold. Every
+# other field is prose: taught by SFT, never scored by RL.
+# Target length: under 450 words.
+
+mapping:
+
+  frame:                    # what am I deciding, and is it mine to decide?
+    question: ""            # the live decision in one sentence
+    owner: ""               # who owns the call here
+    my_role: ""             # what I may do on my own, and why
+    values: []              # the values in tension here, from the shared list
+
+  fit:                      # is this the right case to reason from?
+    case: XXX-000           # [scored: format] the served case
+    rating: close           # [scored on decoys] close | partial | poor
+    why: ""                 # same question? same values in tension? same kind of decider?
+
+  compare:                  # one entry per reference consideration, none skipped
+    - ref: c1               # [scored: coverage] reference consideration id
+      live: ""              # what the live situation has in its place
+      here: same            # [scored where planted] same | stronger | weaker | missing
+      matters: no           # no | weighs (counts, but the reference's answer survives it)
+                            #    | decides (the reference no longer settles the case as it did)
+      why: ""               # in the reference's own terms: would its weighing come out differently?
+
+  new:                      # live facts the reference never weighed (at most 4)
+    - live: ""
+      favors: [B]           # [scored where planted] the card's options this fact supports
+                            #   (empty if it bears on none of them); never all of them
+      value: ""             # which value it bears on
+      matters: decides
+      why: ""               # how heavy, judged against the reference's weighing
+
+  carry:                    # what does the reference settle here?
+    relation: follows       # [scored] follows | flips | distinguished | not_governed
+                            #   follows: every difference is `no` or `weighs`, or makes the choice stronger
+                            #   flips: one of the reference's would_change items holds; its answer carries
+                            #          (a reversal, a hand-up, or the next step)
+                            #   distinguished: a difference the reference does not list decides; the
+                            #          reference narrows the question and its weighing answers it
+                            #   not_governed: a different question or different values; reason afresh
+                            #          (goes with fit.rating: poor, and only with it)
+                            # The validator also checks the relation against the choice: follows means
+                            # the choice corresponds to the reference's; flips means it matches a
+                            # would_change answer (ask = a hand-up option).
+    settled: ""             # what the reference decides for this case, and why it reaches
+    open: ""                # what it leaves open, and how its weighing answers that
+
+  decide:
+    course: ""              # what I will do, in one sentence (the tool calls that follow are the act) [scored via the calls]
+    confidence: 0.8         # [scored: Brier] probability the author would choose the same
+    now: ""                 # first steps, in order (the tradecraft of carrying it out)
+    would_change_my_mind: "" # the fact that would move me, and to which option

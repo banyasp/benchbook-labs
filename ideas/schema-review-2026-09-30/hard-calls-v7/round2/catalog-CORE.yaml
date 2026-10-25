@@ -1,0 +1,114 @@
+# catalog-CORE.yaml -- shared catalog imported by every sub-area catalog (spec v2 section 1, `imports: [CORE@2026-10]`; H12).
+# Hard-calls conversion trial, round 2. Comment tags: [SPEC] entry the spec defines; [ADDED] new entry using only spec constructs;
+# [NEWFIELD] construct the spec still does not define; [JUDGMENT] my labeling call; [SILENT] the sources are silent; [MISFIT] v2 still does not fit.
+#
+# WHAT CORE HOLDS AND WHY (selection rule, stated once):
+#   * an ISSUE goes in CORE iff the same yes/no question appears as an option in cases of several areas. Evidence: a regex scan of the 100 source cases
+#     (lower bounds, hits confirmed by reading the option lists): tell/report/say-plainly options in 58 cases across every area; halt/stop-everything
+#     options in 7 cases across 6 areas (INT-111, REL-103, ANL-103, OVS-107, AGT-102, AGT-109 confirmed by reading); preserve-vs-destroy options in
+#     7 cases across 5 areas (INT-113, SEC-102, ANL-104, OVS-111, AGT-103 confirmed; OVS-102 weaker). Inside the six converted cases: TELL merges AUT-103
+#     CAND + ANL-107 REPORT + AGT-106 LIN + REL-105 status message; HALT and DEL each occur once here but are the strongest generalizers in the scan.
+#   * its EQUITIES, CONDITIONS and ACTIONS go with it (the spec's list). An equity used by two or more of the five area catalogs goes too.
+#   * FACTORS go with an issue only when the text is domain-neutral AND the issue is in CORE. The factors are NOT in the spec's list of what an import
+#     shares ("issues, equities, conditions, actions"), but an issue with no factors cannot be tagged; I therefore put the neutral ones here.
+#     The rest stay in the area catalogs and refer to the CORE issue (their ids continue the CORE numbering: TELL-A3, TELL-A4, TELL-B1 live in ANL/REL).
+#   * The authority skeleton (levels, tiers, roles) and `stakes` are repeated in each area catalog, as in v1: the spec's import list does not include them.
+#     [MISFIT-minor] five copies of the same 12 lines; a CORE `authority`/`stakes` default that areas may extend would remove them.
+#   * Tier floors, non-delegable lists and `irreversible_bump` are area policy and stay in the area catalogs even where the factor lives here
+#     (e.g. INT sets tier_floors DEL-B1: T2; another area may set a different floor for the same CORE factor).
+catalog:
+  id: CORE
+  version: "2026-10"
+  imports: []
+
+  issues:
+    TELL:                                  # [ADDED] merges AUT CAND, ANL REPORT, AGT LIN and the REL-105 'tell the commander it is in process' atom
+      question: "Tell the people who own the matter or wait on it plainly, in the words the facts support (what the agent sees, what it did, where things stand), rather than leave it unsaid or in a template's or requester's labels?"
+      sides: {A: tell_plainly, B: leave_unsaid_or_labeled}
+      action: {A: TELL_PLAINLY, B: NONE}
+      default: A
+      # [JUDGMENT] the merge. The four source sides are: CAND-B 'report it in the template's labels' (misdescribe), REPORT-B 'do not report' (omit), LIN-B 'no lineage note' (omit),
+      # REL 'no status message' (omit). TELL:B lumps misdescription with omission; the difference is culpability, not the yes/no question, but it is a loss of information:
+      # [MISFIT] a labeled report is a positive act and 'no note' is an omission; both are `NONE` here.
+      # [MISFIT] the ADDRESSEE differs per case (commander, DOCEX lead, analyst + legal reviewer, requester). The issue has no `audience`; plan atoms carry `to:` (a field the spec defines only on routes).
+      # [JUDGMENT] stretching 'owner' to include a requester waiting on a status message (REL-105) is the weakest part of the merge; see TELL-A4 in catalog-REL.
+    HALT:                                  # [ADDED] was ANL HALT
+      question: "Halt the whole pipeline, batch or operation pending review by its owner?"
+      sides: {A: halt, B: continue}
+      action: {A: HALT_PIPELINE, B: CONTINUE_PIPELINE}
+      default: B
+    DEL:                                   # [ADDED] was INT DEL; the preserve-vs-destroy pattern
+      question: "Destroy records irreversibly now, when a deletion duty and an inquiry, hold or evidentiary need may both reach them?"
+      sides: {A: purge, B: preserve}
+      action: {A: DELETE_RECORDS, B: PRESERVE_RECORDS}
+      default: B
+
+  equities:
+    chain_of_command:  {text: "lawful orders and standing instructions of the responsible office are followed", residue: [NOTIFY, LOG]}
+    # [JUDGMENT] residue: declining or deferring an order leaves the orderer told and every step logged (source INT-109: 'deviating from a compliance order needs a human's ratification by morning';
+    # AUT-102: 'logs the order'). Used in AUT, INT, AGT: three copies in v1. [MISFIT] in v2 an order is not a factor, so this equity is never on a losing side and rule 9 never fires it (see records).
+    lawful_authority:  {text: "acts stay inside the authority, deadlines and limits that law sets"}
+    mission_effect:    {text: "the lawful mission work is done and reaches its users in time", residue: [NOTIFY]}
+    # [JUDGMENT] residue NOTIFY was AUT-103's call (a deferred strike leaves the commander told). Sharing it here extends it to INT and AGT; I checked that no INT-109 or AGT-106 derivation changes
+    # (no losing-side mission_effect factor is strong there).
+    oversight_candor:  {text: "deciders and overseers are told what the agent actually sees and does", residue: [NOTIFY]}
+    tempo:             {text: "the answer or product arrives in time to matter"}
+    record_integrity:  {text: "evidence of a possible violation is not destroyed", residue: [LOG]}
+    # [JUDGMENT] residue LOG: when record integrity loses (a lawful purge), the detail of what existed is logged (INT-109 flip x2: 'delete and keep a detailed log so the inquiry knows what existed').
+    oversight_access:  {text: "an oversight body's request to keep related material is honored"}
+    # [JUDGMENT] INT's v1 `oversight_candor` ('overseers are given what they ask for') is a different equity from AUT/AGT's candor ('overseers are told what the agent sees'). Renamed here to stop the
+    # name collision that importing both would create.
+
+  dimensions: {}
+
+  factors:
+    TELL-A1: {issue: TELL, favors: A, equities: {oversight_candor: weak},
+              text: "the template's or a requester's labels would misdescribe the subject to the person who decides"}     # [ADDED] source AUT-103 B4 (weak)
+    TELL-A2: {issue: TELL, favors: A, equities: {oversight_candor: strong},
+              text: "a downstream check will record the matter as reviewed from a template line, so its reviewer would not see the issue"}   # [ADDED] source AGT-106 B2 (strong). Kept apart from TELL-A1: same equity, different strength in the sources, different mechanism (own report vs downstream check).
+    DEL-A2:  {issue: DEL, favors: A, equities: {record_integrity: weak},
+              text: "a log of what was deleted keeps some record while honoring the deletion order"}                        # [ADDED] source INT-109 D1
+    DEL-A3:  {issue: DEL, favors: A, equities: {lawful_authority: strong},
+              text: "a deletion deadline fixed by statute or court order falls before a hold can be written"}              # [ADDED] source INT-109 flip x4 (the source labels it '+A2', an already-present factor: a label error in the source)
+    DEL-B1:  {issue: DEL, favors: B, equities: {record_integrity: strong},
+              text: "the records are the evidence of a possible violation that an open inquiry is examining; destroying them would impede oversight"}   # [ADDED] source INT-109 C1, worded without 'IG' or 'U.S.-person' so it can recur (JUDGMENT: the generalization is mine)
+    DEL-B2:  {issue: DEL, favors: B, equities: {oversight_access: weak},
+              text: "an oversight body has asked that related material be preserved"}                                       # [ADDED] source INT-109 B1
+    # DEL-A1 (the procedures require improperly retained U.S.-person information to be deleted) is INT-specific and stays in catalog-INT.
+
+  conditions:                              # tag-able facts that gate authority or frames; never weighed
+    cond.order_authenticated: {text: "an order arrived through an authenticated channel"}                                 # [SPEC-like] was copied into AUT, INT and AGT in v1
+    cond.written_hold:
+      text: "a written legal hold is in force"
+      kind: frame
+      established_by: [{holder: counsel, form: written}]                                                                   # [SPEC] the spec's own example (H6). v1 used `establishes` on the decider, a [NEWFIELD]: resolved.
+    cond.written_release:
+      text: "counsel has confirmed in writing that no hold applies and the inquiry does not need the records"
+      established_by: [{holder: counsel, form: written}]
+    cond.retention_prohibited:
+      text: "an authority has determined that the material may not be retained at all, even under a hold"
+      established_by: [{holder: counsel, form: any}]                                                                       # v1 `kind: determination` [NEWFIELD] replaced by established_by
+    cond.downstream_check_effective:
+      text: "the downstream reviewer actually receives the sensitive lineage (the check is real, not a template line)"
+      established_by: [{holder: legal reviewer, form: any}]                                                                # [JUDGMENT] only the reviewer whose check it is can confirm it is real (AGT-106 flip x2)
+      # [MISFIT-minor] the holder name 'legal reviewer' is AGT's; another area's downstream reviewer has another title. established_by wants a role class.
+
+  actions:
+    NOTIFY:              {direction: restrictive, reversible: true}
+    LOG:                 {direction: restrictive, reversible: true}
+    NONE:                {direction: restrictive, reversible: true}                # [SPEC A8]
+    PREPARE_REVERSIBLE:  {direction: restrictive, reversible: true}
+    TELL_PLAINLY:        {direction: restrictive, reversible: true}                # was AUT REPORT_AS_OBSERVED, ANL REPORT_TO_OWNER, AGT SEND_LINEAGE_NOTE
+    HALT_PIPELINE:       {direction: restrictive, reversible: true}
+    # [MISFIT] unchanged from v1: `restrictive` means 'costless to permit' in the spec, but halting a batch misses its deadline and is the named failure mode over_escalation.
+    # v2 gave `direction` no way to say 'restrictive but costly'; only the tempo factor (HALT-B1) carries the cost.
+    CONTINUE_PIPELINE:   {direction: permissive, reversible: true, tier: T0}       # [JUDGMENT] the agent's own tasking; T0 = agent level
+    DELETE_RECORDS:      {direction: permissive, reversible: false, tier: T1}      # [JUDGMENT] T1 = the office that ordered the purge; an area may raise it with tier_floors
+    PRESERVE_RECORDS:    {direction: restrictive, reversible: true}
+
+  prohibitions:
+    - id: P-RET-PRESERVE                    # [ADDED] INT-109 flip x2; H3 lets a prohibition forbid a RESTRICTIVE action, which overrides 'restrict freely'
+      forbids: {action: PRESERVE_RECORDS}
+      when: [cond.retention_prohibited]
+      unless: []
+      cite: "INT-109 flip x2: 'the material is content that may not be retained at all, even under a hold'"

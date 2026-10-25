@@ -1,0 +1,76 @@
+# catalog-REL.yaml -- REL sub-area catalog (release / tearlines / classification), hard-calls conversion trial, round 2 (spec v2).
+# Built from scratch for REL-105 only. Imports CORE (TELL, tempo, PREPARE_REVERSIBLE, NOTIFY, ...).
+# Tags: [ADDED] spec constructs; [NEWFIELD] not in the spec; [JUDGMENT] my call; [SILENT] source silent; [MISFIT] v2 does not fit; [v2-CHANGE] differs from v1 because of a v2 construct.
+catalog:
+  id: REL
+  version: "2026-10"
+  imports: [CORE@2026-10]
+
+  issues:
+    REL:
+      question: "Release U.S. intelligence to a foreign partner now?"
+      sides: {A: release, B: withhold}
+      action: {A: RELEASE_FOREIGN, B: WITHHOLD}
+      default: B
+    TEAR:
+      question: "Release a minimum-necessary tearline rather than the source product itself?"
+      sides: {A: tearline, B: full_product}
+      action: {A: DRAFT_TEARLINE, B: RELEASE_FULL_PRODUCT}
+      default: A                            # [JUDGMENT] no source text states a default; A follows the holding ('brings the designee a minimum-necessary tearline')
+
+  equities:
+    friendly_force_life: {text: "the lives of U.S., allied, coalition and friendly forces (ICPG 403.3 D.3.a lists them together)"}   # [JUDGMENT] replaces the source's `own_force_life`; the source's own note says the canonical list 'has no partner-force equity'
+    source_protection:   {text: "the collection source and method are not revealed"}
+    truthful_status:     {text: "anyone waiting on the agent is told truthfully where matters stand, even when the answer is not the agent's to give"}   # [ADDED][JUDGMENT] see TELL-A4
+    # tempo: from CORE. originator_control, requester_need and lawful_authority (the source's use) are authority in v7 (see the record), not equities.
+
+  dimensions:
+    time_to_harm: {rungs: [days, within_24h, within_hours], mirror: false}     # [ADDED][JUDGMENT] ordered coarsely from the source's own thresholds: 'hours' (emergency), 24 h (flip x3; ICD 209 urgent tier), days (routine originator approval)
+
+  factors:
+    REL-A1: {issue: REL, favors: A, text: "friendly forces face a threat to life in the window", equities: [friendly_force_life],
+             dimension: time_to_harm, rungs: {within_24h: weak, within_hours: strong}}   # source B1. Rung strengths are [JUDGMENT]: the source gives 'strong' at hours and (via flip) 'not an emergency' beyond 24 h.
+    REL-A2: {issue: REL, favors: A, text: "a location-only warning costs almost nothing and could go out at once", equities: {tempo: weak}}   # source D1
+    TEAR-A1: {issue: TEAR, favors: A, text: "the source product names the intercepted handset and quotes the plotters; a minimum-necessary tearline protects the collection (ICPG 403.3 E.1.c-d)", equities: {source_protection: weak}}   # source C3
+    TELL-A4: {issue: TELL, favors: A, equities: {truthful_status: weak},
+              text: "someone outside the deciding chain is waiting on an answer the agent cannot give itself, and can act on what it is told"}
+    # [ADDED][JUDGMENT] TELL-A4 is NOT a source factor. The source's holding_text says the agent 'tells the requester truthfully where it stands', and the winning option says 'tells the commander it is in process',
+    # but no source factor is attached to that atom. v1 logged this as 'an atom with no reason'. v2 gives the atom an issue (TELL) but a holding still needs a reason, so I authored this weak factor.
+    # It resolves the derivation gap by adding content the source never listed; counted as a partial fix in the log.
+    # No B-side factors exist for either REL issue. Everything the source put on the withhold side ('only a government official may decide a foreign release') is authority, below.
+
+  conditions:
+    cond.emergency_standard_met:
+      text: "imminent threat to life within hours, with routine originator approval taking days: the emergency-disclosure standard is met on its face (ICPG 403.3 D.2)"
+      # [JUDGMENT] tagged by the labeler on the ambush report; the agent 'resolves that the facts meet the emergency standard on their face', the designee decides. No `established_by`: requiring the
+      # designee or element head to establish it would make the delegation d2 circular (d2 is what lets the designee be paged at all). [SILENT] on who establishes it.
+    cond.designee_unreachable:
+      text: "the emergency-disclosure designee cannot be reached inside the window"
+      unreachable: element head's emergency-disclosure designee
+      # [MISFIT-new] the v2 lint 'every unreachable: names a holder that appears in some record's deciders' fails: the designee is the delegatee of d2, not a decider. Human delegatees have no standing as holders.
+    cond.originator_approved:
+      text: "the originator has approved release of the product"
+      established_by: [{holder: originator, form: any}]                        # [v2-CHANGE] H6; [SILENT] on form
+    cond.not_fisa_derived:
+      text: "the product is not FISA-derived (ICD 403 C.4 otherwise takes it outside ordinary release authority)"
+      kind: frame                           # [v2-CHANGE] v1 [NEWFIELD] resolved by the spec's `kind: frame`
+
+  actions:
+    RELEASE_FOREIGN:      {direction: permissive, reversible: false, tier: T3}
+    RELEASE_FULL_PRODUCT: {direction: permissive, reversible: false, tier: T3}
+    DRAFT_TEARLINE:       {direction: restrictive, reversible: true}     # drafting the proposal; nothing leaves the agent
+    WITHHOLD:             {direction: restrictive, reversible: true}
+
+  authority:
+    levels: [agent, operator, supervisor, senior, national]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {}
+    non_delegable_to_agent: [RELEASE_FOREIGN, RELEASE_FULL_PRODUCT]   # the spec's own comment: 'foreign release, ICD 403 E.14 reading'. This one line carries source factor A1.
+    inherent: []
+    irreversible_bump: 1
+
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}
+
+  coupling:
+    - {if: {REL: A}, then: {TEAR: A}}       # [SPEC] the spec's own example coupling; [JUDGMENT] adopted as a rule: any release to a foreign partner is a tearline unless TEAR B is settled separately

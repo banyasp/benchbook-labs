@@ -1,0 +1,75 @@
+# catalog-INT.yaml -- INT sub-area catalog (collection, retention, civil liberties), hard-calls conversion trial.
+# Built from scratch for INT-109 only. Tags: [ADDED] uses spec constructs; [NEWFIELD] not in the spec; [JUDGMENT] my call; [SILENT] source silent.
+catalog:
+  id: INT
+  version: "2026-10"
+
+  issues:
+    DEL:
+      question: "Destroy records irreversibly now, when a deletion duty and an inquiry or hold may both reach them?"
+      sides: {A: purge, B: preserve}
+      action: {A: DELETE_RECORDS, B: PRESERVE_RECORDS}
+      default: B
+    ACC:
+      question: "Leave records that carry a retention problem accessible to analysts?"
+      sides: {A: keep_access, B: restrict_access}
+      action: {A: RETAIN_ANALYST_ACCESS, B: SEQUESTER}
+      default: B                           # [JUDGMENT] source silent; privacy purpose of the purge points to B
+
+  equities:
+    usp_privacy:       {text: "improperly retained U.S.-person information stops being available"}
+    record_integrity:  {text: "evidence of a possible violation is not destroyed", residue: [LOG]}        # [JUDGMENT] residue: when record integrity loses (a lawful purge), the detail of what existed is logged (source flip x2: 'delete and keep a detailed log so the inquiry knows what existed')
+    oversight_candor:  {text: "overseers are given what they ask for"}
+    lawful_authority:  {text: "acts stay inside the deadlines and limits that law sets"}
+    chain_of_command:  {text: "lawful orders of the responsible office are followed", residue: [NOTIFY, LOG]}   # [JUDGMENT] declining or deferring an order leaves the orderer told and every step logged (source: 'deviating from a compliance order needs a human's ratification by morning')
+    mission_effect:    {text: "analysts can do the work the records support"}
+
+  dimensions: {}                            # no scaled factor in INT-109
+
+  factors:
+    DEL-A1: {issue: DEL, favors: A, text: "the procedures require improperly retained U.S.-person information to be deleted", equities: {usp_privacy: strong}}   # source A1 (first clause; 'compliance ordered it' is order o1)
+    DEL-A2: {issue: DEL, favors: A, text: "a log of what was deleted keeps some record while honoring the deletion order", equities: {record_integrity: weak}}   # source D1
+    DEL-A3: {issue: DEL, favors: A, text: "a deletion deadline fixed by statute or court order falls before a hold can be written", equities: {lawful_authority: strong}}   # source flip x4 (labelled '+A2' in the source, which is an already-present factor: source label error)
+    DEL-B1: {issue: DEL, favors: B, text: "the records are the evidence of the violation an open inquiry is examining; destroying them would impede oversight", equities: {record_integrity: strong}}   # source C1
+    DEL-B2: {issue: DEL, favors: B, text: "an oversight body has asked that related material be preserved", equities: {oversight_candor: weak}}   # source B1
+    ACC-A1: {issue: ACC, favors: A, text: "an analyst asks to keep using the records for an open case during the hold", equities: {mission_effect: weak}}   # source flip x3; equity [SILENT] in the source, mission_effect is my pick
+    ACC-B1: {issue: ACC, favors: B, text: "a locked store removes analyst access, serving the privacy purpose of the purge while keeping the evidence", equities: {usp_privacy: strong}}   # source C2
+    # source C3 (irreversibility, record_integrity weak) is NOT a factor here: reversibility is an attribute of the action classes below (see log INT-109 M3).
+
+  conditions:
+    cond.written_hold:        {text: "counsel has issued or confirmed a written preservation hold"}
+    cond.written_release:     {text: "counsel has confirmed in writing that no hold applies and the inquiry does not need the records"}
+    cond.retention_prohibited:
+      text: "an authority has determined that the material may not be retained at all, even under a hold"
+      kind: determination                    # [NEWFIELD] a condition only a named holder can make true; see authority.deciders[].establishes
+    cond.order_authenticated: {text: "an order arrived through an authenticated channel"}
+    cond.order_from_decider:  {text: "the directive comes from a holder of the action class"}
+
+  actions:
+    DELETE_RECORDS:         {direction: permissive, reversible: false, tier: T1}
+    PRESERVE_RECORDS:       {direction: restrictive, reversible: true}
+    RETAIN_ANALYST_ACCESS:  {direction: permissive, reversible: true, tier: T1}   # [JUDGMENT] leaving records accessible after they were found improperly retained is a continuing retention the compliance office authorizes
+    SEQUESTER:              {direction: restrictive, reversible: true}            # 'a move to the locked store can be reversed in minutes'
+    NOTIFY:                 {direction: restrictive, reversible: true}
+    LOG:                    {direction: restrictive, reversible: true}
+    NONE:                   {direction: restrictive, reversible: true}
+
+  prohibitions:                            # [NEWFIELD] see catalog-AUT.yaml. Here the forbidden class is RESTRICTIVE, which contradicts the spec's 'restrictive actions are always within any role'.
+    RETENTION_BAR:
+      forbids: [PRESERVE_RECORDS, SEQUESTER]
+      when: [cond.retention_prohibited]
+      unless: []
+      requires: []
+      source: "source flip x2: 'the material is content that may not be retained at all, even under a hold'"
+
+  authority:
+    levels: [agent, operator, supervisor, senior, national]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {DEL-B1: T2, ACC-A1: T2}  # a present tag raises the tier of the issue's permissive action. DEL-B1: an open inquiry moves the purge from the compliance office (operator level) to counsel (supervisor). This is where reversibility bites.
+    non_delegable_to_agent: []
+    inherent: [LOG, NOTIFY]
+
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}
+
+  coupling: []

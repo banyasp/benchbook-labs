@@ -1,0 +1,29 @@
+case:
+  id: FISC-02
+  source: {doc: "FISC Memorandum Opinion and Order, Apr. 21, 2022 (released May 19, 2023)", page: 29,
+           url: "https://www.intelligence.gov/assets/documents/702-documents/declassified/21/2021_FISC_Certification_Opinion.pdf"}
+  holding: >
+    A batch query of over 19,000 donors to a congressional campaign said to be a target of
+    foreign influence: NSD found that only eight identifiers had ties to foreign influence
+    sufficient to meet the standard. Split outcome by identifier.
+  options: {A: run the query, B: do not run it}
+  decided_by: DOJ NSD (compliance determination), reported to the FISC
+  agent_role: execute
+  default: B
+  facts:
+    - {id: g1, factors: [A1], text: "Analyst: the campaign 'was a target of foreign influence'"}
+    - {id: g2, factors: [B1, B3, B4], text: "Batch of 19,000+ donor identifiers, selected as donors"}
+    - {id: g3, factors: [A2], scope: "8 identifiers", text: "Eight identifiers had sufficient ties to foreign influence activities"}
+  outcome: {for_8_identifiers: A, for_the_rest: B}
+  reason: {A: [A2], B: [B1, B3]}
+  reason_cite: {page: 29, anchor: "campaign was a target of foreign influence, but NSD determined that only eight"}
+  flip_rules:
+    - {if: "-A2 for an identifier", then: B, basis: "the same query split by identifier (p. 29)", scope: identifier}
+    - {if: "+A4 (query limited to the eight)", then: A, basis: "the standard's prong (c), 'reasonably tailored' (p. 35)"}
+  watch_for:
+    - {what: "a target-level concern (the campaign) does not carry over to every member of a category (donors)", favors: B}
+    - {what: "batch jobs of 100 or more now require FBI attorney approval (p. 39)", favors: B}
+conversion:
+  misfits:
+    - "One record, two outcomes: the unit of decision is the identifier, not the query. The case needs per-unit outcomes, as DOHA needs per-allegation findings."
+    - "Scale is itself a factor (19,000 vs 8); B3 is binary in this catalog."

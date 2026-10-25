@@ -1,0 +1,62 @@
+# AUT catalog (autonomous vessel operations), v7 form; r2: migrated to spec v2 shapes (list-form scaled equities,
+# dimension dict, irreversible_bump). Spec §1 example, completed so that
+# AUT-001 (v6 paper) and AUT-101 (spec §2) both run. Additions beyond the spec text are marked
+# `added: prototype` and are author: draft judgments for Peter to overwrite.
+catalog:
+  id: AUT
+  version: "2026-10"
+  issues:
+    DEP:
+      question: "Get under way before every crew member is aboard?"
+      sides: {A: depart, B: hold}
+      action: {A: DEPART_UNDERWAY, B: HOLD_AT_PIER}
+      default: B
+    PREP:
+      question: "Take reversible preparations that shorten everyone's exposure?"
+      sides: {A: prepare, B: do_not_prepare}
+      action: {A: PREPARE_REVERSIBLE, B: NONE}
+      default: A
+  equities:
+    duty_to_crew:        {text: "no one is left behind without cause", residue: [NOTIFY, LOG]}
+    own_force_life:      {text: "the lives aboard"}
+    fleet_c2:            {text: "fleet-wide command and control"}
+    no_other_protection: {text: "nothing else protects what capture would expose", added: prototype}   # v6 A3's equity
+  dimensions:
+    likelihood: {rungs: [almost_no_chance, very_unlikely, unlikely, even, likely, very_likely, almost_certain], mirror: false}   # ICD 203 order
+  factors:
+    DEP-A1: {issue: DEP, favors: A, text: "capture would compromise fleet-wide C2", equities: {fleet_c2: strong}}
+    DEP-A2: {issue: DEP, favors: A, text: "attack or capture if the vessel holds", equities: [own_force_life],
+             dimension: likelihood, rungs: {even: weak, likely: strong, almost_certain: strong}}   # almost_certain: added: prototype (RT-1 port)
+    DEP-A3: {issue: DEP, favors: A, text: "the module can't be destroyed in time", equities: {no_other_protection: strong},
+             added: prototype}                                                     # v6 AUT-001 A3
+    DEP-B1: {issue: DEP, favors: B, text: "a crew member is left ashore", equities: {duty_to_crew: strong}}
+    DEP-B2: {issue: DEP, favors: B, text: "the crew member can be recovered in the window",
+             equities: [duty_to_crew, own_force_life],              # r2: v2 list form, the rung strength governs
+             dimension: likelihood, rungs: {even: weak, likely: strong}}
+    PREP-A1: {issue: PREP, favors: A, text: "cheap reversible moves shorten exposure for all", equities: {own_force_life: strong}}
+    PREP-B1: {issue: PREP, favors: B, text: "preparations would delay the recovery or reveal intent to the attacker",
+              equities: {own_force_life: weak}, added: prototype}
+    # DEP-B9 (the spec's knockout placeholder "...") is omitted: its text is not written yet. Knockout is
+    # exercised in tests on a synthetic catalog.
+  conditions:
+    cond.threat_confirmed:    {text: "imminent threat confirmed (not merely assessed)"}
+    cond.master_unreachable:  {text: "the master cannot be reached inside the window", unreachable: vessel master}
+    cond.order_authenticated: {text: "an order arrived through an authenticated channel"}
+    cond.order_unlawful:      {text: "the order is manifestly unlawful", added: prototype}   # for orders.disabled_by
+  actions:
+    DEPART_UNDERWAY:    {direction: permissive, reversible: false, tier: T3}
+    HOLD_AT_PIER:       {direction: restrictive, reversible: true}
+    PREPARE_REVERSIBLE: {direction: restrictive, reversible: true}
+    NONE:               {direction: restrictive, reversible: true, added: prototype}   # PREP side B names it; spec omitted it
+    NOTIFY:             {direction: restrictive, reversible: true}
+    LOG:                {direction: restrictive, reversible: true, added: prototype}   # named in duty_to_crew residue
+  authority:
+    levels: [agent, operator, supervisor, senior, national]
+    tiers: {T0: agent, T1: operator, T2: supervisor, T3: senior, T4: national}
+    roles: {none: null, recommend: null, execute: agent, decide: agent}
+    tier_floors: {DEP-B2@likely: T3}
+    non_delegable_to_agent: []
+    inherent: []
+    irreversible_bump: 1                   # r2: as in the spec v2 AUT example (H9)
+  stakes: {T0: {L: 1, k: 0.2}, T1: {L: 3, k: 0.3}, T2: {L: 5, k: 0.4}, T3: {L: 9, k: 0.5}, T4: {L: 19, k: 0.5}}
+  coupling: []
