@@ -44,7 +44,10 @@ case_only: [{case: {{CASE_ID_FIRST}}-C3, assumption: "What you assume about it h
 ---
 kind: applicability
 case: {{CASE_ID_FIRST}}
-frame: {question: same | same_kind | different, decider: same | same_kind | different, role: same | same_kind | different}
+frame:
+  question: same | same_kind | different
+  decider: same | same_kind | different
+  role: same | same_kind | different
 governs: true | false
 why: "Whether the case's considerations are close enough for its reasoning to govern this decision."
 ---
@@ -75,6 +78,7 @@ flip_conditions:
     - {id: LIVE-watch1, what: "A sign to watch.", favors: [LIVE-O2], why: "Why it matters."}
 
 Meaning of the fields.
+- `frame` in fact_mapping and applicability is one mapping with three indented keys, question, decider and role, as shown.
 - fact_mapping and consideration_mapping compare your live items with the case's. matched: the same item in both.
   corresponding: the same characteristic with a different state (or, for considerations, the same equity in a
   different manner or size). live_only: only in your scenario. case_only: only in the case. `options` maps each of
