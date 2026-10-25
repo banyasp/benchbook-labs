@@ -9,7 +9,7 @@ One interface, three implementations:
         P(yes) that `candidate` matches `reference` under `question` (frame articulation x3, course).
 
     JevJudge()      TypeSafe Jev on OpenRouter (model id from bench.models.role("judge_choice"/"judge_noul").bare),
-                    probabilities read from the answer token's top-20 logprobs and renormalized over the label set.
+                    probabilities from OpenRouter's Decisions API (choice -> `probabilities`, noul -> P(yes)).
     StubJudge()     deterministic offline stand-in: normalized token overlap; identical text (after normalization)
                     is an exact match. For tests and dry runs only; its numbers mean nothing.
     CachedJudge(inner, path)   SQLite cache keyed by sha256(model id, method, rendered prompt).
@@ -205,10 +205,8 @@ class MatrixJudge(Judge):
         return self.fallback.noul(reference, candidate, question) if self.fallback else 0.0
 
 
-# ---------------------------------------------------------------- JevJudge (OpenRouter, token logprobs)
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-YES = {"yes", "y", "true"}
-NO = {"no", "n", "false"}
+# ---------------------------------------------------------------- JevJudge (OpenRouter Decisions API)
+DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions"
 
 
 class JevJudgeError(RuntimeError):
@@ -216,41 +214,41 @@ class JevJudgeError(RuntimeError):
 
 
 class JevJudge(Judge):
-    """TypeSafe Jev through OpenRouter. Needs token logprobs: requests `logprobs: true, top_logprobs: 20`,
-    `provider: {data_collection: "deny", require_parameters: true}` (so a provider that drops logprobs is never
-    routed to), reads the first generated token's top-20 distribution, and renormalizes over the label set.
-    Labels missing from the top 20 get `floor` probability before renormalizing.
-
-    UNVALIDATED as of 2026-10-25: OPENROUTER_API_KEY was not on the box, so no live call has been made. Whether Jev
-    honours logprobs/top_logprobs on OpenRouter, and whether its first token is the bare label, is unknown."""
+    """TypeSafe Jev through OpenRouter's **Decisions API** (POST /api/alpha/decisions; Jev is a decisions model and
+    is refused on /chat/completions). One typed question per call:
+      choice -> criteria {label: candidate text} (labels shuffled deterministically, last label = "None of these");
+                the answer's `probabilities` is the distribution over labels (PDF: Jev Choice).
+      noul   -> the answer's `noul` is P(yes) (PDF: Jev_Noul).
+    The item/reference/candidate go in `state`; the instruction/question in `instructions`.
+    Validated live 2026-10-25 (typesafe/jev-1.14 -> build jev-1.14-20261014; ~$2e-5 per call)."""
 
     def __init__(self, choice_model: str | None = None, noul_model: str | None = None, api_key: str | None = None,
                  timeout: float = 60.0, max_retries: int = 4, max_workers: int = 8, floor: float = 1e-6,
-                 max_tokens: int = 2, extra: dict | None = None):
+                 extra: dict | None = None):
         if choice_model is None or noul_model is None:
             from bench.models import role
             choice_model = choice_model or role("judge_choice").bare
             noul_model = noul_model or role("judge_noul").bare
         self.choice_model, self.noul_model = choice_model, noul_model
-        self.model_id = f"openrouter/{choice_model}|{noul_model}"
+        self.model_id = f"openrouter-decisions/{choice_model}|{noul_model}"
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
         self.timeout, self.max_retries, self.max_workers = timeout, max_retries, max_workers
-        self.floor, self.max_tokens, self.extra = floor, max_tokens, extra or {}
-        self.last_raw: dict | None = None      # last response body, for debugging the logprob path
+        self.floor, self.extra = floor, extra or {}
+        self.last_raw: dict | None = None
+        self.builds: set[str] = set()          # exact model builds that answered (provenance)
 
     # -- transport
-    def _post(self, model: str, prompt: str) -> dict:
+    def _post(self, model: str, state, questions: dict) -> dict:
         if not self.api_key:
             raise JevJudgeError("OPENROUTER_API_KEY is not set")
         import httpx
-        body = {"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.0,
-                "max_tokens": self.max_tokens, "logprobs": True, "top_logprobs": 20,
-                "provider": {"data_collection": "deny", "require_parameters": True}, **self.extra}
+        body = {"model": model, "state": state, "questions": questions,
+                "provider": {"data_collection": "deny"}, **self.extra}
         headers = {"Authorization": f"Bearer {self.api_key}", "X-Title": "benchbook-scorers"}
         err = None
         for attempt in range(self.max_retries + 1):
             try:
-                r = httpx.post(OPENROUTER_URL, json=body, headers=headers, timeout=self.timeout)
+                r = httpx.post(DECISIONS_URL, json=body, headers=headers, timeout=self.timeout)
                 if r.status_code in (429, 500, 502, 503, 504):
                     err = JevJudgeError(f"HTTP {r.status_code}: {r.text[:300]}")
                     time.sleep(min(30, 2 ** attempt))
@@ -261,44 +259,36 @@ class JevJudge(Judge):
                 self.last_raw = data
                 if "error" in data:
                     raise JevJudgeError(str(data["error"])[:500])
+                if data.get("model"):
+                    self.builds.add(data["model"])
                 return data
             except httpx.HTTPError as e:      # network
                 err = e
                 time.sleep(min(30, 2 ** attempt))
-        raise JevJudgeError(f"OpenRouter failed after retries: {err}")
+        raise JevJudgeError(f"OpenRouter decisions failed after retries: {err}")
 
     @staticmethod
-    def top_logprobs(data: dict) -> tuple[list[dict], str]:
-        """-> (top_logprobs of the first non-empty generated token, the generated text)."""
-        ch = (data.get("choices") or [{}])[0]
-        text = (ch.get("message") or {}).get("content") or ""
-        content = ((ch.get("logprobs") or {}).get("content")) or []
-        for tok in content:
-            if tok.get("token", "").strip():
-                return tok.get("top_logprobs") or [{"token": tok["token"], "logprob": tok.get("logprob", 0.0)}], text
-        return [], text
-
-    def _label_dist(self, data: dict, labels: list[str]) -> list[float]:
-        tops, text = self.top_logprobs(data)
-        mass = {l: 0.0 for l in labels}
-        for t in tops:
-            lab = t.get("token", "").strip().strip(".):").upper()
-            if lab in mass:
-                mass[lab] += math.exp(t.get("logprob", -100.0))
-        if not any(mass.values()):
-            ans = text.strip().strip(".):").upper()[:1]
-            if ans in mass:            # no logprobs came back: degrade to the argmax text answer
-                mass[ans] = 1.0
-            else:
-                raise JevJudgeError(f"no label in top_logprobs or text: text={text!r} tops={tops[:5]}")
-        vals = [max(mass[l], self.floor) for l in labels]
-        tot = sum(vals)
-        return [v / tot for v in vals]
+    def _answer(data: dict, qid: str, kind: str) -> dict:
+        a = (data.get("answers") or {}).get(qid)
+        if not isinstance(a, dict) or a.get("type") != kind:
+            raise JevJudgeError(f"expected a `{kind}` answer for `{qid}`, got {str(a)[:200]}")
+        return a
 
     # -- interface
     def _choice_call(self, item, candidates, context, instruction):
-        prompt, perm, labels = render_choice(item, candidates, context, instruction)
-        dist = self._label_dist(self._post(self.choice_model, prompt), labels)
+        _, perm, labels = render_choice(item, candidates, context, instruction)
+        criteria = {labels[k]: _one_line(candidates[i]) for k, i in enumerate(perm)}
+        criteria[labels[-1]] = "None of these: no candidate matches the item"
+        state = {"item": _one_line(item), **({"context": context} if context else {})}
+        q = {"match": {"type": "choice", "instructions": (instruction or DEFAULT_CHOICE_INSTRUCTION).strip(),
+                       "criteria": criteria}}
+        a = self._answer(self._post(self.choice_model, state, q), "match", "choice")
+        probs = a.get("probabilities")
+        if not probs:                          # schema marks probabilities optional: degrade to the argmax
+            probs = {a.get("choice"): 1.0}
+        vals = [max(float(probs.get(l, 0.0) or 0.0), self.floor) for l in labels]
+        tot = sum(vals)
+        dist = [v / tot for v in vals]
         out = [0.0] * (len(candidates) + 1)
         for k, i in enumerate(perm):
             out[i] = dist[k]
@@ -310,16 +300,10 @@ class JevJudge(Judge):
             return list(ex.map(lambda r: self.choice(**r), requests))
 
     def noul(self, reference, candidate, question):
-        data = self._post(self.noul_model, render_noul(reference, candidate, question))
-        tops, text = self.top_logprobs(data)
-        y = sum(math.exp(t["logprob"]) for t in tops if t.get("token", "").strip().strip(".").lower() in YES)
-        n = sum(math.exp(t["logprob"]) for t in tops if t.get("token", "").strip().strip(".").lower() in NO)
-        if y + n > 0:
-            return y / (y + n)
-        ans = text.strip().strip(".").lower()
-        if ans in YES or ans in NO:
-            return 1.0 if ans in YES else 0.0
-        raise JevJudgeError(f"no yes/no in top_logprobs or text: text={text!r} tops={tops[:5]}")
+        state = {"reference": _one_line(reference), "candidate": _one_line(candidate)}
+        q = {"q": {"type": "noul", "instructions": question.strip()}}
+        a = self._answer(self._post(self.noul_model, state, q), "q", "noul")
+        return float(a["noul"])
 
 
 # ---------------------------------------------------------------- CachedJudge

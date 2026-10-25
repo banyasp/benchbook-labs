@@ -136,7 +136,7 @@ def test_run_episode_modes_raw_text(monkeypatch, prov):
         url, p = srv.calls[-1]
         assert url == "http://localhost:8000/v1/completions" and p["model"] == "granite-4.2-8b"
         assert p["prompt"] == ep.prompt_text and p["max_tokens"] == 12000 and p["seed"] == 3
-        assert p["temperature"] == 1.0 and p["top_p"] == 0.95 and p["stop"] == ["<|im_end|>"]
+        assert p["temperature"] == 1.0 and p["top_p"] == 0.95 and p["stop"][0] == "<|im_end|>" and "\n[assistant]" in p["stop"]
         assert out.raw_text == start + "fact_mapping_never\n" and out.finish_reason == "stop"
     lines = [json.loads(l) for l in prov.read_text().splitlines()]
     assert len(lines) == 3 and lines[0]["endpoint"] == "completions" and lines[0]["scenario"] == "INT-301-v01"

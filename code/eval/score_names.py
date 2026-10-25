@@ -10,16 +10,18 @@ import json
 import sys
 
 ALIASES: dict[str, list[str]] = {
-    "choice": ["choice", "verdict_choice", "decision", "choice_correct", "decision_correct"],
-    "relation": ["relation", "relation_correct", "relation_accuracy", "relation_map"],
-    "via": ["via", "via_correct", "via_accuracy"],
-    # options-enumeration score (found/extra form) and the gold options the agent failed to enumerate
-    "options_enumeration": ["options_enumeration", "options_enum", "options", "option_enumeration"],
-    "options_omitted": ["options_omitted", "gold_options_omitted", "gold_option_omissions", "options_missing"],
-    "gold_option_present": ["gold_option_enumerated", "gold_option_present", "choice_option_enumerated"],
-    "schema": ["schema_validator", "schema", "format"],
-    # the gold id the agent's verdict choice was translated to (judge alignment), if 2d exposes it as a score
-    "translated_choice": ["translated_choice", "choice_gold_id"],
+    # Fixed at integration (2026-10-25) to 2d's real keys (scorers/score.py). Eval reports the UNGATED choice:
+    # Later aliases are generic fallbacks (test fakes). decoy-arm accuracy must count a not_governed decline's choice (never use the ungated value for reward).
+    "choice": ["verdict_choice_ungated", "choice"],
+    "choice_gated": ["verdict_choice"],
+    "relation": ["relation"],
+    "via": ["via_match", "via"],
+    "via_consistent": ["via_consistent"],
+    "options_enumeration": ["options_enum", "options_enumeration"],
+    "options_omitted": ["options_omitted"],
+    "gold_option_present": ["gold_option_present"],          # derived in eval.core.score_reply_with_details
+    "schema": ["schema_valid", "schema"],
+    "translated_choice": ["translated_choice"],              # derived in eval.core.score_reply_with_details
 }
 
 

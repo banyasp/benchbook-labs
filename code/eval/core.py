@@ -89,9 +89,21 @@ class Backend:
         return await asyncio.to_thread(self.continue_episode, ep, settings, partial=partial)
 
 
+def score_reply_with_details(parsed, key, served, judge) -> dict:
+    """2d's row dict plus two integration fields from its details: `translated_choice` (the gold option id the
+    agent's choice was aligned to, None if unresolved) and `gold_option_present` (1 - options_correct_omitted)."""
+    from scorers import score_reply_detailed
+    r = score_reply_detailed(parsed, key, served, judge)
+    rows = dict(r.rows)
+    rows["translated_choice"] = ((r.details.get("notes") or {}).get("choice") or {}).get("gold_id")
+    om = rows.get("options_correct_omitted")
+    rows["gold_option_present"] = None if om is None else 1 - om
+    return rows
+
+
 def default_backend() -> Backend:
     import harness
-    from scorers import score_reply
+    score_reply = score_reply_with_details
     return Backend(
         build_episode=harness.build_episode,
         run_episode=getattr(harness, "run_episode", None),

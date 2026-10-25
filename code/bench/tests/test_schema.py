@@ -182,3 +182,17 @@ def test_column0_lists_parse():
     text = "\n---\n".join(_y.safe_dump(d, sort_keys=False, allow_unicode=True) for d in docs)   # `- ` at column 0
     p = parse_reply(text)
     assert p.strict_ok, p.errors
+
+
+def test_unclosed_flow_item_repaired():
+    v = body(REPLY).split("\n---\n")[-1]
+    cut = v.rstrip()
+    assert cut.endswith("}")
+    p = parse_reply(cut[:-1])                       # drop the final `}` of the last watch_for item
+    assert "verdict" in p.models and any("unbalanced" in r for r in p.repairs["verdict"])
+
+
+def test_trailing_comma_list_item_repaired():
+    v = body(REPLY).split("\n---\n")[-1].replace('nothing about how we know."', 'nothing about how we know.",')
+    p = parse_reply(v)
+    assert "verdict" in p.models and any("trailing comma" in r for r in p.repairs["verdict"])

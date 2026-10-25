@@ -1,5 +1,5 @@
 """Scorer tests: PDF example at max, greedy vs Hungarian, conflation, omitted gold option, not_governed, via,
-REF2 translation, the untrained-Granite smoke reply, the judge cache and the Jev logprob parsing."""
+REF2 translation, the untrained-Granite smoke reply, the judge cache and the Jev Decisions-API parsing."""
 from __future__ import annotations
 
 import copy
@@ -380,25 +380,32 @@ def test_render_choice_permutes_deterministically():
     assert p1 == p2 and perm1 == perm2 and labels[-1] == "E" and sorted(perm1) == [0, 1, 2, 3]
 
 
-def fake_response(tops, text=None):
-    return {"choices": [{"message": {"content": text or tops[0][0]},
-                         "logprobs": {"content": [{"token": tops[0][0], "logprob": tops[0][1],
-                                                   "top_logprobs": [{"token": t, "logprob": l} for t, l in tops]}]}}]}
-
-
-def test_jev_logprob_parsing_offline(monkeypatch):
+def test_jev_decisions_parsing_offline(monkeypatch):
+    """Response shape of OpenRouter's Decisions API, as returned live on 2026-10-25."""
     j = JevJudge(choice_model="typesafe/jev-1.14", noul_model="typesafe/jev-1.14", api_key="x")
     cands = ["alpha", "beta", "gamma"]
     _, perm, labels = render_choice("item", cands)
-    # Put the mass on the label that shows candidate index 1 ("beta").
     lab_beta = labels[perm.index(1)]
-    tops = [(lab_beta, np.log(0.7)), (" " + labels[-1], np.log(0.2)), ("Hello", np.log(0.1))]
-    monkeypatch.setattr(j, "_post", lambda model, prompt: fake_response(tops))
+    seen = {}
+
+    def fake_choice(model, state, questions):
+        seen.update(state=state, questions=questions)
+        probs = {l: 0.0 for l in labels}
+        probs[lab_beta], probs[labels[-1]] = 0.7, 0.2
+        probs[labels[perm.index(0)]] = 0.1
+        return {"model": "typesafe/jev-1.14-20261014",
+                "answers": {"match": {"type": "choice", "choice": lab_beta, "probabilities": probs, "confidence": 0.7}}}
+    monkeypatch.setattr(j, "_post", fake_choice)
     d = j.choice("item", cands)
     assert len(d) == 4 and sum(d) == pytest.approx(1.0)
-    assert d[1] == pytest.approx(0.7 / 0.9, rel=1e-3) and d[-1] == pytest.approx(0.2 / 0.9, rel=1e-3)
-    monkeypatch.setattr(j, "_post", lambda model, prompt: fake_response([("Yes", np.log(0.6)), (" No", np.log(0.3))]))
-    assert j.noul("a", "b", "q") == pytest.approx(2 / 3)
+    assert d[1] == pytest.approx(0.7, rel=1e-3) and d[0] == pytest.approx(0.1, rel=1e-3) and d[-1] == pytest.approx(0.2, rel=1e-3)
+    q = seen["questions"]["match"]
+    assert q["type"] == "choice" and q["criteria"][lab_beta] == "beta" and seen["state"]["item"] == "item"
+    monkeypatch.setattr(j, "_post", lambda m, st, qs: {"answers": {"q": {"type": "noul", "noul": 0.16}}})
+    assert j.noul("a", "b", "q") == pytest.approx(0.16)
+    monkeypatch.setattr(j, "_post", lambda m, st, qs: {"answers": {"q": {"type": "choice"}}})
+    with pytest.raises(Exception):
+        j.noul("a", "b", "q")
 
 
 # ---------------------------------------------------------------- 11. real 2b data: converted INT-301 + its keys

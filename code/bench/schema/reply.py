@@ -265,6 +265,7 @@ KIND_LINE = re.compile(r"^kind:\s*['\"]?([A-Za-z_]+)['\"]?\s*$")
 STOP_LINE = re.compile(r"^(---+|```.*|\.\.\.)\s*$")
 TOP_KEY = re.compile(r"^[a-z_][a-z0-9_]*:(\s|$)")   # top-level lines of a step doc are snake_case keys...
 LIST_ITEM = re.compile(r"^-(\s|$)")                  # ...or items of a list written at column 0 (PyYAML's default)
+TRAILING_COMMA = re.compile(r"""^(\s*-\s+(?:"[^"]*"|'[^']*'))\s*,\s*$""")   # `- "text",` (JSON habit)
 PLACEHOLDER = re.compile(r"^(\s*(?:-\s+)?[A-Za-z_][\w-]*:\s+)(<[^>\n]*>.*)$")
 
 
@@ -293,9 +294,13 @@ def _load(lines: list[str]) -> tuple[dict | None, list[str]]:
     repairs, fixed = [], []
     for ln in cur:
         m = PLACEHOLDER.match(ln)
+        c = TRAILING_COMMA.match(ln)
         if m:
             fixed.append(m.group(1) + yaml.safe_dump(m.group(2), default_style='"').strip())
             repairs.append(f"quoted placeholder value: {m.group(2)[:40]}")
+        elif c:
+            fixed.append(c.group(1))
+            repairs.append("dropped trailing comma after a block-list item")
         else:
             fixed.append(ln)
     if repairs:
@@ -305,7 +310,31 @@ def _load(lines: list[str]) -> tuple[dict | None, list[str]]:
                 return d, repairs
         except yaml.YAMLError:
             pass
+    closers = _unclosed(fixed)
+    if closers:       # e.g. the last flow item `- {id: x, why: "..."` lost its `}` (generation moved on)
+        try:
+            d = yaml.safe_load("\n".join(fixed[:-1] + [fixed[-1] + closers]))
+            if isinstance(d, dict) and "kind" in d:
+                return d, repairs + [f"closed unbalanced brackets at end: {closers}"]
+        except yaml.YAMLError:
+            pass
     return None, []
+
+
+def _unclosed(lines: list[str]) -> str:
+    """Closing brackets needed to balance {} and [] outside quoted strings (simple scanner; '' escapes ignored)."""
+    stack, q = [], None
+    for ch in "\n".join(lines):
+        if q:
+            if ch == q:
+                q = None
+        elif ch in "\"'":
+            q = ch
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]" and stack and stack[-1] == ch:
+            stack.pop()
+    return "".join(reversed(stack))
 
 
 def _scan(text: str, where: str) -> tuple[list[Doc], list[str]]:

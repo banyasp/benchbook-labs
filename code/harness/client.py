@@ -55,6 +55,9 @@ async def _apost(url: str, payload: dict, timeout: float) -> dict:
 
 
 # ------------------------------------------------------------------ request building
+TURN_MARKERS = ["\n[assistant]", "\n[tool", "\n[user", "\n[system"]
+
+
 def _request(prompt: str, settings: HarnessSettings, role_name: str, seed):
     cfg = models.role(role_name)
     if cfg.backend != "vllm":
@@ -65,7 +68,9 @@ def _request(prompt: str, settings: HarnessSettings, role_name: str, seed):
         "max_tokens": settings.max_tokens or p.get("max_tokens", 12000),
         "temperature": settings.temperature if settings.temperature is not None else p.get("temperature", 1.0),
         "top_p": settings.top_p if settings.top_p is not None else p.get("top_p", 1.0),
-        "stop": [EOS],
+        # Flattened traces: the model tends to continue the transcript after its reply ("[assistant] -> msg.send(...)",
+        # even invented "[tool ...]" results). Stop at the next turn marker (integration smoke, 2026-10-25).
+        "stop": [EOS] + (TURN_MARKERS if settings.tool_messages == "flattened" else []),
         "add_special_tokens": False,        # the template already wrote every special token
         "skip_special_tokens": False,       # keep </think> if the tokenizer marks it special
     }
