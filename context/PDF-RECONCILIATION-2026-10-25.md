@@ -11,6 +11,9 @@ or conflicts with one of his later decisions.*
 - **C1 → greedy** assignment, as in the PDF.
 - **B7 and the overall reward → TBD**; Peter will define how the scorers combine. Scorers stay separate until then.
 - B6 stands as written: nothing after `not_governed` is scored.
+- **B5 → keep `via`.** Add it to the PDF's verdict: required for `flips` (the served case's would_change id(s)
+  that fired), null otherwise. Score it against gold and check the choice against the item's `then:`; partial
+  credit amounts belong to the TBD reward.
 
 ## A. The v7 worked example (`context/schema/benchbook-analogical-pipeline-example-v7.yaml`)
 

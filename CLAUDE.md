@@ -67,6 +67,8 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
 - **No numeric `confidence` in the verdict** (matches the PDF), so the reward has no calibration term.
 - **The decision is scored from the verdict's `choice`** (PDF; Peter confirmed 2026-10-25). Tool calls and
   says/does consistency are future work: they test whether a model does what it says, not analogical reasoning.
+- **The verdict carries `via`** (added to the PDF, Peter 2026-10-25): for `flips`, the id of the served case's
+  `would_change` item that fired; the choice must match that item's `then:`.
 - **Fact matching uses greedy assignment** (PDF p. 21), not Hungarian. **The reward function is TBD** (Peter will
   define the weights and combination): build every scorer as a separate function.
 - Training (PDF): LoRA SFT with loss only on the generated reasoning tokens (trace, equities and cases masked);
