@@ -352,6 +352,8 @@ def finish_flip_conditions(d: dict, out: dict, choice: str, c_choice: str, fired
     nxt = max([int(w["id"][4:]) for w in fc["would_change"]], default=0)
     for nw in out.get("new_would_change") or []:
         nxt += 1
+        if not isinstance(nw, dict):     # model sometimes returns bare strings: reject with feedback, don't crash
+            raise ValueError("each new_would_change entry must be an object {if, then, why}, not a string")
         if nw.get("then") not in d["options"] or not nw.get("if") or not nw.get("why"):
             raise ValueError("new_would_change entries need if, then (an option id), why")
         keep.append({"id": f"flip{nxt}", "if": nw["if"], "then": nw["then"], "why": nw["why"]})
