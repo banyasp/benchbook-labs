@@ -50,7 +50,7 @@ def student_episode(pair: PairRecord, store: Store, equities: EquitySet | None =
     T = store.scenario(pair.trace_scenario)
     if not pair.trace:
         raise ValueError(f"pair {pair.id} has no trace (run render first)")
-    eq = equities or load_equities(None, T)
+    eq = equities or load_equities(pair.equities or None, T)
     scen = types.SimpleNamespace(id=pair.id, family=T.family, trace=str(store.pair_dir(pair.id) / pair.trace),
                                  equities=eq.id)
     return build_episode(scen, "relevant", settings, _Lib(eq), retriever=_Retriever([C.case]))

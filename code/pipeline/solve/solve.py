@@ -26,7 +26,7 @@ from .check import check_reply
 from .episode import load_equities, student_episode
 from .structure import GoldStructure
 
-PROMPT = Path(__file__).parent / "prompts" / "teacher.v2.md"
+PROMPT = Path(__file__).parent / "prompts" / "teacher.v3.md"
 
 
 def trace_quotes(pair: PairRecord, store: Store, g: GoldStructure) -> dict[str, str]:

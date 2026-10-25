@@ -176,6 +176,7 @@ class PairRecord(Strict):
     case_scenario: str                        # C (served)
     trace_scenario: str                       # T (rendered)
     split: Split                              # inherited from the family (C and T share a family for derived pairs)
+    equities: str = "pilot"                   # equities set id (data/registry/equities/<id>.yaml) injected with C
     # gold structure (M_{C,T} + verdict)
     frame: FrameCmp
     options_map: dict[str, str | None]        # global T option -> global C option (None: no counterpart)
