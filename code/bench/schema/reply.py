@@ -9,7 +9,7 @@
 Tolerance (reasoning modes A, B, C, C' of DECISIONS 2026-10-25): documents may sit after `</think>` (A, B),
 inside `<think>` (C), or inside it with free prose between them (C'); in ```yaml fences or not; separated by
 `---` or not. A document starts at a line `kind: <step>` and ends at the next `kind:` line, `---`, fence, or the
-first column-0 line that is not a `snake_case_key:` (prose). Repairs (recorded, and they fail strict_ok): unquoted
+first column-0 line that is neither a `snake_case_key:` nor a `- ` list item (prose). Repairs (recorded, and they fail strict_ok): unquoted
 `<placeholder>` values. When a step appears more than once, the last occurrence outside <think> wins, else the
 last inside; all occurrences are kept in `parsed.all_docs`.
 """
@@ -263,7 +263,8 @@ class ParsedReply:
 THINK = re.compile(r"<think>(.*?)(?:</think>|\Z)", re.S)
 KIND_LINE = re.compile(r"^kind:\s*['\"]?([A-Za-z_]+)['\"]?\s*$")
 STOP_LINE = re.compile(r"^(---+|```.*|\.\.\.)\s*$")
-TOP_KEY = re.compile(r"^[a-z_][a-z0-9_]*:(\s|$)")   # top-level lines of a step doc are always snake_case keys
+TOP_KEY = re.compile(r"^[a-z_][a-z0-9_]*:(\s|$)")   # top-level lines of a step doc are snake_case keys...
+LIST_ITEM = re.compile(r"^-(\s|$)")                  # ...or items of a list written at column 0 (PyYAML's default)
 PLACEHOLDER = re.compile(r"^(\s*(?:-\s+)?[A-Za-z_][\w-]*:\s+)(<[^>\n]*>.*)$")
 
 
@@ -315,7 +316,8 @@ def _scan(text: str, where: str) -> tuple[list[Doc], list[str]]:
         end = starts[n + 1] if n + 1 < len(starts) else len(lines)
         chunk, prose = [], False
         for ln in lines[s:end]:
-            if chunk and (STOP_LINE.match(ln) or (ln[:1].strip() and not TOP_KEY.match(ln) and not ln.startswith("#"))):
+            if chunk and (STOP_LINE.match(ln) or (ln[:1].strip() and not TOP_KEY.match(ln) and not LIST_ITEM.match(ln)
+                                                  and not ln.startswith("#"))):
                 prose = prose or not STOP_LINE.match(ln)
                 break
             chunk.append(ln)

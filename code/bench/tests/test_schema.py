@@ -174,3 +174,11 @@ def test_flattened_frame_is_repaired():
                                "question: same_kind\ndecider: same_kind\nrole: same")
     p = parse_reply(flat)
     assert "applicability" in p.models and p.repairs["applicability"] and not p.strict_ok
+
+
+def test_column0_lists_parse():
+    import yaml as _y
+    docs = [_y.safe_load(d) for d in body(REPLY).split("\n---\n")]
+    text = "\n---\n".join(_y.safe_dump(d, sort_keys=False, allow_unicode=True) for d in docs)   # `- ` at column 0
+    p = parse_reply(text)
+    assert p.strict_ok, p.errors
