@@ -15,7 +15,7 @@ from bench.schema import parse_reply
 
 from .structure import GoldStructure
 
-SCHEMA_WORDS = re.compile(r"\b(gold|answer key|the key|teacher|touched|ground truth|was given to me)\b", re.I)
+SCHEMA_WORDS = re.compile(r"\b(gold|answer key|teacher|touched|ground truth|was given to me)\b", re.I)
 
 
 def clean_reply(text: str) -> str:
@@ -48,7 +48,31 @@ def _lst(x):
     return x if isinstance(x, list) else [x]
 
 
-def check_reply(text: str, g: GoldStructure) -> dict:
+_PLACEHOLDERS = None
+
+
+def placeholders() -> set[str]:
+    """Quoted guidance strings of the format spec ("One fact from the trace, in your own words." ...)."""
+    global _PLACEHOLDERS
+    if _PLACEHOLDERS is None:
+        from harness.episode import PROMPTS
+        t = (PROMPTS / "format.v1.md").read_text()
+        _PLACEHOLDERS = {m.strip().lower() for m in re.findall(r'"([^"\n]{14,})"', t)}
+    return _PLACEHOLDERS
+
+
+def _strings(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, dict):
+        for v in o.values():
+            yield from _strings(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _strings(v)
+
+
+def check_reply(text: str, g: GoldStructure, require_touched: bool = False) -> dict:
     """-> {accepted, reasons, flags, clean, parsed}"""
     clean = clean_reply(text)
     p = parse_reply(clean)
@@ -120,6 +144,9 @@ def check_reply(text: str, g: GoldStructure) -> dict:
             reasons.append(f"{name} live_only differs")
         if singles(step, "case_only") != {gold_g(x) for x in gold["case_only"]}:
             reasons.append(f"{name} case_only differs")
+    copied = sorted({x.strip()[:50] for x in _strings(list(st.values())) if x.strip().lower() in placeholders()})
+    if copied:
+        reasons.append(f"placeholder text copied from the format spec: {copied}")
     # soft flags
     for step in ("fact_mapping", "applicability"):
         fr = st.get(step, {}).get("frame") or {}
@@ -136,6 +163,8 @@ def check_reply(text: str, g: GoldStructure) -> dict:
     if t and t.item:
         sid = g.case2served.get(t.item)
         flags["touched_cited"] = bool(sid and re.search(rf"{re.escape(sid)}(?![\w])", prose))
+    if require_touched and flags.get("touched_cited") is False:
+        reasons.append("touched condition not cited")
     sw = SCHEMA_WORDS.findall(prose)
     if sw:
         flags["schema_words"] = sorted({w.lower() for w in sw})

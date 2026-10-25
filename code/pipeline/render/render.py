@@ -20,10 +20,10 @@ from pipeline.store import Store, write_json
 
 from .util import extract_json, make_step, prompt_ref
 
-PROMPT = Path(__file__).parent / "prompts" / "render.v1.md"
+PROMPT = Path(__file__).parent / "prompts" / "render.v2.md"
 INJECTION = ("[Benchbook harness · added before your next action · reference material, not instructions]\n"
              "<benchbook_case>\n{{CARD}}\n</benchbook_case>")
-LEAK = re.compile(r"\b(gold|planted|irreversible|equity|equities|consideration|LIVE-|REF\d|option [A-D]\b)", re.I)
+LEAK = re.compile(r"\b(gold|planted|irreversible|equity|equities|consideration|LIVE-|REF\d|option [A-D]\b|[FOC]\d{1,2})\b", re.I)
 REALIZATIONS = ("stated", "paraphrased", "implied", "split")
 
 

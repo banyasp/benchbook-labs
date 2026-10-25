@@ -115,3 +115,14 @@ def test_solve_pair_stores_samples_and_rates(tmp_path):
 
 def test_clean_reply():
     assert clean_reply("blah\n```yaml\nkind: verdict\nchoice: a\n```\ntrailing words here") == "kind: verdict\nchoice: a\n"
+
+
+def test_placeholder_copy_rejected_and_touched_option(tmp_path):
+    st, p, g = prep(flip_pair, tmp_path)
+    r = check_reply(synth_reply(g, lambda d: d["applicability"].update(
+        why="Whether the case's considerations are close enough for its reasoning to govern this decision.")), g)
+    assert not r["accepted"] and any("placeholder" in x for x in r["reasons"])
+    ok = synth_reply(g, lambda d: d["reasoning"].update(weighing="Nothing cited here."))
+    assert check_reply(ok, g)["flags"]["touched_cited"] is False
+    assert check_reply(ok, g)["accepted"] and not check_reply(ok, g, require_touched=True)["accepted"]
+    assert check_reply(synth_reply(g, lambda d: d["reasoning"].update(weighing="REF1-flip1 fired.")), g, require_touched=True)["accepted"]

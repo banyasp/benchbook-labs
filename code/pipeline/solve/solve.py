@@ -26,7 +26,7 @@ from .check import check_reply
 from .episode import load_equities, student_episode
 from .structure import GoldStructure
 
-PROMPT = Path(__file__).parent / "prompts" / "teacher.v1.md"
+PROMPT = Path(__file__).parent / "prompts" / "teacher.v2.md"
 
 
 def trace_quotes(pair: PairRecord, store: Store, g: GoldStructure) -> dict[str, str]:
@@ -97,7 +97,7 @@ def teacher_messages(g: GoldStructure, ep, quotes=None) -> list[dict]:
 
 
 def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = None, llm: Callable | None = None,
-               rewrite: Callable | None = None, settings=None) -> PairRecord:
+               rewrite: Callable | None = None, settings=None, require_touched: bool = False) -> PairRecord:
     llm = llm or default_complete
     n = n or role("teacher").get("samples", 3)
     C, T = store.scenario(pair.case_scenario), store.scenario(pair.trace_scenario)
@@ -113,9 +113,9 @@ def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = No
         raw = llm("teacher", msgs, stage="solve")
         text = raw
         if rewrite:
-            first = check_reply(raw, g)
+            first = check_reply(raw, g, require_touched)
             text = rewrite(first["clean"] or raw, {"gold": g, "episode": ep, "raw": raw}) if first["accepted"] else raw
-        res = check_reply(text, g)
+        res = check_reply(text, g, require_touched)
         return k, raw, text, res, round(time.time() - t0, 1)
 
     with ThreadPoolExecutor(max_workers=max(1, min(n, 4))) as ex:
@@ -139,9 +139,9 @@ def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = No
     return pair
 
 
-def acceptance_report(pairs: list[PairRecord]) -> dict:
+def acceptance_report(pairs: list[PairRecord], store: Store | None = None) -> dict:
     """Acceptance per pair intent (R27): samples accepted / total, pairs with at least one accepted sample."""
-    agg: dict[str, dict] = defaultdict(lambda: {"pairs": 0, "pairs_with_accept": 0, "samples": 0, "accepted": 0, "reasons": defaultdict(int)})
+    agg: dict[str, dict] = defaultdict(lambda: {"pairs": 0, "pairs_with_accept": 0, "samples": 0, "accepted": 0, "accepted_touched_cited": 0, "accepted_with_touched": 0, "reasons": defaultdict(int)})
     for p in pairs:
         if not p.solve:
             continue
@@ -150,6 +150,12 @@ def acceptance_report(pairs: list[PairRecord]) -> dict:
         a["samples"] += len(p.solve)
         a["accepted"] += sum(s.accepted for s in p.solve)
         a["pairs_with_accept"] += any(s.accepted for s in p.solve)
+        if store is not None:
+            for s in p.solve:
+                if s.accepted:
+                    f = yaml.safe_load((store.root.parent / s.path.replace("pairs/", "store/pairs/", 1)).read_text())
+                    a["accepted_touched_cited"] += bool(f.get("flags", {}).get("touched_cited"))
+                    a["accepted_with_touched"] += "touched_cited" in f.get("flags", {})
         for s in p.solve:
             for r in s.reasons:
                 a["reasons"][r.split(":")[0].split(" got")[0][:32]] += 1

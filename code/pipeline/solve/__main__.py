@@ -16,6 +16,7 @@ def main(argv=None):
     ap.add_argument("--equities", help="equities yaml path or set id (default: the T scenario's, else `pilot`)")
     ap.add_argument("-n", type=int, help="samples per pair (default: role teacher samples)")
     ap.add_argument("--redo", action="store_true")
+    ap.add_argument("--require-touched", action="store_true", help="also require the touched condition to be cited (R25)")
     a = ap.parse_args(argv)
     st = Store(a.data)
     pairs = st.pairs() if a.all else [st.pair(a.pair)]
@@ -27,10 +28,10 @@ def main(argv=None):
         if p.solve and not a.redo and not a.pair:
             done.append(p)
             continue
-        p = solve_pair(p, st, a.equities, a.n)
+        p = solve_pair(p, st, a.equities, a.n, require_touched=a.require_touched)
         done.append(p)
         print(f"{p.id} [{p.intent}]: {sum(s.accepted for s in p.solve)}/{len(p.solve)} accepted", file=sys.stderr)
-    rep = acceptance_report(done)
+    rep = acceptance_report(done, st)
     write_json(st.root / "solve.acceptance.json", rep)
     print(json.dumps(rep, indent=1))
     return 0
