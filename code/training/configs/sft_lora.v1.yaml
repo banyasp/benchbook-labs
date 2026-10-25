@@ -1,0 +1,30 @@
+# LoRA SFT, v1 (2026-10-25). PDF pp. 19-20: loss only on the generated reasoning tokens; trace, equities and cases masked.
+# Never overwrite: copy to sft_lora.v2-<what changed>.yaml and edit the copy.
+# The model comes from bench.models.role(policy_role); hf_ids maps its served name to the HF repo for training.
+policy_role: policy
+hf_ids:
+  granite-4.2-8b: ibm-granite/granite-4.2-8b
+
+data:
+  max_length: 20000          # prompt + reply tokens; longer examples are dropped, not truncated
+  verify_format: true        # keep only golden replies that pass ParsedReply.strict_ok
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:                       # placeholders for the first run; Peter/coordinator to tune
+  learning_rate: 1.0e-4
+  num_train_epochs: 2
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_steps: 0.05         # transformers 5: a float in [0,1) is a ratio of total steps (warmup_ratio was removed)
+  lr_scheduler_type: cosine
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 5
+  save_strategy: epoch
+  seed: 0
