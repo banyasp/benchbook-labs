@@ -187,13 +187,22 @@ def test_openrouter_shape(tmp):
           seen["body"].get("provider") == {"data_collection": "deny"} and seen["body"]["model"] == "openai/gpt-oss-120b"
           and seen["auth"] == "Bearer test-key")
     check("openrouter: the key is not written to provenance", "test-key" not in (tmp / "p.jsonl").read_text())
-    for var in ("BENCHBOOK_AWS_REGION", "BENCHBOOK_AWS_PROFILE"):
+    for var in ("BENCHBOOK_AWS_REGION", "BENCHBOOK_AWS_PROFILE", "BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE"):
         os.environ.pop(var, None)
     try:
         llm.complete("bedrock/openai.gpt-oss-120b-1:0", [{"role": "user", "content": "hi"}], provenance=tmp / "p.jsonl")
         check("bedrock: refuses without region and profile", False)
     except llm.LLMError as e:
         check("bedrock: refuses without region and profile (no default credential chain)", "never used" in str(e))
+    os.environ.update({"BENCHBOOK_AWS_REGION": "us-west-2", "BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE": "1"})
+    try:
+        llm.complete("bedrock/openai.gpt-oss-120b-1:0", [{"role": "user", "content": "hi"}], provenance=tmp / "p.jsonl")
+        check("bedrock: instance-role opt-in refused outside us-east-1", False)
+    except llm.LLMError as e:
+        check("bedrock: instance-role opt-in refused outside us-east-1", "only with region us-east-1" in str(e))
+    finally:
+        for var in ("BENCHBOOK_AWS_REGION", "BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE"):
+            os.environ.pop(var, None)
 
 
 def test_check_batch(tmp, mvp):

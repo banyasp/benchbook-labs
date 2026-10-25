@@ -2,8 +2,8 @@
 
 The validator is the authority on the schema. It is imported as a module from a path and never
 copied or modified here. Path order: explicit argument, env BENCHBOOK_MVP, then
-$BENCHBOOK_LABS/ideas/schema-mvp-2026-09-30/code/mvp.py (BENCHBOOK_LABS defaults to
-/home/claude/bb/benchbook-labs, or ~/Desktop/AI/benchbook-labs when that exists and the first does not).
+$BENCHBOOK_LABS/ideas/schema-mvp-2026-09-30/code/mvp.py (BENCHBOOK_LABS defaults to the repo this file
+is in, then /home/claude/bb/benchbook-labs, then ~/Desktop/AI/benchbook-labs).
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ def labs_root() -> Path:
     env = os.environ.get("BENCHBOOK_LABS")
     if env:
         return Path(env).expanduser()
+    if (HERE.parents[1] / MVP_RELPATH).is_file():   # code/datagen/ inside the repo
+        return HERE.parents[1]
     for cand in ("/home/claude/bb/benchbook-labs", "~/Desktop/AI/benchbook-labs"):
         if Path(cand).expanduser().is_dir():
             return Path(cand).expanduser()

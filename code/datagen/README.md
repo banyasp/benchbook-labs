@@ -18,7 +18,7 @@ Python 3.10, stdlib plus `pyyaml`. `boto3` and `requests` are optional and impor
 | Variable | Used for |
 |---|---|
 | `BENCHBOOK_MVP` | Path to `mvp.py` (or pass `--mvp`). Default: `$BENCHBOOK_LABS/ideas/schema-mvp-2026-09-30/code/mvp.py`. |
-| `BENCHBOOK_LABS` | Root of `benchbook-labs` (templates, examples, validator). Default `/home/claude/bb/benchbook-labs`, else `~/Desktop/AI/benchbook-labs`. |
+| `BENCHBOOK_LABS` | Root of `benchbook-labs` (templates, examples, validator). Default: the repo `code/datagen/` sits in, else `/home/claude/bb/benchbook-labs`, else `~/Desktop/AI/benchbook-labs`. |
 | `OPENROUTER_API_KEY` | `openrouter/<id>` models. Requests carry `provider: {data_collection: "deny"}`. |
 | `BENCHBOOK_AWS_REGION`, `BENCHBOOK_AWS_PROFILE` | `bedrock/<modelId>` models. Both are required. Credentials come from that named profile only; the default credential chain is never used (this container's default AWS credentials are the sandbox's, not Peter's). A profile that resolves to env, instance or container credentials is refused. |
 | `BENCHBOOK_PROVENANCE` | Default `provenance.jsonl` path for `llm.complete` when no path is passed (`run_stage.py` writes `DIR/provenance.jsonl`). |

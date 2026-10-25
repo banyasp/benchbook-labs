@@ -7,7 +7,9 @@ complete(model, messages, temperature, max_tokens) picks a backend by model pref
   bedrock/<modelId>   boto3 bedrock-runtime converse; region from env BENCHBOOK_AWS_REGION and
                       credentials from the profile named in env BENCHBOOK_AWS_PROFILE only. The default
                       credential chain is never used: this container's own AWS credentials are the
-                      sandbox's, not Peter's.
+                      sandbox's, not Peter's. Exception (Peter, 2026-10-25): on the EC2 box, explicit
+                      opt-in BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE=1 with region us-east-1 uses the instance
+                      role, and only the role named in BENCHBOOK_AWS_INSTANCE_ROLE (default FiroInstanceRole).
   dry/<anything>      calls nothing: writes the prompt to disk and returns a placeholder.
 
 Every call appends a record (model, family, time, prompt hash, stage, output path) to provenance.jsonl.
@@ -143,21 +145,46 @@ def _openrouter(bare, messages, temperature, max_tokens, ctx):
     return text, data.get("usage") or {}
 
 
+INSTANCE_ROLE_REGION = "us-east-1"
+
+
+def _instance_role_session(boto3, region):
+    """The EC2 instance role, only on explicit opt-in, only in us-east-1, only the expected role."""
+    if region != INSTANCE_ROLE_REGION:
+        raise LLMError(f"BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE is allowed only with region {INSTANCE_ROLE_REGION} (got {region})")
+    want = os.environ.get("BENCHBOOK_AWS_INSTANCE_ROLE", "FiroInstanceRole")
+    session = boto3.session.Session(region_name=region)
+    creds = session.get_credentials()
+    if creds is None or getattr(creds, "method", "") != "iam-role":
+        raise LLMError(f"instance-role opt-in set, but credentials came from {getattr(creds, 'method', None)}; refusing")
+    arn = session.client("sts").get_caller_identity()["Arn"]   # arn:aws:sts::<acct>:assumed-role/<role>/<instance>
+    role = arn.split(":assumed-role/")[-1].split("/")[0] if ":assumed-role/" in arn else None
+    if role != want:
+        raise LLMError(f"instance role is `{role}`, expected `{want}` (BENCHBOOK_AWS_INSTANCE_ROLE); refusing")
+    return session, f"instance-role:{role}"
+
+
 def _bedrock(bare, messages, temperature, max_tokens, ctx):
     region, profile = os.environ.get("BENCHBOOK_AWS_REGION"), os.environ.get("BENCHBOOK_AWS_PROFILE")
-    if not (region and profile):
-        raise LLMError("set BENCHBOOK_AWS_REGION and BENCHBOOK_AWS_PROFILE; the default AWS credential chain is never used")
+    instance_role = os.environ.get("BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE") == "1"
+    if not (region and (profile or instance_role)):
+        raise LLMError("set BENCHBOOK_AWS_REGION and BENCHBOOK_AWS_PROFILE (or, on the EC2 box, "
+                       "BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE=1); the default AWS credential chain is never used otherwise")
     try:
         import boto3
     except ImportError:
         raise LLMError("boto3 is not installed (pip install boto3)")
-    try:
-        session = boto3.session.Session(profile_name=profile, region_name=region)
-        creds = session.get_credentials()
-    except Exception as e:
-        raise LLMError(f"AWS profile `{profile}` could not be loaded: {type(e).__name__}")
-    if creds is None or getattr(creds, "method", "") in ("env", "iam-role", "container-role"):
-        raise LLMError(f"profile `{profile}` did not resolve to its own credentials (got {getattr(creds, 'method', None)}); refusing")
+    if profile:
+        try:
+            session = boto3.session.Session(profile_name=profile, region_name=region)
+            creds = session.get_credentials()
+        except Exception as e:
+            raise LLMError(f"AWS profile `{profile}` could not be loaded: {type(e).__name__}")
+        if creds is None or getattr(creds, "method", "") in ("env", "iam-role", "container-role"):
+            raise LLMError(f"profile `{profile}` did not resolve to its own credentials (got {getattr(creds, 'method', None)}); refusing")
+        ctx["credential_source"] = f"profile:{profile}"
+    else:
+        session, ctx["credential_source"] = _instance_role_session(boto3, region)
     system = [{"text": m["content"]} for m in messages if m["role"] == "system"]
     convo = []
     for m in messages:
@@ -208,6 +235,8 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
     try:
         text, usage = BACKENDS[backend](bare, messages, temperature, max_tokens, ctx)
         rec["usage"] = usage
+        if ctx.get("credential_source"):
+            rec["credential_source"] = ctx["credential_source"]
         if ctx.get("dry_prompt"):
             rec["dry_prompt"] = ctx["dry_prompt"]
         return text
