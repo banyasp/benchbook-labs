@@ -97,7 +97,8 @@ class RewardScorer:
         if fp in self._memo:
             self._memo.move_to_end(fp)
             return self._memo[fp]
-        s = score_reply(parse_reply(content, reas), to_key(answer_key), to_served(served), self.judge,
+        key = to_key(answer_key)
+        s = score_reply(parse_reply(content, reas, noref=key.arm == "none"), key, to_served(served), self.judge,
                         **self.score_kwargs)
         self._memo[fp] = s
         if len(self._memo) > self.memo_size:

@@ -11,7 +11,7 @@ from bench.schema import AnswerKey, Case, parse_reply
 from scorers import ROWS, align, align_from_passes, enum_grade, score_reply, score_reply_detailed, set_compare, set_score
 from scorers.judge import CachedJudge, JevJudge, MatrixJudge, StubJudge, render_choice
 
-from .conftest import PDF, SMOKE, dump_docs, full_key_dict, key_dict, reply_docs, reply_text
+from .conftest import PDF, ROOT, SMOKE, dump_docs, full_key_dict, key_dict, reply_docs, reply_text
 
 # Rows that are None for the PDF example by construction: relation is `follows`, so there is no gold via and the
 # agent claims no flip.
@@ -399,3 +399,25 @@ def test_jev_logprob_parsing_offline(monkeypatch):
     assert d[1] == pytest.approx(0.7 / 0.9, rel=1e-3) and d[-1] == pytest.approx(0.2 / 0.9, rel=1e-3)
     monkeypatch.setattr(j, "_post", lambda model, prompt: fake_response([("Yes", np.log(0.6)), (" No", np.log(0.3))]))
     assert j.noul("a", "b", "q") == pytest.approx(2 / 3)
+
+
+# ---------------------------------------------------------------- 11. real 2b data: converted INT-301 + its keys
+REAL = ROOT / "data"
+
+
+@pytest.mark.skipif(not (REAL / "cases" / "INT-301" / "DR-INT-301@v1.case.yaml").exists(), reason="2b data absent")
+def test_smoke_reply_against_real_int301_keys():
+    """The untrained-Granite smoke reply scored with 2b's converted INT-301 case served as REF1 and the real
+    (choice-only) answer keys. Pilot keys hold only the decision, so the reasoning rows are None, not 0."""
+    case = Case.load(REAL / "cases" / "INT-301" / "DR-INT-301@v1.case.yaml")
+    text = SMOKE.read_text()
+    rel = AnswerKey.load(REAL / "scenarios" / "INT-301" / "INT-301-v01.relevant.key.yaml")
+    s = score_reply(parse_reply(text), rel, case.serve("REF1"), StubJudge())
+    assert s["relation"] == 1 and s["governs"] == 1
+    assert s["options_omitted"] >= 1                        # the hand-up option was dropped
+    for row in ("facts_enum", "facts_mapping", "considerations_enum", "course", "now", "flip_conditions",
+                "frame_question", "frame_map_question"):
+        assert s[row] is None, row
+    none = AnswerKey.load(REAL / "scenarios" / "INT-301" / "INT-301-v01.none.key.yaml")
+    s0 = score_reply(parse_reply(text, noref=True), none, None, StubJudge())
+    assert s0["relation"] is None and s0["governs"] is None and s0["verdict_choice"] in (0, 1)

@@ -74,11 +74,13 @@ def benchbook_scorer(judge: Judge | None = None, threshold: float | None = None,
     async def score(state: TaskState, target: Target) -> Score:
         md = state.metadata or {}
         raw = md.get("raw_text")
+        key = to_key(md["answer_key"])
+        noref = key.arm == "none"          # no-reference arm: no case-bound steps (2a, parse_reply noref)
         if raw:
-            parsed = parse_reply(raw)
+            parsed = parse_reply(raw, noref=noref)
         else:
-            parsed = parse_reply(state.output.completion if state.output else "", _reasoning_of(state))
-        full = score_reply_detailed(parsed, to_key(md["answer_key"]), to_served(md.get("served")), judge,
+            parsed = parse_reply(state.output.completion if state.output else "", _reasoning_of(state), noref=noref)
+        full = score_reply_detailed(parsed, key, to_served(md.get("served")), judge,
                                     threshold=threshold, weights=weights)
         choice = full.details["notes"].get("choice") or {}
         # None -> NaN: Inspect's epoch reducer maps None to 0, which would score "not scored" as wrong.
