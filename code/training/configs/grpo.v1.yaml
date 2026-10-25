@@ -1,0 +1,37 @@
+# GRPO skeleton, v1 (2026-10-25). PDF p. 20: GRPO with Dr. GRPO normalization, 8 rollouts per prompt, KL penalty to the SFT checkpoint.
+# Never overwrite: copy to grpo.v2-<what changed>.yaml and edit the copy. Values marked TBD are placeholders, not decisions.
+policy_role: policy
+hf_ids:
+  granite-4.2-8b: ibm-granite/granite-4.2-8b
+
+grpo:
+  num_generations: 8              # PDF: a group of 8 replies per prompt
+  loss_type: dr_grpo              # Dr. GRPO: token losses normalised by a constant (max_completion_length), no length bias
+  scale_rewards: none             # Dr. GRPO: advantage = reward - group mean, NOT divided by the group std (PDF step 3)
+  beta: 0.04                      # TBD (Peter): KL coefficient to the SFT checkpoint; > 0 so TRL keeps a reference
+  max_completion_length: null     # null -> role(policy).max_tokens (12000, the same cap as evaluation)
+  temperature: null               # null -> role(policy).temperature / top_p (IBM's recommended sampling)
+  top_p: null
+  learning_rate: 1.0e-5           # TBD
+  per_device_train_batch_size: 8  # must be a multiple of num_generations (one prompt group per device step)
+  gradient_accumulation_steps: 4
+  num_train_epochs: 1
+  bf16: true
+  gradient_checkpointing: true
+  use_vllm: false                 # true needs the vLLM server's GPU share worked out (the L40S also hosts the eval server): TBD
+  logging_steps: 1
+  save_strategy: steps
+  save_steps: 50
+  seed: 0
+
+lora:                             # used only when no SFT adapter is given (--sft-adapter loads the SFT LoRA instead)
+  r: 16
+  alpha: 32
+  dropout: 0.0
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+data:
+  split: train
+  arms: [none, relevant, augmented, decoy]
+  modes: [B]                      # which reasoning mode(s) to train in: TBD after Checkpoint 2
+  prompts: [true, false]
