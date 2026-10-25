@@ -6,6 +6,8 @@ Run from the repo root with `PYTHONPATH=code` (pytest picks this up from `confte
 
 ## bench (2a, done)
 - `bench.schema`: `Case` (+ `.serve("REF1") -> ServedCase` with `.doc`, `.yaml()`, `.table` served id → global id),
+  `parse_reply(..., noref=True)` for the no-reference arm (steps fact_enumeration, consideration_enumeration,
+  reasoning, verdict; no case/relation), flattened `frame` keys folded back as a recorded repair,
   `EquitySet`, `parse_reply(content, reasoning=None) -> ParsedReply`, `AnswerKey`, `LiveScenario`, `STEPS`.
 - `bench.models`: `role(name) -> RoleConfig`, `complete(role, messages, **overrides) -> str`. Roles in
   `config/models.yaml`: `policy`, `judge_choice`, `judge_noul`, `converter`, `query_extractor`.
