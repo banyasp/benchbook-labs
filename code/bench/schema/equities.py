@@ -24,6 +24,7 @@ class Equity(Strict):
 
 class EquitySet(Strict):
     id: str                       # deployment / set name
+    status: str | None = None     # e.g. needs_review | reviewed
     equities: list[Equity]
 
     @model_validator(mode="after")
