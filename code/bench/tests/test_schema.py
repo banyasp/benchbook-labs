@@ -155,3 +155,22 @@ def test_answer_key():
     d["relation"] = "flips"
     with pytest.raises(ValueError):
         AnswerKey.model_validate(d)
+
+
+def test_noref_reply():
+    docs = {d.split("\n", 1)[0]: d for d in body(REPLY).split("\n---\n")}
+    keep = [docs["kind: fact_enumeration"], docs["kind: consideration_enumeration"],
+            docs["kind: reasoning"].replace("case: REF1\n", "").split("case_approach:")[0]
+            + "weighing:" + docs["kind: reasoning"].split("weighing:", 1)[1],
+            docs["kind: verdict"].replace("relation: follows\n", "").replace("via: null\n", "")]
+    p = parse_reply("\n---\n".join(keep), noref=True)
+    assert p.strict_ok, p.errors
+    full = parse_reply("\n---\n".join(keep))
+    assert "fact_mapping" in full.missing and "relation" in full.errors["verdict"]
+
+
+def test_flattened_frame_is_repaired():
+    flat = body(REPLY).replace("frame: {question: same_kind, decider: same_kind, role: same}",
+                               "question: same_kind\ndecider: same_kind\nrole: same")
+    p = parse_reply(flat)
+    assert "applicability" in p.models and p.repairs["applicability"] and not p.strict_ok

@@ -26,6 +26,10 @@ from .common import FactKind, FactStatus, FrameCompare, Relation, Strict, Weight
 
 STEPS = ["fact_enumeration", "fact_mapping", "consideration_enumeration", "consideration_mapping",
          "applicability", "reasoning", "verdict"]
+# The no-reference arm has nothing to map to: no mapping/applicability steps, no `case` in reasoning,
+# no `relation`/`via` in the verdict (parse_reply(..., noref=True)).
+NOREF_STEPS = ["fact_enumeration", "consideration_enumeration", "reasoning", "verdict"]
+CASE_BOUND = {"reasoning": ["case", "case_approach"], "verdict": ["relation"]}   # required unless noref
 
 
 # ---------------------------------------------------------------- step models
@@ -140,8 +144,8 @@ class TemptingWrong(Strict):
 
 class Reasoning(Strict):
     kind: str = "reasoning"
-    case: str
-    case_approach: str
+    case: str | None = None             # required unless noref (enforced in parse_reply)
+    case_approach: str | None = None
     weighing: str
     tradecraft: str
     uncertainty: str
@@ -180,7 +184,7 @@ class Verdict(Strict):
     kind: str = "verdict"
     choice: str
     course: str
-    relation: Relation
+    relation: Relation | None = None    # required unless noref (enforced in parse_reply)
     via: list[str] | None = None     # served case would_change id(s) that fired; required iff relation is flips
     decisive: list[str]
     now: list[str]
@@ -228,6 +232,7 @@ class ParsedReply:
     all_docs: list[Doc] = field(default_factory=list)
     unparsed: list[str] = field(default_factory=list)           # chunks that started `kind:` but never parsed
     unknown_kinds: list[str] = field(default_factory=list)
+    noref: bool = False
 
     @property
     def missing(self) -> list[str]:
@@ -235,6 +240,8 @@ class ParsedReply:
 
     def required(self) -> list[str]:
         """Reasoning is not required after applicability governs: false (not_governed ends the reasoning)."""
+        if self.noref:
+            return list(NOREF_STEPS)
         gov = self.steps.get("applicability", {}).get("governs")
         return [k for k in STEPS if not (k == "reasoning" and gov is False)]
 
@@ -320,9 +327,24 @@ def _scan(text: str, where: str) -> tuple[list[Doc], list[str]]:
     return docs, bad
 
 
-def parse_reply(content: str | None, reasoning: str | None = None) -> ParsedReply:
+FLAT_FRAME = {"fact_enumeration": ("question", "decider", "my_role"),
+              "fact_mapping": ("question", "decider", "role"), "applicability": ("question", "decider", "role")}
+
+
+def _unflatten_frame(kind: str, d: dict) -> tuple[dict, list[str]]:
+    """Granite often writes frame's keys at the top level; fold them back into `frame` (a recorded repair)."""
+    keys = FLAT_FRAME.get(kind)
+    if not keys or "frame" in d or not all(k in d for k in keys):
+        return d, []
+    d = dict(d)
+    d["frame"] = {k: d.pop(k) for k in keys}
+    return d, ["folded top-level question/decider/role into frame"]
+
+
+def parse_reply(content: str | None, reasoning: str | None = None, *, noref: bool = False) -> ParsedReply:
+    """noref=True for the no-reference arm (NOREF_STEPS; no case/relation)."""
     think, outside = split_think(content, reasoning)
-    out = ParsedReply()
+    out = ParsedReply(noref=noref)
     for text, where in ((think, "think"), (outside, "content")):
         docs, bad = _scan(text, where)
         out.all_docs += docs
@@ -334,13 +356,20 @@ def parse_reply(content: str | None, reasoning: str | None = None) -> ParsedRepl
         prev = out.where.get(d.kind)
         if prev == "content" and d.where == "think":
             continue                      # an outside occurrence beats one inside <think>
-        out.steps[d.kind], out.where[d.kind], out.repairs[d.kind] = d.data, d.where, d.repairs
-    for k in STEPS:
+        data, fixes = _unflatten_frame(d.kind, d.data)
+        out.steps[d.kind], out.where[d.kind], out.repairs[d.kind] = data, d.where, d.repairs + fixes
+    for k in (NOREF_STEPS if noref else STEPS):
         if k not in out.steps:
             out.errors[k] = "missing"
             continue
         try:
-            out.models[k] = MODELS[k].model_validate(out.steps[k])
+            m = MODELS[k].model_validate(out.steps[k])
         except ValidationError as e:
             out.errors[k] = "; ".join(f"{'.'.join(map(str, x['loc']))}: {x['msg']}" for x in e.errors())[:600]
+            continue
+        absent = [f for f in CASE_BOUND.get(k, []) if not noref and getattr(m, f) is None]
+        if absent:
+            out.errors[k] = f"missing {', '.join(absent)}"
+            continue
+        out.models[k] = m
     return out

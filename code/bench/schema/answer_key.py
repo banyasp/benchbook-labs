@@ -22,6 +22,7 @@ class GoldOption(Strict):
     do: str
     move: Move | None = None
     irreversible: bool | None = None
+    to: str | None = None                  # hand-off target of a partial/ask option
     source_id: str | None = None          # id in the source data (e.g. v2.6 letter "B")
 
 
