@@ -106,8 +106,12 @@ def complete(role_name: str, messages: list[dict], *, stage: str | None = None, 
     if r.backend == "vllm":
         return _vllm(r, messages, p, prov, stage)
     _bedrock_env(cfg)
+    extra = dict(p.get("extra") or {})
+    if p.get("reasoning_effort"):          # gpt-oss on Bedrock / OpenRouter
+        extra["reasoning_effort"] = p["reasoning_effort"]
     return _llm().complete(r.model, messages, p.get("temperature", 0.7), p.get("max_tokens", 4000), stage=stage or role_name,
-                           out_path=out_path, training_bound=bool(p.get("training_bound")), provenance=prov)
+                           out_path=out_path, training_bound=bool(p.get("training_bound")), provenance=prov,
+                           extra=extra or None)
 
 
 def _vllm(r: RoleConfig, messages, p, prov: Path, stage):

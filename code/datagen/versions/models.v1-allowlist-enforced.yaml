@@ -1,0 +1,50 @@
+# Generator policy and stage settings for the Benchbook datagen pipeline (read by llm.py and run_stage.py).
+#
+# Authorship rule (plan v2, spec section 10): training-bound text and labels come from open-weight
+# models, real documents, the solver or Peter. Claude and closed GPT models may review and prototype,
+# never write training-bound text. A stage marked `training_bound: true` refuses any other model.
+
+# Allowlist for training-bound stages. `match` is a case-insensitive regex on the bare model id (the
+# part after openrouter/ or bedrock/). `lineage` groups families from one lab for the critic check.
+training_bound_families:
+  gpt-oss: {match: "gpt[-_ ]?oss",                         lineage: openai}
+  gemma-4: {match: "gemma[-_ ]?4",                         lineage: google}
+  mistral: {match: "mistral|mixtral|ministral|magistral",  lineage: mistral}
+  olmo:    {match: "olmo",                                 lineage: ai2}
+
+# Recognised but never allowed for training-bound stages; used for provenance and the critic check.
+other_families:
+  anthropic: {match: "anthropic|claude",            lineage: anthropic}
+  openai:    {match: "openai|gpt|\\bo[1-9]\\b",     lineage: openai}
+  google:    {match: "gemini|gemma|google",         lineage: google}
+  meta:      {match: "llama",                       lineage: meta}
+  qwen:      {match: "qwen",                        lineage: alibaba}
+  deepseek:  {match: "deepseek",                    lineage: deepseek}
+
+# Refused outright for training-bound stages, even if a family pattern would match.
+refuse_when_training_bound:
+  - "anthropic"
+  - "claude"
+  - "(^|[/.])gpt-(?!oss)"        # closed GPT models; gpt-oss is allowed
+  - "^openai[/.](?!gpt-oss)"
+
+# Stage settings. spec: DATAGEN-SPEC.md sections embedded verbatim in {SPEC} ("3.4" is a subsection;
+# "3" includes 3.1-3.4). templates: files from examples-v21/templates/ embedded in {TEMPLATES}.
+stages:
+  reference: {training_bound: true,  temperature: 0.7, max_tokens: 7000,  spec: ["1", "2", "7"],       templates: [reference.template.yaml]}
+  revised:   {training_bound: true,  temperature: 0.6, max_tokens: 7000,  spec: ["2", "3.4"],          templates: [reference.template.yaml]}
+  live:      {training_bound: true,  temperature: 0.7, max_tokens: 6000,  spec: ["3", "7"],            templates: [live.template.yaml]}
+  render:    {training_bound: true,  temperature: 0.7, max_tokens: 9000,  spec: ["4", "3.2", "3.3"],   templates: [TRACE-FORMAT.md]}
+  reply:     {training_bound: true,  temperature: 0.4, max_tokens: 6000,  spec: ["5", "3.2", "3.4"],   templates: [mapping.template.yaml]}
+  critic:    {training_bound: false, temperature: 0.2, max_tokens: 4000,  spec: ["2", "4", "7"],       templates: []}
+
+# Worked examples embedded as {EXAMPLE_*}; paths are under examples-v21/. Copy their quality and
+# structure, not their option lengths or hand-up mix (spec section 7).
+examples:
+  EXAMPLE_REFERENCE:      AUT-001/AUT-001.reference.yaml
+  EXAMPLE_REVISED:        AUT-001/AUT-001-r1.reference.yaml
+  EXAMPLE_LIVE:           INT-103/INT-103-v01.live.yaml
+  EXAMPLE_LIVE_RESTYLE:   AUT-001/AUT-001-v01.live.yaml
+  EXAMPLE_TRACE:          AUT-001/AUT-101.trace.json
+  EXAMPLE_REPLY:          INT-103/INT-103-v01.reply.json
+  EXAMPLE_DECOY_REPLY:    AGT-201/AGT-201-v01.decoy.reply.json

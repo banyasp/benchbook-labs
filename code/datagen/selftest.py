@@ -39,7 +39,7 @@ def check(name, cond, detail=""):
 
 def refused(model, tb=True):
     try:
-        llm.check_allowed(model, tb)
+        llm.check_allowed(model, tb, enforce=True)     # the allowlist logic itself (enforce mode)
         return False
     except llm.ModelRefused:
         return True
@@ -54,6 +54,11 @@ def test_policy():
         "openrouter/anthropic/claude-sonnet-4", "bedrock/anthropic.claude-3-haiku-20240307-v1:0",
         "openrouter/openai/gpt-4o", "openrouter/openai/o3", "openrouter/meta-llama/llama-3.3-70b")))
     check("non-training-bound stage may use claude", not refused("openrouter/anthropic/claude-sonnet-4", tb=False))
+    check("record mode (default): claude is not refused, only recorded",
+          llm.load_policy().get("allowlist_mode") == "record"
+          and llm.check_allowed("openrouter/anthropic/claude-sonnet-4", True) is None
+          and llm.allowlist_status("openrouter/anthropic/claude-sonnet-4").startswith("outside-allowlist")
+          and llm.allowlist_status("bedrock/openai.gpt-oss-120b-1:0") == "allowlisted")
     try:
         llm.check_critic("openrouter/openai/gpt-4o", ["openrouter/openai/gpt-oss-120b"])
         check("critic from the drafter's lineage refused", False)

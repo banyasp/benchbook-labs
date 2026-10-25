@@ -13,7 +13,10 @@ complete(model, messages, temperature, max_tokens) picks a backend by model pref
   dry/<anything>      calls nothing: writes the prompt to disk and returns a placeholder.
 
 Every call appends a record (model, family, time, prompt hash, stage, output path) to provenance.jsonl.
-Stages marked training_bound in models.yaml refuse anything but the allowlisted open-weight families.
+Allowlist: models.yaml `allowlist_mode: record` (default since 2026-10-25, Peter lifted the open-weight-only rule)
+records per call whether the model is inside the allowlist (`allowlist` in provenance) and never refuses;
+`enforce` restores refusing non-allowlisted models for training-bound stages.
+`extra` passes backend-specific request fields (e.g. {"reasoning_effort": "high"} for gpt-oss).
 boto3 and requests are imported only when used (urllib is the fallback for requests).
 """
 from __future__ import annotations
@@ -71,11 +74,23 @@ def family_of(model, policy=None):
     return vendor, vendor
 
 
-def check_allowed(model, training_bound, policy=None):
-    """Refuse non-allowlisted models for training-bound stages (dry/ never calls out, so it is exempt)."""
+def allowlist_status(model, policy=None) -> str:
+    """'allowlisted' | 'outside-allowlist:<reason>' (recorded in provenance; never raises)."""
+    try:
+        check_allowed(model, True, policy, enforce=True)
+        return "allowlisted"
+    except ModelRefused as e:
+        return f"outside-allowlist:{str(e).split(';')[0][:120]}"
+
+
+def check_allowed(model, training_bound, policy=None, enforce=None):
+    """In `enforce` mode, refuse non-allowlisted models for training-bound stages (dry/ never calls out, so it is
+    exempt). In `record` mode (the default since 2026-10-25) this never raises."""
     policy = policy or load_policy()
     backend, bare = split_model(model)
-    if backend == "dry" or not training_bound:
+    if enforce is None:
+        enforce = policy.get("allowlist_mode", "enforce") == "enforce"
+    if backend == "dry" or not training_bound or not enforce:
         return
     low = bare.lower()
     for pat in policy["refuse_when_training_bound"]:
@@ -132,11 +147,12 @@ def _post_json(url, headers, payload, timeout=300):
 
 
 def _openrouter(bare, messages, temperature, max_tokens, ctx):
+    extra = ctx.get("extra") or {}
     key = os.environ.get("OPENROUTER_API_KEY")
     if not key:
         raise LLMError("OPENROUTER_API_KEY is not set")
     payload = {"model": bare, "messages": messages, "temperature": temperature, "max_tokens": max_tokens,
-               "provider": {"data_collection": "deny"}}
+               "provider": {"data_collection": "deny"}, **extra}
     data = _post_json(OPENROUTER_URL, {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, payload)
     try:
         text = data["choices"][0]["message"]["content"] or ""
@@ -195,6 +211,8 @@ def _bedrock(bare, messages, temperature, max_tokens, ctx):
         else:
             convo.append({"role": m["role"], "content": [{"text": m["content"]}]})
     kwargs = {"system": system} if system else {}
+    if ctx.get("extra"):    # e.g. gpt-oss {"reasoning_effort": "high"}
+        kwargs["additionalModelRequestFields"] = ctx["extra"]
     resp = session.client("bedrock-runtime").converse(
         modelId=bare, messages=convo, inferenceConfig={"temperature": temperature, "maxTokens": max_tokens}, **kwargs)
     text = "".join(b.get("text", "") for b in resp["output"]["message"]["content"])
@@ -219,7 +237,7 @@ def prompt_hash(messages):
 
 
 def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, out_path=None,
-             training_bound=False, provenance=None, attempt=1):
+             training_bound=False, provenance=None, attempt=1, extra=None):
     """One chat completion. messages: [{role: system|user|assistant, content: str}]. Returns the text.
     Appends a provenance record to `provenance` (default: env BENCHBOOK_PROVENANCE or ./provenance.jsonl)."""
     check_allowed(model, training_bound)
@@ -230,8 +248,9 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
     rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "model": model, "backend": backend,
            "family": fam, "lineage": lineage, "stage": stage, "training_bound": bool(training_bound),
            "attempt": attempt, "prompt_sha256": prompt_hash(messages), "out_path": str(out_path) if out_path else None,
-           "temperature": temperature, "max_tokens": max_tokens}
-    ctx = {"stage": stage, "hash": rec["prompt_sha256"], "dir": prov.parent}
+           "temperature": temperature, "max_tokens": max_tokens, "allowlist": allowlist_status(model),
+           **({"extra": extra} if extra else {})}
+    ctx = {"stage": stage, "hash": rec["prompt_sha256"], "dir": prov.parent, "extra": extra}
     try:
         text, usage = BACKENDS[backend](bare, messages, temperature, max_tokens, ctx)
         rec["usage"] = usage
