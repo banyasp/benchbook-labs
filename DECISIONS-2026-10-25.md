@@ -1,5 +1,12 @@
 # Decisions for the EC2 session — 2026-10-25 (Peter, via his claude.ai session)
 
+> **Latest (2026-10-25, evening):** 2f is approved as a critical path — follow `BUILD-BRIEF-2f-2026-10-25.md`.
+>
+> **Update (later on 2026-10-25):** (1) SFT golden reasoning is written by a **stronger teacher model, never the
+> base model** (overrides the PDF); Peter names the teacher later — make it a config setting. (2) The
+> open-weight-only authorship allowlist is **lifted**: relax `models.yaml` to record provenance only. Where this file
+> says "allowlisted" or "training-bound", read it in that light.
+
 Read this after `CLAUDE.md`, `context/PDF-RECONCILIATION-2026-10-25.md` and `HANDOFF-2026-10-25.md`. Where this
 file and the handoff differ, this file is newer. Proceed with Step 2; don't wait on the open items at the end.
 
