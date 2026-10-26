@@ -1,6 +1,8 @@
 # Decisions for the EC2 session — 2026-10-25 (Peter, via his claude.ai session)
 
 > **Latest (2026-10-25, evening):** 2f is approved as a critical path — follow `BUILD-BRIEF-2f-2026-10-25.md`.
+> SFT targets now come from **rejection sampling Granite** (two worked examples in the prompt, no gold; keep only
+> samples matching gold structure). This supersedes "teacher, never the base model" below.
 >
 > **Update (later on 2026-10-25):** (1) SFT golden reasoning is written by a **stronger teacher model, never the
 > base model** (overrides the PDF); Peter names the teacher later — make it a config setting. (2) The

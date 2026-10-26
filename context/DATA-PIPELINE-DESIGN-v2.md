@@ -1,4 +1,6 @@
-# Benchbook data pipeline — design v2.2 (draft for Peter's review, 2026-10-25)
+# Benchbook data pipeline — design v2.3 (draft for Peter's review, 2026-10-25)
+
+*v2.3: SFT targets come from rejection sampling the base model (Peter's ruling, evening of 2026-10-25); §4b and §10 updated.*
 
 *v2.2 adds §4b (where the analogical reasoning in SFT targets comes from — under discussion) and requires
 `perturb` to emit the gold mapping. Earlier versions are in `context/versions/`.*
@@ -129,9 +131,14 @@ Candidate sources and checks, best first (none beyond the first two items of the
 - SFT is the warm start; RL against gold structure sharpens the skill, so SFT targets need to be well formed and
   plausible, not perfect.
 
-**Open:** who writes the final target text — the teacher alone, or the teacher's content re-expressed by the base
-model in its own words (self-distillation fine-tuning, Yang et al. 2024) to reduce forgetting (R23). Default
-tonight: teacher alone; keep the writer pluggable.
+**Ruled (Peter, evening of 2026-10-25): SFT is a warm start, so targets come from rejection sampling the base
+model.** Peter's assumption: existing models are weak at analogical reasoning, and RLVR (which scores only
+structure, never prose) does most of the teaching; SFT only has to teach the format and a plain discussion of the
+considerations and their weighing. So Granite generates replies with two worked examples in the prompt and no gold
+answer; samples are kept only if they match gold structure (verdict, relation, `via`, applicability, mapping
+buckets). Pairs Granite never solves get one rationalization pass with the verdict as a hint, tagged. The teacher
+and the sources above (legal opinions, Horty, twin contrast, rubric) remain options for later, not the critical
+path.
 
 ## 5. render, and its gates
 
@@ -218,11 +225,8 @@ logged in `docs/RISK-REGISTER.md` and built after the path works.
 3. **perturb**, three operators: `restyle`, `flip` (realized indirectly, §4a), `add fact` (independent re-solve).
 4. **pair**: derived pairs + decoys (unrelated scenarios); cap hand-up golds per arm (R7).
 5. **render**: trace + span map (emitted now, gated later).
-6. **solve**: the **teacher model** (not the base model) writes the full reply in the PDF step format, given the
-   trace, the equities, the served case **and the full gold structure** from step 3/4 (mappings, applicability,
-   relation, `via`, verdict, the touched weighing condition), with the structure-mapping rubric (§4b). N = 3 samples
-   per pair; keep a sample only if it parses and agrees with gold on verdict, relation, `via` and the mapping
-   buckets. Teacher TBD by Peter; tonight's placeholder is gpt-oss-120b at high effort, swappable by config.
+6. **solve**: rejection sampling from the base model (Granite), two worked examples in the prompt, no gold;
+   N = 8; keep samples matching gold structure; rationalization pass (tagged) for pairs with none. See §4b.
 7. **project**: SFT jsonl, RLVR JSON, Inspect samples, using the 2a schemas and 2d scorers.
 **Done when:** ≥20 pairs flow end to end, load in the SFT builder and the scorers, and Peter has read 3 of them.
 

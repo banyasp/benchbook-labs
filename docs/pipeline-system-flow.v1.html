@@ -1,0 +1,231 @@
+<title>Benchbook Data Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single technical reading column (~980px) with wide tables and the flow diagram allowed to scroll inside their own containers. */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --ink:#16202B; --muted:#5A6573; --rule:#D9DEE5; --accent:#1F6F8B; --accent-soft:#E2F0F5;
+  --tag-now:#1F7A5C; --tag-now-bg:#DDF3EC; --tag-later:#8A5A12; --tag-later-bg:#FBEFD9; --tag-none:#5A6573; --tag-none-bg:#ECEFF3;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F151C; --surface:#161E27; --ink:#E4E9EF; --muted:#9AA6B4; --rule:#2A3542; --accent:#6CC0DB; --accent-soft:#18303A;
+  --tag-now:#7FD8B6; --tag-now-bg:#143229; --tag-later:#F0C27A; --tag-later-bg:#3A2C12; --tag-none:#AEB8C4; --tag-none-bg:#232D38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#161E27; --ink:#E4E9EF; --muted:#9AA6B4; --rule:#2A3542; --accent:#6CC0DB; --accent-soft:#18303A;
+  --tag-now:#7FD8B6; --tag-now-bg:#143229; --tag-later:#F0C27A; --tag-later-bg:#3A2C12; --tag-none:#AEB8C4; --tag-none-bg:#232D38; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+header{display:flex;flex-direction:column;gap:6px;border-bottom:2px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 4px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:500;font-size:17px;margin:12px 0 4px}
+p{margin:0;max-width:72ch}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+code,.m{font-family:var(--f-mono);font-size:.9em}
+.lede{color:var(--muted);max-width:80ch}
+.scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:9px 11px;border-bottom:1px solid var(--rule)}
+th{font-family:var(--f-mono);font-weight:500;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--bg);position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+td.step{font-family:var(--f-mono);white-space:nowrap;color:var(--accent);font-weight:500}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.now{color:var(--tag-now);background:var(--tag-now-bg)} .later{color:var(--tag-later);background:var(--tag-later-bg)} .none{color:var(--tag-none);background:var(--tag-none-bg)}
+.notation{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.notation div{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;min-width:0}
+.notation b{font-family:var(--f-mono);font-weight:500;color:var(--accent);display:block}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;border:1.5px solid;display:inline-block}
+.diagram{padding:16px;min-width:880px}
+.callout{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0;padding:12px 14px;max-width:none}
+ul,ol{margin:0;padding-left:20px;max-width:80ch} li{margin:3px 0}
+.grid-ab td,.grid-ab th{text-align:center}
+.grid-ab td:first-child,.grid-ab th:first-child{text-align:left}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Benchbook · data generation · design v2.3 · 25 Oct 2026</div>
+  <h1>Benchbook Data Pipeline</h1>
+  <p class="lede">Every step from raw sources to SFT, RLVR and eval records: which model runs it, exactly what goes into its context, what comes out, and where each piece of the gold comes from. Drafted for Peter to check. Source of truth: <code>context/DATA-PIPELINE-DESIGN-v2.md</code> and <code>BUILD-BRIEF-2f-2026-10-25.md</code> in the repo.</p>
+</header>
+
+<section>
+  <h2>Notation</h2>
+  <div class="notation">
+    <div><b>R</b>Raw corpus: immutable source documents, addressed by span ids.</div>
+    <div><b>E · E_d</b>Equity registry (shared ids + glosses); E_d is one deployment's injected subset (~10–20).</div>
+    <div><b>D</b>Deployment profile: role, tools, standing orders, delegations, people.</div>
+    <div><b>X = (F, Q, A)</b>A scenario. F facts · Q question frame (question, decider, agent role, options) · A answer.</div>
+    <div><b>A = (K, W, V, Φ)</b>K considerations (fact → equity → favors → weight → why) · W reasoning prose · V verdict · Φ flip conditions.</div>
+    <div><b>C · T</b>Roles: a scenario served as a case (card) or rendered as a trace. Any scenario can be either.</div>
+    <div><b>τ · σ · α</b>The rendered trace; its span map (where each fact landed, how); the allowed list (true details not in F_T).</div>
+    <div><b>G</b>Gold for a pair: F_T, Q_T, M^F, K_T, M^K, applicability, relation, via, V_T.</div>
+    <div><b>Y</b>A reply in the PDF step format (the SFT target, and what the policy writes at runtime).</div>
+  </div>
+</section>
+
+<section>
+  <h2>System flow</h2>
+  <div class="legend">
+    <span><i class="sw" style="background:#FDF0D5;border-color:#B7791F"></i>gpt-oss-120b on Bedrock</span>
+    <span><i class="sw" style="background:#DDF3EC;border-color:#1F7A5C"></i>Granite 4.2 8B, local vLLM</span>
+    <span><i class="sw" style="background:#ECE9FB;border-color:#5B4BC4"></i>Jev judge (OpenRouter)</span>
+    <span><i class="sw" style="background:#EEF0F3;border-color:#6B7280"></i>Code only</span>
+    <span><i class="sw" style="background:#E3EEFA;border-color:#2B6CB0"></i>Stored artifact</span>
+    <span><i class="sw" style="background:#FBE7EF;border-color:#B83266"></i>Peter</span>
+    <span><i class="sw" style="background:#FFFFFF;border-color:#9CA3AF;border-style:dashed"></i>Deferred</span>
+  </div>
+  <div class="scroll"><div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  subgraph S1["1 · Ingest"]
+    SRC["Source registry<br/>catalog → public URLs"]:::code --> ACQ["Acquire + normalize<br/>bytes → text with span ids"]:::code
+    ACQ --> R[("Raw corpus R")]:::store
+    R --> EPI["Find episodes<br/>decision points, scored, in scope"]:::bedrock
+  end
+  subgraph S2["2 · extract  (R → X)"]
+    EPI --> XFQ["extract F, Q<br/>facts cite spans · question frame · matched option set"]:::bedrock
+    XFQ --> XA["extract A<br/>K uses equity ids from E · W from source's reasons<br/>V = endorsed answer · Φ stated or tagged authored"]:::bedrock
+    XA --> DER["derive skeleton + world kit<br/>tension, decisive conditions, move structure · timeline, actors, artifacts"]:::bedrock
+  end
+  E[("Equity registry E")]:::store -.-> XA
+  DER --> STORE[("Scenario store<br/>X = F, Q, A + skeleton, world, provenance, family, split")]:::store
+  REV1["sampled review of holdings"]:::human -.-> STORE
+  subgraph S3["3 · perturb + pair"]
+    STORE --> PERT["perturb X → X′<br/>code picks operator + target condition<br/>model edits F or Q"]:::bedrock
+    PERT --> SOLVEI["A′: by construction (code)<br/>or independent solve, never sees C"]:::bedrock
+    SOLVEI --> STORE
+    PERT --> DELTA[("Lineage + gold mapping Δ<br/>M^F, M^K, relation, via, touched condition")]:::store
+    STORE --> PAIR["pair<br/>intent · arm · hand-up cap · option balance"]:::code
+    DELTA --> PAIR
+  end
+  subgraph S4["4 · render"]
+    PAIR --> REND["render T<br/>F_T, Q_T, deployment D, world kit, R texture"]:::bedrock
+    DEP[("Deployment profiles D")]:::store -.-> REND
+    REND --> TR[("Trace τ + span map σ + allowed list α")]:::store
+  end
+  subgraph S5["5 · gold + prompt (code)"]
+    PAIR --> GOLD["assemble gold G<br/>F_T, Q_T, M^F, K_T, M^K, applicability, relation, via, V_T"]:::code
+    DELTA --> GOLD
+    TR --> GOLD
+    TR --> HARN["harness prompt<br/>τ + E_d + served card (none · relevant · augmented · decoy)<br/>± analogical-reasoning prompt"]:::code
+    E -.-> HARN
+  end
+  subgraph S6["6 · SFT writer: rejection sampling"]
+    HARN --> GEN["generate Y, N = 8<br/>+ 2 worked examples · format rules · no gold"]:::local
+    GEN --> FILT["filter Y against G<br/>verdict · relation · via · applicability · mapping buckets"]:::judge
+    GOLD --> FILT
+    FILT -- "no accepted Y" --> RAT["rationalization pass<br/>+ verdict & relation hint · tagged"]:::local
+    RAT --> FILT
+  end
+  subgraph S7["7 · project (code)"]
+    FILT -- "accepted Y" --> SFT[/"SFT record<br/>harness prompt (masked) + Y"/]:::code
+    GOLD --> RL[/"RLVR record<br/>harness prompt + gold JSON (no prose)"/]:::code
+    GOLD --> EV[/"Eval sample<br/>every arm of the PDF grid + G"/]:::code
+    HARN --> RL
+    HARN --> EV
+  end
+  REV2["pairwise picks on a sample"]:::human -.-> SFT
+  GATES["Deferred gates: grounding judge · A/B render test · salience probe · verbatim check<br/>option-specificity gate · two-solver agreement · twin-contrast filter · Horty a-fortiori checker"]:::deferred
+  GATES -.-> TR
+  GATES -.-> STORE
+  classDef bedrock fill:#FDF0D5,stroke:#B7791F,color:#3D2A06
+  classDef local fill:#DDF3EC,stroke:#1F7A5C,color:#0B3B2C
+  classDef judge fill:#ECE9FB,stroke:#5B4BC4,color:#231B5C
+  classDef code fill:#EEF0F3,stroke:#6B7280,color:#1F2937
+  classDef store fill:#E3EEFA,stroke:#2B6CB0,color:#0F2A4A
+  classDef human fill:#FBE7EF,stroke:#B83266,color:#4A1028
+  classDef deferred fill:#FFFFFF,stroke:#9CA3AF,stroke-dasharray:4 3,color:#6B7280
+</pre>
+  </div></div>
+  <p class="callout">The gold (G) is assembled by code from what extract, perturb and pair already recorded. No model writes any part of the RLVR answer key. A model writes only the SFT text, and that text is kept only when its structure matches G.</p>
+</section>
+
+<section>
+  <h2>Step by step: model, context in, output</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Step</th><th>Operator</th><th>Model (now)</th><th>What goes into context</th><th>What comes out</th><th>Gold status · gate</th></tr></thead>
+    <tbody>
+      <tr><td class="step">1a</td><td>acquire, normalize</td><td>code</td><td>Source URLs from the registry</td><td>Raw bytes (by hash); text split into paragraphs with span ids</td><td>Immutable · <span class="tag now">now</span></td></tr>
+      <tr><td class="step">1b</td><td>find episodes</td><td>gpt-oss-120b</td><td>Normalized document (span-tagged); definition of a decision episode; safety scope</td><td>Candidate decision points with span ranges and scores; rejects with reasons</td><td>Scope + score threshold · <span class="tag now">now</span></td></tr>
+      <tr><td class="step">2a</td><td>extract F, Q</td><td>gpt-oss-120b</td><td>The episode's spans; F and Q schema; the PDF case example (facts, question, options); matched-option-set rule</td><td><b>F</b>: atomic facts (kind, status, text, span refs) · <b>Q</b>: question, decider, agent role and authority (agent recast tagged), options with move type and irreversibility</td><td>F grounded · schema + span refs <span class="tag now">now</span> · grounding judge <span class="tag later">later</span></td></tr>
+      <tr><td class="step">2b</td><td>extract A</td><td>gpt-oss-120b</td><td>The spans, F, Q, the equity registry E (ids + glosses), the A schema, the PDF case example</td><td><b>K</b> (considerations using E's ids) · <b>W</b> from the source's stated reasons · <b>V</b> = the source's endorsed answer + <code>basis</code> · <b>Φ</b> where the source states counterfactuals, else tagged authored · lesson, limits</td><td>V <code>source-endorsed</code> or <code>model-solved</code> · Peter samples holdings</td></tr>
+      <tr><td class="step">2c</td><td>derive</td><td>gpt-oss-120b + code</td><td>X and its spans</td><td><b>Skeleton</b> (tension, decisive consideration and its conditions, move structure, authority shape) · <b>world kit</b> (actors, timeline of when each fact is known and via which channel, artifacts with quotes, noise pool)</td><td>Schema-valid · <span class="tag now">now</span></td></tr>
+      <tr><td class="step">3a</td><td>perturb</td><td>code + gpt-oss-120b</td><td>X, its skeleton, the operator spec and target (a fact, or a condition in the weighing); for indirect flips, the rule "never paraphrase the list item"</td><td><b>X′</b> (edited F or Q) · <b>Δ</b>: the gold mapping (each case fact's bucket and counterpart, each consideration's handling, options map, relation, <code>via</code>, the touched condition)</td><td>Operators tonight: restyle, indirect flip, add fact</td></tr>
+      <tr><td class="step">3b</td><td>A′</td><td>code, or gpt-oss-120b (high effort)</td><td>By construction: Δ and A (code). Independent solve: F′, Q′, E only. <b>Never C.</b></td><td><b>A′</b> including K′ and V′</td><td><code>by-construction</code> or <code>model-solved</code> (sampled review)</td></tr>
+      <tr><td class="step">3c</td><td>pair</td><td>code</td><td>The store, lineage, Δ, arm targets</td><td>(C, T, intent, arm) with gold relation · decoys = unrelated scenarios (<code>not_governed</code>) · augmented = revised card</td><td>Hand-up ≤ 1/3 per arm; option positions balanced · <span class="tag now">now</span></td></tr>
+      <tr><td class="step">4</td><td>render</td><td>gpt-oss-120b</td><td>F_T, Q_T (options become tools, never a menu), deployment D, world kit, R passages for texture, TRACE-FORMAT rules. <b>No equities, no case, no gold verdict.</b></td><td><b>τ</b> (system prompt, operator messages, tool calls and results, ending at the decision) · <b>σ</b> span map · <b>α</b> allowed list</td><td>Word bounds, leak scan <span class="tag now">now</span> · A/B, salience, verbatim <span class="tag later">later</span></td></tr>
+      <tr><td class="step">5a</td><td>assemble G</td><td>code</td><td>Pair, Δ, scenarios C and T, σ</td><td><b>G</b>: F_T (weights: decisive ×2), α, Q_T (hidden option ids), M^F, K_T, M^K, applicability, relation, <code>via</code>, V_T, gold tier</td><td>No model involved</td></tr>
+      <tr><td class="step">5b</td><td>harness prompt</td><td>code</td><td>τ, E_d, the served card for the arm, optional analogical-reasoning prompt</td><td>The exact prompt the policy sees</td><td>Same function for eval, SFT and RL</td></tr>
+      <tr><td class="step">6a</td><td>SFT writer</td><td>Granite 4.2 8B (local), N = 8</td><td>The harness prompt + 2 worked examples (PDF journalist/raft transfer; v6 same-domain flip) + format rules, in the Checkpoint 2 reasoning mode. <b>No gold.</b></td><td>Candidate replies Y</td><td>Writer is a config slot (see Model slots)</td></tr>
+      <tr><td class="step">6b</td><td>filter</td><td>code scorers + Jev</td><td>Y, G</td><td>Accepted Y; acceptance rates by pair type and family</td><td>Verdict, relation, <code>via</code>, applicability, mapping buckets · <span class="tag now">now</span></td></tr>
+      <tr><td class="step">6c</td><td>rationalize</td><td>Granite (local)</td><td>As 6a + the gold verdict and relation as a hint</td><td>Y tagged <code>rationalized</code></td><td>Only for pairs with zero accepted Y; Peter decides inclusion</td></tr>
+      <tr><td class="step">7</td><td>project</td><td>code</td><td>Harness prompt, accepted Y, G</td><td><b>SFT</b>: prompt + Y, loss on Y only · <b>RLVR</b>: prompt + G as JSON (no W, no applicability-why) · <b>Eval</b>: one sample per arm + G</td><td>Load in <code>code/training</code> and <code>code/scorers</code></td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede">At data-generation time nothing ever extracts facts from a trace. F_T is known before the trace is rendered. Only the policy, and the SFT writer standing in for it, reads the trace.</p>
+</section>
+
+<section>
+  <h2>Who writes each part of the reply</h2>
+  <p>For each step of the PDF reply: where the gold for RLVR comes from, and what produces the SFT text.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Reply step (PDF)</th><th>RLVR gold comes from</th><th>How it's scored</th><th>SFT text comes from</th></tr></thead>
+    <tbody>
+      <tr><td><code>fact_enumeration</code> facts</td><td>T's own F (extract or perturb), before rendering</td><td>Precision/recall via Jev alignment; allowed list neutral; hallucination = absent from τ</td><td>Granite's own enumeration (kept if it passes)</td></tr>
+      <tr><td><code>fact_enumeration</code> frame + options</td><td>T's Q</td><td>Frame exact match; options enumerated and aligned to hidden ids</td><td>Granite</td></tr>
+      <tr><td><code>fact_mapping</code></td><td>Δ from perturb (derived pairs)</td><td>Translate ids, then set comparison</td><td>Granite</td></tr>
+      <tr><td><code>consideration_enumeration</code></td><td>K_T: T's own considerations (independent of C)</td><td>Alignment precision/recall + attributes (equity, favors, weight)</td><td>Granite; its K may be framed by C, which is why scoring isn't exact match</td></tr>
+      <tr><td><code>consideration_mapping</code></td><td>Δ from perturb</td><td>Set comparison by case consideration id</td><td>Granite</td></tr>
+      <tr><td><code>applicability</code></td><td>Pair intent</td><td><code>governs</code> exact; <code>why</code> not scored</td><td>Granite</td></tr>
+      <tr><td><code>reasoning</code></td><td>None</td><td>Never scored</td><td>Granite (only the structural filter and, later, twin contrast check it)</td></tr>
+      <tr><td><code>verdict</code></td><td>V_T by tier (construction → endorsed → independent solve); <code>via</code> from the operator</td><td>Choice exact after id translation; relation; <code>via</code> + its <code>then:</code>; decisive set</td><td>Granite</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Equities: the variable to isolate</h2>
+  <p>Equities enter in three places: extract (K is written in E's vocabulary), the independent solve, and the harness prompt (E_d is injected with the case). Because the harness injects them together, "case helps" and "equities help" are confounded. The PDF's question of whether the harness alone is enough is answered by the base-model rows, before any training, only if equities and the case vary independently.</p>
+  <div class="scroll"><table class="grid-ab">
+    <thead><tr><th>Base model, untrained</th><th>No case</th><th>Relevant case</th><th>Augmented case</th><th>Decoy</th></tr></thead>
+    <tbody>
+      <tr><td>No equities</td><td>pure baseline <span class="tag later">add</span></td><td>case only <span class="tag later">add</span></td><td><span class="tag none">optional</span></td><td><span class="tag none">optional</span></td></tr>
+      <tr><td>Equities E_d</td><td>equities only <span class="tag later">add</span></td><td>harness <span class="tag now">running</span></td><td><span class="tag now">running</span></td><td><span class="tag now">running</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede">Each cell runs with and without the analogical-reasoning prompt. If base + harness already matches SFT + RL later, the training adds nothing (PDF falsifier 2); if equities-only matches the harness, the case adds nothing.</p>
+</section>
+
+<section>
+  <h2>Model slots</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Slot</th><th>Now</th><th>Alternatives</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td>Extract, derive, perturb, render</td><td>gpt-oss-120b (Bedrock)</td><td>Claude or another frontier model on Bedrock</td><td>Quality of facts, options and traces vs cost; any model, provenance recorded</td></tr>
+      <tr><td>Independent solve (gold when not by construction)</td><td>gpt-oss-120b, high effort</td><td>Two-model agreement (e.g. + a Mistral or Claude model)</td><td>Gold quality is bounded by this solver (R2)</td></tr>
+      <tr><td>SFT writer</td><td>Granite 4.2 8B, rejection sampling</td><td>A stronger model writes Y (same filter); or a stronger model writes and Granite rewrites in its own words</td><td>Granite: on-policy, less forgetting, skews to easy pairs (R28). Stronger: better text, more forgetting (R23)</td></tr>
+      <tr><td>Judge (alignment, option matching)</td><td>Jev 1.14 (OpenRouter Decisions API)</td><td>Clef-flash (open weights) as second judge</td><td>Needs probabilities over options; validate on ~150 hand-checked pairs (R13)</td></tr>
+      <tr><td>Reference solver for the A/B render test</td><td><span class="tag later">deferred</span></td><td>A strong model reading (τ, C) vs (F_T, Q_T, C)</td><td>Separates render loss from policy weakness</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Open decisions</h2>
+  <ul>
+    <li>SFT writer: Granite rejection sampling (current) or a stronger model in the same slot.</li>
+    <li>Equities ablation: add the three missing cells to Checkpoint 2.</li>
+    <li>Sources beyond tonight's defaults (3 DOHA Appeal Board decisions + 1 doctrine or training-scenario source); the held-out domain.</li>
+    <li>Legal opinions as a separately tagged training domain (R26).</li>
+    <li>Distance weights per operator axis; the reward function; <code>partner_relationship</code>; <code>decisive_in_case</code>.</li>
+  </ul>
+</section>
+</div>

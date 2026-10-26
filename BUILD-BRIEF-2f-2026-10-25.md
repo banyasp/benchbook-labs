@@ -9,7 +9,8 @@ build the critical path below, nothing more.*
 One thin, working path from public sources to SFT / RLVR / eval records, end to end, tonight.
 **Done when** ≥ 20 (C, T) pairs flow through every operator, the SFT records load in `code/training`'s SFT
 builder, the RLVR records load in `code/scorers`, and `results/DATAGEN-2026-10-25.md` lists 3 example pairs for
-Peter to read. Checkpoint 2 keeps priority on the GPU; this work uses CPU + Bedrock + OpenRouter only.
+Peter to read. Checkpoint 2 keeps priority on the GPU; this work uses CPU + Bedrock + OpenRouter, plus low-priority requests to
+the already-running Granite server for step 6.
 
 ## Concepts (design v2.2 §2–3)
 - **Scenario X = (F, Q, A)** — role-agnostic: facts; question frame (question, decider, agent role/authority,
@@ -51,12 +52,18 @@ Peter to read. Checkpoint 2 keeps priority on the GPU; this work uses CPU + Bedr
    point, plus a **span map** (for each fact: message index, character range, realization stated / paraphrased /
    implied / split) and the allowed list of true-but-unneeded details. Spread facts across channels; no verbatim
    copying. Emit the span map now; its gates come later.
-6. **solve** — the **teacher** writes the full reply in the PDF step format (`kind:` documents, `via` in the
-   verdict), given the trace, equities, served case **and the full gold structure** (mappings, applicability,
-   relation, `via`, verdict, touched condition) plus the structure-mapping rubric (design §4b: map the case's
-   conditions and relations, not surface facts). **Never the base model.** Teacher = config setting; tonight's
-   placeholder is gpt-oss-120b at high effort. N = 3 samples per pair; keep a sample only if it parses and matches
-   gold on verdict, relation, `via` and the mapping buckets. **Log acceptance rates** per pair type (R27).
+6. **solve — SFT targets by rejection sampling from the base model** (Peter, 2026-10-25, evening; replaces the
+   teacher plan). Granite (the running vLLM server, at lower priority than Checkpoint 2) writes the full reply in
+   the PDF step format (`kind:` documents, `via` in the verdict), in the reasoning mode Checkpoint 2 selects
+   (default C′ until it reports), given the trace, equities and served case **plus two worked examples in the
+   prompt**: the PDF's journalist/raft transfer example (pp. 14–18) and a same-domain flip (convert
+   `ideas/benchbook-analogical-pipeline-example-v6.yaml` to the PDF's names: matched / corresponding / live_only /
+   case_only; `fact_enumeration`; no `confidence`; add `via`). **The gold answer is NOT in the prompt.** Sample
+   N = 8 per pair. **Keep a sample only if** it parses and matches gold on verdict, relation, `via`, applicability
+   and the mapping buckets (use the 2d scorers). For pairs with zero accepted samples, run one **rationalization
+   pass** with the gold verdict and relation given as a hint; tag those samples `rationalized` (kept separate so
+   Peter can include or exclude them). **Log acceptance rates** per pair type and per family (R27, R45). The
+   teacher model is an optional fallback only, off the critical path.
 7. **project** (code only): SFT records (prompt messages; target; loss on the target only — trace, equities and
    case masked), RLVR records (the gold pair record without reasoning prose or applicability-why; keeps `governs`,
    relation, `via`), Inspect samples. Must load in `code/training` and `code/scorers`.
@@ -84,6 +91,5 @@ hand-up and option-position balance; Bedrock spend; time per stage; 3 example pa
 logged.
 
 ## Still open with Peter (don't block)
-Source picks beyond the defaults; the teacher model; teacher-only vs teacher-then-base-rewrite (self-distillation);
-legal opinions as a training domain; distance weights; the reward function; `partner_relationship`;
+Source picks beyond the defaults; legal opinions as a training domain; distance weights; the reward function; `partner_relationship`;
 `decisive_in_case`.
