@@ -85,7 +85,12 @@ def _replace_doc(text: str, kind: str, mutate) -> str | None:
     sp = last_span(text, kind)
     if sp is None:
         return None
-    d = yaml.safe_load(text[sp["start"]: sp["end"]])
+    chunk = text[sp["start"]: sp["end"]]
+    try:
+        d = yaml.safe_load(chunk)
+    except yaml.YAMLError:                 # the reply parsed only with recorded repairs: use the same repairs
+        from bench.schema.reply import _load
+        d = _load(chunk.splitlines())[0]
     if not isinstance(d, dict) or mutate(d) is False:
         return None
     return text[: sp["start"]] + _dump(d) + text[sp["end"]:]
@@ -189,7 +194,10 @@ async def one(ctx: Context, rec: dict, interv: str, rep: int, resume_at: str) ->
         if "augmented" not in sc.arms or item.arm != "relevant":
             return None
         arm = "augmented"
-    partial = apply(interv, raw, dec, resume_at if interv != "swap_revised" else "verdict")
+    try:
+        partial = apply(interv, raw, dec, resume_at if interv != "swap_revised" else "verdict")
+    except Exception:                      # one unusable reply must not end the run; it is simply not eligible
+        return None
     if partial is None:
         return None
     seed = (core.sample_seed(ctx.run_seed, item, rec["sample_idx"]) + 1000 * (rep + 1) + INTERVENTIONS.index(interv)) % (2**31 - 1)
