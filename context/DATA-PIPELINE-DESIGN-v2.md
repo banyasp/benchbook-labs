@@ -466,8 +466,8 @@ eval, SFT and RL.
 reverse-restyle). Pairs whose gold is `flips` (relevant flips, augmented) are always served `full`. The gold `via`
 names a `would_change` item, which a thin card hides, and without Φ `flips` and `distinguished` can't be told apart.
 A thin card also removes every flip-condition reference (`REF…-flip*`, `noflip*`, `watch*`) from the reasoning prose,
-and the leak gate checks that none remain. This scoping is a default; Peter's ruling was "thin card withholds Φ,
-lesson, limits", and it is listed in §16.
+and the leak gate checks that none remain. Peter agreed to this scoping on 2026-10-27, plus a T2 **eval-only
+thin-flip set** (flip pairs served thin; gold `distinguished`, no `via`) to measure lookup directly (§16.5).
 
 **Thin share:** 0 in the first SFT run (for speed), then 30% of eligible training items (default; Peter may override).
 `card_view` is assigned per training item (seeded) **before** sampling. Eval runs both views on eligible `relevant` pairs.
@@ -621,7 +621,9 @@ for sampling only. Check that prompt + Y fits `max_length`, because `sft_lora` d
 3. Spot-checks: DR-AUT-001 (`then: ask` mapped to hold), DR-INT-301-r1, DR-AGT-201; and the three example pairs
    from the 2f run (box applies the advice: reject P-1217d16660; keep P-7b3fe9966f as a paraphrase-realized flip).
 4. Legal opinions as a training domain (R26); a stronger SFT writer (R23/R48); the equities list per deployment.
-5. **Thin cards and flips (§9.3):** thin applies only to non-flip pairs (default). The alternative: on a thin card, a
-   flip pair's gold becomes `distinguished` with no `via`.
+5. *(Resolved, Peter 2026-10-27.)* **Thin cards and flips (§9.3):** v1 applies thin cards only to non-flip pairs.
+   Right after the first run (T2), add a small **eval-only thin-flip set**: flip pairs served thin, gold relation
+   `distinguished` with no `via`, so the model must see from the weighing alone that the change matters. This is the
+   direct lookup-vs-reasoning measure (R1).
 6. *(Resolved, Peter 2026-10-27: the served card strips `move`, `irreversible` and `to:`; split by decision with a held-out domain, §13.5, agreed.)*
 7. **H4 at C\* = T:** Peter's words are that the harness does *better* than the fine-tune there; at minimum it matches.
