@@ -94,8 +94,8 @@ Authorship rule (training data only from allowlisted open-weight models); revise
   in this file (§E, §F) and the Checkpoint 2 code used "augmented" for the **revised card** (C′, judgment edited);
   that arm is now named `revised` and is an addition to the PDF's grid, not its augmented arm.
 - **Served card options:** the PDF card (p. 14) shows `move`, `irreversible` and `to:` on options. v2.4.1 strips all
-  three from the served card (shortcut cues: R52; `to:` reveals a hand-up option) and keeps them backend. Peter to
-  confirm.
+  three from the served card (shortcut cues: R52; `to:` reveals a hand-up option) and keeps them backend. **Peter
+  confirmed, 2026-10-27.**
 - **Thin cards** (flip conditions, lesson and limits withheld) are an ablation the PDF doesn't have; they apply only to
   pairs whose gold relation isn't `flips`.
 - **Decoys:** the PDF's "decoy case" is kept; v2.4.1 defines it by equity non-overlap, not by domain.

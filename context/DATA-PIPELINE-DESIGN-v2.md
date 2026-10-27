@@ -170,7 +170,7 @@ When extraction can't complete a scenario, nothing is thrown away:
     disposition as an `act` option too (grant vs deny; disclose vs withhold).
   - **`to:`** (a hand-up target) is also stripped from the served card, since it reveals a hand-up option. The PDF
     card (p. 14) carries `move`, `irreversible` and `to:`, so this departure is recorded in the reconciliation file
-    (Peter to confirm).
+    (**Peter confirmed, 2026-10-27**).
 
 ### 5.2 A (2b)
 
@@ -623,6 +623,5 @@ for sampling only. Check that prompt + Y fits `max_length`, because `sft_lora` d
 4. Legal opinions as a training domain (R26); a stronger SFT writer (R23/R48); the equities list per deployment.
 5. **Thin cards and flips (§9.3):** thin applies only to non-flip pairs (default). The alternative: on a thin card, a
    flip pair's gold becomes `distinguished` with no `via`.
-6. **Stripping `to:` and `move`/`irreversible` from the served card** departs from the PDF card (p. 14). This is
-   recorded in the reconciliation file.
+6. *(Resolved, Peter 2026-10-27: the served card strips `move`, `irreversible` and `to:`; split by decision with a held-out domain, §13.5, agreed.)*
 7. **H4 at C\* = T:** Peter's words are that the harness does *better* than the fine-tune there; at minimum it matches.
