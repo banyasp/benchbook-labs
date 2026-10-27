@@ -18,3 +18,7 @@ Order is priority. Keep every version (`docs/versions/`) before large edits.*
 5. **Fallback router and natsec sources** (design v2.4 §4.2): route false-positive refusals of in-scope decision content
    to another provider; then add use-of-force / intelligence-oversight decision sources tagged by `refusal_sensitivity`.
    (Router is T2 in v1; listed here so the natsec domain expansion isn't forgotten.)
+
+**Parked (not scheduled):** a thin-flip set: flip pairs served with a thin card (no flip conditions), gold
+`distinguished` with no `via`, as a direct lookup-vs-reasoning measure (R1). Peter chose thin cards on non-flip pairs
+only (2026-10-27); revisit if the full-vs-thin gap on non-flip pairs suggests lookup matters.

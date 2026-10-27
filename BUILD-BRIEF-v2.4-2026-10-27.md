@@ -342,7 +342,6 @@ close behind), cut in this order:
 - skeleton + world kit, with conditions-driven fact selection;
 - trap, a fortiori, remove/revise fact, Q operators, near-miss decoys;
 - add_fact-derived augmented pairs;
-- an eval-only thin-flip set (flip pairs served thin; gold `distinguished`, no `via`; design §16.5);
 - the fallback router;
 - A/B render test, salience probe, single-hop check, grounding judge, two-solver agreement, twin-contrast filter, Horty
   checker;
