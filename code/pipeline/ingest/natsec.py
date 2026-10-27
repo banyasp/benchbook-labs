@@ -3,6 +3,10 @@ v2 option rules.
 
     PYTHONPATH=code .venv/bin/python -m pipeline.ingest.natsec acquire     # fetch the seed, record blocks
     PYTHONPATH=code .venv/bin/python -m pipeline.ingest.natsec status
+    PYTHONPATH=code .venv/bin/python -m pipeline.ingest.natsec ingest-manual   # files Peter downloaded by hand
+
+Blocked sources: run fetch-blocked-natsec.sh on a laptop, copy its output into data/raw/manual/ (with manifest.tsv),
+then ingest-manual stores each listed file in the raw store and moves the source from blocked to acquired.
 
 Seed: sources-natsec.seed.yaml. Same polite fetcher as pipeline.ingest.acquire (descriptive User-Agent, delay,
 immutable raw store). A non-200 is recorded, never worked around (no UA spoofing, no alternative routes beyond the
@@ -91,6 +95,40 @@ def write_blocked(acq: dict):
     BLOCKED.write_text("\n".join(lines) + "\n")
 
 
+MANUAL = DATA / "raw" / "manual"
+
+
+def ingest_manual() -> dict:
+    """Register hand-downloaded files listed in data/raw/manual/manifest.tsv (source_id, url, file)."""
+    from .acquire import store_raw
+    seed = {s["id"]: s for s in yaml.safe_load(SEED.read_text())["sources"]}
+    d = yaml.safe_load(SEED.read_text()).get("defaults", {})
+    acq = yaml.safe_load(ACQ.read_text()) if ACQ.exists() else {"sources": {}, "blocked": {}}
+    rows = [ln.split("\t") for ln in (MANUAL / "manifest.tsv").read_text().splitlines()[1:] if ln.strip()]
+    for sid, url, fname in rows:
+        if sid not in seed:
+            print(f"skip    {fname}: unknown source id {sid}")
+            continue
+        f = MANUAL / fname
+        if not f.exists():
+            print(f"missing {fname}")
+            continue
+        sha = store_raw(f.read_bytes(), {"url": url, "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                        time.gmtime(f.stat().st_mtime)), "acquired_by": "manual download (Peter)",
+                        "manual_file": fname})
+        s = seed[sid]
+        rec = acq["sources"].setdefault(sid, {**{k: d[k] for k in ("split", "held_out_domain",
+                                        "refusal_sensitivity", "license")}, **s, "files": [],
+                                        "tags": (["ocr"] if s.get("ocr") else []) + ["manual"]})
+        if not any(x["sha256"] == sha for x in rec["files"]):
+            rec["files"].append({"url": url, "sha256": sha})
+        acq["blocked"].pop(sid, None)
+        print(f"stored  {sid}: {fname} -> raw/{sha[:12]}")
+    write_yaml(ACQ, acq)
+    write_blocked(acq)
+    return acq
+
+
 def status():
     acq = yaml.safe_load(ACQ.read_text()) if ACQ.exists() else {"sources": {}, "blocked": {}}
     fams = sorted({s["family"] for s in acq["sources"].values()})
@@ -104,9 +142,9 @@ def status():
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["acquire", "status"])
+    ap.add_argument("cmd", choices=["acquire", "status", "ingest-manual"])
     a = ap.parse_args(argv)
-    acquire() if a.cmd == "acquire" else status()
+    {"acquire": acquire, "status": status, "ingest-manual": ingest_manual}[a.cmd]()
     return 0
 
 
