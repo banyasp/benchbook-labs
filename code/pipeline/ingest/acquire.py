@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pipeline.store import DATA
 
-USER_AGENT = "benchbook-labs-research/0.1 (peterbanyas@outlook.com; academic research on public-domain decisions)"
+USER_AGENT = "benchbook-labs-research/0.1 (academic research on public decision records)"
 RAW = DATA / "raw"
 
 
