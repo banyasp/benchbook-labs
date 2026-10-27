@@ -1,5 +1,7 @@
 # Build brief — 2f data pipeline, critical path (2026-10-25, tonight)
 
+> **SUPERSEDED (2026-10-27) by `BUILD-BRIEF-v2.4-2026-10-27.md` and design v2.4.** Kept for the record.
+
 *The work order for the EC2 session. Written in Peter's claude.ai session from everything decided today.
 Read first: `CLAUDE.md` → `DECISIONS-2026-10-25.md` → `context/DATA-PIPELINE-DESIGN-v2.md` (v2.2; §1–4b, §10)
 → `docs/RISK-REGISTER.md`. Where this brief and older files differ, this brief wins. 2f is no longer on hold:

@@ -1,240 +1,540 @@
-# Benchbook data pipeline — design v2.3 (draft for Peter's review, 2026-10-25)
+# Benchbook data pipeline — design v2.4 (2026-10-27)
 
-*v2.3: SFT targets come from rejection sampling the base model (Peter's ruling, evening of 2026-10-25); §4b and §10 updated.*
+*Status: **approved design.** Built from Peter's step-by-step walkthrough of the pipeline (2026-10-26/27) and his
+answers of 2026-10-27. It supersedes v2.3 (kept at `context/versions/DATA-PIPELINE-DESIGN-v2.3-before-walkthrough.md`).
+Ground truth for formats is the Research Plan v0.4 PDF; where this file and the PDF disagree, the PDF wins, and
+the known differences are in `context/PDF-RECONCILIATION-2026-10-25.md`. Hypotheses: `docs/HYPOTHESES.md`. Risks:
+`docs/RISK-REGISTER.md`. v2 items: `docs/V2-PRIORITIES.md`. Tomorrow's work order: `BUILD-BRIEF-v2.4-2026-10-27.md`.
+Diagram: `docs/pipeline-system-flow.v4.html`.*
 
-*v2.2 adds §4b (where the analogical reasoning in SFT targets comes from — under discussion) and requires
-`perturb` to emit the gold mapping. Earlier versions are in `context/versions/`.*
+**How to read the labels.** Each rule says where its data lives:
+- **[backend]**: stored in the pipeline, never shown to any policy model;
+- **[served]**: in the policy's prompt (trace, equities, card);
+- **[trained]**: in an SFT target or the RLVR gold.
 
-*v2.1 adds §4a (getting beyond lookup) and §10 (tonight's critical path vs deferred work). v2.0 is in
-`context/versions/`. Risks and assumptions are logged in `docs/RISK-REGISTER.md` (ids R*/A*/I* below).*
+Each rule also has a build tier:
+- **T1**: build tomorrow, before the 150+ pair batch;
+- **T2**: build after the first training run;
+- **v2**: later (`docs/V2-PRIORITIES.md`).
 
-*Supersedes v1 (`DATA-PIPELINE-DESIGN-v1.md`, kept). Built from Peter's whiteboards of 2026-10-25 ("Data
-Operators"; trace / case / answer decomposition) and the discussion around them. Ground truth for formats is the
-Research Plan v0.4 PDF. Nothing here is built until Peter approves it; then it becomes workstream 2f.*
+A rule Peter didn't explicitly set is marked **(default; Peter may override)**.
 
-## 1. The thesis, stated as the data problem
+## What changed from v2.3
 
-A values oracle **O** (the practitioner at the edge: the deployer's SME) answers scenarios. The human has paid for
-O on a case C, giving A_C, but not on the live scenario T. The policy π must produce
-**verdict(π(T, C)) = verdict(O(T))**. Its reasoning may differ from O's, because it sees T through C; its verdict
-should not. Training teaches the generalization from A_C to A_T.
+- **SFT writer.** SFT targets come from **rejection sampling Granite** (no gold in the prompt). The gold-informed
+  teacher the box built becomes an alternative writer, kept for the forgetting comparison (R48). §10.
+- **Arms.** There are now six: `relevant`, **`augmented`** (the PDF's: the case's facts altered so its conclusion flips,
+  built by reversing flip pairs), **`revised`** (C′: the case's judgment edited), `decoy`, `none`, and `self` (the d = 0
+  anchor). **Both `augmented` and `revised` are in training and eval** (Peter, 2026-10-27). The near-neighbor arm
+  moves to v2. §7.
+- **Options are plain-text courses of action, not tools.**
+  - They carry no justification, are matched in form and are discoverable in the trace.
+  - Each option's discovery channel is recorded and balanced. Recommendations in traces are sometimes wrong.
+  - The policy's options are aligned to gold by Jev Choice. An answer that matches no gold option is scored **off-menu**.
+  - §5.1, §8, §12.
+- **Episodes.** Episode criteria are pass/fail, and rejects are kept with their reason. Every scenario carries a `content_domain` tag and a
+  `refusal_sensitivity` flag. A fallback router handles false-positive refusals only. Incomplete
+  extractions go to their own store. §4.
+- **Skeleton and conditions.** The skeleton gains `question_type`, a `decisive` list and `decisive_mode`. **Conditions are
+  backend-only:** they choose which facts perturb changes, and are never served or trained on. §5.3, §6.2.
+- **Flip realization.** It is a tunable mix (`indirect_share`), replacing "never paraphrase". **The R49 render rule:** every relevant fact is
+  readable in one hop. §6.3, §8.3.
+- **Mapping terms.** "Buckets" is the term for both fact and consideration mappings. "Counterpart" is defined separately. §6.4.
+- **Gold tier.** It is defined and used for reporting, review and filtering. §9.2.
+- **Thin cards.** Lesson and limits stay on the full card and are withheld, together with the flip conditions, on the
+  thin card. §5.2, §9.3.
+- **Proxy objective.** The model should faithfully extend the case (R\*), not out-guess the oracle. §1.
+- **Natural pairs** move to v2 as the top priority. §7.6.
 
-The data pipeline exists to manufacture (C, T, gold) triples where the gold is O's answer to T, obtained without
-asking the policy's own kind of solver to invent it.
+## 1. The thesis as a data problem
 
-**Assumption to record:** for a pair, A_C and A_T come from the same oracle (one value system). Pairs across value
-systems are the later pluralism experiment, not training data.
+A values oracle **O** (the deployer's practitioner) answers scenarios. The human has paid for O on case C, giving A_C,
+but not on the live scenario T. The policy π reads T through C, and its verdict should match **R\*_C(T)**: the
+faithful extension of C's own reasoning to T.
+
+**Peter's ruling (2026-10-26).** The model should faithfully carry out the reasoning shown in the case. It should not
+try to guess the oracle beyond what the case supports. Where faithful extension and O(T) disagree, that is a
+**library gap** (add or rewrite a case), not a training target. Corollary for case authors: state priorities and how
+sensitive they are ("would weigh heavily against…"), not rigid if-then rules.
+
+The pipeline manufactures (C, T, gold) triples. The gold is either R\*_C(T) by construction, or O(T) from a source or
+an independent solve that never sees C. It never comes from a solver that has seen C. **v1 serves one case per
+trace** (sets of cases are v2).
+
+**Assumption A1:** within a pair, A_C and A_T come from one value system. Pairs across value systems are the
+later pluralism experiment.
 
 ## 2. Notation
 
-- **R**: the raw corpus (immutable sources, addressed by span ids).
-- **Scenario X = (F_X, Q_X, A_X)** — the role-agnostic unit:
-  - **F**: atomic facts (id, kind, status, text, span refs or `authored`).
-  - **Q**: the question frame: the question, the decider and the agent's role/authority, and the options (each with
-    an abstract move type and irreversibility).
-  - **A**: the answer: considerations (facts → equity → favors → weight → why), reasoning, verdict (choice, basis,
-    decisive), flip conditions (`would_change` with `then:`, `would_not_change`, `watch_for`), lesson, limits.
-- **Roles, not kinds:** a scenario served by the harness is a **case C** (rendered as a card); a scenario rendered as
-  agent context is a **trace T**. Any scenario can play either role.
-- **M_{C,T}**: the mapping between C and T (facts: matched / corresponding / live_only / case_only; options map;
-  considerations; applicability; relation; `via`).
-- **A_{T|C}**: T's answer as reasoned through C (the policy's output at runtime).
+| Symbol | Meaning |
+|---|---|
+| R | the raw corpus (immutable sources, addressed by span ids) |
+| X = (F, Q, A) | a **scenario**, role-agnostic. F = atomic facts; Q = question frame (question, decider, agent role and authority, options); A = answer (considerations K, reasoning W, verdict V, flip conditions Φ, lesson, limits) |
+| C, T | **roles**, not kinds: a scenario served as a case (card), or rendered as a trace. Any scenario can play either role |
+| E, E_d | the equity registry (ids and glosses) and one deployment's injected subset |
+| skeleton | [backend] structural summary of X (§5.3) |
+| Δ | perturb's exact record of what it changed. For a derived pair, Δ *is* the gold mapping |
+| M^F, M^K | fact and consideration mappings between C and T (buckets plus counterparts, §6.4) |
+| τ, σ, α | the rendered trace, its span map, its allowed list (§8) |
+| G | the gold record for a pair, assembled by code only (§9) |
+| Y | an SFT target: the policy's full reply in the PDF step format (§10) |
+| d(C, T) | structural distance, computed from structured YAML to structured YAML, never from traces (§7.5) |
 
-## 3. The data operators
+## 3. The pipeline at a glance
 
-| Operator | Signature | What it does | Model | Gold status of what it produces |
+| # | Stage | Operator | Model | Output | Built? |
+|---|---|---|---|---|---|
+| 1a | acquire, normalize | — | code | `data/raw/<sha256>`, `data/docs/<sha12>.jsonl` | built |
+| 1b | find episodes | — | gpt-oss-120b (Bedrock) | candidate decision points, pass/fail, rejects with reasons | **T1 new** (today: hand-picked seed) |
+| 2a | extract F, Q | extract | gpt-oss-120b | facts with span refs; the frame; a matched option set | built; **T1 changes** |
+| 2b | extract A | extract | gpt-oss-120b | K, W, V (endorsed), Φ, lesson, limits, `basis` | built; **T1 changes** |
+| 2c | derive | derive | gpt-oss-120b | skeleton, world kit | **T2 new** |
+| 3a | perturb | perturb | code + gpt-oss-120b | X′ plus Δ | built (restyle, flip, add_fact); **T1 changes** |
+| 3b | A′ | (inside perturb) | by construction, or independent solve (gpt-oss-120b, high effort, never sees C) | X′'s answer and gold tier | built |
+| 3c | pair | pair | code (+ gpt-oss-120b for `revise_card`) | pair records, one per (C, T, arm) | built; **T1: arms, augmented, revised, self** |
+| 4 | render | render | gpt-oss-120b | τ, σ (facts + options), α | built; **T1 changes** |
+| 5a | assemble gold | — | code only | G | built; **T1 changes** |
+| 5b | harness prompt | — | code | prompt per arm × card view × AR prompt × equities | built; **T1 changes** |
+| 6 | SFT writer | solve | **Granite 4.2 8B** (vLLM), rejection sampling | accepted Y, tagged | **T1 rebuild** (today: teacher) |
+| 7 | project | project | code | SFT jsonl, RLVR jsonl, Inspect samples | built; **T1 changes** |
+
+## 4. Ingest (1a, 1b)
+
+### 4.1 Acquire and normalize (1a) — agreed, built
+
+- **Raw bytes** are the original downloaded file: immutable, named by content hash: `data/raw/<sha256>` with
+  `.meta.json` (URL, fetch time, license). Never edited.
+- **Normalize** writes `data/docs/<sha12>.jsonl`, one paragraph per line. Each paragraph has a span id
+  `src:<sha12>#p<page>.<para>`, plus an optional character range `[a:b]`. Span ids are stable on re-run.
+- Public material only. If a site blocks fetching, say so and use another source; never work around a block.
+
+### 4.2 Find episodes (1b) — T1
+
+gpt-oss-120b reads a normalized document and lists its candidate **decision points**. Several per document are
+allowed. Each candidate carries:
+- its span range;
+- the decision in one line;
+- the criteria results, **pass/fail** per criterion (no numeric score);
+- `content_domain` and `refusal_sensitivity`.
+
+**Episode criteria (all must pass):**
+1. A decider faces a real choice among at least 2 courses of action.
+2. The source states or clearly implies the chosen course.
+3. The source gives reasons.
+4. The decision is at the level of decision ethics, law or policy.
+
+**Rejects are kept** in `data/store/episodes/rejected.jsonl`, each with the criterion that failed.
+
+**Safety scope, tagging and the fallback router** (Peter, 2026-10-26):
+- **[backend] Tag, don't discard.** Every episode and scenario carries `content_domain` (e.g.
+  `security-clearance`, `gov-ethics`, `use-of-force-policy`, `intel-oversight`, `cyber-policy`) and
+  `refusal_sensitivity: low | medium | high`. Decision-level content about, for example, *whether* to employ force or
+  under what authority is in scope. Tag it `high`; do not drop it. **The goal is learning which equities to weigh and
+  why.** Generation stops at the decision and nothing is executed.
+- **Out of scope (unchanged, CLAUDE.md):** operational *technique*. That means how to employ a weapon, target,
+  intrude, collect, or communicate covertly. An episode whose decision can't be stated without technique fails
+  criterion 4. Strip technique details from facts; keep the decision.
+- **Fallback router.** It applies **only to false-positive refusals of in-scope decision content**. When a model refuses
+  a step on such content (Bedrock `stopReason` / content filter, or a refusal-shaped reply), re-send that step
+  once to a configured fallback provider and record both attempts in provenance. It is never used to get around a refusal of
+  out-of-scope content. Refusal detection and recording are T1; the router is T2, before natsec sources are added.
+
+### 4.3 Incomplete candidates — T1
+
+When extraction can't complete a scenario, nothing is thrown away:
+- Everything that was extracted is saved to `data/store/incomplete/<family>/<id>.yaml`, with
+  `missing: [<field paths>]` and the failure reason. Example: A failed, or F has fewer than 4 grounded facts.
+- Incomplete records are never paired, rendered or trained on until they are completed and pass the gates.
+
+## 5. extract (2a, 2b) and derive (2c)
+
+### 5.1 F and Q, with the option rules (2a)
+
+- **Facts** [served via render; trained as F_T]:
+  - each fact has `{id, kind, status, fact}` and cites span ids;
+  - unsourced facts are listed in `provenance.authored` (at most a third);
+  - people are named by office, never by personal name (T1: add a check; the v0 export leaked a judge's name).
+- **Options** (Peter, 2026-10-26) [served on the card; trained via `fact_enumeration.options` and the options map]:
+  - **Actions only. No justification, rationale or "because…" in the option text.**
+  - Each option is a **complete course of action** (what is done, by whom, to what end), not a fragment.
+  - **Matched set:** all options, the real one included, have similar length, grammatical form and specificity (R6, R33).
+  - **[backend] `move` and `irreversible` are tags, not option text.** Strip them from the served card (T1); they are
+    used for balance, stakes weighting and the hand-up cap.
+  - Order is shuffled with a seed; the gold position is balanced in `pair`.
+
+### 5.2 A (2b)
+
+- **Considerations K** belong to A [trained]: `{id, facts[], equity, favors[], weight: strong|weak|bar, why}`.
+  Equities are E ids. In the live reply, K_T is the gold for `consideration_enumeration` (this answers Peter's "within
+  F or A?": in the stored scenario it lives in A; in the reply it is enumerated after the fact mapping).
+- **Verdict** [trained]: `choice` (the endorsed option), `basis`, `decisive` (a **list** of consideration ids).
+- **Flip conditions Φ** [served on the full card]: `would_change {id, if, then, why}`, `would_not_change`,
+  `watch_for`. Use the source's stated counterfactuals where they exist; otherwise write them and tag them `authored`.
+- **Lesson and limits** [served on the full card]: kept. They are not the flip conditions. The lesson is the take-away
+  principle; the limits are its stated boundaries. Each carries provenance (`stated` vs `authored`). **Both are
+  withheld on the thin card** (§9.3).
+- No source-narration phrases in case prose ("The source emphasizes…"; R40).
+
+### 5.3 derive: skeleton and world kit (2c) — T2
+
+**[backend] skeleton** (Peter approved the format):
+```yaml
+skeleton:
+  question_type: <e.g. grant-or-deny | act-now-or-wait | disclose-or-withhold | delegate-or-decide>
+  tension: [<equity id>, <equity id>]          # the equities in conflict
+  decisive: [<consideration id>, ...]         # one or more
+  decisive_mode: each_necessary | cumulative  # backend only
+  conditions:                                 # hinges in the weighing; backend only (§6.2)
+    - {id, on: <consideration id>, hinge: <prose>, target_fact_state: <what F would have to say>}
+  move_structure: <shape of the option set, e.g. act / partial / hold>
+  authority_shape: <who may decide what>
+```
+- `each_necessary`: every decisive consideration is needed for the verdict.
+- `cumulative`: the decisive considerations decide together, by weight.
+
+**World kit** (for render, T2): actors, a timeline of when each fact becomes known and through which channel,
+artifacts with source quotes, and a noise pool drawn from R. Until T2, render uses the source paragraphs as
+texture, as built.
+
+## 6. perturb (3a, 3b)
+
+### 6.1 What perturb may change
+
+**perturb changes only F or Q, never the reasoning.** The case's decision process stays fixed. The answer
+follows from that rule:
+- **By construction** when the change realizes a flip the case states (`would_change` → its `then:`) or leaves the
+  answer untouched (restyle, trap, a fortiori). Tier `by-construction`.
+- **Otherwise by an independent solve** (gpt-oss-120b, high effort). The solver sees only F′, Q′ and E, **never C or A**.
+  Tier `model-solved`. Peter expects most unlisted changes to need it. `distinguished` labels come from here.
+
+### 6.2 Conditions are backend-only
+
+`skeleton.conditions` are **never served and never in SFT or RLVR targets**. They are used only to **choose which
+facts an operator changes**. Each condition becomes a *target fact state*, and the operator is parameterized with it
+("make F7 say the loss is unrecoverable"). Until the skeleton exists (T2):
+- `flip` parameterizes from `would_change` items, as built;
+- `add_fact` picks its mode at random, as built.
+
+### 6.3 Operators
+
+| Operator | Changes | A′ | Relation (C, X′) | Status |
 |---|---|---|---|---|
-| **extract** | R → F, Q;  then  R, F, Q → A | Build a scenario from source material. F and Q first, so A is conditioned on the facts as triaged. A takes the source's **endorsed** answer and stated reasons where they exist. | gpt-oss-120b (Bedrock) | F grounded (span refs); A's verdict `source-endorsed` if the source endorses it, else `model-solved` |
-| **perturb** | X, operator → X′ | Change F (or Q) by a named operator and update A to match. | code + gpt-oss-120b | A′ verdict `by-construction` when the operator realizes a flip condition; else `model-solved` (independent: never sees any case) |
-| **pair** | store → (C, T, intent) | Choose pairs with an intended relation and distance: derived pairs (T = perturb(C)), natural pairs (independent scenarios matched by structure), decoys, transfers, revised cards. Enforces balance. | code (+ structural index) | sets the pair's gold relation by construction where possible |
-| **render** | R, F_T, Q_T → T (+ span map) | Write the agent trace: deployment, timeline, tool results, noise from R. | gpt-oss-120b | — (checked by gates, §5) |
-| **solve** | C = (F_C, Q_C, A_C), F_T, Q_T → M_{C,T}, A_{T|C} | The dependent solver: the same function the policy performs at runtime. Used to **write the process** (mapping, considerations, reasoning) toward an **already-fixed gold verdict**, never to decide it. | **a strong teacher model, never the base model** (Peter, 2026-10-25; teacher TBD, a config setting) | process text; must agree with the gold verdict, relation and `via`, or the item is reviewed |
-| **project** | (C, T) pair record → card(C), T, SFT string, RLVR JSON | Deterministic views of one record. | code | — |
+| restyle | surface wording of F and Q | unchanged | follows | built. **T1:** reject numeric drift in decisive facts (R43) |
+| flip | applies one `would_change` item | its `then:` | flips, `via` = that item | built. **T1:** `indirect_share`; regularize X′'s Φ (R35) |
+| add fact | an unlisted new fact | independent solve | follows / distinguished | built |
+| trap | applies a `would_not_change` item | unchanged | follows | T2 |
+| a fortiori | strengthens the winning side | unchanged | follows | T2 |
+| remove / revise fact | drops a fact, or changes its magnitude | by construction if a stated flip threshold is crossed, else independent solve | follows / flips / distinguished | T2 |
+| option set, authority/role (Q) | reshapes options or decider | independent solve | often flips | T2 |
+| transfer | the skeleton in another domain | from the skeleton | follows / flips | v2 |
+| near-miss decoy | keeps surface facts, changes the equities | independent solve | not_governed | T2 |
+| **revise_card** | edits A (the weighing), never F or Q | the revised verdict | (C′, T): follows C′ | **T1 new** (§7.3) |
 
-**Where the gold verdict for T comes from (strictly in this order):**
-1. **By construction** — T = perturb(C or its source scenario) with a known effect: `follows` → C's choice through
-   the options map; `flips` via w → w's `then:`; revised card C′ → C′'s answer.
-2. **Source-endorsed** — T extracted from its own raw material, which states the endorsed answer.
-3. **Model-solved, independent** — an independent solve of T **without C** standing in for O; tagged, sampled for
-   Peter's review. This is where `distinguished` labels come from.
+**Flip realization: `indirect_share`** (Peter, 2026-10-26: allow "some paraphrase").
+- A tunable fraction of listed-item flips is realized **indirectly**: in other terms, through another channel, or
+  by placement (the built path: content-word recall ≤ 0.5, longest shared run ≤ 2 words, plus a model
+  verify). The rest are realized as a **paraphrase** of the `would_change` item.
+- **Default `indirect_share = 0.7` (default; Peter may override).**
+- Record `realization: indirect | paraphrase` in Δ.
+- Results are always reported per realization and per operator family, so lookup can't hide in the average (R1).
 
-`solve` (dependent) is never a gold source. Disagreement between `solve` and the gold is a review signal: a bad
-analogy, a case that shouldn't govern, or a bad anchor.
+**Flipped scenarios that will be served as cards** (the augmented arm, §7.2) must not look flipped (R35).
+- Keep X′'s `would_change` count equal to X's. Drop a vacuous item, then add a non-vacuous authored one.
+- Keep the touched consideration's weight distribution the same as untouched ones.
+- X′ must carry a **back-flip item** whose `then:` is X's choice (the box's re-pointing already does this; verify it).
 
-## 4. perturb: the operator set
+### 6.4 Δ: every operator emits the gold mapping
 
-Each operator declares what it changes, how A must change, and the resulting relation for the pair (C, X′).
+For a derived pair the operator knows exactly what it changed, so Δ contains:
+- for every C fact: its **bucket** and its **counterpart**;
+- the T facts it added (`live_only`);
+- the same for considerations, with `role`;
+- the options map;
+- applicability (`governs`), relation and `via`;
+- the touched condition or item;
+- `realization`;
+- the distance features.
 
-| Operator | Changes | A′ | Relation for (X, X′) |
-|---|---|---|---|
-| restyle | surface wording of F and Q | unchanged | follows |
-| trap | applies a `would_not_change` item | verdict unchanged | follows |
-| a fortiori | strengthens the winning side | verdict unchanged | follows |
-| flip | applies one `would_change` item | verdict = its `then:` | flips, `via` = that item |
-| add fact | a new fact (may implicate an equity) | independent re-solve | follows or distinguished (reviewed) |
-| remove fact | drops a fact | unchanged, or flip if the fact was dispositive (re-solve) | follows / flips / distinguished |
-| revise fact | changes a fact's value (magnitude) | by construction if it crosses a stated flip threshold, else re-solve | follows / flips |
-| option set (Q) | add / remove / reshape an option | re-solve; options map updated | by construction where the map is clear |
-| authority / role (Q) | changes the decider or the agent's role | re-solve | often flips; reviewed |
-| transfer | re-instantiates X's skeleton in another domain (new F, same equities in tension) | by construction from the skeleton: preserved → same move; flip analog → its move | follows / flips (Peter checks faithfulness yes/no) |
-| near-miss decoy | keeps most surface facts, changes the equities at stake | independent re-solve | not_governed |
-| revise card | edits A (the weighing), not F or Q | the revised verdict | (T, C′): follows C′ |
+- **Bucket** = *which category* an item falls in: `matched` (same in both), `corresponding` (a counterpart with a
+  different value or wording), `live_only`, `case_only`. "Buckets" is the term for both facts and considerations;
+  "handling" is retired.
+- **Counterpart** = *which specific item* on the other side it pairs with. Only `matched` and `corresponding` have one.
 
-The **distance** of a pair is a function of the operators applied (axis, number of facts touched, magnitude) for
-derived pairs, and of the structural signature distance for natural pairs. Store the features; weights are Peter's.
+## 7. pair (3c): intents, arms, balance, distance
 
-**Every operator must emit the gold mapping.** For a derived pair the operator knows exactly what it changed, so
-it writes the gold M_{C,T} directly: each case fact's bucket (matched / corresponding / case_only) and its live
-counterpart, the live-only facts it added, each case consideration's handling (matched / corresponding / case_only)
-and any new consideration, the options map, applicability, relation and `via`, plus *which condition in the case's
-weighing the change touches*. This record is the backbone of the SFT target and the RLVR answer key.
+### 7.1 Pair records
 
-## 4a. Getting beyond lookup (Peter, 2026-10-25; risk R1)
+One record per (served case, trace, arm). Its fields:
+- `intent` (what the pair is built to exhibit: restyle / flip / add_fact / augmented / revised / decoy / self);
+- `arm`;
+- lineage, options map, split, gold tier, `card_view` (§9.3);
+- the G fields (§9).
 
-By-construction flips and traps come straight from the card's own `would_change` / `would_not_change` lists, so
-on their own they teach a lookup ("is a listed item present?"), not reasoning from the weighing. Rules:
-- **Listed-item variants are a minority** of training pairs, and are realized **indirectly**: the changed fact is
-  stated in different terms, in another channel, as a magnitude that crosses a threshold the weighing implies, or
-  in another domain — never as a paraphrase of the list item.
-- **Unlisted changes** (add / remove / revise a fact the card never mentions) are labeled by an **independent
-  solve** (strongest allowlisted model, high reasoning effort, never sees C) and tagged `model-solved`. These are
-  the pairs that exercise the weighing and produce `distinguished`.
-- **Natural pairs and transfers** (independent scenarios matched by structure; source-endorsed or skeleton-built
-  gold) carry the real test (I2).
-- **Thin cards:** a share of training serves the card with flip conditions withheld, so the model must reason from
-  the weighing; the same ablation at eval measures how much accuracy came from the lists.
-- Results are always reported **per variant family**, so lookup performance can't hide in the average.
+**One rendered trace may be paired with several cases**, one served at a time. That is how the augmented, revised,
+decoy and self arms reuse traces at no render cost.
 
-## 4b. Where the analogical reasoning in SFT targets comes from (UNDER DISCUSSION — Peter + Claude)
+### 7.2 Arms (Peter, 2026-10-27: augmented and revised in both training and eval)
 
-The analogical reasoning in an SFT target is conditional on a *pair*, so it exists in neither scenario on its own.
-It has two parts:
-1. **Structure** — the mappings, applicability, relation, `via`, verdict. **Gold without human writing**: from the
-   operator's record (derived pairs), from formal precedential-constraint logic (Horty; a fortiori), or from the
-   source (natural pairs).
-2. **Verbalization** — `case_approach`, `weighing`, the `why`s: why a correspondence holds, why a difference
-   matters. A **teacher model writes it, given the full gold structure**, so it explains a known derivation rather
-   than discovering one.
+| Arm | Served case | Trace | Gold | Tier | Train | Eval |
+|---|---|---|---|---|---|---|
+| `relevant` | C (source scenario X) | T = perturb(X) | from Δ | per operator | yes | yes |
+| `augmented` (PDF) | **X′ = flip(X), or add_fact(X) when its verdict changed** | X's own trace | O(X), X's endorsed choice; relation `flips` via X′'s back-flip item (by construction); mapping = Δ inverted | X's tier (`source-endorsed` for extracted X) | yes | yes |
+| `revised` | C′ = revise_card(C) | C's own trace, or a restyle of C | C′'s choice through the options map; relation `follows` | by-construction (`revised-authored` tag) | yes | yes |
+| `decoy` | an unrelated scenario (different family, preferably a different domain) | any trace | T's own answer; `not_governed` | T's tier | yes | yes |
+| `none` | no card | any trace | T's own answer | T's tier | no | yes |
+| `self` | card(X) | X's own trace | X's answer; all matched; d = 0 | X's tier | no | yes (anchor for H4 at C\* = T; ceiling) |
+| `near_neighbor` | a retrieved, non-optimal case | — | — | — | — | **v2** (needs the structural index) |
 
-Candidate sources and checks, best first (none beyond the first two items of the build list are built yet):
-- **Legal opinions** as human-written analogical reasoning (courts following / distinguishing precedent; DOHA
-  Appeal Board decisions citing earlier ones; AI-and-law resources: CATO factors, Horty's model, CaseHOLD). Possible
-  separately tagged training domain and a structure-vs-content transfer test. *Peter to rule.*
-- **Formal a fortiori gold** (Horty / `solver_v2`): C binds T when T has every pro-winner factor C had and no new
-  pro-loser factor — comparative reasoning over factor sets, checkable by code (answers R1).
-- **Twin-contrast filter:** for minimal-pair twins (T follows, T′ flips, one fact apart), keep teacher traces only
-  if the verdict/relation/`via`/mapping match gold, the decisive consideration cited is the one the change touched,
-  and the twins' traces diverge exactly there.
-- **Structure-mapping rubric** (Gentner): good analogies map connected relations (the case's conditions, e.g.
-  "only help in time", "loss recoverable"), not isolated surface facts. In the teacher prompt and as a filter.
-- **Peter's pairwise picks** in the Review Desk on a sample (choosing is fast; writing isn't).
-- SFT is the warm start; RL against gold structure sharpens the skill, so SFT targets need to be well formed and
-  plausible, not perfect.
+- **Augmented** is the PDF's "exemplar case with case facts deliberately altered so that the conclusion should flip".
+  The trace-side flip (the PDF's "other direction") is the `relevant` flip pair. One flip gives both directions.
+- **C\* in v1.** For by-construction derived pairs, the source case C attains the gold. So C is the C\* estimate, and
+  `relevant` measures AR_C\*(T). The cost of a worse case is measured at its extreme by `decoy` now, and by
+  `near_neighbor` in v2.
 
-**Ruled (Peter, evening of 2026-10-25): SFT is a warm start, so targets come from rejection sampling the base
-model.** Peter's assumption: existing models are weak at analogical reasoning, and RLVR (which scores only
-structure, never prose) does most of the teaching; SFT only has to teach the format and a plain discussion of the
-considerations and their weighing. So Granite generates replies with two worked examples in the prompt and no gold
-answer; samples are kept only if they match gold structure (verdict, relation, `via`, applicability, mapping
-buckets). Pairs Granite never solves get one rationalization pass with the verdict as a hint, tagged. The teacher
-and the sources above (legal opinions, Horty, twin contrast, rubric) remain options for later, not the critical
-path.
+### 7.3 `revise_card` (new, T1)
 
-## 5. render, and its gates
+Code picks a target choice ≠ C's choice. The pick is balanced by move, and hand-ups count toward the cap. gpt-oss-120b
+then writes A′ for C:
+- it re-weights or re-prioritizes considerations, or adds one deployer-policy consideration stated as the revision
+  ("the deployer now weighs X above Y");
+- it updates the reasoning, the verdict and Φ;
+- **F and Q are unchanged.**
 
-**Output:** the trace T plus a **span map**: for every fact in F_T, where it appears in T (message index, character
-range) and how it is realized (`stated` / `paraphrased` / `implied` / `split`). Also a list of the true-but-not-in-F_T
-details the renderer added (the **allowed list**) and any planted look-alikes.
+Gate: schema-valid; verdict = target; Δ_K lists every consideration whose weight or favors changed.
 
-**Design rules:** facts spread across channels (operator messages, tool results, documents); varied explicitness;
-decisive facts 10–25% of words, never highlighted or last; noise drawn from R where possible; salient and
-non-salient content written in the **same register** (salient facts sometimes inside messy tool output; vivid,
-important-sounding details that don't matter).
+Gold for (C′, T):
+- M^F as in (C, T);
+- K_T = C′'s considerations carried onto T's facts;
+- choice = C′'s choice through the options map.
 
-**Gates (a trace that fails is re-rendered, not kept):**
-1. **Coverage:** every fact in F_T is locatable via the span map; decisive facts are not merely `implied` unless
-   the operator intends it.
-2. **A/B test with a reference solver** (a strong model, not the policy): solve from (T, C) and from (F_T, Q_T, C).
-   Different verdicts → the render lost information (Peter's cause 1) → re-render. If the reference solver gets it
-   and the policy later doesn't, that's the policy's extraction weakness (cause 2), the training signal.
-3. **Salience probe:** a cheap classifier on surface features only (sentence length, position, register, message
-   type, formatting) predicting which sentences carry F_T facts, trained per batch. Accuracy well above chance →
-   style is leaking salience → re-render that batch with style-matching.
-4. Leak scan (no option labels, no gold, no case text in the trace); word bounds.
+**(C, T) and (C′, T) share one trace and form a minimal pair:** the model must follow the card, not its prior. Report
+the pair-level "follows both" rate (H4 axis 2, online edits). C′ judgments are stipulated, not an oracle's, so tag them
+and report them separately (R54).
 
-## 6. The answer record and its projections
+### 7.4 Balance
 
-One **pair record** per (C, T): pair intent and relation, gold verdict and its source tier, M_{C,T}, gold F_T with
-weights (facts behind decisive considerations ×2), the allowed list, Q_T gold (question, decider, role, options
-with hidden ids), `via`, the solve output (process) and its agreement flags, provenance.
+- **Hand-up cap: ≤ 1/3 hand-up golds (`ask`, `refuse`) per arm** (default; Peter may override). It was per intent; T1
+  makes it per arm, and per intent within an arm. The default stance is autonomy (R7).
+- Gold option position is uniform per (arm, number of options).
+- Recommendation-is-gold rate ≈ 50% per arm (§8.2).
 
-- **SFT string** = the PDF's generated steps, `kind:` documents (or inside `<think>`, per the mode Checkpoint 2
-  selects), live ids numbered in trace order from the span map.
-- **RLVR JSON** = the same record without reasoning and applicability-why; keeps `governs`, relation, `via`.
-- **Scoring F_T** is precision/recall, not exact match: the model's enumeration is legitimately case-conditioned.
-  Recall against gold F_T (weighted); precision penalizes only facts absent from the trace (hallucinations) at full
-  weight, and padding lightly; allowed-list items are neutral.
+### 7.5 Distance d(C, T) — computed, not served
 
-## 7. extract in detail (the ingestion half)
+From G, structured YAML to structured YAML. Weights are Peter's; this is the default formula until he sets them:
+- d = 1 − Σ w·s / Σ w, over the union of fact and consideration items;
+- s = 1 for `matched`, 0.5 for `corresponding`, 0 for `live_only` or `case_only`;
+- w = 2 for items behind decisive considerations, else 1;
+- add 0.1 per frame field (question, decider, role) that is not `same`, and cap d at 1.
 
-Stages, each with an artifact and a gate:
+Under this formula, restyle and self come out at about 0, and decoys at about 1. Store the raw features with it, so any
+other weighting can be recomputed.
 
-| Stage | Artifact | Gate |
+### 7.6 Natural pairs — v2, top priority
+
+These pair independently sourced scenarios matched by structure. They have no Δ, so they need a model mapping step
+with verification, plus the structural index. They carry the source-endorsed O(T). See `docs/V2-PRIORITIES.md` #1.
+The H3 pilot (§13.4) uses a few natural pairs now, scoring verdicts only.
+
+## 8. render (4)
+
+### 8.1 Output
+
+- The trace τ, in `examples-v21/templates/TRACE-FORMAT.md` form, ending at the decision point with the harness
+  injection.
+- The span map σ, with two parts:
+  - `facts`: for each fact, `{fact, message, start, end, realization: stated | paraphrased | implied | split}`;
+  - **`options`**: for each option, `{option, message, start, end, channel}`.
+- The allowed list α: true details not in F_T. α items are neutral in scoring.
+
+### 8.2 Options are text, not tools; discoverability
+
+Peter's rulings, 2026-10-26:
+- **Options are not tool definitions.** The policy enumerates them as plain-text courses of action in
+  `fact_enumeration.options`. Jev Choice aligns them to the hidden gold option ids.
+- **Every option must be discoverable in the trace, and never as a menu.** It can appear in:
+  - the agent's scope or authority stated in the system prompt;
+  - operator or colleague messages;
+  - tool results;
+  - attached documents.
+
+  Options and recommendations are buried in the trace. No numbered list of all options appears anywhere.
+- **[backend] Discovery channel per option.** Code assigns each option a channel before rendering. The channel
+  distribution is balanced so that the gold option's channel doesn't predict it (R51). Render records it in σ.
+- **Recommendations are sometimes wrong.** In a share of traces (default 50%), someone recommends an option. The
+  recommended option is the gold one in about half of those; otherwise it is the `tempting_wrong` option. Record
+  `recommended_option` on the pair (R50).
+
+### 8.3 Render rules
+
+- **R49, v1 rule (severe limitation).** Every decision-relevant fact is readable from the trace with **at most a
+  single-hop reading**: no arithmetic and no multi-step combination. Indirectness comes only from wording, channel or
+  placement, never from computation. The fix (token space for derived facts) is v2 #2.
+- Facts are spread across channels. Decisive facts are 10–25% of words and are never highlighted or placed last.
+- Salient and non-salient content use the same register. Noise comes from R where possible. No verbatim runs of 8+ words
+  from F.
+
+### 8.4 Gates
+
+Diagnostics already logged (coverage, leak words, verbatim runs, decisive share). **T1 makes three of them gates:**
+1. every decisive fact and every option is located in σ;
+2. leak scan: no option ids, labels, gold or case text, and no menu;
+3. no person names.
+
+Deferred (T2): A/B render test (R3), salience probe (R4), single-hop check on decisive facts (R49).
+
+## 9. Gold and the harness prompt (5a, 5b)
+
+### 9.1 G is assembled by code only
+
+G =
+- F_T with weights (facts behind decisive considerations ×2), from T's F, σ and the decisive links;
+- α;
+- Q_T with hidden option ids;
+- M^F, K_T, M^K, from Δ (inverted for `augmented`; with C′'s K for `revised`; all matched for `self`;
+  all unmatched for `decoy`);
+- `governs`, relation, `via`, V_T;
+- the gold tier;
+- `recommended_option` and the option channels;
+- d and its features.
+
+No model writes any part of G. A model writes only Y, and Y is kept only if its structure matches G.
+
+### 9.2 Gold tier [backend]
+
+`gold_tier ∈ {by-construction, source-endorsed, model-solved}` records where the gold verdict came from.
+- `by-construction`: a stated flip, an untouched restyle, or a revised card. It measures **R\*_C(T)**. (An augmented reversal keeps X's own tier, because its verdict is X's answer.)
+- `source-endorsed`: the source states the answer. It measures **O(T)**.
+- `model-solved`: an independent solve that never saw C. It **estimates O(T)**.
+
+Uses:
+- accuracy is always reported per tier;
+- Peter's sampled review goes mostly to `model-solved`;
+- training can be filtered or weighted by tier;
+- on pairs with both labels, O-vs-R\* disagreement estimates A-O2.
+
+The tier is separate from the SFT-sample tag `rationalized`. The tier is about the answer; the tag is about the training text.
+Pilot imports are Claude-drafted cases; tag them `eval-only-import` and report them apart (R42).
+
+### 9.3 The harness prompt
+
+The prompt is τ + E_d + the served card for the arm + an optional analogical-reasoning prompt. One function builds it for
+eval, SFT and RL.
+
+**`card_view`:**
+- `full`: the PDF card;
+- `thin`: the flip conditions, lesson and limits are withheld, so the model must reason from the weighing (R1).
+
+**Default thin share: 30% of training prompts** (default; Peter may override). Eval runs both views on `relevant` and
+`augmented`. Served cards never carry `move` or `irreversible` tags, conditions, the skeleton, the gold tier or provenance.
+
+**Equities ablation (eval only):** E_d on/off × card none/relevant, run for the base and SFT models.
+
+## 10. The SFT writer (6): rejection sampling Granite
+
+Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher becomes an alternative writer.
+
+1. **Generate.** Granite 4.2 8B (the vLLM server) writes Y in the PDF step format (`kind:` documents; `via` in the
+   verdict) in **reasoning mode C** (structure inside `<think>`; the most accurate mode in Checkpoint 2, and C/C′ parse best;
+   default, Peter may override). The prompt contains the harness prompt plus **two worked examples**:
+   - the PDF journalist/raft transfer example (pp. 14–18);
+   - a same-domain flip (v6 example converted to PDF names).
+
+   **No gold in the prompt.** N = 8 per (pair, arm, card view).
+2. **Filter** against G with the 2d scorers. Live fact ids are the model's own, so align them first (greedy, plus
+   Jev Choice where text differs). Keep a sample only if:
+   - **exact:** the choice (after option alignment), relation, `via` and `governs` match;
+   - **thresholded:** mapping buckets agree on ≥ 0.7 of aligned items (default; Peter may override), and every decisive
+     fact and consideration is in the right bucket.
+
+   Log every sample's sub-scores, so the threshold can be moved without re-sampling.
+3. **Rationalize.** Pairs with zero accepted samples get one pass with the gold verdict and relation as a hint,
+   filtered the same way and tagged `rationalized`. **Tomorrow's first SFT run includes them, tagged** (default
+   for speed); the without-rationalized run is the first ablation.
+4. **Log** acceptance per arm, intent, family, tier and card view (R27, R45). Pick one accepted sample per item, at
+   random among those with the best sub-score.
+5. **Alternative writer** (R48 two-writer comparison): the built teacher (gpt-oss-120b, sees gold), tagged
+   `writer: teacher`. Not in the default export.
+
+**Not governed:** for `decoy`, Y ends at `applicability: governs: false` followed by a verdict. Nothing after
+`not_governed` is scored, so the filter checks only `governs` and relation for decoys.
+
+## 11. project (7)
+
+- **SFT:** prompt (masked) + Y. Loss only on Y. Mode C split, as built. Meta: pair, arm, intent, relation, tier, writer,
+  card view, `rationalized`, d, realization, family, split.
+- **RLVR:** prompt + G as JSON, without reasoning prose or applicability-why. Keeps `governs`, relation and `via`.
+- **Eval (Inspect):** one sample per (pair, arm, card view, AR prompt, equities cell) + G.
+
+## 12. Scoring notes the data must support
+
+- The decision is scored from `verdict.choice` (tool calls are future work). Options are aligned by Jev Choice.
+- **Off-menu:** a choice that aligns to no gold option is wrong for choice accuracy and is also reported as its own rate.
+- Fact matching is greedy (PDF p. 21). F_T is scored for recall (weighted) and precision. Hallucinated facts count fully
+  and padding lightly; α items are neutral.
+- No `confidence`. After `not_governed`, nothing is scored. The reward function is Peter's; every scorer stays a
+  separate function.
+
+## 13. Evaluation design (v1)
+
+1. **Grid:** models {base, SFT} (SFT+RL when ready) × arms {none, relevant, augmented, revised, decoy, self} ×
+   AR prompt {on, off} × card view (on relevant and augmented), plus the equities cells.
+2. **Headline:** choice accuracy vs d(C, T), one curve per model, with 95% CIs. A second graph shows accuracy by arm.
+   Always break results down by intent, realization, tier and family. The held-out domain is a separate panel.
+3. **Baselines and controls:**
+   - copy-the-case's-verdict, split by intent (follows vs flips);
+   - always-hand-up;
+   - accuracy conditional on the gold option being enumerated (R29);
+   - revised minimal-pair "follows both" rate;
+   - decoy vs none (PDF falsifier 3);
+   - AR(T) via the `none` arm (falsifier 2).
+4. **H3 pilot (runs now, in parallel):** tests A-O2 before training.
+   - Take 15–30 DOE OHA decisions that cite an earlier OHA decision as controlling or analogous.
+   - Extract both decisions: C from the cited one, T from the citing one.
+   - Have a frontier stand-in on Bedrock (gpt-oss-120b, plus a second model family; require agreement) extend C
+     to T, and answer T without C.
+   - Report agreement with O(T), with and without C, by a coarse distance band (same issue and guideline vs
+     different).
+5. **Splits:**
+   - per family;
+   - **one whole source domain held out** for test (cross-domain);
+   - pilot imports eval-only.
+
+## 14. Storage and ids (as built)
+
+- **Store:**
+  - `data/raw/`, `data/docs/`;
+  - `data/store/registry/`;
+  - `data/store/episodes/` (T1);
+  - `data/store/incomplete/` (T1);
+  - `data/store/scenarios/<family>/<id>.yaml`;
+  - `data/store/partials/`;
+  - `data/store/pairs/<pair-id>/` (pair.yaml, trace.json, span map, solve samples).
+- **Exports:** `data/exports/<version>/{sft,rl,eval}`.
+- **Separate:** `data/cases/` and `data/scenarios/` belong to Checkpoint 2; leave them alone.
+- **Writes:** every write versions the old file.
+- **Ids:** global ids are stored. Served and rendered views renumber them (`REF1-…`, `LIVE-…`) with stored translation tables.
+- **Provenance:** every artifact records input hashes, operator, model id and prompt version.
+
+## 15. Defaults set in this version (Peter may override any)
+
+| Default | Value | Where |
 |---|---|---|
-| Registry | `registry/sources.yaml` (from `context/sources/source-catalog.csv`) | public; license recorded |
-| Acquire | `raw/<sha256>` + `.meta.json` (fetched from the EC2 box; manual drop where blocked) | hash recorded; immutable |
-| Normalize | `docs/<sha12>.jsonl`: text with span ids `src:<sha12>#p<page>.<para>[a:b]` | span ids stable on re-run |
-| Find episodes | `episodes/`: candidate decision points (several per document allowed), scored | in safety scope; score ≥ threshold; rejects kept with reason |
-| Extract F, Q | facts with span refs; the question frame as the source presents it (human decider) | grounding check: a judge confirms each span supports its fact |
-| Extract A | considerations, reasoning from the source's own stated reasons, the endorsed verdict and who endorsed it (`basis`), flip conditions only where the source states counterfactuals | verdict grounded; every authored field tagged |
-| Cast for an agent | agent role and authority, option set rewritten as a **matched set** (same length and specificity, real option included) | only when the decision's structure carries over; option-specificity baseline at chance |
-| Derive | `skeleton` (tension, decisive + conditions, move structure, authority shape) and `world` (actors, timeline of when each fact becomes known and through which channel, artifacts with source quotes) | schema-valid |
-| Review | Peter rules on sampled holdings and model-solved labels | `approved` |
+| `indirect_share` | 0.7 | §6.3 |
+| Hand-up cap | ≤ 1/3 per arm | §7.4 |
+| Distance formula | §7.5 | §7.5 |
+| Recommendation share / recommended-is-gold | 50% / 50% | §8.2 |
+| Thin-card share in training | 30% | §9.3 |
+| SFT reasoning mode | C | §10 |
+| Bucket-agreement threshold | 0.7, decisive items exact | §10 |
+| Rationalized samples in the first SFT run | included, tagged | §10 |
+| Off-menu | wrong + reported separately | §12 |
+| Revised pairs | trace = C's own or its restyle | §7.3 |
 
-Incidents covered by several sources are clustered into one **family**; splits are assigned per family (and one
-whole domain held out) at this point, before any perturbation.
+## 16. Open with Peter (non-blocking)
 
-## 8. Storage and ids
-
-As in v1 §5–6, renamed: `data/raw/`, `data/docs/`, `data/episodes/`, `data/scenarios/<family>/<X>.yaml` (each with
-`F`, `Q`, `A`, `skeleton`, `world`, `provenance`, `status`, `lineage`), `data/pairs/<pair-id>/` (pair record, trace,
-span map), `data/exports/<version>/{sft,rl,eval}`. Global ids for scenarios and their facts/considerations/options;
-served and rendered views renumber (`REF1-…`, `LIVE-…`) with stored translation tables. Every artifact records input
-hashes, operator, model id and prompt version.
-
-## 9. Open questions for Peter
-
-1. First sources and the held-out domain.
-2. ~~Who writes the SFT process text~~ — ruled: a strong teacher model, never the base model; Peter names it.
-3. Distance weights per operator axis.
-4. Where your ≤5 h of review goes: holdings, model-solved labels (`distinguished`), or transfer faithfulness.
-5. Equities: the 28 values, or a shorter deployment-facing list per deployment?
-6. Can a single rendered trace be paired with several cases (one served at a time)? (Recommended: yes — that is how
-   decoys and revised cards reuse one trace.)
-
-## 10. Tonight's critical path vs deferred work (Peter, 2026-10-25)
-
-**Goal:** one thin path from raw sources to SFT/RLVR/eval records, end to end, tonight. Robustness analyses are
-logged in `docs/RISK-REGISTER.md` and built after the path works.
-
-**Critical path (build now):**
-1. **Scenario store** (`data/scenarios/`) seeded with the 10 converted pilot scenarios (eval-only) plus new
-   extractions.
-2. **extract** on 3–5 public sources → 6–10 scenarios (F, Q, A) with span refs; endorsed verdict + `basis`;
-   options as a matched set; family id and split assigned. Gate: schema validation and span refs present.
-3. **perturb**, three operators: `restyle`, `flip` (realized indirectly, §4a), `add fact` (independent re-solve).
-4. **pair**: derived pairs + decoys (unrelated scenarios); cap hand-up golds per arm (R7).
-5. **render**: trace + span map (emitted now, gated later).
-6. **solve**: rejection sampling from the base model (Granite), two worked examples in the prompt, no gold;
-   N = 8; keep samples matching gold structure; rationalization pass (tagged) for pairs with none. See §4b.
-7. **project**: SFT jsonl, RLVR JSON, Inspect samples, using the 2a schemas and 2d scorers.
-**Done when:** ≥20 pairs flow end to end, load in the SFT builder and the scorers, and Peter has read 3 of them.
-
-**Deferred (logged, built after):** grounding judge (span supports fact), A/B render test (R3), salience probe
-(R4), verbatim check (R5), option-specificity baseline gate (R6), two-solver agreement (R2), thin-card training
-share (R1), natural-pair matching via the structural index, transfer operator, review UI, judge validation set
-(R13), oracle-consistency audit (A1).
-
-**Models:** extract / perturb / render / independent solve on Bedrock gpt-oss-120b (high reasoning effort for the
-independent solve); judge = Jev (OpenRouter); solve = the teacher model (placeholder gpt-oss-120b). The open-weight
-authorship allowlist is lifted; provenance is still recorded per field.
+1. Distance weights (§7.5) and the reward function.
+2. Where his ≤ 5 h review goes. Proposed: `model-solved` labels first, then the revised-card judgments.
+3. Spot-checks: DR-AUT-001 (`then: ask` mapped to hold), DR-INT-301-r1, DR-AGT-201; and the three example pairs
+   from the 2f run (box applies the advice: reject P-1217d16660; keep P-7b3fe9966f as a paraphrase-realized flip).
+4. Legal opinions as a training domain (R26); a stronger SFT writer (R23/R48); the equities list per deployment.
+5. **H4 at C\* = T:** Peter's words are that the harness does *better* than the fine-tune there; at minimum it matches.

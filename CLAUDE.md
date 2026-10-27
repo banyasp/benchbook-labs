@@ -1,9 +1,10 @@
 # Benchbook Labs — standing context for Claude
 
 *Written 2026-10-25 from Peter's claude.ai project ("Recruiting and Learning") so a Claude Code session on the
-EC2 box starts with the same context. Read next, in order: `DECISIONS-2026-10-25.md` (latest rulings),
-`BUILD-BRIEF-2f-2026-10-25.md` (tonight's data-pipeline work order), `HANDOFF-2026-10-25.md` (the day's earlier plan),
-`docs/RISK-REGISTER.md`.*
+EC2 box starts with the same context; updated 2026-10-27 after Peter's walkthrough of the data pipeline. Read next,
+in order: `context/DATA-PIPELINE-DESIGN-v2.md` (**design v2.4, approved**), `BUILD-BRIEF-v2.4-2026-10-27.md`
+(the current work order), `docs/HYPOTHESES.md`, `docs/RISK-REGISTER.md`, `docs/V2-PRIORITIES.md`. Older:
+`DECISIONS-2026-10-25.md`, `BUILD-BRIEF-2f-2026-10-25.md` (superseded), `HANDOFF-2026-10-25.md`.*
 
 > **Ground truth: `context/Benchbook-Research-Plan-v0.4.pdf`.** Where any code, example, spec or doc in this repo
 > disagrees with the PDF, the PDF wins. Known disagreements are listed in
@@ -87,6 +88,16 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   deterministic checks plus narrow judge calls (Jev Choice to align facts, Jev_Noul for free-text fields like
   frame and course); reasoning prose and applicability-why are never scored. One scorer package shared by TRL
   (training) and Inspect (eval).
+- **Data pipeline rulings (design v2.4, Peter's walkthrough 2026-10-26/27)** — the design file has the details:
+  the model should faithfully extend the served case's reasoning (R\*), not out-guess the oracle (a disagreement is
+  a library gap); v1 serves one case; perturb changes only F or Q, never the reasoning; skeleton `conditions` are
+  backend-only (they pick which facts to change; never served or trained on); options are plain-text complete
+  courses of action with no justification, discoverable in the trace (never a menu, never tools), aligned to gold by
+  Jev Choice, with an off-menu category; recommendations in traces are sometimes wrong; flip realization mixes
+  indirect and paraphrase (`indirect_share`); traces obey the R49 single-hop rule; arms are relevant / augmented
+  (the PDF's: case facts altered so its conclusion flips = a reversed flip pair) / revised C′ (judgment edited) /
+  decoy / none / self, with augmented and revised in both training and eval; natural pairs and the near-neighbor
+  arm are v2; refusal-prone in-scope content is tagged (`content_domain`, `refusal_sensitivity`), not dropped.
 - **Eval infrastructure: UK AISI Inspect (`inspect_ai`).**
 - **Headline experiment:** alignment (action) accuracy vs. distance from the live scenario to the nearest
   reference case, one curve per arm (base / harness / SFT / SFT+RL), showing alignment generalizes and the arms
@@ -128,9 +139,8 @@ See `context/PDF-RECONCILIATION-2026-10-25.md` for the full list. In short:
    in the old mapping format. Fine for today's choice/action eval; must be converted for reasoning scores and SFT.
 3. `observe_v2.py` matches the PDF's buckets and two-pass Choice design but uses Hungarian assignment and an F1
    score where the PDF specifies greedy assignment and a found/extra weighted sum.
-4. `llm.py` refuses AWS credentials that resolve to instance/env credentials (a guard written for a sandbox). On
-   this EC2 box the instance role `FiroInstanceRole` would be refused for Bedrock. Use OpenRouter, or ask Peter
-   before relaxing the guard.
+4. *(Resolved.)* `llm.py`'s instance-credential guard is now opted in for this box (`config/models.yaml`
+   `allow_instance_role: true`), so Bedrock works through `FiroInstanceRole`.
 5. `reward_v2.py` lives in `context/`; when the eval/training code needs it, copy it into a real package
    (e.g. `code/bench/`) and keep the `context/` copy as the frozen reference.
 

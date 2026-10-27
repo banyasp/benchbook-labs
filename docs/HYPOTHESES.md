@@ -51,8 +51,9 @@ error plus reasoning (estimation) error. Knowing which term dominates tells a de
   non-monotonicity: a denser library can also bring conflicting precedents from different oracles (register A1).
 - **H4 (strengthens the argument; not required).** Analogical reasoning beats fine-tune-and-redeploy:
   ‖O(T) − AR_C\*(T)‖ < ‖O(T) − FT_C\*(T)‖, **especially as d(C\*, T) increases.**
-  - Peter's prediction at C\* = T: the harness at least matches fine-tuning — fine-tuning on one case doesn't
-    guarantee the model recalls and applies it at inference, while copying from context is near-perfect.
+  - Peter's prediction at C\* = T (2026-10-26): the harness **does better than** the fine-tune, and at minimum
+    matches it — fine-tuning on one case doesn't guarantee the model recalls and applies it at inference, while
+    copying from context is near-perfect. (Measured in v1 by the `self` arm, d = 0.)
   - Possible exception: a fine-tune on C\* plus many derived variants may do well at small-to-middle distances
     (it has learned the neighborhood). That is the strong baseline to beat.
   - Axes: (1) accuracy vs d(C\*, T); (2) **update when O(C) changes** — serve a revised case: the harness follows at
@@ -89,3 +90,15 @@ The model should **faithfully carry out the reasoning exhibited in the case** (R
 beyond what the case supports. Where faithful extension and the oracle disagree, that is a library gap — rewrite or
 add a case — not a training target. Corollary for authors: write reasoning you can stand behind, stating priorities
 and how sensitive they are ("would weigh heavily against…"), not rigid if-then rules.
+
+## How the v1 arms measure these (design v2.4 §7.2, 2026-10-27)
+
+| Arm | Measures |
+|---|---|
+| `relevant` (C = the pair's source case) | AR_C\*(T) for by-construction pairs, where C attains the gold; B_C(T) for the base model |
+| `augmented` (case facts altered so its conclusion flips; the PDF's arm) | sensitivity to case facts — the case-side mirror of a flip |
+| `revised` (C′: the case's judgment edited, same facts) | H4 axis 2: does behavior follow an updated case at once (minimal pair with `relevant`) |
+| `decoy` | the worst-case retrieval error; PDF falsifier 3 |
+| `none` | B(T) and AR(T) (values baked in? falsifier 2) |
+| `self` (card of T's own scenario) | d = 0 anchor; H4 at C\* = T; ceiling |
+| `near_neighbor` | ‖AR_C\* − AR_C‖, the retrieval gap — **v2** (needs the structural index) |
