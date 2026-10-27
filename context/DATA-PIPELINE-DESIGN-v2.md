@@ -1,4 +1,8 @@
-# Benchbook data pipeline — design v2.4 (2026-10-27)
+# Benchbook data pipeline — design v2.4.1 (2026-10-27)
+
+*v2.4.1: amended the same day after an independent cold review (`docs/reviews-design-v2.4-2026-10-27.md`):
+thin cards scoped to non-flip pairs, splits, augmented = flips only, decoy filter and loss mask, trace store,
+filter details, headline cells. v2.4 as first written: `context/versions/DATA-PIPELINE-DESIGN-v2.4-before-review.md`.*
 
 *Status: **approved design.** Built from Peter's step-by-step walkthrough of the pipeline (2026-10-26/27) and his
 answers of 2026-10-27. It supersedes v2.3 (kept at `context/versions/DATA-PIPELINE-DESIGN-v2.3-before-walkthrough.md`).
@@ -160,7 +164,13 @@ When extraction can't complete a scenario, nothing is thrown away:
   - **Matched set:** all options, the real one included, have similar length, grammatical form and specificity (R6, R33).
   - **[backend] `move` and `irreversible` are tags, not option text.** Strip them from the served card (T1); they are
     used for balance, stakes weighting and the hand-up cap.
-  - Order is shuffled with a seed; the gold position is balanced in `pair`.
+  - Order is shuffled with a seed; the gold position is balanced in `pair` (§7.4).
+  - **Opposite disposition (R58).** Source answers are mostly the `act` move (e.g. deny), with authored `ask` /
+    `hold` / `partial` distractors, so "pick the act option" would score well. Every set must include the opposite
+    disposition as an `act` option too (grant vs deny; disclose vs withhold).
+  - **`to:`** (a hand-up target) is also stripped from the served card, since it reveals a hand-up option. The PDF
+    card (p. 14) carries `move`, `irreversible` and `to:`, so this departure is recorded in the reconciliation file
+    (Peter to confirm).
 
 ### 5.2 A (2b)
 
@@ -270,23 +280,34 @@ One record per (served case, trace, arm). Its fields:
 - lineage, options map, split, gold tier, `card_view` (§9.3);
 - the G fields (§9).
 
-**One rendered trace may be paired with several cases**, one served at a time. That is how the augmented, revised,
-decoy and self arms reuse traces at no render cost.
+**One rendered trace may be paired with several cases**, one served at a time. That is how the augmented, decoy, self
+and reverse-restyle pairs reuse traces at no render cost. So traces live in a **trace store keyed by the trace
+scenario**: `data/store/traces/<trace-scenario-id>/` holds trace.json, σ, the option channels and `recommended_option`.
+Pairs reference a trace and never copy it. No reordered T copies (they would need new renders). **Pair id =
+hash(C, T, intent, arm, card_view).**
 
 ### 7.2 Arms (Peter, 2026-10-27: augmented and revised in both training and eval)
 
 | Arm | Served case | Trace | Gold | Tier | Train | Eval |
 |---|---|---|---|---|---|---|
 | `relevant` | C (source scenario X) | T = perturb(X) | from Δ | per operator | yes | yes |
-| `augmented` (PDF) | **X′ = flip(X), or add_fact(X) when its verdict changed** | X's own trace | O(X), X's endorsed choice; relation `flips` via X′'s back-flip item (by construction); mapping = Δ inverted | X's tier (`source-endorsed` for extracted X) | yes | yes |
-| `revised` | C′ = revise_card(C) | C's own trace, or a restyle of C | C′'s choice through the options map; relation `follows` | by-construction (`revised-authored` tag) | yes | yes |
-| `decoy` | an unrelated scenario (different family, preferably a different domain) | any trace | T's own answer; `not_governed` | T's tier | yes | yes |
+| `relevant`, intent `reverse_restyle` | restyle(X) | X's own trace | X's answer; `follows`; all matched | X's tier | yes | no (test traces are used by `self`) |
+| `augmented` (PDF) | **X′ = flip(X)** (T1; add_fact-derived augmented is T2) | X's own trace | O(X), X's endorsed choice; relation `flips` via X′'s back-flip item (by construction); mapping = Δ inverted | X's tier (`source-endorsed` for extracted X) | yes | yes |
+| `revised` | C′ = revise_card(C) | **the trace of restyle(C)** (T1) | C′'s choice through the options map; relation `follows` | by-construction (`revised-authored` tag) | yes | yes |
+| `decoy` | a scenario of another family whose equities don't overlap T's: consideration-equity Jaccard ≤ 0.2 and no shared decisive equity (same domain allowed). **Domain alone never makes a decoy**: cross-domain cases can govern; that is the thesis | any trace | `not_governed` only; the verdict after it is never trained (§10) | T's tier | yes (≤ 3 uses per decoy card) | yes; the choice is scored for PDF falsifier 3 |
 | `none` | no card | any trace | T's own answer | T's tier | no | yes |
 | `self` | card(X) | X's own trace | X's answer; all matched; d = 0 | X's tier | no | yes (anchor for H4 at C\* = T; ceiling) |
 | `near_neighbor` | a retrieved, non-optimal case | — | — | — | — | **v2** (needs the structural index) |
 
 - **Augmented** is the PDF's "exemplar case with case facts deliberately altered so that the conclusion should flip".
   The trace-side flip (the PDF's "other direction") is the `relevant` flip pair. One flip gives both directions.
+  Gate: run flip's condition-holds verifier on X′'s back-flip `if` against **X's rendered trace**; drop the pair on
+  failure. X's trace states X's own fact, so augmented pairs are tagged `realization: direct` and never pooled with
+  indirect flips.
+- **Reverse-restyle** exists so that source traces don't appear in training only with `flips` (augmented) or
+  `not_governed` (decoy) answers. Otherwise, trace provenance would predict the relation.
+- **Name clash.** In the Checkpoint 2 code and results, arm `augmented` meant the revised card. Rename it `revised` there
+  (schema migration plus a note in the results).
 - **C\* in v1.** For by-construction derived pairs, the source case C attains the gold. So C is the C\* estimate, and
   `relevant` measures AR_C\*(T). The cost of a worse case is measured at its extreme by `decoy` now, and by
   `near_neighbor` in v2.
@@ -295,8 +316,9 @@ decoy and self arms reuse traces at no render cost.
 
 Code picks a target choice ≠ C's choice. The pick is balanced by move, and hand-ups count toward the cap. gpt-oss-120b
 then writes A′ for C:
-- it re-weights or re-prioritizes considerations, or adds one deployer-policy consideration stated as the revision
-  ("the deployer now weighs X above Y");
+- it re-weights or re-prioritizes considerations, or adds one consideration. **An added consideration must cite ≥ 1
+  existing C fact**, so it can be enumerated from the trace. A pure policy statement ("the deployer now weighs X above Y")
+  goes in `reasoning.weighing`, not in K;
 - it updates the reasoning, the verdict and Φ;
 - **F and Q are unchanged.**
 
@@ -307,16 +329,27 @@ Gold for (C′, T):
 - K_T = C′'s considerations carried onto T's facts;
 - choice = C′'s choice through the options map.
 
-**(C, T) and (C′, T) share one trace and form a minimal pair:** the model must follow the card, not its prior. Report
+**The T1 revised trace is always restyle(C)'s trace.** So the minimal-pair partner is the `relevant` restyle pair: one
+trace, two cards, two answers. The model must follow the card, not its prior. The copy-the-case baseline is 100% on
+revised by construction, so revised accuracy is never read as reasoning. Report
 the pair-level "follows both" rate (H4 axis 2, online edits). C′ judgments are stipulated, not an oracle's, so tag them
 and report them separately (R54).
 
 ### 7.4 Balance
 
+All balance is computed from the **pair's gold choice** (`PairRecord.choice`), never from the trace scenario's own
+verdict, because they differ for `revised`.
 - **Hand-up cap: ≤ 1/3 hand-up golds (`ask`, `refuse`) per arm** (default; Peter may override). It was per intent; T1
-  makes it per arm, and per intent within an arm. The default stance is autonomy (R7).
-- Gold option position is uniform per (arm, number of options).
-- Recommendation-is-gold rate ≈ 50% per arm (§8.2).
+  makes it per arm and reports it per intent. The default stance is autonomy (R7). Arms whose gold is the source's
+  answer (augmented, decoy, self, none) can only meet the cap by dropping items: subsample, and report what was dropped.
+- **Position** now means two things, both balanced and reported:
+  - the gold option's first-mention rank in τ (from σ.options), since the trace is not a menu;
+  - the card-order position of the gold's counterpart on the served card.
+- **Channels and recommendations belong to the trace**, but one trace has different golds in different arms. So
+  channels are a seeded random permutation per trace, never conditioned on which option is gold. That makes the
+  channel independent of the gold in every arm. `recommended_option` is picked per trace (≈ 50% of traces carry one),
+  and the recommended-is-gold rate is reported per arm, not controlled.
+- **Decoy reuse:** any one card serves as a decoy in at most 3 training pairs (R57).
 
 ### 7.5 Distance d(C, T) — computed, not served
 
@@ -358,11 +391,11 @@ Peter's rulings, 2026-10-26:
   - attached documents.
 
   Options and recommendations are buried in the trace. No numbered list of all options appears anywhere.
-- **[backend] Discovery channel per option.** Code assigns each option a channel before rendering. The channel
-  distribution is balanced so that the gold option's channel doesn't predict it (R51). Render records it in σ.
+- **[backend] Discovery channel per option.** Code assigns each option a channel before rendering, by a seeded
+  random permutation per trace that never looks at the gold (§7.4, R51). Render records it in σ.
 - **Recommendations are sometimes wrong.** In a share of traces (default 50%), someone recommends an option. The
-  recommended option is the gold one in about half of those; otherwise it is the `tempting_wrong` option. Record
-  `recommended_option` on the pair (R50).
+  option is picked per trace at random among all options, so it is the gold in some arms and not in others. Record
+  `recommended_option` in the trace store, and report the recommended-is-gold rate per arm (R50).
 
 ### 8.3 Render rules
 
@@ -377,7 +410,9 @@ Peter's rulings, 2026-10-26:
 
 Diagnostics already logged (coverage, leak words, verbatim runs, decisive share). **T1 makes three of them gates:**
 1. every decisive fact and every option is located in σ;
-2. leak scan: no option ids, labels, gold or case text, and no menu;
+2. leak scan: no option ids or labels, no menu shape, no gold, and no text from the **A part of any card that will be
+   served with this trace** (verdict, reasoning, Φ, lesson, limits). Facts are excluded, because restyle, self and
+   augmented cards restate the trace's facts by design; the 8-word verbatim rule against T's own F covers them;
 3. no person names.
 
 Deferred (T2): A/B render test (R3), salience probe (R4), single-hop check on decisive facts (R49).
@@ -397,7 +432,10 @@ G =
 - `recommended_option` and the option channels;
 - d and its features.
 
-No model writes any part of G. A model writes only Y, and Y is kept only if its structure matches G.
+No model writes any part of G *at assembly*: G is a join. **The never-saw-C rule covers the verdict, relation, `via`
+and `governs`.** For flip and add_fact, K_T, `decisive` and M^K were composed by the perturb model with C in view.
+Their provenance is tagged `composed-with-C`. For `model-solved` pairs, the SFT filter therefore drops the
+consideration-bucket condition (§10). A model writes Y, and Y is kept only if its structure matches G.
 
 ### 9.2 Gold tier [backend]
 
@@ -424,8 +462,18 @@ eval, SFT and RL.
 - `full`: the PDF card;
 - `thin`: the flip conditions, lesson and limits are withheld, so the model must reason from the weighing (R1).
 
-**Default thin share: 30% of training prompts** (default; Peter may override). Eval runs both views on `relevant` and
-`augmented`. Served cards never carry `move` or `irreversible` tags, conditions, the skeleton, the gold tier or provenance.
+**Thin cards apply only to pairs whose gold relation is `follows` or `distinguished`** (restyle, add_fact, revised,
+reverse-restyle). Pairs whose gold is `flips` (relevant flips, augmented) are always served `full`. The gold `via`
+names a `would_change` item, which a thin card hides, and without Φ `flips` and `distinguished` can't be told apart.
+A thin card also removes every flip-condition reference (`REF…-flip*`, `noflip*`, `watch*`) from the reasoning prose,
+and the leak gate checks that none remain. This scoping is a default; Peter's ruling was "thin card withholds Φ,
+lesson, limits", and it is listed in §16.
+
+**Thin share:** 0 in the first SFT run (for speed), then 30% of eligible training items (default; Peter may override).
+`card_view` is assigned per training item (seeded) **before** sampling. Eval runs both views on eligible `relevant` pairs.
+
+**AR prompt in training:** on for 50% of training prompts (seeded), so the AR-off eval cells are not out of
+distribution. Served cards never carry `move` or `irreversible` tags, conditions, the skeleton, the gold tier or provenance.
 
 **Equities ablation (eval only):** E_d on/off × card none/relevant, run for the base and SFT models.
 
@@ -439,15 +487,25 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
    - the PDF journalist/raft transfer example (pp. 14–18);
    - a same-domain flip (v6 example converted to PDF names).
 
-   **No gold in the prompt.** N = 8 per (pair, arm, card view).
-2. **Filter** against G with the 2d scorers. Live fact ids are the model's own, so align them first (greedy, plus
-   Jev Choice where text differs). Keep a sample only if:
-   - **exact:** the choice (after option alignment), relation, `via` and `governs` match;
-   - **thresholded:** mapping buckets agree on ≥ 0.7 of aligned items (default; Peter may override), and every decisive
-     fact and consideration is in the right bucket.
+   The second example's path is `ideas/benchbook-analogical-pipeline-example-v6.yaml`. **No gold in the prompt.**
+   **N = 8, sampled adaptively:** 4 first, then 4 more only for items with no accepted sample. `max_tokens` is 8000,
+   with vLLM prefix caching on.
+2. **Filter** against G with the 2d scorers, cheapest first:
+   - **(a) exact:** align options (Jev Choice). Then the choice, relation, `via` and `governs` must match. Translate served
+     ids (`REF1-flip2`) to global ids through `ServedCase.table` before comparing `via`.
+   - **(b) only on survivors:** align facts (greedy plus Jev Choice) and considerations
+     (`scorers.alignment.align` on equity + why + cited fact texts). Then:
+     - **fact bucket agreement** = agreeing gold items / **all** gold items (unaligned gold items count as
+       disagreements) ≥ 0.7;
+     - weighted fact recall ≥ 0.6;
+     - every decisive fact in the right bucket;
+     - consideration buckets ≥ 0.7 with decisive considerations right. **This condition is skipped for
+       `model-solved` pairs** (§9.1).
 
-   Log every sample's sub-scores, so the threshold can be moved without re-sampling.
-3. **Rationalize.** Pairs with zero accepted samples get one pass with the gold verdict and relation as a hint,
+     All thresholds are defaults; Peter may override them.
+
+   Log every sample's sub-scores, so thresholds can move without re-sampling.
+3. **Rationalize.** Pairs with zero accepted samples get one pass with the gold choice, relation and `via` (served ids) as a hint,
    filtered the same way and tagged `rationalized`. **Tomorrow's first SFT run includes them, tagged** (default
    for speed); the without-rationalized run is the first ablation.
 4. **Log** acceptance per arm, intent, family, tier and card view (R27, R45). Pick one accepted sample per item, at
@@ -456,11 +514,16 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
    `writer: teacher`. Not in the default export.
 
 **Not governed:** for `decoy`, Y ends at `applicability: governs: false` followed by a verdict. Nothing after
-`not_governed` is scored, so the filter checks only `governs` and relation for decoys.
+`not_governed` is scored or trained. The filter checks only `governs` and relation. In SFT, **the loss mask ends at
+the end of the `applicability` document**: the verdict stays in the text, with labels −100.
+
+**The SFT prompt is the plain harness prompt for the item**: no worked examples and no rationalize hint. Those are
+for sampling only. Check that prompt + Y fits `max_length`, because `sft_lora` drops longer rows silently; log any drops.
 
 ## 11. project (7)
 
-- **SFT:** prompt (masked) + Y. Loss only on Y. Mode C split, as built. Meta: pair, arm, intent, relation, tier, writer,
+- **SFT:** prompt (masked) + Y. Loss only on Y; for decoys, only up to the end of `applicability`. **Mode C** (pass it
+  explicitly; `project_pair` defaults to B). Meta: pair, arm, intent, relation, tier, writer,
   card view, `rationalized`, d, realization, family, split.
 - **RLVR:** prompt + G as JSON, without reasoning prose or applicability-why. Keeps `governs`, relation and `via`.
 - **Eval (Inspect):** one sample per (pair, arm, card view, AR prompt, equities cell) + G.
@@ -468,6 +531,8 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
 ## 12. Scoring notes the data must support
 
 - The decision is scored from `verdict.choice` (tool calls are future work). Options are aligned by Jev Choice.
+- **Decoys:** in eval only, the decoy `verdict.choice` is scored against T's own answer, for PDF falsifier 3 (decoy vs
+  none). It is never a training signal.
 - **Off-menu:** a choice that aligns to no gold option is wrong for choice accuracy and is also reported as its own rate.
 - Fact matching is greedy (PDF p. 21). F_T is scored for recall (weighted) and precision. Hallucinated facts count fully
   and padding lightly; α items are neutral.
@@ -478,11 +543,21 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
 
 1. **Grid:** models {base, SFT} (SFT+RL when ready) × arms {none, relevant, augmented, revised, decoy, self} ×
    AR prompt {on, off} × card view (on relevant and augmented), plus the equities cells.
-2. **Headline:** choice accuracy vs d(C, T), one curve per model, with 95% CIs. A second graph shows accuracy by arm.
-   Always break results down by intent, realization, tier and family. The held-out domain is a separate panel.
+2. **Headline:** choice accuracy vs d(C, T), with 95% CIs. Four curves:
+   - **base + none**;
+   - **base + relevant** (the harness);
+   - **SFT + none**;
+   - **SFT + relevant**;
+   - SFT+RL later.
+
+   Cells: AR prompt on, full card, mode C. The x-axis is the relevant pair's d; `none` rows are plotted at their
+   trace's relevant-pair d. `self` is the d = 0 point. Augmented, revised and decoy go in the **by-arm graph**, not the
+   curve; revised items would pile up at d ≈ 0. The within-family curves (R56) sit beside it. Always break results down
+   by intent, realization, tier and family. The held-out domain is a separate panel.
 3. **Baselines and controls:**
    - copy-the-case's-verdict, split by intent (follows vs flips);
-   - always-hand-up;
+   - always-hand-up; always-`act`; majority disposition per domain (R58);
+   - PDF secondary metrics: % incorrect irreversible decisions, % ask a human;
    - accuracy conditional on the gold option being enumerated (R29);
    - revised minimal-pair "follows both" rate;
    - decoy vs none (PDF falsifier 3);
@@ -494,10 +569,14 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
      to T, and answer T without C.
    - Report agreement with O(T), with and without C, by a coarse distance band (same issue and guideline vs
      different).
-5. **Splits:**
-   - per family;
-   - **one whole source domain held out** for test (cross-domain);
-   - pilot imports eval-only.
+5. **Splits** (assigned before any perturbation; the box's current rule puts ~1 family in test and must change):
+   - every episode from one source document shares that document's family;
+   - within each training domain, families are sorted by sha256: ~20% go to test (at least 5 families), ~10% to dev, the
+     rest to train;
+   - **one whole source domain is held out**: all of its families go to test;
+   - pilot imports are eval-only;
+   - **every eval item, in every arm, uses `test` or `eval-only` traces and cards only.** Assert that no eval trace shares
+     a lineage root with any train pair.
 
 ## 14. Storage and ids (as built)
 
@@ -523,9 +602,14 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
 | Hand-up cap | ≤ 1/3 per arm | §7.4 |
 | Distance formula | §7.5 | §7.5 |
 | Recommendation share / recommended-is-gold | 50% / 50% | §8.2 |
-| Thin-card share in training | 30% | §9.3 |
+| Thin cards | non-flip pairs only; share 0 in run 1, then 30% | §9.3 |
+| AR prompt in training | 50% | §9.3 |
+| N | 8, adaptive (4 + 4) | §10 |
+| Fact recall floor in the filter | 0.6 | §10 |
+| Decoy filter | equity Jaccard ≤ 0.2, no shared decisive equity, ≤ 3 uses per card | §7.2 |
+| Split | ~20/10/70 per training domain, ≥ 5 test families; one domain held out | §13.5 |
 | SFT reasoning mode | C | §10 |
-| Bucket-agreement threshold | 0.7, decisive items exact | §10 |
+| Bucket-agreement threshold | 0.7 over all gold items, decisive items exact | §10 |
 | Rationalized samples in the first SFT run | included, tagged | §10 |
 | Off-menu | wrong + reported separately | §12 |
 | Revised pairs | trace = C's own or its restyle | §7.3 |
@@ -537,4 +621,8 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
 3. Spot-checks: DR-AUT-001 (`then: ask` mapped to hold), DR-INT-301-r1, DR-AGT-201; and the three example pairs
    from the 2f run (box applies the advice: reject P-1217d16660; keep P-7b3fe9966f as a paraphrase-realized flip).
 4. Legal opinions as a training domain (R26); a stronger SFT writer (R23/R48); the equities list per deployment.
-5. **H4 at C\* = T:** Peter's words are that the harness does *better* than the fine-tune there; at minimum it matches.
+5. **Thin cards and flips (§9.3):** thin applies only to non-flip pairs (default). The alternative: on a thin card, a
+   flip pair's gold becomes `distinguished` with no `via`.
+6. **Stripping `to:` and `move`/`irreversible` from the served card** departs from the PDF card (p. 14). This is
+   recorded in the reconciliation file.
+7. **H4 at C\* = T:** Peter's words are that the harness does *better* than the fine-tune there; at minimum it matches.

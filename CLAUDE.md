@@ -2,7 +2,7 @@
 
 *Written 2026-10-25 from Peter's claude.ai project ("Recruiting and Learning") so a Claude Code session on the
 EC2 box starts with the same context; updated 2026-10-27 after Peter's walkthrough of the data pipeline. Read next,
-in order: `context/DATA-PIPELINE-DESIGN-v2.md` (**design v2.4, approved**), `BUILD-BRIEF-v2.4-2026-10-27.md`
+in order: `context/DATA-PIPELINE-DESIGN-v2.md` (**design v2.4.1, approved**), `BUILD-BRIEF-v2.4-2026-10-27.md`
 (the current work order), `docs/HYPOTHESES.md`, `docs/RISK-REGISTER.md`, `docs/V2-PRIORITIES.md`. Older:
 `DECISIONS-2026-10-25.md`, `BUILD-BRIEF-2f-2026-10-25.md` (superseded), `HANDOFF-2026-10-25.md`.*
 
@@ -120,7 +120,8 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
 | `data/draft/B001/` | First datagen batch: INT-301, REL-301, OVS-301 × 4 lives (restyle, trap, 2 flips) = 12 rendered traces, with right-card, revised-card (r1) and decoy replies. Eval-only. `CHECK-REPORT.md` = acceptance run |
 | `code/datagen/` | Datagen pipeline: `run_stage.py` (stages reference, revised, live, render, reply, critic), `llm.py` (openrouter/ bedrock/ dry/ backends + allowlist), `check_batch.py` (acceptance), `selftest.py`. Read its README |
 | `ideas/schema-mvp-2026-09-30/code/mvp.py` | v2.6 validator, card renderer (`card`, `card --spine`), scorer (`reply-score`, `floors`, `trace-check`). The datagen pipeline imports it by path |
-| `code/{eval,harness,inference,training}/`, `data/{cases,scenarios}/` | **Empty** — to be built |
+| `code/{bench,pipeline,harness,eval,training,inference,scorers}/` | Built 2026-10-25/26 (schema, 2f pipeline, harness, Checkpoint 2 eval, SFT/GRPO code). `code/pipeline/` is being rebuilt to design v2.4.1 |
+| `data/store/`, `data/exports/` | The 2f pipeline's scenario/pair/trace store and SFT/RL/eval exports. `data/cases/`, `data/scenarios/` belong to Checkpoint 2 |
 | `context/reward/v2/` | `reward_v2.py` (Oct 13): parse → match tool calls → gate → score; `score_completion(completion, gold)`; TRL adapters; 107 tests; `reward-v2-notes.md` |
 | `context/reward/observe/` | `observe_v2.py` + write-up: judge-aligned fact matching (two Choice passes, Hungarian) for the enumeration/mapping terms. Prototype |
 | `context/training/` | Training plan v1 (Oct 1) and the consolidated "How to Train Analogical Reasoning" v1–v3 (v3 = Oct 13, latest) |
