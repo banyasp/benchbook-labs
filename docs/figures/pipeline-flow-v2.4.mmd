@@ -1,0 +1,110 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: BRANDES_KOEPF
+---
+%% Benchbook data pipeline, design v2.4 (2026-10-27). Render: mmdc -i flow3.mmd -o flow3.svg -c mcfg.json -b white
+flowchart TD
+  subgraph S1["1 · Ingest"]
+    direction TB
+    ACQ["acquire + normalize<br/>raw bytes by hash<br/>paragraphs with span ids"]:::code
+    R[("Raw corpus R")]:::store
+    EPI["find episodes (T1)<br/>4 pass/fail criteria<br/>rejects kept with reason<br/>tags: content_domain,<br/>refusal_sensitivity"]:::bedrock
+    FB["fallback router (T2)<br/>false-positive refusals<br/>of in-scope content only"]:::deferred
+    ACQ --> R --> EPI
+    EPI -. "refusal" .-> FB
+  end
+  subgraph S2["2 · extract (R → X) + derive"]
+    direction TB
+    XFQ["2a extract F, Q<br/>facts cite spans, offices not names<br/>options: complete courses of action<br/>no justification · matched set<br/>move / irreversible = backend tags"]:::bedrock
+    XA["2b extract A<br/>K in E's equity ids · W<br/>V = endorsed answer · Φ<br/>lesson + limits"]:::bedrock
+    DER["2c derive (T2)<br/>skeleton + world kit<br/>conditions: backend only"]:::deferred
+    XFQ --> XA
+    XA -.-> DER
+    INC[("Incomplete store<br/>missing fields + reason<br/>never paired or trained")]:::store
+    XA -. "incomplete" .-> INC
+    end
+  subgraph S3["3 · perturb + pair"]
+    direction TB
+    STORE[("Scenario store<br/>X = F, Q, A<br/>provenance, tier, split")]:::store
+    PERT["3a perturb X → X′<br/>changes F or Q only<br/>restyle · flip · add_fact<br/>flip: indirect_share 0.7"]:::bedrock
+    REVC["revise_card (T1, new)<br/>edits A only → C′<br/>target choice ≠ C's"]:::bedrock
+    SOLVEI["3b A′ by construction<br/>or independent solve<br/>(never sees C)"]:::bedrock
+    DELTA[("Δ = gold mapping<br/>buckets + counterparts<br/>relation · via · realization")]:::store
+    PAIR["3c pair<br/>arms: relevant · augmented<br/>(reversed flip) · revised C′<br/>decoy · none · self<br/>hand-up ≤ 1/3 per arm<br/>position + recommendation<br/>balance · distance d"]:::code
+    STORE --> PERT
+    PERT --> SOLVEI
+    PERT --> DELTA
+    STORE --> REVC
+    DELTA --> PAIR
+    REVC --> PAIR
+  end
+  subgraph S4["4 · render"]
+    direction TB
+    REND["render T<br/>options discoverable in trace<br/>never a menu, not tools<br/>recommendation sometimes wrong<br/>R49: every fact single-hop"]:::bedrock
+    RG["T1 gates<br/>decisive facts + options located<br/>leak scan · no person names"]:::code
+    TR[("trace τ<br/>span map σ: facts +<br/>options with channel<br/>allowed list α")]:::store
+    REND --> RG --> TR
+  end
+  subgraph S5["5 · gold + prompt (code)"]
+    direction TB
+    GOLD["5a assemble G<br/>F_T, Q_T, M^F, K_T, M^K<br/>governs · relation · via · V_T<br/>gold tier · d"]:::code
+    HARN["5b harness prompt<br/>τ + E_d + card per arm<br/>card view: full | thin<br/>± AR prompt<br/>equities cells (eval)"]:::code
+  end
+  subgraph S6["6 · SFT writer (rejection sampling)"]
+    direction TB
+    GEN["Granite 4.2 8B · mode C<br/>N = 8 · 2 worked examples<br/>no gold in prompt"]:::local
+    FILT["filter Y vs G<br/>exact: choice · relation<br/>via · governs<br/>buckets ≥ 0.7, decisive exact<br/>Jev Choice aligns options"]:::judge
+    RAT["rationalize<br/>gold verdict as hint<br/>tagged rationalized"]:::local
+    TEACH["alternative writer<br/>teacher, sees gold<br/>R48 comparison"]:::bedrock
+    GEN --> FILT
+    FILT -- "none accepted" --> RAT
+    RAT --> FILT
+  end
+  subgraph S7["7 · project (code)"]
+    direction LR
+    SFT[/"SFT record<br/>prompt (masked) + Y"/]:::code
+    RL[/"RLVR record<br/>prompt + G as JSON"/]:::code
+    EV[/"Eval (Inspect) sample<br/>per arm, card view,<br/>AR, equities cell + G"/]:::code
+  end
+  E[("Equity registry E")]:::store
+  DEP[("Deployment<br/>profiles")]:::store
+  REV["Peter: sampled review<br/>model-solved golds first"]:::human
+  GATES["Deferred gates (T2)<br/>A/B render · salience<br/>single-hop check · grounding<br/>two-solver · twin contrast<br/>Horty a fortiori"]:::deferred
+  V2["v2<br/>natural pairs + structural index<br/>near-neighbor arm<br/>token space for derived facts (R49)<br/>multiple cases per trace"]:::deferred
+
+  EPI --> XFQ
+  XA --> STORE
+  DER -.-> STORE
+  SOLVEI --> STORE
+  STORE --> PAIR
+  PAIR --> REND
+  PAIR --> GOLD
+  DELTA --> GOLD
+  TR --> GOLD
+  TR --> HARN
+  HARN --> GEN
+  GOLD --> FILT
+  HARN -.-> TEACH
+  FILT -- "accepted Y" --> SFT
+  TEACH -. "writer: teacher<br/>not default" .-> SFT
+  GOLD --> RL
+  GOLD --> EV
+  E -.-> XA
+  E -.-> SOLVEI
+  E -.-> HARN
+  DEP -.-> REND
+  REV -.-> SOLVEI
+  GATES -.-> TR
+  V2 -.-> PAIR
+
+  classDef bedrock fill:#FDF0D5,stroke:#B7791F,color:#3D2A06
+  classDef local fill:#DDF3EC,stroke:#1F7A5C,color:#0B3B2C
+  classDef judge fill:#ECE9FB,stroke:#5B4BC4,color:#231B5C
+  classDef code fill:#EEF0F3,stroke:#6B7280,color:#1F2937
+  classDef store fill:#E3EEFA,stroke:#2B6CB0,color:#0F2A4A
+  classDef human fill:#FBE7EF,stroke:#B83266,color:#4A1028
+  classDef deferred fill:#FFFFFF,stroke:#9CA3AF,stroke-dasharray:4 3,color:#6B7280
+  style TEACH stroke-dasharray:4 3
