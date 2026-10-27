@@ -267,10 +267,88 @@ card none/relevant).
 **Sources**
 - ~30–40 more DOE OHA decisions (varied guidelines and outcomes).
 - More 5 CFR 2635 examples if useful.
-- **One new public-domain decision domain, held out whole for test.** Choose from `context/sources/source-catalog.csv`
-  (e.g. MSPB or GAO decisions, IG reports) and say which you chose and why.
+- **The held-out domain is military operational and tactical decisions, targeting above all** (default from
+  Peter's interest, 2026-10-27; he may move some of it into training later). Source list: **`docs/natsec-decision-sources-v1.md`**
+  (W8b below). This replaces "pick a domain from the catalog".
 
 Acquire now. Run extraction after W4a and the option rules land.
+
+### W8b — National-security decision sources (added 2026-10-27)
+
+Peter added `docs/natsec-decision-sources-v1.md`, a catalog of public natsec decision sources compiled by another
+agent and reviewed by Peter. **Use it as source material.** He finds the **tactical and operational
+decisions, especially targeting and strike decisions**, the most interesting.
+
+**How to use it**
+- These episodes are the held-out test domain for tomorrow: `content_domain: targeting | operational-command |
+  intel-analysis`, split = test.
+- Every one gets `refusal_sensitivity: high` where force is involved.
+- Families are per incident. All documents about one incident share a family; e.g. the Kunduz Bundestag report
+  and the coalition position paper are one family.
+
+**Episode priority** (decision + stated reasoning + outcome, text available):
+
+1. **Strike and engagement decisions** (Part D1, A2):
+   - Kunduz tanker strike 2009 (Bundestag 17/7400, in German, so extract to English: the commander's decision, the declined
+     show of force, the "imminent threat" reading of the ROE);
+   - Tarnak Farm 2002 board of inquiry;
+   - Farah/Granai 2009;
+   - Mosul al-Jadida 2017;
+   - Al Jinah 2017;
+   - Harim 2014 (OCR);
+   - USS *Vincennes* 1988;
+   - USS *Stark* 1987 (OCR);
+   - Patriot fratricides 2003;
+   - the 1994 Black Hawk shootdown (GAO);
+   - WCK convoy 2024;
+   - the ICTY NATO-bombing report incidents (Grdelica train, Djakovica convoy, RTS);
+   - Bucknam's Bosnia cases (Udbina);
+   - Operation Anaconda.
+2. **Command decisions** (Part B1): *16 Cases of Mission Command*, *66 Stories of Battle Command* (training-center
+   events; tag them so), Savo Island, the Laconia order and Dönitz.
+3. **Intelligence decisions** (Part C): the CSI monographs (Yugoslavia 1990 estimate, 2007 Iran NIE, Vietnam
+   policymakers, Polish crisis, Afghanistan 1979, the 1983 war scare), the Bay of Pigs IG survey, the DIA sourcebook items.
+
+Aim for ≥ 10 episodes from tier 1 so the held-out panel reaches ≥ 15 eval items. Add tiers 2–3 as time allows.
+
+**Scope: the decision, not the technique (design §4.2)**
+
+Extract each episode at the level Peter wants trained: who decided, the options, the equities in tension, the
+authority and legal standard, the stated reasoning, the outcome. The equities include force protection, civilian
+harm, mission, legitimacy and lawful authority; the legal standard includes ROE, distinction, proportionality and
+precautions.
+- **Keep facts like** "the strike cell assessed that civilians were likely present", "the pilots offered a show of
+  force; the commander declined", "approval authority had been delegated to the brigade".
+- **Strip operational technique:**
+  - munition and fuze selection details;
+  - collateral-damage-estimation mechanics;
+  - sensor and ISR procedures;
+  - attack geometry and tactics;
+  - anything that reads as how to employ a weapon or find a target.
+
+  An episode that can't be stated without technique fails criterion 4.
+- **Doctrine (Part D3: CJCSI 3160.01, JP 3-60, AFDP 3-60, AJP-3.9, FM 3-60) is not an episode source and not render
+  texture.** Don't ingest it. At most, a short summary of the *legal standards* (distinction, proportionality,
+  precautions) can inform equity glosses.
+- The catalog's line "do not filter on content" refers to choosing sources. Extraction still follows the rule
+  "tag, don't drop; strip technique".
+
+**Access**
+- Several hosts 403 scripted clients: media.defense.gov, apps.dtic.mil, nsa.gov, rand.org, esd.whs.mil, and others
+  (see the catalog's access notes).
+- Use the mirrors the catalog lists (archive.org, govinfo, globalsecurity, Black Vault, Airwars, ACLU).
+- **Don't spoof user agents or otherwise work around a block.**
+- List anything you can't fetch in `results/SOURCES-BLOCKED-2026-10-28.md`, so Peter can download it by hand into
+  `data/raw/manual/`.
+- Scanned items need OCR; tag them `ocr`.
+
+**Refusals**
+- Extraction and render on this content may draw false-positive refusals from gpt-oss.
+- Record every refusal (W4).
+- If false-positive refusals on in-scope decision content block more than ~20% of these episodes, **pull the
+  fallback router (design §4.2) forward**. It retries once with another configured provider and records both
+  attempts in provenance.
+- Never use the router for content that is out of scope (technique).
 
 **Batch:** extract → perturb → revise_card → pair (all arms) → render (into the trace store) → gold.
 - Per train scenario: 1 restyle, 1–2 flips, 1 add_fact, 1 revise_card.

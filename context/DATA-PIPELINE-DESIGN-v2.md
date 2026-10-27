@@ -131,7 +131,8 @@ allowed. Each candidate carries:
 
 **Safety scope, tagging and the fallback router** (Peter, 2026-10-26):
 - **[backend] Tag, don't discard.** Every episode and scenario carries `content_domain` (e.g.
-  `security-clearance`, `gov-ethics`, `use-of-force-policy`, `intel-oversight`, `cyber-policy`) and
+  `security-clearance`, `gov-ethics`, `use-of-force-policy`, `targeting`, `operational-command`, `intel-analysis`,
+  `intel-oversight`, `cyber-policy`) and
   `refusal_sensitivity: low | medium | high`. Decision-level content about, for example, *whether* to employ force or
   under what authority is in scope. Tag it `high`; do not drop it. **The goal is learning which equities to weigh and
   why.** Generation stops at the decision and nothing is executed.
@@ -569,7 +570,10 @@ for sampling only. Check that prompt + Y fits `max_length`, because `sft_lora` d
      to T, and answer T without C.
    - Report agreement with O(T), with and without C, by a coarse distance band (same issue and guideline vs
      different).
-5. **Splits** (assigned before any perturbation; the box's current rule puts ~1 family in test and must change):
+5. **Splits** (assigned before any perturbation; the box's current rule puts ~1 family in test and must change).
+   The held-out domain for v1 is **military operational and tactical decisions, targeting above all**. Sources:
+   `docs/natsec-decision-sources-v1.md`; use them per brief W8b.
+
    - every episode from one source document shares that document's family;
    - within each training domain, families are sorted by sha256: ~20% go to test (at least 5 families), ~10% to dev, the
      rest to train;
