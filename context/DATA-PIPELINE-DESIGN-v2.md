@@ -511,6 +511,10 @@ Peter's ruling of 2026-10-25 (evening). The box's current gold-informed teacher 
    for speed); the without-rationalized run is the first ablation.
 4. **Log** acceptance per arm, intent, family, tier and card view (R27, R45). Pick one accepted sample per item, at
    random among those with the best sub-score.
+   **Ruling (Peter, 2026-10-28):** Granite accepted ~70 of 150 train items, with almost none in the augmented arm
+   (untrained Granite copies the served case's verdict). Fill the gap with the **rationalization pass only**: Granite
+   with the gold choice, relation and `via` as a hint, on every train item that has no accepted sample, tagged
+   `rationalized`. The teacher is **not** used to fill gaps.
 5. **Alternative writer** (R48 two-writer comparison): the built teacher (gpt-oss-120b, sees gold), tagged
    `writer: teacher`. Not in the default export.
 
