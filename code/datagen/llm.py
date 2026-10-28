@@ -47,6 +47,41 @@ class ModelRefused(LLMError):
     pass
 
 
+class RefusalError(LLMError):
+    """The model declined the request: a content filter / guardrail stop reason, or a refusal-shaped reply.
+    Recorded in provenance (`refusal: true`, `refusal_reason`). Callers catch this to save an incomplete record
+    (design 4.3). It is NOT retried silently; see REFUSAL_HOOK for the (T2) fallback-router attachment point."""
+
+    def __init__(self, reason, text="", model=None, stage=None):
+        super().__init__(f"refusal ({reason}) from {model} at {stage}: {text[:160]!r}")
+        self.reason, self.text, self.model, self.stage = reason, text, model, stage
+
+
+# Stop reasons that mean a filter or guardrail, not the model, ended the reply.
+REFUSAL_STOP_REASONS = {"content_filtered", "guardrail_intervened", "content_filter", "refusal"}
+_REFUSAL_RE = re.compile(
+    r"^\W*(i(?:'m| am)? (?:sorry|unable|afraid)|sorry,? (?:but )?i|i (?:can(?:'|no)t|cannot|won't|will not|am not able to|'m not able to)"
+    r"|(?:unfortunately,? )?i (?:can(?:'|no)t|cannot) (?:help|assist|comply|provide|fulfil)|as an ai\b|i must decline|i can't (?:help|assist))",
+    re.I)
+
+# T2 hook, deliberately unset. The fallback router (design 4.2) applies ONLY to false-positive refusals of in-scope
+# decision content. When implemented, set REFUSAL_HOOK = fn(err: RefusalError, model, messages, ctx) -> text | None;
+# it must log both attempts and never be used for out-of-scope (operational technique) content.
+REFUSAL_HOOK = None
+
+
+def detect_refusal(text, stop_reason=None):
+    """-> reason string or None. stop_reason: the backend's stop/finish reason."""
+    if stop_reason and str(stop_reason).lower() in REFUSAL_STOP_REASONS:
+        return f"stop_reason:{stop_reason}"
+    t = (text or "").strip()
+    if not t and stop_reason and str(stop_reason).lower() not in ("end_turn", "stop", "max_tokens", "length", "stop_sequence"):
+        return f"empty reply with stop_reason:{stop_reason}"
+    if t and len(t) < 600 and "{" not in t and _REFUSAL_RE.search(t):
+        return "refusal-shaped reply"
+    return None
+
+
 def load_policy(path=None):
     p = Path(path) if path else HERE / "models.yaml"
     if str(p) not in _POLICY:
@@ -155,7 +190,11 @@ def _openrouter(bare, messages, temperature, max_tokens, ctx):
                "provider": {"data_collection": "deny"}, **extra}
     data = _post_json(OPENROUTER_URL, {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, payload)
     try:
-        text = data["choices"][0]["message"]["content"] or ""
+        ch = data["choices"][0]
+        text = ch["message"]["content"] or ""
+        ctx["stop_reason"] = ch.get("finish_reason")
+        if ch["message"].get("refusal"):
+            ctx["stop_reason"] = "refusal"
     except (KeyError, IndexError, TypeError):
         raise LLMError(f"unexpected OpenRouter response: {str(data)[:300]}")
     return text, data.get("usage") or {}
@@ -215,7 +254,8 @@ def _bedrock(bare, messages, temperature, max_tokens, ctx):
         kwargs["additionalModelRequestFields"] = ctx["extra"]
     resp = session.client("bedrock-runtime").converse(
         modelId=bare, messages=convo, inferenceConfig={"temperature": temperature, "maxTokens": max_tokens}, **kwargs)
-    text = "".join(b.get("text", "") for b in resp["output"]["message"]["content"])
+    ctx["stop_reason"] = resp.get("stopReason")
+    text = "".join(b.get("text", "") for b in (resp.get("output", {}).get("message", {}).get("content") or []))
     return text, resp.get("usage") or {}
 
 
@@ -237,7 +277,7 @@ def prompt_hash(messages):
 
 
 def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, out_path=None,
-             training_bound=False, provenance=None, attempt=1, extra=None):
+             training_bound=False, provenance=None, attempt=1, extra=None, refusal_check=True):
     """One chat completion. messages: [{role: system|user|assistant, content: str}]. Returns the text.
     Appends a provenance record to `provenance` (default: env BENCHBOOK_PROVENANCE or ./provenance.jsonl)."""
     check_allowed(model, training_bound)
@@ -254,6 +294,14 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
     try:
         text, usage = BACKENDS[backend](bare, messages, temperature, max_tokens, ctx)
         rec["usage"] = usage
+        if ctx.get("stop_reason"):
+            rec["stop_reason"] = ctx["stop_reason"]
+        reason = detect_refusal(text, ctx.get("stop_reason")) if refusal_check and backend != "dry" else None
+        if reason:
+            rec["refusal"] = True
+            rec["refusal_reason"] = reason
+            rec["reply_head"] = (text or "")[:200]
+            raise RefusalError(reason, text, model, stage)
         if ctx.get("credential_source"):
             rec["credential_source"] = ctx["credential_source"]
         if ctx.get("dry_prompt"):
@@ -261,6 +309,11 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
         return text
     except Exception as e:
         rec["error"] = f"{type(e).__name__}: {str(e)[:300]}"
+        if isinstance(e, RefusalError) and REFUSAL_HOOK is not None:
+            rec["refusal_hook"] = "invoked"
+            alt = REFUSAL_HOOK(e, model, messages, ctx)      # T2 router; must record its own attempt
+            if alt is not None:
+                return alt
         raise
     finally:
         with open(prov, "a") as f:

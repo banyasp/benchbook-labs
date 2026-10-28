@@ -91,6 +91,14 @@ def _llm():
     return llm
 
 
+def __getattr__(name):
+    """`from bench.models import RefusalError` -> the exception code/datagen/llm.py raises on a content-filter stop
+    reason or a refusal-shaped reply (recorded in provenance with `refusal: true`)."""
+    if name in ("RefusalError", "LLMError", "detect_refusal"):
+        return getattr(_llm(), name)
+    raise AttributeError(name)
+
+
 def complete(role_name: str, messages: list[dict], *, stage: str | None = None, out_path=None,
              stub: str | None = None, **overrides) -> str:
     """One chat completion for a role. overrides replace config params for this call (temperature, max_tokens...).
@@ -129,10 +137,19 @@ def _vllm(r: RoleConfig, messages, p, prov: Path, stage):
     rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "model": r.model, "role": r.name, "backend": "vllm",
            "stage": stage, "prompt_sha256": llm.prompt_hash(messages), "seconds": round(time.time() - t0, 2),
            "usage": resp.usage.model_dump() if resp.usage else None}
+    text = resp.choices[0].message.content or ""
+    stop = resp.choices[0].finish_reason
+    if stop:
+        rec["stop_reason"] = stop
+    reason = llm.detect_refusal(text, stop)
+    if reason:
+        rec.update(refusal=True, refusal_reason=reason, reply_head=text[:200])
     prov.parent.mkdir(parents=True, exist_ok=True)
     with open(prov, "a") as f:
         f.write(json.dumps(rec) + "\n")
-    return resp.choices[0].message.content or ""
+    if reason:
+        raise llm.RefusalError(reason, text, r.model, stage)
+    return text
 
 
 def main():

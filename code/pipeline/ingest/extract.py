@@ -26,22 +26,48 @@ import yaml
 from pydantic import ValidationError
 
 from bench.models import ROOT as MROOT
-from bench.models import load_config, role
+from bench.models import RefusalError, load_config, role
 from bench.schema import Case
 from bench.schema.pipeline import Lineage, ProvStep, Provenance, Scenario, SourceRef, sha256_text
-from pipeline.store import DATA, Store, _keep_version
+from pipeline.store import DATA, Store, _keep_version, write_yaml
 
+from . import option_rules as OR
 from . import registry as R
 from .normalize import load_spans
 
 PROMPTS = Path(__file__).with_name("prompts")
 EQUITIES = DATA.parent / "data" / "registry" / "equities" / "pilot.yaml"
 MAX_ATTEMPTS = 3
+FQ_PROMPT = "extract_fq.v2"          # v1 stays on disk; set to extract_fq.v1 to reproduce older extractions
 SPAN_RE = re.compile(r"^src:[0-9a-f]{12}#p\d+\.\d+$")
 
 
 class ExtractionError(RuntimeError):
     pass
+
+
+class IncompleteExtraction(ExtractionError):
+    """Extraction could not complete; carries what was extracted so the caller can save it (design 4.3)."""
+
+    def __init__(self, msg, partial=None, missing=(), reason="failed", refusal=None):
+        super().__init__(msg)
+        self.partial, self.missing, self.reason, self.refusal = partial or {}, list(missing), reason, refusal
+
+
+# content_domain / refusal_sensitivity defaults when neither the episode nor the source carries them (design 4.2)
+DOMAIN_TO_CONTENT = {"personnel security adjudication": "security-clearance", "federal employee gifts and ethics": "gov-ethics"}
+CONTENT_SENSITIVITY = {"targeting": "high", "operational-command": "high", "use-of-force-policy": "high", "cyber-policy": "medium",
+                       "intel-analysis": "medium", "intel-oversight": "medium", "security-clearance": "low", "gov-ethics": "low"}
+
+
+def scenario_domain_fields(source: dict, ep: dict) -> dict:
+    """content_domain, refusal_sensitivity, held_out: episode > source > mapping from the source domain."""
+    cd = ep.get("content_domain") or source.get("content_domain") or DOMAIN_TO_CONTENT.get(source.get("domain", ""))
+    if not cd:
+        cd = re.sub(r"[^a-z]+", "-", source.get("domain", "unknown").lower()).strip("-")
+    rs = ep.get("refusal_sensitivity") or source.get("refusal_sensitivity") or CONTENT_SENSITIVITY.get(cd, "low")
+    held = bool(source.get("held_out")) or source.get("domain") in R.HELD_OUT_DOMAINS
+    return {"content_domain": cd, "refusal_sensitivity": rs, "held_out": held}
 
 
 # ------------------------------------------------------------------ helpers
@@ -54,6 +80,17 @@ def prompt_file(name: str) -> tuple[str, str, str]:
 def equities() -> dict[str, str]:
     d = yaml.safe_load(EQUITIES.read_text())
     return {e["id"]: e["gloss"] for e in d["equities"]}
+
+
+def select_episode_spans(spans: list[dict], ep: dict) -> list[dict]:
+    """ep.span_range = [first span id, last span id] (episode finder output), else ep.section (CFR style), else all."""
+    rng = ep.get("span_range") or ([ep["span_start"], ep["span_end"]] if ep.get("span_start") else None)
+    if rng:
+        ids = [s["span"] for s in spans]
+        if rng[0] not in ids or rng[1] not in ids or ids.index(rng[0]) > ids.index(rng[1]):
+            raise ExtractionError(f"bad span_range {rng}")
+        return spans[ids.index(rng[0]):ids.index(rng[1]) + 1]
+    return select_spans(spans, ep.get("section"))
 
 
 def select_spans(spans: list[dict], section: str | None) -> list[dict]:
@@ -114,7 +151,14 @@ def call_json(step: str, role_name: str, system: str, user: str, validate: Calla
     log = []
     for attempt in range(1, MAX_ATTEMPTS + 1):
         n0 = _nlines()
-        reply = complete_fn(role_name, msgs, stage=f"extract.{step}")
+        try:
+            reply = complete_fn(role_name, msgs, stage=f"extract.{step}")
+        except RefusalError as e:       # T2 hook: llm.REFUSAL_HOOK; here a refusal is recorded, never worked around
+            log.append({"attempt": attempt, "errors": [f"refusal: {e.reason}"], "reply": e.text})
+            log_dir.mkdir(parents=True, exist_ok=True)
+            (log_dir / f"{tag}.{step}.log.json").write_text(json.dumps(log, indent=1, ensure_ascii=False))
+            raise IncompleteExtraction(f"{tag} {step}: model refused ({e.reason})", reason="refusal",
+                                       refusal={"step": step, "reason": e.reason, "model": e.model, "reply_head": e.text[:200]}) from e
         u = _read_usage(n0)
         for k in usage:
             usage[k] += u[k]
@@ -135,7 +179,8 @@ def call_json(step: str, role_name: str, system: str, user: str, validate: Calla
         msgs += [{"role": "assistant", "content": reply},
                  {"role": "user", "content": "Your JSON was rejected. Fix ALL of these and return the complete corrected JSON object only:\n- "
                   + "\n- ".join(errs[:25])}]
-    raise ExtractionError(f"{tag} {step}: rejected after {MAX_ATTEMPTS} attempts: {errs[:8]}")
+    raise IncompleteExtraction(f"{tag} {step}: rejected after {MAX_ATTEMPTS} attempts: {errs[:8]}",
+                               reason=f"validation failed after {MAX_ATTEMPTS} attempts: {errs[:8]}")
 
 
 # ------------------------------------------------------------------ F, Q
@@ -145,7 +190,18 @@ MOVES = {"act", "partial", "ask", "refuse", "hold"}
 ROLES = {"decide", "execute", "advise"}
 
 
-def validate_fq(o: dict, allowed_spans: set[str]) -> list[str]:
+def fq_texts(o: dict) -> dict[str, str]:
+    """Every string in F and Q that must be name- and narration-free."""
+    t = {k: str(o.get(k) or "") for k in ("title", "setting", "decider", "agent", "situation", "question")}
+    for f in o.get("facts") or []:
+        t[f"facts.{f.get('id')}"] = str(f.get("fact") or "")
+    for k, v in (o.get("options") or {}).items():
+        t[f"options.{k}"] = str(v.get("do") or "")
+    return t
+
+
+def validate_fq(o: dict, allowed_spans: set[str], rules: bool = False, source_text: str = "") -> list[str]:
+    """rules=True adds the extract_fq.v2 checks: option justification / form, opposite disposition (R58), names, narration."""
     errs = []
     for k in ("title", "setting", "decider", "agent", "agent_role", "situation", "question", "facts", "options",
               "real_option", "agent_recast"):
@@ -189,6 +245,12 @@ def validate_fq(o: dict, allowed_spans: set[str]) -> list[str]:
         errs.append("real_option is not an option id")
     if re.search(r"\{[FCO]\d+\}", o["situation"]):
         errs.append("situation must not contain {id} references")
+    if rules:
+        errs += OR.option_errors(opts)
+        errs += OR.opposite_errors(o)
+        texts = fq_texts(o)
+        errs += OR.name_errors(texts, source_text)
+        errs += OR.narration_errors(texts)
     return errs
 
 
@@ -202,6 +264,8 @@ def relabel_options(fq: dict, seed: str) -> dict:
     fq["options"] = new
     fq["real_option"] = f"O{ids.index(fq['real_option']) + 1}"
     fq["authored_options"] = [k for k in new if k != fq["real_option"]]
+    if fq.get("opposite_pair"):
+        fq["opposite_pair"] = [f"O{ids.index(p) + 1}" for p in fq["opposite_pair"] if p in ids]
     return fq
 
 
@@ -274,6 +338,20 @@ def validate_a(a: dict, sid: str, fq: dict, eq: dict[str, str], allowed_spans: s
             for s in it.get("spans") or []:
                 if s not in allowed_spans:
                     errs.append(f"{it.get('id')}: unknown span {s}")
+    prose = {}
+    for k in ("lesson", "limits"):
+        prose[k] = str(a.get(k) or "")
+    r = a.get("reasoning") or {}
+    for k, v in (r.items() if isinstance(r, dict) else []):
+        if isinstance(v, str):
+            prose[f"reasoning.{k}"] = v
+    for c in a.get("considerations") or []:
+        prose[f"{c.get('id')}.why"] = str(c.get("why") or "")
+    for grp in ("would_change", "would_not_change", "watch_for"):
+        for it in fc.get(grp) or []:
+            prose[f"{it.get('id')}.if"] = str(it.get("if") or "")
+            prose[f"{it.get('id')}.why"] = str(it.get("why") or "")
+    errs += OR.narration_errors(prose)           # R40; basis_statement is exempt (it names the source by design)
     try:
         Case.model_validate(mk(a))
     except ValidationError as e:
@@ -293,19 +371,24 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
     sibs = [e for e in source["episodes"] if R.family_of(source, e) == family]
     k = next((i for i, e in enumerate(sibs, 1) if e is ep), n)       # unique within the document family
     sid = f"DR-{family}-{k}@v1" if len(sibs) > 1 else f"DR-{family}@v1"
-    sel = select_spans(spans, ep.get("section"))
+    sel = select_episode_spans(spans, ep)
     allowed = {s["span"] for s in sel}
     log_dir = data / "store" / "scenarios" / family / "extract-logs"
     tag = sid.split("@")[0]
     cfg = role("extractor")
     eq = equities()
-    t_fq, v_fq, h_fq = prompt_file("extract_fq.v1")
+    t_fq, v_fq, h_fq = prompt_file(FQ_PROMPT)
     t_a, v_a, h_a = prompt_file("extract_a.v1")
     sys_msg = "You are a careful legal-and-policy analyst building decision scenarios from public documents. Reply with one JSON object only."
 
+    src_text = " ".join(s["text"] for s in sel)
+    dom = scenario_domain_fields(source, ep)
+    partial = {"id": sid, "family": family, "split": split, "source_id": source.get("id"), "episode": ep.get("focus"), **dom}
+
     # (a) F, Q
     user = t_fq.replace("{{SPANS}}", spans_text(sel)).replace("{{FOCUS}}", ep["focus"])
-    fq, att_fq, use_fq = call_json("FQ", "extractor", sys_msg, user, lambda o: validate_fq(o, allowed), complete_fn, log_dir, tag)
+    fq, att_fq, use_fq = call_json("FQ", "extractor", sys_msg, user, lambda o: validate_fq(o, allowed, rules=True, source_text=src_text),
+                                complete_fn, log_dir, tag)
     fq = relabel_options(fq, sid)
     cues = option_cues(fq)
 
@@ -316,8 +399,14 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
             .replace("{{FQ}}", json.dumps(fq_view, indent=1, ensure_ascii=False)).replace("{{REAL}}", fq["real_option"])
             .replace("{{EQUITIES}}", "\n".join(f"- {k}: {v}" for k, v in eq.items())))
     mk = lambda a: build_case_dict(sid, fq, a, source["domain"], family, source["url"], ep["focus"], cues)  # noqa: E731
-    a, att_a, use_a = call_json("A", "extractor", sys_msg, user, lambda o: validate_a(o, sid, fq, eq, allowed, mk),
-                                complete_fn, log_dir, tag)
+    partial["fq"] = fq
+    try:
+        a, att_a, use_a = call_json("A", "extractor", sys_msg, user, lambda o: validate_a(o, sid, fq, eq, allowed, mk),
+                                    complete_fn, log_dir, tag)
+    except IncompleteExtraction as e:
+        e.partial = {**partial, "fq_usage": use_fq}
+        e.missing = ["case.considerations", "case.reasoning", "case.verdict", "case.flip_conditions", "case.lesson", "case.limits", "basis"]
+        raise
     case = Case.model_validate(mk(a))
 
     # assemble
@@ -330,6 +419,10 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
     authored += [f"case.{p}" if not p.startswith("case.") else p for p in a.get("authored") or []]
     authored = sorted(set(authored))
     tags = ["options-authored"]
+    if OR.no_opposite(fq):
+        tags.append("no-opposite")
+    elif fq.get("opposite_pair"):
+        tags.append("opposite:" + "|".join(sorted(fq["options"][p].get("disposition", "?") for p in fq["opposite_pair"])))
     if fq.get("agent_recast"):
         tags.append("agent-recast")
     if flip_auth:
@@ -356,13 +449,17 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
                **{f"case.{k}": "extract.A" for k in ("considerations", "reasoning", "verdict", "flip_conditions", "lesson", "limits")},
                "family": "extract.assign", "split": "extract.assign"},
         authored=authored)
-    s = Scenario(id=sid, family=family, split=split, domain=source["domain"], status="needs_review", case=case,
+    s = Scenario(id=sid, family=family, split=split, domain=source["domain"], status="needs_review", case=case, **dom,
                  verdict_tier="source-endorsed", basis=a["basis_statement"],
                  source=SourceRef(sha256=sha256, doc=f"data/docs/{sha256[:12]}.jsonl", url=source["url"], title=source["title"],
                                   kind=source["kind"], license=source["license"]),
                  fact_spans=fact_spans, tags=tags, lineage=Lineage(operator="extract", detail={"episode": ep["focus"]}),
                  provenance=prov)
-    gate(s)
+    try:
+        gate(s)
+    except ExtractionError as e:
+        raise IncompleteExtraction(str(e), partial={**partial, "scenario": s.dump()}, reason="gate failed (fewer than 4 grounded facts or ungrounded fact)",
+                                   missing=["case.facts"]) from e
     return s
 
 
@@ -378,10 +475,20 @@ def gate(s: Scenario):
         raise ExtractionError(f"{s.id}: gate failed: {errs}")
 
 
-def extract_all(source_id: str | None = None, episode: int | None = None, complete_fn=None) -> list[str]:
+def save_incomplete(e: IncompleteExtraction, family: str, sid: str, data: Path = DATA) -> Path:
+    """data/store/incomplete/<family>/<id>.yaml: everything extracted + `missing:` + reason. Never paired or trained on."""
+    p = data / "store" / "incomplete" / family / (sid.replace("@", "-") + ".yaml")
+    rec = {"id": sid, "family": family, "reason": e.reason, "message": str(e)[:600], "missing": e.missing or ["case"],
+           "refusal": e.refusal, "extracted": e.partial, "status": "incomplete",
+           "note": "never paired, rendered or trained on until completed and passing the gates (design 4.3)"}
+    write_yaml(p, rec)
+    return p
+
+
+def extract_all(source_id: str | None = None, episode: int | None = None, complete_fn=None, data: Path = DATA) -> list[str]:
     reg = R.load_registry()
     acq = R.load_acquired()
-    st = Store()
+    st = Store(data)
     out = []
     for src in reg["sources"]:
         if source_id and src["id"] != source_id:
@@ -392,8 +499,18 @@ def extract_all(source_id: str | None = None, episode: int | None = None, comple
             if episode and ep["n"] != episode:
                 continue
             family = R.family_of(src, ep)
+            sibs = [e for e in src["episodes"] if R.family_of(src, e) == family]
+            k = next((i for i, e in enumerate(sibs, 1) if e is ep), ep["n"])
+            sid = f"DR-{family}-{k}@v1" if len(sibs) > 1 else f"DR-{family}@v1"
             try:
-                s = extract_episode(src, ep, spans, sha, reg["splits"][family], complete_fn)
+                s = extract_episode(src, ep, spans, sha, reg["splits"][family], complete_fn, data=data)
+            except IncompleteExtraction as e:
+                if not e.partial:
+                    e.partial = {"id": sid, "family": family, "source_id": src["id"], "episode": ep.get("focus"), **scenario_domain_fields(src, ep)}
+                    e.missing = e.missing or ["case.facts", "case.options", "case.situation", "case.question"]
+                p = save_incomplete(e, family, sid, data)
+                out.append(f"INCOMPLETE {src['id']} ep{ep['n']}: {e.reason[:120]} -> {p}")
+                continue
             except ExtractionError as e:
                 out.append(f"REJECTED {src['id']} ep{ep['n']}: {e}")
                 continue
