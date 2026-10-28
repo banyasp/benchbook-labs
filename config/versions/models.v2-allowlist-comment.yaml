@@ -1,0 +1,88 @@
+# Which model does which job. This is the one place to swap models.
+#
+#   Swap for good:     edit the `model:` line of the role below.
+#   Swap for one run:  BENCHBOOK_MODEL_<ROLE>=<spec>, e.g.
+#                      BENCHBOOK_MODEL_CONVERTER=openrouter/openai/gpt-oss-120b python ...
+#                      (any other field: BENCHBOOK_MODEL_<ROLE>__<FIELD>=<value>, e.g. ..._POLICY__MAX_TOKENS=8000)
+#   See what's in effect:  PYTHONPATH=code .venv/bin/python -m bench.models
+#
+# Model spec = <backend>/<id>:
+#   vllm/<served-name>        the local vLLM server (code/inference/serve.sh); needs base_url
+#   openrouter/<id>           openrouter.ai, key from env OPENROUTER_API_KEY, data_collection: deny
+#   bedrock/<modelId>         AWS Bedrock (us-east-1, instance role on the EC2 box; see `bedrock:` below)
+#   dry/<anything>            calls nothing: writes the prompt to disk, returns a placeholder
+#   stub/<anything>           deterministic offline stand-in for tests (judges: fixed scores)
+#
+# training_bound: true -> code/datagen/models.yaml's allowlist applies (gpt-oss, gemma-4, mistral, olmo only).
+# Every call through bench.models is logged to provenance.jsonl (model, role, prompt hash, credential source).
+
+roles:
+  # The agent under test (PDF: Granite 4.2 8B primary; Qwen3.5 9B as the comparison, later).
+  policy:
+    model: vllm/granite-4.2-8b
+    base_url: http://localhost:8000/v1
+    temperature: 1.0          # IBM's recommended settings for all modes
+    top_p: 0.95
+    max_tokens: 12000         # cap so thinking modes can't run away (DECISIONS 2026-10-25)
+  # policy_comparison:
+  #   model: vllm/qwen3.5-9b
+  #   base_url: http://localhost:8001/v1
+
+  # Judges (PDF "Jev Choice" / "Jev_Noul"). Need token probabilities -> OpenRouter, not Bedrock.
+  judge_choice:               # aligns generated facts/options/considerations to gold (two-pass, geometric mean)
+    model: openrouter/typesafe/jev-1.14
+    temperature: 0.0
+    logprobs: true
+  judge_noul:                 # yes/no graded match for free text (frame articulation, course)
+    model: openrouter/typesafe/jev-1.14
+    temperature: 0.0
+    logprobs: true
+  # judge_validation:         # later: open-weight second judge, only to validate the judge on ~150 pairs
+  #   model: <Cloudflare Clef-flash>
+
+  # Generative work (allowlisted open weights, so output can become training data after Peter's review).
+  converter:                  # v2.6 cards -> PDF case format (2b)
+    model: bedrock/openai.gpt-oss-120b-1:0
+    temperature: 0.2
+    max_tokens: 12000
+    training_bound: true
+
+  # 2f data pipeline (BUILD-BRIEF-2f-2026-10-25). Allowlist is record-only now (code/datagen/models.yaml).
+  extractor:                  # extract: source -> F, Q; then A from the endorsed answer
+    model: bedrock/openai.gpt-oss-120b-1:0
+    temperature: 0.2
+    max_tokens: 16000
+    reasoning_effort: medium
+  perturber:                  # perturb: restyle / indirect flip / add fact (X -> X')
+    model: bedrock/openai.gpt-oss-120b-1:0
+    temperature: 0.5
+    max_tokens: 16000
+    reasoning_effort: medium
+  independent_solver:         # gold for unlisted changes: solves X' WITHOUT ever seeing the case (tag model-solved)
+    model: bedrock/openai.gpt-oss-120b-1:0
+    temperature: 0.2
+    max_tokens: 16000
+    reasoning_effort: high
+  renderer:                   # render: X -> agent trace + span map
+    model: bedrock/openai.gpt-oss-120b-1:0
+    temperature: 0.7
+    max_tokens: 16000
+    reasoning_effort: medium
+  teacher:                    # solve: writes the SFT reply given the FULL gold structure. Never the base model.
+    model: bedrock/openai.gpt-oss-120b-1:0   # PLACEHOLDER until Peter names the teacher
+    temperature: 0.7
+    max_tokens: 16000
+    reasoning_effort: high
+    samples: 3                # N samples per pair; keep those that match gold
+
+  # Later (stubbed today):
+  query_extractor:            # reads the trace at the trigger, emits a provisional signature for retrieval
+    model: stub/none
+  # ingestion / case_authoring / trace_rendering: on hold (2f); the datagen stages keep their own --model for now.
+
+bedrock:
+  region: us-east-1
+  allow_instance_role: true   # explicit opt-in for this EC2 box (Peter, 2026-10-25); llm.py refuses it otherwise
+  instance_role: FiroInstanceRole
+
+provenance: results/provenance.jsonl

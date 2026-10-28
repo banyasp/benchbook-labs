@@ -13,7 +13,9 @@
 #   dry/<anything>            calls nothing: writes the prompt to disk, returns a placeholder
 #   stub/<anything>           deterministic offline stand-in for tests (judges: fixed scores)
 #
-# training_bound: true -> code/datagen/models.yaml's allowlist applies (gpt-oss, gemma-4, mistral, olmo only).
+# training_bound: true -> recorded against code/datagen/models.yaml's allowlist (gpt-oss, gemma-4, mistral, olmo).
+# The allowlist is RECORD-ONLY (Peter, 2026-10-25: not bound to it): calls are never refused, each records
+# `allowlist: allowlisted | outside-allowlist`. Before training on a closed model's outputs, Peter checks its terms.
 # Every call through bench.models is logged to provenance.jsonl (model, role, prompt hash, credential source).
 
 roles:
@@ -40,7 +42,7 @@ roles:
   # judge_validation:         # later: open-weight second judge, only to validate the judge on ~150 pairs
   #   model: <Cloudflare Clef-flash>
 
-  # Generative work (allowlisted open weights, so output can become training data after Peter's review).
+  # Generative work (gpt-oss-120b on Bedrock; provenance per field records which model wrote what).
   converter:                  # v2.6 cards -> PDF case format (2b)
     model: bedrock/openai.gpt-oss-120b-1:0
     temperature: 0.2

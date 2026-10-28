@@ -1,4 +1,13 @@
-# 2f pipeline — operator contract (2026-10-25)
+# Data pipeline — operator contract (2f 2026-10-25; v2.4.1 rebuild in progress 2026-10-28)
+
+> **v2.4.1 (BUILD-BRIEF-v2.4-2026-10-27, design `context/DATA-PIPELINE-DESIGN-v2.md` v2.4.1) supersedes the 2f
+> rows below where they differ:** the SFT writer is **rejection sampling Granite (no gold, mode C)**, the gold-informed
+> teacher is kept only as `--writer teacher`; pairs carry `arm` / `card_view` (ids hash both); traces live once per
+> trace scenario in `data/store/traces/<id>/` (TraceRecord: σ with option spans, channels, recommended_option);
+> options are plain text discoverable in the trace (never tools, never a menu); served cards strip
+> `move` / `irreversible` / `to:`; splits = per source document, ~20/10/70 per domain, the held-out domain
+> (military-operational) all test. The 2f text below is kept as the record of the first build. 2f version:
+> `versions/PIPELINE.v1-2f-teacher.md`.
 
 Work order: `BUILD-BRIEF-2f-2026-10-25.md` (wins over older files). Design: `context/DATA-PIPELINE-DESIGN-v2.md`
 §2-4b, §6. Risks: `docs/RISK-REGISTER.md` (append new ones). Records: `code/bench/schema/pipeline.py`
