@@ -257,6 +257,11 @@ class JevJudge(Judge):
                     raise JevJudgeError(f"HTTP {r.status_code}: {r.text[:500]}")
                 data = r.json()
                 self.last_raw = data
+                try:                                  # spend logger: one line per call (bench/costs.py)
+                    from bench.costs import log_judge_call
+                    log_judge_call(f"openrouter-decisions/{model}", data)
+                except Exception:                     # noqa: BLE001 - accounting must not break scoring
+                    pass
                 if "error" in data:
                     raise JevJudgeError(str(data["error"])[:500])
                 if data.get("model"):

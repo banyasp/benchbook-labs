@@ -334,6 +334,11 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
     try:
         text, usage = BACKENDS[backend](bare, messages, temperature, max_tokens, ctx)
         rec["usage"] = usage
+        try:                                    # spend logger (bench/costs.py): exact for OpenRouter, else price table
+            from bench.costs import call_cost
+            rec["cost_usd"], rec["cost_basis"] = call_cost(model, usage)
+        except Exception:                       # noqa: BLE001 - never let accounting break a call
+            pass
         if ctx.get("stop_reason"):
             rec["stop_reason"] = ctx["stop_reason"]
         if ctx.get("throttle_retries"):

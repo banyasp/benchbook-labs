@@ -1,0 +1,316 @@
+id: DR-CORPUS-NX-32ccafd4-E1@v1
+family: CORPUS-NX-32ccafd4
+split: train
+domain: intel-analysis
+content_domain: intel-analysis
+refusal_sensitivity: medium
+held_out: false
+status: needs_review
+case:
+  id: DR-CORPUS-NX-32ccafd4-E1@v1
+  title: Cotton Supply and the Production Increase
+  status: draft
+  setting: Later that morning, during an analysts' evaluation of newly released Soviet economic data.
+  decider: The analyst
+  agent: An economic-analysis agent acting under the analyst's delegated authority
+  agent_role: decide
+  situation: An economic-analysis agent is assigned to assess the reported increase in Soviet cotton-cloth production. The
+    reported increase is 7 percent, while the previous forecast was 3 percent. Data on cotton production and cotton imports
+    and exports are available. Data on cotton inventories are also available.
+  question: What should the economic-analysis agent do about whether available cotton supplies support the reported cotton-cloth
+    production increase?
+  options:
+    O1:
+      do: The economic-analysis agent accepts the reported increase as consistent with available cotton supplies.
+      move: act
+      irreversible: false
+    O2:
+      do: The economic-analysis agent requests additional cotton-supply data from the analysts before issuing an assessment.
+      move: ask
+      irreversible: false
+      to: the analysts
+    O3:
+      do: The economic-analysis agent rejects the reported increase as consistent with available cotton supplies.
+      move: act
+      irreversible: false
+  facts:
+  - id: F1
+    kind: situation
+    status: confirmed
+    fact: The latest Soviet economic data had been released.
+  - id: F2
+    kind: intelligence
+    status: confirmed
+    fact: The released data indicated a 7 percent increase in cotton-cloth output.
+  - id: F3
+    kind: intelligence
+    status: confirmed
+    fact: The previous cotton-cloth output forecast was a 3 percent increase.
+  - id: F4
+    kind: capability
+    status: confirmed
+    fact: The analyst retrieved data on cotton production.
+  - id: F5
+    kind: capability
+    status: confirmed
+    fact: The analyst retrieved data on cotton exports and imports.
+  - id: F6
+    kind: capability
+    status: confirmed
+    fact: The analyst retrieved data on cotton inventories.
+  - id: F7
+    kind: authority
+    status: confirmed
+    fact: The analyst delegates to the economic-analysis agent authority to make the cotton-supply consistency assessment.
+  considerations:
+  - id: C1
+    facts:
+    - F4
+    - F5
+    - F6
+    equity: analytic_integrity
+    favors:
+    - O1
+    weight: strong
+    why: The analyst compared cotton production, imports and exports, and inventories—the stated evidence used to assess whether
+      supplies could support the reported increase.
+  - id: C2
+    facts:
+    - F2
+    - F3
+    equity: analytic_integrity
+    favors:
+    - O1
+    - O2
+    weight: weak
+    why: The 7 percent reported increase materially exceeded the 3 percent forecast, warranting examination rather than automatic
+      acceptance or rejection; the comparison alone does not establish whether supplies were adequate.
+  - id: C3
+    facts:
+    - F2
+    - F4
+    - F5
+    - F6
+    equity: analytic_integrity
+    favors:
+    - O1
+    weight: strong
+    why: The analyst concluded that the available cotton was sufficient to support the reported increase without substantially
+      reducing inventories, directly supporting acceptance of its supply consistency.
+  reasoning:
+    read: The question is whether the reported output increase is consistent with available cotton supplies, not whether the
+      report matches the earlier forecast. The forecast gap calls for checking the supply evidence; it does not by itself
+      show the increase is implausible.
+    weighing: The forecast discrepancy merits scrutiny {C2}, but the analyst retrieved and compared production, trade, and
+      inventory data {C1}. The resulting assessment was that cotton supplies were sufficient without substantially reducing
+      inventories {C3}, so the evidence favors {O1} over requesting more data or rejecting the increase. That balance depends
+      on the supply comparison supporting the stated conclusion.
+    tradecraft: 'State the supply-consistency judgment and preserve its evidentiary basis: cotton production, imports and
+      exports, and inventories. Do not treat the forecast miss alone as proof of a supply shortfall.'
+    uncertainty: The source gives the analyst's conclusion but no numerical supply balance or confidence level. The assessment
+      should therefore be understood as the analyst's stated judgment on the data reviewed, not as a quantified certainty.
+    handoff: The analyst made the supply assessment using the retrieved data; the source does not indicate that further approval
+      or a request to other analysts was needed for this judgment.
+    tempting_wrong:
+      option: O3
+      pull: The reported 7 percent increase is substantially higher than the previous 3 percent forecast.
+      why_wrong: A forecast miss is a reason to examine the evidence, not evidence that cotton supplies are insufficient;
+        the analyst's comparison instead found supplies adequate.
+    rejected:
+      O2: The analyst had retrieved and assessed the relevant production, trade, and inventory data, and the stated conclusion
+        did not call for additional supply information.
+      O3: The analyst concluded that available cotton could support the reported increase without substantially reducing inventories.
+  verdict:
+    choice: O1
+    basis: recommended
+    decisive:
+    - C1
+    - C3
+  flip_conditions:
+    would_change:
+    - id: flip1
+      if: A reassessment of the relevant supply data showed that cotton was insufficient to support the reported increase.
+      then: O3
+      why: A demonstrated supply shortfall would contradict the evidentiary basis for accepting the increase as supply-consistent.
+    - id: flip2
+      if: The supply data were materially incomplete or unreliable, preventing a sound conclusion about availability.
+      then: O2
+      why: Without an adequate evidentiary basis, requesting further supply data would be preferable to accepting or rejecting
+        the increase on the current record.
+    would_not_change:
+    - id: noflip1
+      if: The reported increase remained higher than the previous forecast while the production, trade, and inventory evidence
+        continued to support adequate supplies.
+      why: The forecast gap alone does not outweigh the supply evidence supporting the analyst's conclusion.
+    watch_for: []
+  lesson: A forecast divergence is a prompt to test the underlying evidence, not a reason by itself to accept or reject a
+    new estimate. When the relevant supply data support the reported increase without a substantial inventory drawdown, the
+    assessment should reflect that evidence.
+  limits: This reasoning addresses only whether available cotton supports the reported cotton-cloth production increase. It
+    does not assess other explanations for the output change, the reliability of the released data beyond the analyst's stated
+    assessment, or the full economic forecast.
+  library:
+    domain: intel-analysis
+    family: CORPUS-NX-32ccafd4
+    source: https://www.cia.gov/resources/csi/static/614967995df1da808decb0e019bbe001/Computers-in-Economic-Intel.pdf
+    episode_focus: The analyst assesses whether the production increase is plausible by comparing cotton production, trade,
+      and inventory data, and concludes that sufficient cotton is available without substantially reducing inventories. Focus
+      on this estimative judgment and its stated evidentiary basis; exclude the surrounding computer workflow and other analysts’
+      separate assessments.
+    cues:
+      option_words:
+        O1: 13
+        O2: 14
+        O3: 13
+      real_option: O1
+      real_to_mean_other_length: 0.96
+      real_is_longest: false
+      moves:
+        O1: act
+        O2: ask
+        O3: act
+      real_move: act
+      irreversible_flags:
+        O1: false
+        O2: false
+        O3: false
+    equities: pilot2
+verdict_tier: source-endorsed
+basis: The analyst concludes that sufficient cotton is available to support the 7 percent increase without substantially reducing
+  inventories.
+source:
+  sha256: 4a00ef706ffb47ef7fba6b5b60b8c4290089b1136fdc7fae819560f6bf2808ef
+  doc: data/docs/4a00ef706ffb.jsonl
+  url: https://www.cia.gov/resources/csi/static/614967995df1da808decb0e019bbe001/Computers-in-Economic-Intel.pdf
+  title: Computers in Economic Intelligence
+  kind: national-security corpus document
+  license: 'natsec corpus v1 (data/corpus/natsec/README.md): mostly U.S. government works (public domain); others copyrighted,
+    used as source material for extracting decision episodes only'
+fact_spans:
+  F1:
+  - src:c43cdfbf01d3#p2.3
+  F2:
+  - src:c43cdfbf01d3#p2.3
+  F3:
+  - src:c43cdfbf01d3#p2.3
+  F4:
+  - src:c43cdfbf01d3#p2.3
+  F5:
+  - src:c43cdfbf01d3#p2.3
+  F6:
+  - src:c43cdfbf01d3#p2.3
+  F7: []
+tags:
+- options-authored
+- opposite:accept|reject
+- agent-recast
+- flip-conditions-authored
+- natsec
+- corpus
+- corpus-batch2
+- bucket-intel-analysis
+lineage:
+  operator: extract
+  detail:
+    episode: The analyst assesses whether the production increase is plausible by comparing cotton production, trade, and
+      inventory data, and concludes that sufficient cotton is available without substantially reducing inventories. Focus
+      on this estimative judgment and its stated evidentiary basis; exclude the surrounding computer workflow and other analysts’
+      separate assessments.
+provenance:
+  steps:
+  - id: extract.FQ
+    operator: extract
+    model: bedrock/us.openai.gpt-6-luna
+    role: extractor
+    prompt_version: extract_fq.v2+b02354d347e7
+    inputs:
+      doc: 4a00ef706ffb47ef7fba6b5b60b8c4290089b1136fdc7fae819560f6bf2808ef
+      prompt: b02354d347e78bf26f58ee1b400f219e75aa027ccd8cbaeaa818d00ddcea7263
+      spans: c4ef4d1f92f06eeeb64eae528ba7a5aaa64a7078ff789ed54f9c42cdcf17b57f
+    params:
+      temperature: 0.2
+      max_tokens: 16000
+      reasoning_effort: medium
+      attempts: 1
+      usage:
+        calls: 14
+        inputTokens: 24
+        outputTokens: 32589
+    ts: '2026-10-28T16:04:56Z'
+    notes: The analyst's evidence-based consistency judgment is recast as an economic-analysis agent making the same delegated
+      assessment.
+  - id: extract.A
+    operator: extract
+    model: bedrock/us.openai.gpt-6-luna
+    role: extractor
+    prompt_version: extract_a.v1+69ec70c84847
+    inputs:
+      doc: 4a00ef706ffb47ef7fba6b5b60b8c4290089b1136fdc7fae819560f6bf2808ef
+      prompt: 69ec70c84847394351228eafbe9a1cc8b9e1f1c58bb6570414710c89e99aedf3
+      fq: c94461f3c5f4f51c8fc6709d360fd0853f288dad2bd0b0dec158559992782916
+    params:
+      temperature: 0.2
+      max_tokens: 16000
+      reasoning_effort: medium
+      attempts: 1
+      usage:
+        calls: 16
+        inputTokens: 30
+        outputTokens: 42520
+    ts: '2026-10-28T16:04:56Z'
+  - id: extract.assign
+    operator: extract
+    inputs: {}
+    params: {}
+    ts: '2026-10-28T16:04:56Z'
+    notes: 'family CORPUS-NX-32ccafd4; split train by rule: v2 (design v2.4.1 §13.5, brief W4a): family = source document
+      (all its episodes share it); per domain, families sorted by sha256(family id); the first ~20% go to test (at least 5
+      when the domain has >= 15 families, else at least 1 once it has 3), the next ~10% to dev, the rest to train; every family
+      of a held-out domain (military-operational) goes to test; pilot imports stay eval-only. Assigned before any perturbation;
+      derived scenarios inherit their root''s split.; option order shuffled by code (seed = scenario id)'
+  - id: corpus.scope
+    operator: extract
+    inputs: {}
+    params:
+      attempts: 1
+      bucket: intel-analysis
+      doctrine: false
+    ts: '2026-10-28T16:04:56Z'
+    notes: corpus-batch2 episode CORPUS-NX-32ccafd4-E1 (studies-in-intelligence); corpus_scope.v2; equities pilot2; technique
+      screen clean after 1 extraction(s)
+  fields:
+    case.title: extract.FQ
+    case.setting: extract.FQ
+    case.decider: extract.FQ
+    case.agent: extract.FQ
+    case.agent_role: extract.FQ
+    case.situation: extract.FQ
+    case.question: extract.FQ
+    case.options: extract.FQ
+    case.facts: extract.FQ
+    case.considerations: extract.A
+    case.reasoning: extract.A
+    case.verdict: extract.A
+    case.flip_conditions: extract.A
+    case.lesson: extract.A
+    case.limits: extract.A
+    family: extract.assign
+    split: extract.assign
+  authored:
+  - case.facts.F7
+  - case.flip_conditions.flip1
+  - case.flip_conditions.flip2
+  - case.flip_conditions.noflip1
+  - case.flip_conditions.would_change
+  - case.flip_conditions.would_not_change
+  - case.lesson
+  - case.limits
+  - case.options.O2
+  - case.options.O3
+  - case.reasoning.handoff
+  - case.reasoning.read
+  - case.reasoning.rejected
+  - case.reasoning.tempting_wrong
+  - case.reasoning.tradecraft
+  - case.reasoning.uncertainty
+  - case.reasoning.weighing

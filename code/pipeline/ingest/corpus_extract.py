@@ -1,8 +1,12 @@
 """Extract a stratified batch of natsec-corpus episodes into scenarios X = (F, Q, A) (Peter, 2026-10-28: "500, stratified
 from throughout the domains").
 
-    PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract select [--n 500] [--seed 0]   # -> batch file
-    BENCHBOOK_EQUITY_SET=pilot2 PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract run [--workers 16]
+    PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract [--batch corpus-batch2] select [--n 500] [--seed 0]
+    PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract --batch corpus-batch2 incidents   # then select again
+    BENCHBOOK_EQUITY_SET=pilot2 PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract --batch corpus-batch2 \
+        --scope corpus_scope.v2 run [--workers 16]
+A later batch never reuses an earlier batch's episodes, inherits the family (and so the split) of any document or
+incident an earlier batch used, and drops a targeting episode whose family is already train/dev.
 
 select: reads data/store/episodes/corpus/*.yaml and writes data/store/episodes/corpus-batch1.yaml.
 - Buckets by content_domain with quotas (QUOTAS); 1,402 free-text `other:` labels share one bucket.
@@ -41,11 +45,31 @@ from .extract import EQUITY_SET, ExtractionError, IncompleteExtraction, Techniqu
 
 HERE = Path(__file__).parent
 EP_DIR = DATA / "store" / "episodes" / "corpus"
-BATCH = DATA / "store" / "episodes" / "corpus-batch1.yaml"
-RESULTS = DATA / "store" / "episodes" / "corpus-batch1.results.jsonl"
-INCIDENTS = DATA / "store" / "episodes" / "corpus-batch1.incidents.json"   # Luna's incident groups over a first selection
+EPISODES = DATA / "store" / "episodes"
+BATCH = EPISODES / "corpus-batch1.yaml"                       # configure() points these at --batch
+RESULTS = EPISODES / "corpus-batch1.results.jsonl"
+INCIDENTS = EPISODES / "corpus.incidents.json"                # incident groups across all batches (batch 1's seeded it)
+INCIDENTS_B1 = EPISODES / "corpus-batch1.incidents.json"
 CORPUS_META = DATA / "corpus" / "natsec" / "meta"
-SCOPE = HERE / "prompts" / "corpus_scope.v1.md"
+SCOPE = HERE / "prompts" / "corpus_scope.v1.md"             # batch 1; batch 2 on: corpus_scope.v2 (3-4 genuine options)
+
+
+def configure(batch: str, scope: str | None = None):
+    global BATCH, RESULTS, SCOPE
+    BATCH, RESULTS = EPISODES / f"{batch}.yaml", EPISODES / f"{batch}.results.jsonl"
+    if scope:
+        SCOPE = HERE / "prompts" / f"{scope}.md"
+    if not INCIDENTS.exists() and INCIDENTS_B1.exists():
+        INCIDENTS.write_text(INCIDENTS_B1.read_text())
+
+
+def previous_batches() -> list[dict]:
+    """Episodes of every other corpus batch (they fix families and splits for this one)."""
+    out = []
+    for f in sorted(EPISODES.glob("corpus-batch*.yaml")):
+        if f != BATCH:
+            out += [{**e, "_batch": f.stem} for e in (yaml.safe_load(f.read_text()) or {}).get("episodes", [])]
+    return out
 
 QUOTAS = {"targeting": 80, "operational-command": 90, "intel-oversight": 85, "intel-analysis": 85,
           "use-of-force-policy": 60, "small": 20, "other": 80}
@@ -93,6 +117,36 @@ def candidates() -> tuple[list[dict], Counter]:
 
 def select(n_total: int = 500, seed: int = 0) -> dict:
     cands, dropped = candidates()
+    prev = previous_batches()
+    prev_keys = {(e["source"], e["n"]) for e in prev}
+    n0 = len(cands)
+    cands = [e for e in cands if (e["source"], e["n"]) not in prev_keys]
+    if n0 - len(cands):
+        dropped["already in an earlier batch"] = n0 - len(cands)
+    prev_fam_of_key = {(e["source"], e["n"]): e["family"] for e in prev}
+    prev_fams_of_src = defaultdict(set)
+    for e in prev:
+        prev_fams_of_src[e["source"]].add(e["family"])
+    prev_split = {e["family"]: e["split"] for e in prev}
+    prev_held = {e["family"] for e in prev if e.get("held_out")}
+    for e in cands:                                            # same document as an earlier batch -> same family
+        if len(prev_fams_of_src.get(e["source"], ())) == 1:
+            e["family"] = next(iter(prev_fams_of_src[e["source"]]))
+    # incident groups (the same event in several documents) are one family; applied before picking, so the one-per-family
+    # spread and the held-out checks see final families
+    key_fam = incident_families(prev_fam_of_key)
+    for e in cands:
+        if (e["source"], e["n"]) in key_fam:
+            e["family"] = e["incident_family"] = key_fam[(e["source"], e["n"])]
+    prev_src_split = defaultdict(set)
+    for e in prev:
+        prev_src_split[e["source"]].add(e["split"])
+    locked = lambda e: bool(({prev_split.get(e["family"])} | prev_src_split.get(e["source"], set())) & {"train", "dev"})
+    n0 = len(cands)
+    cands = [e for e in cands if not (e["bucket"] == "targeting" and locked(e))]   # could not be held out
+    if n0 - len(cands):
+        dropped["targeting tied to an earlier train/dev family or document"] = n0 - len(cands)
+    seen_before = lambda f: f in prev_split                                        # families earlier batches used
     scale = n_total / sum(QUOTAS.values())
     quotas = {b: round(q * scale) for b, q in QUOTAS.items()}
     rng = random.Random(seed)
@@ -102,11 +156,13 @@ def select(n_total: int = 500, seed: int = 0) -> dict:
     chosen, used = [], Counter()
 
     def take(b, pred, limit):
-        """Round-robin collections -> families (one episode per family per pass), widest span range first."""
+        """Round-robin collections -> families (one episode per family per pass; families no earlier batch used first),
+        widest span range first."""
         got = []
         colls = sorted(by_b[b])
         rng.shuffle(colls)
-        queues = {c: sorted(by_b[b][c], key=lambda f: hashlib.sha256(f"{seed}{f}".encode()).hexdigest()) for c in colls}
+        queues = {c: sorted(by_b[b][c], key=lambda f: (seen_before(f), hashlib.sha256(f"{seed}{f}".encode()).hexdigest()))
+                  for c in colls}
         passes = 0
         while len(got) < limit and passes < 50:
             moved = False
@@ -141,33 +197,106 @@ def select(n_total: int = 500, seed: int = 0) -> dict:
             break
     for b, q in quotas.items():
         chosen += take(b, lambda e: True, q - doc_per_b.get(b, 0))
-    # incident groups (the same event seen from several documents) become one family, so they share a split
-    key_fam = incident_families()
     for e in chosen:
-        if (e["source"], e["n"]) in key_fam:
-            e["family"] = e["incident_family"] = key_fam[(e["source"], e["n"])]
-    # splits per family
-    fam_b = {}
-    for e in chosen:
-        fam_b.setdefault(e["family"], set()).add(e["bucket"])
-    test_fams = {f for f, bs in fam_b.items() if "targeting" in bs}
-    fam_dom = {f: sorted(bs)[0] for f, bs in fam_b.items() if f not in test_fams}
-    splits, warns = R.assign_splits_v2(fam_dom, held_out=())
-    splits.update({f: "test" for f in test_fams})
-    eps = []
-    for i, e in enumerate(sorted(chosen, key=lambda e: (e["bucket"], e["family"], e["n"])), 1):
         e.pop("_taken", None)
-        e["split"] = splits[e["family"]]
-        e["held_out"] = e["family"] in test_fams
+    splits, held, warns, moved = split_groups(prev, chosen)
+    eps = []
+    for e in sorted(chosen, key=lambda e: (e["bucket"], e["family"], e["n"])):
+        e["split"], e["held_out"] = splits[e["family"]], e["family"] in held
         multi = e["family"] != f"CORPUS-{e['source']}"               # incident / multi-part family: add the document
         e["id"] = f"{e['family']}-{e['source']}-E{e['n']}" if multi else f"{e['family']}-E{e['n']}"
         eps.append(e)
+    fams = {e["family"] for e in eps}
     summary = {"n": len(eps), "quotas": quotas, "by_bucket": dict(Counter(e["bucket"] for e in eps)),
                "by_split": dict(Counter(e["split"] for e in eps)), "doctrine": sum(e["doctrine"] for e in eps),
-               "families": len(fam_b), "collections": len({e["collection"] for e in eps}), "dropped": dict(dropped),
-               "split_warnings": warns, "seed": seed, "candidates": len(cands)}
-    write_yaml(BATCH, {"batch": "corpus-batch1", "created": time.strftime("%Y-%m-%d"), "summary": summary, "episodes": eps})
+               "families": len(fams), "collections": len({e["collection"] for e in eps}), "dropped": dict(dropped),
+               "split_warnings": warns, "seed": seed, "candidates": len(cands),
+               "families_from_earlier_batches": sum(1 for f in fams if f in prev_split),
+               "earlier_batch_episodes_resplit": moved}
+    write_yaml(BATCH, {"batch": BATCH.stem, "created": time.strftime("%Y-%m-%d"), "summary": summary, "episodes": eps})
+    if moved:
+        apply_prev_splits(prev, splits, held)
     return summary
+
+
+def split_groups(prev: list[dict], chosen: list[dict]) -> tuple[dict, set, list, list]:
+    """One split per SPLIT GROUP: families joined by a shared document or incident, across all batches (R82).
+    Group with a targeting episode -> test, held out. Earlier batches' splits are kept; if they disagree inside a group,
+    the group goes to test (conservative) and those earlier episodes are moved (`moved`). New groups: assign_splits_v2."""
+    allx = prev + chosen
+    parent = {}
+
+    def find(x):
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        parent[find(a)] = find(b)
+
+    first_fam_of_src = {}
+    for e in allx:
+        find(e["family"])
+        if e["source"] in first_fam_of_src:
+            union(e["family"], first_fam_of_src[e["source"]])
+        else:
+            first_fam_of_src[e["source"]] = e["family"]
+    comp = defaultdict(list)
+    for e in allx:
+        comp[find(e["family"])].append(e)
+    splits, held, new_dom = {}, set(), {}
+    for root, es in comp.items():
+        fams = {e["family"] for e in es}
+        tgt = any(e["bucket"] == "targeting" or e.get("held_out") for e in es)
+        old = {e["split"] for e in es if e.get("_batch")}
+        if tgt or len(old) > 1:
+            sp = "test"
+        elif old:
+            sp = next(iter(old))
+        else:
+            new_dom[root] = sorted(e["bucket"] for e in es)[0]
+            continue
+        for f in fams:
+            splits[f] = sp
+            if tgt:
+                held.add(f)
+    new_splits, warns = R.assign_splits_v2(new_dom, held_out=())
+    for root, sp in new_splits.items():
+        for e in comp[root]:
+            splits[e["family"]] = sp
+    moved = sorted({e["id"] for e in prev if splits.get(e["family"]) != e["split"]
+                    or (e["family"] in held) != bool(e.get("held_out"))})
+    return splits, held, warns, moved
+
+
+def apply_prev_splits(prev: list[dict], splits: dict, held: set):
+    """Write changed splits back into earlier batch files and their extracted scenarios (only valid while those scenarios
+    have not been perturbed or paired: check before calling)."""
+    store = Store()
+    by_batch = defaultdict(list)
+    for e in prev:
+        by_batch[e["_batch"]].append(e)
+    for bname, es in by_batch.items():
+        f = EPISODES / f"{bname}.yaml"
+        doc = yaml.safe_load(f.read_text())
+        for e in doc["episodes"]:
+            sp, h = splits.get(e["family"], e["split"]), e["family"] in held
+            if (sp, h) != (e["split"], bool(e.get("held_out"))):
+                e["split"], e["held_out"] = sp, h
+                sid = f"DR-{e['id']}@v1"
+                try:
+                    s = store.scenario(sid)
+                except (KeyError, FileNotFoundError):              # rejected / not extracted: batch file only
+                    continue
+                if any(p.case_scenario == sid or p.trace_scenario == sid for p in store.pairs()):
+                    raise SystemExit(f"{sid} is already paired; resplit it with pipeline.ingest resplit instead")
+                s.split, s.held_out = sp, h
+                s.provenance.step(id="corpus.resplit", operator="extract", ts=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                  notes=f"split group joined with {BATCH.stem} (shared document or incident, R82): {sp}")
+                store.save_scenario(s)
+        write_yaml(f, doc)
 
 
 # ------------------------------------------------------------------ incident groups
@@ -184,13 +313,17 @@ more items.
 {lines}"""
 
 
-def incident_families() -> dict:
-    """(source, n) -> incident family id, from INCIDENTS (accumulated over grouping passes)."""
+def incident_families(prev_fam_of_key: dict | None = None) -> dict:
+    """(source, n) -> family, from INCIDENTS (accumulated over grouping passes). A group with a member in an earlier
+    batch takes that member's family, so the incident keeps the split it already has."""
     if not INCIDENTS.exists():
         return {}
+    prev_fam_of_key = prev_fam_of_key or {}
     out = {}
     for g in json.loads(INCIDENTS.read_text()):
         fid = "CORPUS-INC-" + re.sub(r"[^A-Z0-9]+", "-", g["incident"].upper()).strip("-")[:40]
+        old = sorted({prev_fam_of_key[tuple(m)] for m in g["members"] if tuple(m) in prev_fam_of_key})
+        fid = old[0] if old else fid
         for src, n in g["members"]:
             out[(src, n)] = fid
     return out
@@ -202,7 +335,7 @@ def group_incidents(complete_fn=None) -> list[dict]:
     if complete_fn is None:
         from bench.models import complete as complete_fn
     from .extract import parse_json
-    b = yaml.safe_load(BATCH.read_text())["episodes"]
+    b = yaml.safe_load(BATCH.read_text())["episodes"] + previous_batches()     # incidents across batches too
     lines = "\n".join(f"{i}: [{(e.get('title') or '')[:70]}] {e['decision'][:220]}" for i, e in enumerate(b))
     o = parse_json(complete_fn("extractor", [{"role": "system", "content": "Reply with one JSON object only."},
                                              {"role": "user", "content": INCIDENT_PROMPT.format(n=len(b), lines=lines)}],
@@ -268,11 +401,11 @@ def extract_one(ep: dict, store: Store, complete_fn=None) -> dict:
         return {**rec, "outcome": "rejected", "criterion": 4, "reason": "technique remains after two re-extractions",
                 "flags": flags[:30]}
     s.held_out, s.split = ep["held_out"], ep["split"]
-    s.tags += ["natsec", "corpus", f"bucket-{ep['bucket']}"] + (["doctrine-derived"] if ep["doctrine"] else []) \
+    s.tags += ["natsec", "corpus", BATCH.stem, f"bucket-{ep['bucket']}"] + (["doctrine-derived"] if ep["doctrine"] else []) \
         + (["held-out-domain"] if ep["held_out"] else [])
     s.case.library["equities"] = EQUITY_SET
     s.provenance.step(id="corpus.scope", operator="extract", ts=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                      notes=(f"corpus-batch1 episode {ep['id']} ({ep['collection']}); corpus_scope.v1; equities {EQUITY_SET}; "
+                      notes=(f"{BATCH.stem} episode {ep['id']} ({ep['collection']}); {SCOPE.stem}; equities {EQUITY_SET}; "
                              f"technique screen clean after {attempt} extraction(s)"),
                       params={"attempts": attempt, "bucket": ep["bucket"], "doctrine": ep["doctrine"]})
     store.save_scenario(s)
@@ -308,6 +441,8 @@ def run(workers: int = 16, only=None) -> dict:
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--batch", default="corpus-batch1", help="batch name: data/store/episodes/<batch>.yaml")
+    ap.add_argument("--scope", help="scope addendum prompt name (default corpus_scope.v1; batch 2 on: corpus_scope.v2)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("select")
     s.add_argument("--n", type=int, default=500)
@@ -317,6 +452,7 @@ def main(argv=None):
     r.add_argument("--workers", type=int, default=16)
     r.add_argument("--only", nargs="*")
     a = ap.parse_args(argv)
+    configure(a.batch, a.scope)
     if a.cmd == "select":
         print(json.dumps(select(a.n, a.seed), indent=1))
     elif a.cmd == "incidents":
