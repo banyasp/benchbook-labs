@@ -21,7 +21,8 @@ def main():
                 continue
             m = json.load(open(f))
             cur = best.get(m["id"])
-            if cur is None or (not cur[1].get("ok") and m.get("ok")):
+            better = m.get("ok") and (not cur[1].get("ok") or (m.get("chars") or 0) > (cur[1].get("chars") or 0)) if cur else True
+            if better:  # an ok copy beats a failed one; among ok copies, the one with more text (e.g. after OCR)
                 best[m["id"]] = (b, m)
     rows, blocked = [], []
     for iid, (b, m) in sorted(best.items()):
