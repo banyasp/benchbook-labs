@@ -63,7 +63,10 @@ def validate_candidates(o: dict, ids: list[str]) -> list[str]:
     return errs
 
 
-def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None = None, data: Path = DATA) -> dict:
+def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None = None, data: Path = DATA,
+                  addendum: str = "", relax: tuple[str, ...] = (), out_dir: Path | None = None) -> dict:
+    """`addendum` is appended to the prompt (corpus-specific guidance); a candidate that fails only criteria in `relax`
+    still passes and carries `relaxed: [...]` (doctrine: no stated choice -> model-solved gold, brief W8b)."""
     if complete_fn is None:
         from bench.models import complete as complete_fn
     tmpl, version, _ = prompt_file("find_episodes.v1")
@@ -75,7 +78,7 @@ def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None 
     for wi, win in enumerate(windows(spans)):
         ids = [s["span"] for s in win]
         try:
-            obj, _, _ = call_json(f"EP{wi}", "extractor", sys_msg, tmpl.replace("{{SPANS}}", spans_text(win)),
+            obj, _, _ = call_json(f"EP{wi}", "extractor", sys_msg, tmpl.replace("{{SPANS}}", spans_text(win)) + addendum,
                                   lambda o: validate_candidates(o, ids), complete_fn, log_dir, source["id"])
         except ExtractionError as e:
             refused = getattr(e, "reason", "") == "refusal"
@@ -84,7 +87,9 @@ def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None 
                             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
             continue
         for c in obj["candidates"]:
-            failed = [k for k in CRITERIA if not c["criteria"][k]["pass"]]
+            failed_all = [k for k in CRITERIA if not c["criteria"][k]["pass"]]
+            relaxed = [k for k in failed_all if k in relax]
+            failed = [k for k in failed_all if k not in relax]
             cd = c["content_domain"] if c["content_domain"] else base["content_domain"]
             rs = c["refusal_sensitivity"]
             if base["refusal_sensitivity"] == "high":          # a seed that says high (natsec) is never lowered by the model
@@ -96,7 +101,8 @@ def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None 
                                 "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
             else:
                 passes.append({"decision": c["decision"], "focus": c["focus"], "span_range": [c["span_start"], c["span_end"]],
-                               "content_domain": cd, "refusal_sensitivity": rs, "criteria": {k: True for k in CRITERIA}})
+                               "content_domain": cd, "refusal_sensitivity": rs,
+                               "criteria": {k: k not in relaxed for k in CRITERIA}, "relaxed": relaxed})
     seen, eps = set(), []
     for p in passes:                                            # dedupe identical ranges across windows
         key = tuple(p["span_range"])
@@ -104,14 +110,14 @@ def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None 
             continue
         seen.add(key)
         eps.append({"n": len(eps) + 1, "focus": p["focus"], "span_range": p["span_range"], "decision": p["decision"],
-                    "content_domain": p["content_domain"], "refusal_sensitivity": p["refusal_sensitivity"]})
-    d = data / "store" / "episodes"
+                    "content_domain": p["content_domain"], "refusal_sensitivity": p["refusal_sensitivity"]}
+                   | ({"relaxed": p["relaxed"]} if p["relaxed"] else {}))
+    d = out_dir or data / "store" / "episodes"
     d.mkdir(parents=True, exist_ok=True)
     write_yaml(d / f"{source['id']}.yaml", {"source": source["id"], "prompt": version, "episodes": eps})
     if rejects:
-        with open(d / "rejected.jsonl", "a") as f:
-            for r in rejects:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        with open(d / "rejected.jsonl", "a") as f:             # one write per document (callers run in threads)
+            f.write("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rejects))
     return {"passed": eps, "rejected": rejects}
 
 
