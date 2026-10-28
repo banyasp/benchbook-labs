@@ -36,7 +36,8 @@ def alt_urls(url):
     m = re.match(r"https?://arxiv\.org/abs/([\w.]+)", url)
     if m:
         alts.insert(0, ("arxiv-pdf", f"https://arxiv.org/pdf/{m.group(1)}"))
-    alts.append(("wayback", "https://web.archive.org/web/2026id_/" + url))
+    if not os.environ.get("BENCHBOOK_NO_WAYBACK"):  # set where the Wayback Machine is unreachable (slow timeouts)
+        alts.append(("wayback", "https://web.archive.org/web/2026id_/" + url))
     return alts
 
 
