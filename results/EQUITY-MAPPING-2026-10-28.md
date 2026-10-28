@@ -59,3 +59,54 @@ rejects them (commit 297c0daf); this table is for the scenarios that already hav
 | `risk_to_national_security` | 1 | Protecting the security of the nation from threats that could undermine its safety, institutions, or interests. | The use weighs a broad risk to national security, which is not covered by any registry gloss focused on a more specific interest. |
 | `security_risk` | 5 | Protecting national security by ensuring access to sensitive information is granted only when security concerns are acceptably resolved. | These uses weigh the risk of granting security clearance while unresolved financial concerns remain, an interest not covered by the registry’s glosses. |
 | `workplace_morale` | 1 | Supporting the morale, goodwill, and cohesion of people working together in an organization. | The use weighs employee goodwill and team cohesion, which no registry gloss directly covers. |
+
+## Mapping onto pilot2 (after adding 5 equities)
+
+`data/registry/equities/pilot2.mapping.yaml` holds this table; not applied yet. `by` = who proposed the row.
+
+| id | uses | → pilot2 | by | note |
+|---|---|---|---|---|
+| `appearance_of_bias` | 1 | `impartiality` | claude |  |
+| `character` | 1 | `mitigation` | claude |  |
+| `civilian_protection` | 1 | `civilian_life` | gpt-6-luna |  |
+| `contractual_obligation` | 1 | `lawful_authority` | claude | review: a contract's terms, not law |
+| `crew_readiness` | 1 | `mission_effect` | gpt-6-luna |  |
+| `employee_fairness` | 1 | `duty_to_individual` | gpt-6-luna |  |
+| `employee_protection` | 1 | `duty_to_individual` | gpt-6-luna |  |
+| `ethical_compliance` | 1 | `complicity_risk` | gpt-6-luna |  |
+| `evidence_insufficiency` | 1 | `due_process` | gpt-6-luna |  |
+| `evidence_reliability` | 1 | `analytic_integrity` | gpt-6-luna |  |
+| `fairness_to_individual` | 1 | `duty_to_individual` | gpt-6-luna |  |
+| `fairness_to_respondent` | 1 | `duty_to_individual` | gpt-6-luna |  |
+| `family_support` | 1 | `duty_to_individual` | claude | review: charitable support for service families |
+| `financial_integrity` | 1 | `security_risk` | claude |  |
+| `friendly_force_protection` | 1 | `own_force_life` | gpt-6-luna |  |
+| `information_gap` | 1 | `analytic_integrity` | claude |  |
+| `intelligence_need` | 1 | `analytic_integrity` | claude |  |
+| `mission_continuity` | 1 | `mission_effect` | gpt-6-luna |  |
+| `mission_effectiveness` | 1 | `mission_effect` | gpt-6-luna |  |
+| `mission_necessity` | 1 | `own_force_life` | gpt-6-luna |  |
+| `mission_success` | 1 | `mission_effect` | gpt-6-luna |  |
+| `mission_value` | 1 | `mission_effect` | gpt-6-luna |  |
+| `mitigation` | 2 | `mitigation` | claude |  |
+| `mitigation_candor` | 1 | `mitigation` | claude |  |
+| `mitigation_evidence` | 1 | `mitigation` | claude |  |
+| `mitigation_success` | 1 | `mitigation` | claude |  |
+| `national_security` | 3 | `security_risk` | claude |  |
+| `operational_continuity` | 1 | `mission_effect` | gpt-6-luna |  |
+| `operational_practicality` | 1 | `mission_effect` | claude |  |
+| `partial_restoration` | 1 | `mitigation` | claude |  |
+| `policy_compliance` | 1 | `policy_compliance` | claude |  |
+| `procedural_fairness` | 1 | `due_process` | gpt-6-luna |  |
+| `prudential_caution` | 1 | `lawful_authority` | gpt-6-luna |  |
+| `public_education` | 1 | `public_transparency` | claude | review: educating the public about a regulator's work |
+| `rehabilitation_potential` | 1 | `mitigation` | claude |  |
+| `rehabilitative_counseling` | 1 | `mitigation` | claude |  |
+| `risk_aversion` | 1 | `security_risk` | claude |  |
+| `risk_management` | 3 | `security_risk` | claude |  |
+| `risk_mitigation` | 2 | `security_risk` | claude |  |
+| `risk_to_national_security` | 1 | `security_risk` | claude |  |
+| `security_clearance` | 1 | `security_risk` | claude |  |
+| `security_risk` | 5 | `security_risk` | claude |  |
+| `statutory_authority` | 1 | `lawful_authority` | gpt-6-luna |  |
+| `workplace_morale` | 1 | `mission_effect` | claude | review: team cohesion |
