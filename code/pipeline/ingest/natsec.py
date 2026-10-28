@@ -151,7 +151,7 @@ SCRATCH = DATA / "scratch" / "ocr"
 CONTENT_SELECTORS = ["#content", "section.col-md-9", "article", "main", "body"]
 BLOCK = ["h1", "h2", "h3", "h4", "p", "li", "pre", "td"]
 # globalsecurity.org page boilerplate that survives inside #content
-BOILER = re.compile(r"^(Share on|Share|Update|Print|Tweet|Email|Facebook|Twitter)$", re.I)
+BOILER = re.compile(r"^(Share on|Share|Update|Print|Tweet|Email|Facebook|Twitter|previous \||next|Table of contents \||NEWS LETTER|Join the GlobalSecurity.*)$", re.I)
 
 
 def html_blocks(data: bytes) -> list[str]:

@@ -10,6 +10,7 @@ DECISION_OK = [
     "The inquiry applied distinction, proportionality and precautions in attack, and found the decision lawful.",
     "Whether to fire on the radar track before positive identification, given the ROE self-defense condition.",
     "The ship's commanding officer had no time to seek authorization from higher headquarters.",
+    "The controller refused the flight's requests to employ weapons while higher authority was consulted.",
     "Force protection, mission and legitimacy were weighed against the risk of harm to civilians.",
     "The convening authority disagreed with the investigating officer and approved the findings.",
     "The air strike killed civilians; the coalition acknowledged the casualties and paid condolence.",

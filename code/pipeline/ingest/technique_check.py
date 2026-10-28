@@ -83,8 +83,7 @@ RULES: list[tuple[str, str, re.Pattern]] = [
                              r"\bweapon[- ]target (?:pairing|assignment)\b|\bjoint target list\b|\bJTL\b|\btarget(?:ing)? (?:checklist|worksheet)\b|"
                              r"\bstep\s+\d+\s+of\s+the\s+(?:targeting|engagement|fire)\b|\bengagement (?:sequence|procedure|checklist)\b|"
                              r"\bsteps? (?:to|for) (?:locate|find|geolocate|identify and engage|engage|kill)\b")),
-    ("procedure", "strip", _r(r"\bhow (?:to|do you|does one|would one) (?:employ|deliver|drop|fire|launch|guide|aim|locate|find|track|target)\b|"
-                             r"\b(?:employ|employing|employment of)\s+(?:the\s+)?(?:weapon|munition|ordnance|missile|bomb)s?\s+(?:against|on|to)\b")),
+    ("procedure", "strip", _r(r"\bhow (?:to|do you|does one|would one) (?:employ|deliver|drop|fire|launch|guide|aim|locate|find|track|target)\b")),
     # --- platform / system designations: review (needed in fratricide / identification cases, not elsewhere) -----
     ("platform", "review", _r(r"\b(?:AC|AH|UH|CH|MH|HH|MQ|RQ|EA|EC|FA|KC|EP|E)-\d{1,3}[A-Z]?\b|\bAWACS\b(?:\s+(?:Spectre|Spooky|Apache|Reaper|Predator|Hawkeye|Hercules|Gunship))?", 0)),
     ("platform", "review", _r(r"\b(?:A|B|C|F|T|P|S|U)-\d{1,3}[A-Z]?\b(?!/)", 0)),
