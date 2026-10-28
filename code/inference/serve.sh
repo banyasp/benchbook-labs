@@ -65,10 +65,13 @@ mkdir -p logs
 log="logs/vllm-$(date +%Y%m%d-%H%M%S).log"
 # granite_thinking_parser.py is IBM's plugin from the model repo (reviewed copy): it splits <think>...</think>
 # into `reasoning_content` and strips the leading newline from `content`.
-tmux new-session -d -s "$SESSION" "$VENV/bin/vllm serve $MODEL \
+# Pass the environment explicitly: a tmux server that is already running gives new sessions ITS environment, not ours.
+ENVS="HF_HOME=$HF_HOME VLLM_USE_FLASHINFER_SAMPLER=0"
+[ -n "${CUDA_VISIBLE_DEVICES:-}" ] && ENVS="$ENVS CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
+tmux new-session -d -s "$SESSION" "env $ENVS $VENV/bin/vllm serve $MODEL \
   --served-model-name $NAME --dtype bfloat16 --port $PORT \
   --max-model-len $MAX_LEN --gpu-memory-utilization $GPU_UTIL \
   --reasoning-parser granite_thinking_parser --reasoning-parser-plugin $PWD/granite_thinking_parser.py \
   --tool-call-parser qwen3_coder --enable-auto-tool-choice \
   --enable-prefix-caching $DP_FLAGS $LORA_FLAGS ${EXTRA:-} 2>&1 | tee $PWD/$log"
-echo "started $SESSION  log: code/inference/$log"
+echo "started $SESSION  DP=$DP GPUs=${CUDA_VISIBLE_DEVICES:-all}  log: code/inference/$log"
