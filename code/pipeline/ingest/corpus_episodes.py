@@ -31,6 +31,7 @@ from pipeline.store import DATA, _keep_version, write_yaml
 from .episodes import find_episodes
 from .extract import prompt_file
 from .natsec import pdf_paragraphs, split_long
+from .textclean import clean_text
 
 CORPUS = DATA / "corpus" / "natsec"
 OUT = DATA / "store" / "episodes" / "corpus"
@@ -61,8 +62,11 @@ def read_text(cid: str) -> tuple[dict, str]:
 
 
 def normalize_text(cid: str, row: dict) -> tuple[str, list[dict]]:
-    """-> (sha12, spans). Pages from form feeds; paragraphs as natsec.normalize (pdf_paragraphs / split_long)."""
+    """-> (sha12, spans). Text cleaned first (textclean: two-column layout, ligatures, mojibake, hyphenation), then pages
+    from form feeds and paragraphs as natsec.normalize (pdf_paragraphs / split_long). sha12 is of the cleaned text, so
+    spans from the uncleaned text (episodes found before 2026-10-28 14:30) keep their own file."""
     head, body = read_text(cid)
+    body, clean_stats = clean_text(body)
     sha12 = hashlib.sha256(body.encode()).hexdigest()[:12]
     pages = body.split("\f")
     paras = [pdf_paragraphs(t) if row.get("kind") == "pdf" else [q for p in t.split("\n\n") if p.strip()
@@ -77,7 +81,7 @@ def normalize_text(cid: str, row: dict) -> tuple[str, list[dict]]:
         out.write_text(body_out)
     meta = {"doc": f"data/docs/{sha12}.jsonl", "source_id": cid, "corpus": "natsec-v1", "url": row.get("url"),
             "title": row.get("title"), "collection": row.get("collection"), "kind": row.get("kind"),
-            "flags": row.get("flags"), "pages": len(pages), "paragraphs": len(spans), "chars": len(body),
+            "flags": row.get("flags"), "clean": clean_stats, "pages": len(pages), "paragraphs": len(spans), "chars": len(body),
             "header": head}
     out.with_suffix(".meta.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False))
     return sha12, spans
