@@ -209,7 +209,7 @@ def shortcut_cues(rows) -> dict:
 # ------------------------------------------------------------------ headline contrasts
 def contrasts(rows, n_boot: int = N_BOOT) -> list[dict]:
     """The PDF's falsification comparisons that exist at Checkpoint 2 (base model only), per mode and prompt flag:
-    relevant - none, augmented - none, decoy - none (test 3: negative = decoys mislead), relevant - decoy, and
+    relevant - none, revised - none, decoy - none (test 3: negative = decoys mislead), relevant - decoy, and
     relevant - copy baseline (test 4, as a paired difference on the same scenarios, prompt/mode-matched)."""
     out = []
     cells = group_cells(rows)
@@ -217,8 +217,8 @@ def contrasts(rows, n_boot: int = N_BOOT) -> list[dict]:
         for p in (True, False):
             def get(arm):
                 return cells.get((mode, arm, p), [])
-            for a, b in (("relevant", "none"), ("augmented", "none"), ("decoy", "none"), ("relevant", "decoy"),
-                         ("relevant", "augmented")):
+            for a, b in (("relevant", "none"), ("revised", "none"), ("decoy", "none"), ("relevant", "decoy"),
+                         ("relevant", "revised")):
                 ra, rb = get(a), get(b)
                 if ra and rb:
                     d = family_bootstrap_diff(ra, rb, choice_correct, n_boot)

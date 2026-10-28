@@ -46,7 +46,7 @@ class FakeCase:
 
 class FakeLib:
     def __init__(self):
-        self._s = [FakeScenario("S1-v01", "FAM1", ["none", "relevant", "augmented", "decoy"]),
+        self._s = [FakeScenario("S1-v01", "FAM1", ["none", "relevant", "revised", "decoy"]),
                    FakeScenario("S2-v01", "FAM2", ["none", "relevant"], variant="flip")]
 
     def scenarios(self, family=None, split=None):
@@ -83,7 +83,7 @@ class FakeBackend:
     def build_episode(sc, arm, settings, lib):
         served = [] if arm == "none" else [SimpleNamespace(case_id="DR-PDF-001@v1", prefix="REF1")]
         return SimpleNamespace(served=served, arm=arm, messages=[], prompt_text="PROMPT", prefill="",
-                               meta={"arm": arm, "revised": arm == "augmented"})
+                               meta={"arm": arm, "revised": arm == "revised"})
 
     def run_episode(self, ep, settings, role="policy"):
         self.calls += 1

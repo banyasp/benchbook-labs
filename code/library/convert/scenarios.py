@@ -4,7 +4,7 @@ Arms
   none       gold = the live gold choice; no relation, nothing served.
   relevant   served = the reference case (converted); gold choice + relation from the live file; for `flips`, `via` is the
              converted case's flip id for the boundary the variant was built on (case.library.boundary_map).
-  augmented  served = the `-r1` revised card listed in `revised_cards`; gold = that entry's choice/relation.
+  revised    served = the `-r1` revised card listed in `revised_cards`; gold = that entry's choice/relation.
   decoy      served = the first card in `decoys`; gold choice unchanged, relation not_governed, governs false.
 
 Gold option set = the live file's options as LIVE-O1.. in the live file's order, source_id = the v2.6 letter.
@@ -99,13 +99,13 @@ def build_one(lib: Library, live_rel: str) -> tuple[LiveScenario, dict[str, Answ
     keys["relevant"] = key("relevant", served=ref_case_id, choice_letter=gold["choice"], acceptable_letters=accept,
                            relation=gold["relation"], via=via, with_map=True, extra={"via_note": via_note} if via_note else None)
     arms = {"none": [], "relevant": [ref_case_id]}
-    # augmented
+    # revised (Checkpoint 2 called this arm `augmented`)
     for rc in live.get("revised_cards") or []:
         rid = case_id_for(rc["served"])
         lib.case(rid)   # must exist
-        keys["augmented"] = key("augmented", served=rid, choice_letter=rc["choice"], acceptable_letters=[rc["choice"]],
+        keys["revised"] = key("revised", served=rid, choice_letter=rc["choice"], acceptable_letters=[rc["choice"]],
                                 relation=rc["relation"], with_map=True)
-        arms["augmented"] = [rid]
+        arms["revised"] = [rid]
         break
     if len(live.get("revised_cards") or []) > 1:
         notes.append("more than one revised card listed; only the first is used")

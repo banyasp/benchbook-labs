@@ -64,7 +64,7 @@ def _request(prompt: str, settings: HarnessSettings, role_name: str, seed):
         raise ValueError(f"the harness needs a vllm/ role (raw /v1/completions); {role_name} is {cfg.model}")
     p = cfg.params
     payload = {
-        "model": cfg.bare, "prompt": prompt,
+        "model": settings.model or cfg.bare, "prompt": prompt,
         "max_tokens": settings.max_tokens or p.get("max_tokens", 12000),
         "temperature": settings.temperature if settings.temperature is not None else p.get("temperature", 1.0),
         "top_p": settings.top_p if settings.top_p is not None else p.get("top_p", 1.0),

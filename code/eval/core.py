@@ -23,7 +23,8 @@ from bench.schema import parse_reply
 from . import score_names
 
 MODES = ("A", "B", "C", "Cprime")
-ARMS = ("none", "relevant", "augmented", "decoy")
+ARMS = ("none", "relevant", "revised", "decoy")      # Checkpoint 2 arms (live scenarios); `augmented` was renamed `revised`
+LEGACY_ARMS = {"augmented": "revised"}
 # eval-side mode name -> the string HarnessSettings(mode=...) expects. Adjust here if 2c spells C' differently.
 HARNESS_MODE = {"A": "A", "B": "B", "C": "C", "Cprime": "Cprime"}
 SCHEMA_VERSION = 1
@@ -171,10 +172,19 @@ def read_samples(path) -> list[dict]:
     for line in p.read_text().splitlines():
         if line.strip():
             try:
-                out.append(json.loads(line))
+                out.append(canon_record(json.loads(line)))
             except json.JSONDecodeError:
                 pass     # a torn last line from a killed run: the sample is simply redone
     return out
+
+
+def canon_record(r: dict) -> dict:
+    """Old Checkpoint 2 results used arm `augmented` for the revised card: load them as `revised`."""
+    if r.get("arm") in LEGACY_ARMS:
+        r = {**r, "arm": LEGACY_ARMS[r["arm"]]}
+        if isinstance(r.get("item_id"), str):
+            r["item_id"] = r["item_id"].replace("|augmented|", "|revised|")
+    return r
 
 
 def done_keys(path) -> set[tuple[str, int]]:

@@ -1,0 +1,45 @@
+# LoRA SFT, v2 (2026-10-28, W6). Reads the v1 export (data/exports/v1/sft/sft.jsonl, mode C, plain harness prompts).
+# v1 stays as sft_lora.v1.yaml (never overwrite). Run: stop vLLM first (bash code/inference/serve.sh --stop).
+#
+#   PYTHONPATH=code .venv/bin/python -m training.sft_lora --data data/exports/v1/sft/sft.jsonl --out results/sft/run1
+#
+# Sizing (L40S 48 GB, Granite 4.2 8B bf16 = 17.6 GB weights, LoRA r16, gradient checkpointing, batch 1):
+#   prompts are 15-20k tokens and replies up to 8k (the sampling cap), so a row can reach ~28k tokens.
+#   Held per row: checkpointed layer inputs ~ 40 layers x 28k x 4096 x 2 B = 9 GB, one recomputed layer ~2-3 GB with SDPA,
+#   LoRA grads+Adam ~0.3 GB. The logits are the risk: 28k x ~100k vocab in bf16 plus the fp32 upcast in the loss is 15-20 GB.
+#   Hence: (1) use_liger_kernel (fused linear cross-entropy, no full-logit tensor) if liger-kernel is installed,
+#   (2) otherwise the first step on the longest row is the test; if it OOMs lower max_length to 24000 (drops are logged).
+policy_role: policy
+hf_ids:
+  granite-4.2-8b: ibm-granite/granite-4.2-8b
+
+model:
+  attn_implementation: sdpa    # flash-attn is not in the venv; SDPA is memory-efficient enough at batch 1
+
+data:
+  path: data/exports/v1/sft/sft.jsonl
+  require_mode: C              # fail if any row was exported in another mode (SFT trains mode C only)
+  max_length: 28000            # prompt + reply tokens; longer rows are DROPPED (never truncated) and logged to <out>/dropped_max_length.json
+  verify_format: true          # keep only replies that pass ParsedReply.strict_ok
+  drop_report_share_fail: 0.10 # abort if more than 10% of rows are dropped for length (the dataset is not what you think)
+
+lora:
+  r: 16                        # serve.sh LORA_RANK must be >= r
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  learning_rate: 1.0e-4
+  num_train_epochs: 2
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_steps: 0.05
+  lr_scheduler_type: cosine
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  use_liger_kernel: false      # set true when liger-kernel is installed (see sizing note)
+  logging_steps: 5
+  save_strategy: epoch
+  seed: 0

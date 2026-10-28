@@ -38,3 +38,10 @@ Override with `MAX_LEN=`, `GPU_UTIL=`, `PORT=`, `EXTRA="..."`.
 - Single-stream decode **~39 tok/s** (38.4 thinking, 39.6 non-thinking) on a 3.8K-token prompt. Batch throughput
   not measured yet; Inspect runs should send requests concurrently.
 - Smoke test (`smoke.py`): see `results/smoke/NOTES.md`.
+
+## v2.4 additions (2026-10-28)
+- `--enable-prefix-caching` is always on.
+- Adapter serving: `LORA=results/sft/run1/adapter bash code/inference/serve.sh` (or `serve.sh --lora <dir>`) adds
+  `--enable-lora --lora-modules sft=<dir> --max-lora-rank 16`. Base requests use model `granite-4.2-8b`, adapter
+  requests model `sft`. `LORA_RANK` must be >= the adapter's `r`; `LORA_NAME`, `LORA_MAX` override the rest.
+- **Stop vLLM before `training.sft_lora`** (`serve.sh --stop`): both want the 48 GB. Restart in LoRA mode afterwards.

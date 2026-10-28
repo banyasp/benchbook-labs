@@ -16,7 +16,16 @@ from pydantic import Field, model_validator
 from .answer_key import AnswerKey
 from .common import Strict
 
-Arm = Literal["none", "relevant", "augmented", "decoy"]
+Arm = Literal["none", "relevant", "revised", "decoy"]
+ARMS = ("none", "relevant", "revised", "decoy")
+# Checkpoint 2 called the revised-card arm `augmented`. Design v2.4.1 §7.2 gives `augmented` to the PDF flip arm (a new
+# arm in the pipeline) and renames this one `revised`. Old scenario files, answer keys and results load with the old
+# name mapped to the new one.
+LEGACY_ARMS = {"augmented": "revised"}
+
+
+def canon_arm(arm: str) -> str:
+    return LEGACY_ARMS.get(arm, arm)
 
 
 class Touched(Strict):
@@ -51,9 +60,19 @@ class LiveScenario(Strict):
     perturbation: Perturbation
     provenance: dict = Field(default_factory=dict)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _legacy_arms(cls, v):
+        if isinstance(v, dict) and isinstance(v.get("arms"), dict):
+            arms = {canon_arm(a): s for a, s in v["arms"].items()}
+            if len(arms) != len(v["arms"]):
+                raise ValueError(f"scenario {v.get('id')} lists both `augmented` and `revised` arms")
+            v = {**v, "arms": arms}
+        return v
+
     @model_validator(mode="after")
     def _arms(self):
-        bad = [a for a in self.arms if a not in ("none", "relevant", "augmented", "decoy")]
+        bad = [a for a in self.arms if a not in ARMS]
         if bad:
             raise ValueError(f"unknown arms {bad}")
         if "none" in self.arms and self.arms["none"].served:
@@ -68,5 +87,7 @@ class LiveScenario(Strict):
         return s
 
     def answer_key(self, arm: str) -> AnswerKey:
+        arm = canon_arm(arm)
         base = getattr(self, "_path", Path(".")).parent
-        return AnswerKey.load(base / self.arms[arm].key)
+        k = AnswerKey.load(base / self.arms[arm].key)
+        return k if k.arm == arm else k.model_copy(update={"arm": arm})

@@ -161,16 +161,17 @@ def _find_slot(msgs: list[dict]) -> int:
     raise ValueError("trace has no {{CARD}} injection message")
 
 
-def inject(content: str, equities_yaml: str, cases_yaml: str | None, method: str | None, fmt: str | None) -> str:
-    eq = f"<benchbook_equities>\n{equities_yaml.strip()}\n</benchbook_equities>"
+def inject(content: str, equities_yaml: str | None, cases_yaml: str | None, method: str | None, fmt: str | None) -> str:
+    """equities_yaml None = the equities-off cell (design §13): no <benchbook_equities> block at all."""
+    eq = f"<benchbook_equities>\n{equities_yaml.strip()}\n</benchbook_equities>" if equities_yaml is not None else ""
     if cases_yaml is not None:
         content = content.replace(CARD_SLOT, cases_yaml.strip())
         if "<benchbook_case>" in content:
-            content = content.replace("<benchbook_case>", eq + "\n<benchbook_case>", 1)
-        else:
+            content = content.replace("<benchbook_case>", (eq + "\n" if eq else "") + "<benchbook_case>", 1)
+        elif eq:
             content = content + "\n" + eq
     else:   # no-reference arm: drop the trace's own case wrapper
-        content = re.sub(r"<benchbook_case>.*?</benchbook_case>", "", content, flags=re.S).rstrip() + "\n" + eq
+        content = re.sub(r"<benchbook_case>.*?</benchbook_case>", "", content, flags=re.S).rstrip() + ("\n" + eq if eq else "")
     parts = [content.rstrip()]
     if method:
         parts.append(f"<benchbook_method>\n{method}\n</benchbook_method>")
@@ -210,7 +211,23 @@ def render(messages: list[dict], tools, settings: HarnessSettings) -> tuple[str,
     return g, opener, opener + extra
 
 
-def build_episode(scenario, arm: str, settings: HarnessSettings, lib, *, retriever=None) -> Episode:
+class ThinLeakError(ValueError):
+    """A thin-view card still cites a flip condition (REF…-flip*, noflip*, watch*). Never silently served."""
+
+
+def serve_cases(cases, card_view: str = "full") -> list:
+    """Serve cases as REF1.. in the given view. Thin: fail loudly when any flip-condition reference is left (design §9.3)."""
+    served = [c.serve(f"REF{i}", card_view=card_view) for i, c in enumerate(cases, 1)]
+    if card_view == "thin":
+        for s in served:
+            left = s.flip_refs()
+            if left:
+                raise ThinLeakError(f"thin card {s.case_id} still cites flip conditions: {sorted(set(left))}")
+    return served
+
+
+def build_episode(scenario, arm: str, settings: HarnessSettings, lib, *, retriever=None, card_view: str = "full",
+                  equities: bool = True) -> Episode:
     """scenario: bench.schema.LiveScenario. lib: library.Library (needs .equities(id) -> EquitySet and, for the default
     retriever, whatever OracleRetriever needs). retriever: any object with .retrieve(scenario, arm) -> list[Case]."""
     if retriever is None:
@@ -218,10 +235,11 @@ def build_episode(scenario, arm: str, settings: HarnessSettings, lib, *, retriev
         retriever = OracleRetriever(lib)
     trace = load_trace(scenario)
     cases = list(retriever.retrieve(scenario, arm))
-    served = [c.serve(f"REF{i}") for i, c in enumerate(cases, 1)]
+    served = serve_cases(cases, card_view)
     has_case = bool(served)
     ids = [s.prefix for s in served]
-    equities_yaml = yaml.safe_dump(lib.equities(scenario.equities).served(), sort_keys=False, allow_unicode=True, width=200)
+    equities_yaml = (yaml.safe_dump(lib.equities(scenario.equities).served(), sort_keys=False, allow_unicode=True, width=200)
+                     if equities else None)
     cases_yaml = "\n".join(s.yaml().strip() + "\n" for s in served) if has_case else None
     method = analogical_prompt(settings.analogical_version) if (settings.analogical_prompt and has_case) else None
     fmt = format_spec(settings, has_case, ids)
@@ -251,7 +269,7 @@ def build_episode(scenario, arm: str, settings: HarnessSettings, lib, *, retriev
             "settings": settings.to_dict(), "served": {s.prefix: s.case_id for s in served},
             "has_case": has_case, "analogical_prompt": method is not None,
             "format_file": f"format.{settings.format_spec}{'' if has_case else '-noref'}.md",
-            "equities": scenario.equities, "injection_index": k,
+            "equities": scenario.equities if equities else None, "card_view": card_view, "injection_index": k,
             "shortcut_cues": _cues(served)}
     return Episode(messages=chat, prompt_text=gen + prefill[len(opener):], served=served, prefill=prefill, meta=meta,
                    tools=tools, generation_prompt=gen, opener=opener)

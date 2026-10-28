@@ -174,10 +174,10 @@ def build(run_dir: Path, n_boot: int = stats.N_BOOT) -> str:
         md.append("Accuracy by gold option position: " + ", ".join(f"#{int(p) + 1}: {pct(v)}" for p, v in cu["acc_by_gold_position"].items()) + ".\n")
         md.append("**Flags:** " + ("; ".join(cu["flags"]) if cu["flags"] else "none over the thresholds (gold position share > chance+20 pts, hand-up > 50%, longest/shortest > chance+20 pts, model first-option > 60%).") + "\n")
     # perturbation
-    md.append("### Accuracy by perturbation (relevant and augmented arms, pooled over modes and prompt)\n")
+    md.append("### Accuracy by perturbation (relevant and revised arms, pooled over modes and prompt)\n")
     t = []
     for var in sorted({r["perturbation"]["variant"] for r in rows}):
-        sub = [r for r in rows if r["perturbation"]["variant"] == var and r["arm"] in ("relevant", "augmented")]
+        sub = [r for r in rows if r["perturbation"]["variant"] == var and r["arm"] in ("relevant", "revised")]
         if sub:
             t.append([var, len({r["scenario"] for r in sub}), pct(stats.family_bootstrap(sub, stats.choice_correct, n_boot))])
     md.append(table(["variant", "scenarios", "choice accuracy"], t))

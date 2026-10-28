@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,6 +38,8 @@ class SFTExample:
     n_prompt: int
     n_completion: int
     meta: dict = field(default_factory=dict)
+    cut_char: int | None = None          # decoy mask: completion chars >= this carry no loss (None = no cut)
+    n_trained: int | None = None         # tokens with a label (n_completion minus the masked tail)
 
     @property
     def attention_mask(self):
@@ -71,19 +74,64 @@ def verify(rec: dict) -> tuple[bool, str]:
     return False, "; ".join(why) or "not strict_ok"
 
 
-def tokenize_example(tokenizer, prompt_text: str, completion: str, add_eos: bool = True,
-                     max_length: int | None = None, meta: dict | None = None) -> SFTExample | None:
-    """prompt tokens (labels -100) + completion tokens (+ eos, labelled). None if longer than max_length
-    (dropped, never truncated: a truncated reply would teach the model to stop mid-document)."""
-    p = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
-    text = completion
-    c = tokenizer(text, add_special_tokens=False)["input_ids"]
-    if add_eos:
-        c = c + [tokenizer.eos_token_id]       # granite: <|im_end|>
-    if max_length is not None and len(p) + len(c) > max_length:
+_DOC = re.compile(r"^kind:[ \t]*(\w+)", re.M)
+_THINK_END = re.compile(r"^</think>", re.M)
+
+
+def doc_end(assistant_text: str, kind: str = "applicability") -> int | None:
+    """Character index in `assistant_text` (prefill + completion) where the LAST `kind: <kind>` document ends: the start
+    of the next `kind:` document of another kind, or of `</think>`, or len(text) if nothing follows. None if there is
+    no such document. Used for the decoy loss mask (design §10): nothing after `applicability` is trained."""
+    starts = [m for m in _DOC.finditer(assistant_text) if m.group(1) == kind]
+    if not starts:
         return None
-    return SFTExample(input_ids=p + c, labels=[IGNORE] * len(p) + list(c), n_prompt=len(p), n_completion=len(c),
-                      meta=meta or {})
+    after = starts[-1].end()
+    nxt = [m.start() for m in _DOC.finditer(assistant_text, after) if m.group(1) != kind]
+    nxt += [m.start() for m in _THINK_END.finditer(assistant_text, after)]
+    return min(nxt) if nxt else len(assistant_text)
+
+
+def mask_kind(rec: dict) -> str | None:
+    """Which document the loss stops after: the record's explicit `mask_after`, else `applicability` for decoys."""
+    return rec.get("mask_after") or ("applicability" if (rec.get("meta") or {}).get("arm") == "decoy" else None)
+
+
+def _encode(tokenizer, prompt_text: str, completion: str, add_eos: bool, mask_after: str | None, prefill: str,
+            meta: dict | None) -> SFTExample:
+    p = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
+    cut_char = None
+    if mask_after:
+        end = doc_end((prefill or "") + completion, mask_after)
+        if end is None:
+            raise ValueError(f"loss mask after `{mask_after}` requested but the reply has no such document")
+        cut_char = max(0, end - len(prefill or ""))
+    if cut_char is None:
+        c = tokenizer(completion, add_special_tokens=False)["input_ids"]
+        trained = list(c) + ([tokenizer.eos_token_id] if add_eos else [])
+        c = list(trained)
+    else:
+        enc = tokenizer(completion, add_special_tokens=False, return_offsets_mapping=True)
+        c = list(enc["input_ids"])
+        keep = [a < cut_char for a, _ in enc["offset_mapping"]]
+        if add_eos:
+            c.append(tokenizer.eos_token_id)
+            keep.append(False)                 # the end-of-turn token follows the (masked) verdict, so it is masked too
+        trained = [t if k else IGNORE for t, k in zip(c, keep)]
+    n_trained = sum(1 for t in trained if t != IGNORE)
+    return SFTExample(input_ids=p + c, labels=[IGNORE] * len(p) + trained, n_prompt=len(p), n_completion=len(c),
+                      meta=meta or {}, cut_char=cut_char, n_trained=n_trained)
+
+
+def tokenize_example(tokenizer, prompt_text: str, completion: str, add_eos: bool = True,
+                     max_length: int | None = None, meta: dict | None = None, mask_after: str | None = None,
+                     prefill: str = "") -> SFTExample | None:
+    """prompt tokens (labels -100) + completion tokens (+ eos, labelled). None if longer than max_length
+    (dropped, never truncated: a truncated reply would teach the model to stop mid-document).
+    mask_after="applicability": labels are -100 from the end of that document on (decoys; the text stays)."""
+    ex = _encode(tokenizer, prompt_text, completion, add_eos, mask_after, prefill, meta)
+    if max_length is not None and len(ex.input_ids) > max_length:
+        return None
+    return ex
 
 
 def build_examples(records, tokenizer, verify_format: bool = True, max_length: int | None = None):
@@ -95,13 +143,41 @@ def build_examples(records, tokenizer, verify_format: bool = True, max_length: i
             if not ok:
                 rej.append({"id": r.get("id"), "reason": f"format: {why}"})
                 continue
-        e = tokenize_example(tokenizer, r["prompt_text"], r["completion"], max_length=max_length,
-                             meta={"id": r.get("id"), **(r.get("meta") or {})})
-        if e is None:
-            rej.append({"id": r.get("id"), "reason": f"longer than max_length {max_length}"})
+        try:
+            e = _encode(tokenizer, r["prompt_text"], r["completion"], True, mask_kind(r), r.get("prefill") or "",
+                        {"id": r.get("id"), **(r.get("meta") or {})})
+        except ValueError as err:
+            rej.append({"id": r.get("id"), "reason": f"mask: {err}"})
+            continue
+        if max_length is not None and len(e.input_ids) > max_length:
+            m = r.get("meta") or {}
+            rej.append({"id": r.get("id"), "reason": f"longer than max_length {max_length}", "dropped": "max_length",
+                        "n_tokens": len(e.input_ids), "n_prompt": e.n_prompt, "n_completion": e.n_completion,
+                        "max_length": max_length, **{k: m.get(k) for k in ("arm", "card_view", "intent", "family", "split")}})
             continue
         ex.append(e)
     return ex, rej
+
+
+def dropped_by_length(rej: list[dict]) -> list[dict]:
+    return [r for r in rej if r.get("dropped") == "max_length"]
+
+
+def report_drops(rej: list[dict], n_total: int, max_length: int | None, file=None) -> dict:
+    """Make the max_length drops explicit (never silent): count, share, by arm, longest, one line per row on stderr."""
+    from collections import Counter
+    file = file or sys.stderr
+    d = dropped_by_length(rej)
+    out = {"max_length": max_length, "n_rows": n_total, "n_dropped_max_length": len(d),
+           "share": (len(d) / n_total) if n_total else 0.0, "by_arm": dict(Counter(r.get("arm") for r in d)),
+           "longest": max((r["n_tokens"] for r in d), default=None), "ids": [r["id"] for r in d]}
+    if d:
+        print(f"WARNING: {len(d)}/{n_total} rows dropped for exceeding max_length={max_length} "
+              f"(by arm {out['by_arm']}, longest {out['longest']} tokens)", file=file)
+        for r in d:
+            print(f"  dropped {r['id']}: {r['n_tokens']} tokens (prompt {r['n_prompt']} + reply {r['n_completion']}) "
+                  f"arm={r.get('arm')} card_view={r.get('card_view')}", file=file)
+    return out
 
 
 def decode_unmasked(tokenizer, ex: SFTExample) -> str:
@@ -113,18 +189,36 @@ def decode_masked(tokenizer, ex: SFTExample) -> str:
 
 
 def check_example(tokenizer, ex: SFTExample, prompt_text: str, completion: str) -> list[str]:
-    """Mask invariants; returns a list of problems (empty = fine)."""
+    """Mask invariants; returns a list of problems (empty = fine). With a decoy cut: the labelled tokens decode to the
+    completion up to the cut, every later token (verdict, end-of-turn) is -100, and all the text is still in input_ids."""
     bad = []
     if len(ex.input_ids) != len(ex.labels):
         bad.append("length mismatch")
     if any(l != IGNORE for l in ex.labels[: ex.n_prompt]):
         bad.append("a prompt token is unmasked")
-    if ex.labels[ex.n_prompt:] != ex.input_ids[ex.n_prompt:]:
-        bad.append("completion labels differ from input ids")
-    if decode_masked(tokenizer, ex) != prompt_text:
-        bad.append("masked span does not decode to the prompt")
-    if decode_unmasked(tokenizer, ex).removesuffix(tokenizer.eos_token) != completion:
-        bad.append("unmasked span does not decode to the completion")
+    comp_ids, comp_lab = ex.input_ids[ex.n_prompt:], ex.labels[ex.n_prompt:]
+    if ex.cut_char is None:
+        if comp_lab != comp_ids:
+            bad.append("completion labels differ from input ids")
+        masked = [i for i, l in zip(ex.input_ids, ex.labels) if l == IGNORE]
+        if tokenizer.decode(masked, skip_special_tokens=False) != prompt_text:
+            bad.append("masked span does not decode to the prompt")
+        if decode_unmasked(tokenizer, ex).removesuffix(tokenizer.eos_token) != completion:
+            bad.append("unmasked span does not decode to the completion")
+    else:
+        k = sum(1 for l in comp_lab if l != IGNORE)
+        if any(l != IGNORE for l in comp_lab[k:]):
+            bad.append("an unmasked token follows the masked tail")
+        if any(l != t for l, t in zip(comp_lab[:k], comp_ids[:k])):
+            bad.append("trained labels differ from input ids")
+        if comp_lab[-1] != IGNORE:
+            bad.append("end-of-turn token is trained after a cut")
+        if tokenizer.decode(comp_ids[:-1], skip_special_tokens=False) != completion:
+            bad.append("input ids do not decode to the whole completion (the verdict must stay in the text)")
+        want = completion[: ex.cut_char]
+        got = tokenizer.decode(comp_ids[:k], skip_special_tokens=False)
+        if not (want.startswith(got) and len(want) - len(got) < 8):
+            bad.append("trained span does not end at the end of the cut document")
     return bad
 
 
@@ -144,6 +238,7 @@ def main(argv=None):
     ap.add_argument("--tokenizer", default="ibm-granite/granite-4.2-8b")
     ap.add_argument("--max-length", type=int, default=20000)
     ap.add_argument("--no-verify", action="store_true")
+    ap.add_argument("--drops-out", help="write the max_length drop report (json) here")
     a = ap.parse_args(argv)
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(a.tokenizer)
@@ -153,6 +248,9 @@ def main(argv=None):
         for e in ex:
             f.write(json.dumps({**e.as_row(), "meta": e.meta}) + "\n")
     Path(a.out).with_suffix(".rejects.json").write_text(json.dumps(rej, indent=1))
+    drops = report_drops(rej, len(recs), a.max_length)
+    if a.drops_out:
+        Path(a.drops_out).write_text(json.dumps(drops, indent=1))
     print(f"{len(ex)} examples, {len(rej)} rejected -> {a.out}", file=sys.stderr)
     if ex:
         print(f"mean prompt tokens {sum(e.n_prompt for e in ex) / len(ex):.0f}, "

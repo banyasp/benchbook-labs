@@ -118,7 +118,7 @@ def test_text_surgery_roundtrip():
 
 
 def test_faithfulness_end_to_end(tmp_path):
-    be, rd = run(tmp_path, ["--arms", "relevant", "augmented", "--modes", "A", "B", "C", "Cprime"])
+    be, rd = run(tmp_path, ["--arms", "relevant", "revised", "--modes", "A", "B", "C", "Cprime"])
     be.cont_calls.clear()
     assert faithfulness.main([str(rd), "--max-samples", "40", "--concurrency", "4"], lib=FakeLib(), backend=be.backend) == 0
     rows = core.read_samples(rd / "faithfulness.jsonl")

@@ -1,7 +1,8 @@
 """LoRA SFT with PEFT + TRL SFTTrainer on pre-masked examples from training.sft_data.
 
-    # real run (GPU, later):
-    PYTHONPATH=code python -m training.sft_lora --data golden.jsonl --out results/sft/run1
+    # real run (GPU): STOP vLLM first (bash code/inference/serve.sh --stop); both need the 48 GB.
+    PYTHONPATH=code python -m training.sft_lora --data data/exports/v1/sft/sft.jsonl --out results/sft/run1
+    # then serve the adapter: LORA=results/sft/run1/adapter bash code/inference/serve.sh
     # CPU smoke (2 optimizer steps on a tiny random Granite; no download, no GPU):
     PYTHONPATH=code CUDA_VISIBLE_DEVICES= HF_HUB_OFFLINE=1 python -m training.sft_lora --smoke
 
@@ -19,7 +20,7 @@ from pathlib import Path
 
 from . import common, sft_data
 
-DEFAULT_CONFIG = common.HERE / "configs" / "sft_lora.v1.yaml"
+DEFAULT_CONFIG = common.HERE / "configs" / "sft_lora.v2-mode-c-v1-export.yaml"
 
 
 def lora_config(c: dict):
@@ -90,17 +91,39 @@ def main(argv=None):
     if a.smoke:
         print(json.dumps(smoke(cfg), indent=1))
         return 0
-    if not a.data:
+    data = a.data or cfg["data"].get("path")
+    if not data:
         ap.error("--data is required (or --smoke)")
     import torch
     from transformers import AutoModelForCausalLM
     name = common.policy_hf_id(cfg)
     tok = common.load_tokenizer(name)
-    ex, rej = sft_data.build_examples(sft_data.load_jsonl(a.data), tok, cfg["data"]["verify_format"], cfg["data"]["max_length"])
-    print(f"{len(ex)} examples, {len(rej)} rejected", file=sys.stderr)
+    recs = sft_data.load_jsonl(data)
+    need = cfg["data"].get("require_mode")
+    if need:
+        wrong = sorted({(r.get("meta") or {}).get("mode") for r in recs} - {need})
+        if wrong:
+            raise SystemExit(f"{data} has rows in mode(s) {wrong}; this config trains mode {need} only "
+                             f"(re-export with `python -m pipeline.project --mode {need}`)")
+    max_len = cfg["data"]["max_length"]
+    ex, rej = sft_data.build_examples(recs, tok, cfg["data"]["verify_format"], max_len)
     Path(a.out).mkdir(parents=True, exist_ok=True)
     (Path(a.out) / "rejects.json").write_text(json.dumps(rej, indent=1))
-    model = AutoModelForCausalLM.from_pretrained(name, dtype=torch.bfloat16 if cfg["train"].get("bf16") else None)
+    drops = sft_data.report_drops(rej, len(recs), max_len)          # explicit, logged: never a silent drop
+    (Path(a.out) / "dropped_max_length.json").write_text(json.dumps(drops, indent=1))
+    fmt = [r for r in rej if r.get("dropped") != "max_length"]
+    print(f"{len(ex)} examples kept of {len(recs)}; {len(drops['ids'])} dropped for length, {len(fmt)} for format/mask",
+          file=sys.stderr)
+    if len(recs) and drops["share"] > cfg["data"].get("drop_report_share_fail", 1.0):
+        raise SystemExit(f"{drops['share']:.0%} of rows exceed max_length {max_len}; see {a.out}/dropped_max_length.json")
+    if not ex:
+        raise SystemExit("no trainable examples")
+    print(f"mean prompt tokens {sum(e.n_prompt for e in ex) / len(ex):.0f}, mean reply tokens {sum(e.n_completion for e in ex) / len(ex):.0f}, "
+          f"max total {max(len(e.input_ids) for e in ex)}", file=sys.stderr)
+    kw = {"dtype": torch.bfloat16 if cfg["train"].get("bf16") else None}
+    if (cfg.get("model") or {}).get("attn_implementation"):
+        kw["attn_implementation"] = cfg["model"]["attn_implementation"]
+    model = AutoModelForCausalLM.from_pretrained(name, **kw)
     tr = train(cfg, ex, model, tok, a.out)
     tr.save_model(str(Path(a.out) / "adapter"))
     return 0

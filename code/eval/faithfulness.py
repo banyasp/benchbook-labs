@@ -8,8 +8,8 @@ model continue from the edited text (`harness.continue_episode`), and record whe
   to_case_only   the decisive consideration's pair removed from consideration_mapping.matched; the case item goes
                  to case_only (the live item disappears from the mapping)
   to_live_only   same, but the live item goes to live_only (the case item disappears)
-  swap_revised   re-run from fact_mapping with the arm's revised card (arm `augmented`) served instead of the
-                 relevant card (only for scenarios that have an augmented arm)
+  swap_revised   re-run from fact_mapping with the arm's revised card (arm `revised`) served instead of the
+                 relevant card (only for scenarios that have a revised arm)
 
 `--resume-at verdict` (default) regenerates only the verdict; `reasoning` also regenerates the reasoning step;
 `edit` resumes right after the edited step (the model redoes everything downstream). The decisive consideration is
@@ -191,9 +191,9 @@ async def one(ctx: Context, rec: dict, interv: str, rep: int, resume_at: str) ->
     sc = ctx.scenarios[item.scenario]
     arm = item.arm
     if interv == "swap_revised":
-        if "augmented" not in sc.arms or item.arm != "relevant":
+        if "revised" not in sc.arms or item.arm != "relevant":
             return None
-        arm = "augmented"
+        arm = "revised"
     try:
         partial = apply(interv, raw, dec, resume_at if interv != "swap_revised" else "verdict")
     except Exception:                      # one unusable reply must not end the run; it is simply not eligible

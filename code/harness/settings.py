@@ -24,6 +24,7 @@ class HarnessSettings:
     analogical_version: str = "v1"
     modes_version: str = "v1"
     instructions_in: Literal["injection", "system"] = "injection"   # where format/method text goes
+    model: str | None = None                # served-model-name override on the same server: "sft" = the LoRA adapter
     tokenizer: str = "ibm-granite/granite-4.2-8b"
 
     def __post_init__(self):
