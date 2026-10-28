@@ -3,6 +3,11 @@
     case = Case.load("data/cases/INT-301/DR-INT-301@v1.case.yaml")
     view = case.serve("REF1")          # ServedCase: .doc (dict in the PDF's served form), .table (served id -> global)
     view.yaml()                        # the text the harness injects
+    case.serve("REF1", card_view="thin")   # design v2.4.1 §9.3: no flip conditions, lesson or limits
+
+Served cards never carry the backend option tags `move`, `irreversible` or `to:` (design §5.1; Peter confirmed
+2026-10-27, departure from the PDF card recorded in the reconciliation file). They stay on `ServedCase.backend`
+for balance and analysis code, and never reach the prompt.
 
 `library` holds authoring metadata (domain, family, provenance, review status...) and is stripped before serving.
 Prose may reference items as {O2}, {flip1}; serving rewrites them to REF1-O2, REF1-flip1.
@@ -12,11 +17,28 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import re
+from typing import Literal
+
 import yaml
 from pydantic import Field, field_validator, model_validator
 
 from .common import (CASE_ID, LOCAL_ID, PROSE_REF, SERVED_PREFIX, AgentRole, Basis, FactKind, FactStatus, Move,
                      Strict, Weight)
+
+
+CardView = Literal["full", "thin"]
+OPTION_TAGS = ("move", "irreversible", "to")          # backend-only option tags, stripped from the served card
+FLIP_REF = re.compile(r"(?:REF\d+-)?(?:flip|noflip|watch)\d+")
+_SENT = re.compile(r"(?<=[.!?;])\s+")
+
+
+def _drop_flip_refs(text: str) -> str:
+    """Thin view: remove every sentence (or clause after a semicolon) that cites a flip condition."""
+    if not FLIP_REF.search(text):
+        return text
+    kept = [s for s in _SENT.split(text) if not FLIP_REF.search(s)]
+    return " ".join(kept).strip()
 
 
 class CaseOption(Strict):
@@ -182,10 +204,18 @@ class Case(Strict):
     def global_id(self, local: str) -> str:
         return f"{self.id}/{local}"
 
-    def serve(self, prefix: str = "REF1") -> "ServedCase":
+    def serve(self, prefix: str = "REF1", card_view: CardView = "full") -> "ServedCase":
         if not SERVED_PREFIX.match(prefix):
             raise ValueError(f"served prefix `{prefix}` must be REF<n>")
-        return ServedCase.build(self, prefix)
+        return ServedCase.build(self, prefix, card_view)
+
+
+def _thin_prose(obj):
+    if isinstance(obj, dict):
+        return {k: _thin_prose(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_thin_prose(v) for v in obj]
+    return _drop_flip_refs(obj) if isinstance(obj, str) else obj
 
 
 def _rename(obj, fn):
@@ -200,17 +230,27 @@ def _rename(obj, fn):
 
 
 class ServedCase:
-    """The served projection: PDF served form (`case: {id: REF1, ...}` content) + renumbering table."""
+    """The served projection: PDF served form (`case: {id: REF1, ...}` content) + renumbering table.
+    `backend` holds what was stripped (option tags), keyed by served option id; it is never serialized."""
 
-    def __init__(self, case_id: str, prefix: str, doc: dict, table: dict[str, str]):
+    def __init__(self, case_id: str, prefix: str, doc: dict, table: dict[str, str], card_view: CardView = "full",
+                 backend: dict | None = None):
         self.case_id, self.prefix, self.doc, self.table = case_id, prefix, doc, table
+        self.card_view, self.backend = card_view, backend or {}
 
     @classmethod
-    def build(cls, case: Case, prefix: str) -> "ServedCase":
+    def build(cls, case: Case, prefix: str, card_view: CardView = "full") -> "ServedCase":
+        if card_view not in ("full", "thin"):
+            raise ValueError(f"card_view must be full or thin, not {card_view!r}")
         d = case.dump()
         d.pop("library", None)
         d.pop("status", None)
         d.pop("title", None)
+        tags = {o: {k: v[k] for k in OPTION_TAGS if k in v} for o, v in d["options"].items()}
+        d["options"] = {o: {"do": v["do"]} for o, v in d["options"].items()}
+        if card_view == "thin":
+            for k in ("flip_conditions", "lesson", "limits"):
+                d.pop(k, None)
         locals_ = {f.id for f in case.facts} | {c.id for c in case.considerations} | set(case.options)
         fc = case.flip_conditions
         locals_ |= {w.id for w in fc.would_change} | {w.id for w in fc.would_not_change} | {w.id for w in fc.watch_for}
@@ -221,10 +261,17 @@ class ServedCase:
             return PROSE_REF.sub(lambda m: f"{prefix}-{m.group(1)}", s)
 
         body = _rename({k: v for k, v in d.items() if k != "id"}, fn)
+        if card_view == "thin":
+            body = _thin_prose(body)
         doc = {"case": {"id": prefix, **body}}
         table = {f"{prefix}-{x}": case.global_id(x) for x in sorted(locals_)}
         table[prefix] = case.id
-        return cls(case.id, prefix, doc, table)
+        backend = {"options": {f"{prefix}-{o}": t for o, t in tags.items()}}
+        return cls(case.id, prefix, doc, table, card_view, backend)
+
+    def flip_refs(self) -> list[str]:
+        """Every flip-condition reference left anywhere in the served text (thin view must have none)."""
+        return FLIP_REF.findall(self.yaml())
 
     def yaml(self) -> str:
         return yaml.safe_dump(self.doc, sort_keys=False, allow_unicode=True, width=120)

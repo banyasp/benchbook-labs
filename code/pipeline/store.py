@@ -4,7 +4,9 @@
     data/docs/<sha12>.jsonl                        normalized text, one span per line {"span": "src:<sha12>#p3.4", "text": ...}
     data/store/registry/sources.yaml               sources picked for tonight (from context/sources/source-catalog.csv)
     data/store/scenarios/<family>/<id>.yaml        Scenario records
-    data/store/pairs/<pair-id>/pair.yaml           PairRecord (+ trace.json, span_map inside the record, solve/)
+    data/store/traces/<trace-scenario-id>/         TraceRecord: trace.yaml (σ, channels, recommended_option) + trace.json
+    data/store/pairs/<pair-id>/pair.yaml           PairRecord (references a trace by trace_ref; solve/ samples)
+    data/store/episodes/, data/store/incomplete/   episode finder rejects; incomplete extractions (design §4.2-4.3)
     data/exports/<version>/{sft,rl,eval}/          projections (regenerable)
 
 Every write of an existing file first copies it to a versions/ folder beside it (never overwrite).
@@ -18,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-from bench.schema.pipeline import PairRecord, Scenario
+from bench.schema.pipeline import PairRecord, Scenario, TraceRecord
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
@@ -89,6 +91,31 @@ class Store:
 
     def pairs(self) -> list[PairRecord]:
         return [PairRecord.load(p) for p in sorted((self.root / "pairs").glob("*/pair.yaml"))]
+
+    # traces (design §7.1: one per trace scenario; pairs reference, never copy)
+    def trace_dir(self, trace_scenario: str) -> Path:
+        return self.root / "traces" / trace_scenario
+
+    def save_trace(self, t: TraceRecord, trace_json: dict | None = None) -> Path:
+        TraceRecord.model_validate(t.dump())
+        d = self.trace_dir(t.trace_scenario)
+        if trace_json is not None:
+            write_json(d / t.trace, trace_json)
+        write_yaml(d / "trace.yaml", t.dump())
+        return d
+
+    def trace(self, trace_scenario: str) -> TraceRecord:
+        return TraceRecord.load(self.trace_dir(trace_scenario) / "trace.yaml")
+
+    def trace_json(self, trace_scenario: str) -> dict:
+        t = self.trace(trace_scenario)
+        return json.loads((self.trace_dir(trace_scenario) / t.trace).read_text())
+
+    def has_trace(self, trace_scenario: str) -> bool:
+        return (self.trace_dir(trace_scenario) / "trace.yaml").exists()
+
+    def traces(self) -> list[TraceRecord]:
+        return [TraceRecord.load(p) for p in sorted((self.root / "traces").glob("*/trace.yaml"))]
 
     # docs
     def doc_spans(self, sha12: str) -> list[dict]:

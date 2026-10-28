@@ -20,6 +20,7 @@ from collections import Counter, defaultdict
 import yaml
 
 from bench.schema.pipeline import FrameCmp, GoldMap, PairRecord, Provenance, Scenario, sha256_text
+from bench.schema.pipeline import pair_id as _pair_id
 from pipeline.perturb.io import partial_path
 from pipeline.store import Store, write_yaml
 
@@ -28,8 +29,9 @@ from .reorder import gold_position, reorder
 HANDUP = ("ask", "refuse")
 
 
-def pair_id(c: str, t: str, intent: str) -> str:
-    return "P-" + sha256_text(f"{c}|{t}|{intent}")[:10]
+def pair_id(c: str, t: str, intent: str, arm: str | None = None, card_view: str = "full") -> str:
+    """v2.4 id (design §7.1). Legacy 2f ids (hash of C|T|intent) are kept on existing records."""
+    return _pair_id(c, t, intent, arm or ("decoy" if intent == "decoy" else "relevant"), card_view)
 
 
 def h(*parts) -> str:
@@ -171,7 +173,7 @@ def build(store: Store, decoys: int = 2, seed: int = 0, write: bool = True) -> d
     before = distributions(recs, scen)
     kept, dropped = cap_handups(recs, scen, seed)
     final, reordered = balance_positions(kept, scen, seed, store if write else None)
-    final = [PairRecord.model_validate({**r.dump(), "id": pair_id(r.case_scenario, r.trace_scenario, r.intent)}) for r in final]
+    final = [PairRecord.model_validate({**r.dump(), "id": pair_id(r.case_scenario, r.trace_scenario, r.intent, r.arm, r.card_view)}) for r in final]
     for r in final:
         assert scen[r.case_scenario].split == scen[r.trace_scenario].split == r.split, "pair crosses splits"
     if write:

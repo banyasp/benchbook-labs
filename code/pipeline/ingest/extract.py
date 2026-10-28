@@ -290,8 +290,9 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
         from bench.models import complete as complete_fn
     family = R.family_of(source, ep)
     n = ep["n"]
-    multi = len([e for e in source["episodes"] if R.family_of(source, e) == family]) > 1
-    sid = f"DR-{family}-{n}@v1" if multi else f"DR-{family}@v1"
+    sibs = [e for e in source["episodes"] if R.family_of(source, e) == family]
+    k = next((i for i, e in enumerate(sibs, 1) if e is ep), n)       # unique within the document family
+    sid = f"DR-{family}-{k}@v1" if len(sibs) > 1 else f"DR-{family}@v1"
     sel = select_spans(spans, ep.get("section"))
     allowed = {s["span"] for s in sel}
     log_dir = data / "store" / "scenarios" / family / "extract-logs"

@@ -1,4 +1,4 @@
-"""python -m pipeline.ingest {registry|acquire|normalize|extract [--source ID]|import-pilot|status}"""
+"""python -m pipeline.ingest {registry|acquire|normalize|extract [--source ID]|import-pilot|status|resplit|check-splits}"""
 from __future__ import annotations
 
 import argparse
@@ -19,8 +19,23 @@ def main(argv=None):
     e = sub.add_parser("extract"); e.add_argument("--source"); e.add_argument("--episode", type=int)
     sub.add_parser("import-pilot")
     sub.add_parser("status")
+    r = sub.add_parser("resplit"); r.add_argument("--dry-run", action="store_true")
+    sub.add_parser("check-splits")
     args = ap.parse_args(argv)
 
+    if args.cmd == "resplit":
+        from .splits import resplit
+        out = resplit(write=not args.dry_run)
+        for sid, a, b in out["changed"]:
+            print(f"{sid}: {a} -> {b}")
+        print(f"unknown family: {out['unknown_family']}\npairs now crossing splits: {out['pairs_now_crossing_splits']}"
+              f"\nsplits: {dict(out['splits'])}")
+        return 0
+    if args.cmd == "check-splits":
+        from .splits import check_no_leak
+        errs = check_no_leak()
+        print("\n".join(errs) or "ok: no eval item shares a lineage root with a train pair")
+        return 1 if errs else 0
     if args.cmd == "registry":
         print(R.write_registry())
     elif args.cmd == "acquire":

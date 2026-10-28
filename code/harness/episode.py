@@ -265,6 +265,6 @@ def _cues(served) -> dict:
         opts = list(c["options"])
         ch = c["verdict"]["choice"]
         out[s.prefix] = {"n_options": len(opts), "verdict_choice_position": opts.index(ch) + 1 if ch in opts else None,
-                         "verdict_move": c["options"].get(ch, {}).get("move"), "n_facts": len(c["facts"]),
+                         "verdict_move": s.backend.get("options", {}).get(ch, {}).get("move"), "n_facts": len(c["facts"]),
                          "n_considerations": len(c["considerations"])}
     return out

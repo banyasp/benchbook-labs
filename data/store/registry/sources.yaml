@@ -1,13 +1,35 @@
 generated_by: python -m pipeline.ingest registry
-split_rule: families sorted by sha256(family id); first -> test, second -> dev, remaining -> train; fewer than 3 families
-  -> all train. Splits are per family, assigned before any perturbation.
+split_rule: 'v2 (design v2.4.1 §13.5, brief W4a): family = source document (all its episodes share it); per domain, families
+  sorted by sha256(family id); the first ~20% go to test (at least 5 when the domain has >= 15 families, else at least 1 once
+  it has 3), the next ~10% to dev, the rest to train; every family of a held-out domain (military-operational) goes to test;
+  pilot imports stay eval-only. Assigned before any perturbation; derived scenarios inherit their root''s split.'
 splits:
-  OGE-2635-206a1-2: test
-  OHA-26-0087: dev
-  OGE-2635-204a-6: train
+  OGE-2635-204: train
+  OGE-2635-206: train
+  STARK-1987: test
+  FARAH-2009: test
+  KUNDUZ-2009: test
+  BLACKHAWK-SHOOTDOWN-1994: test
+  BOSNIA-AIRPOWER-1994-95: test
+  HARIM-2014: test
+  ANACONDA-2002: test
+  ICTY-NATO-1999: test
+  TARNAK-2002: test
+  ALJINAH-2017: test
+  WCK-CONVOY-2024: test
+  MOSUL-ALJADIDA-2017: test
+  PATRIOT-FRATRICIDE-2003: test
+  VINCENNES-1988: test
+  OHA-26-0087: test
   OHA-26-0122: train
   OHA-26-0100: train
-  OGE-2635-204b-1: train
+split_warnings:
+- 'domain `federal employee gifts and ethics`: 2 families -> 0 test (< 5); add sources'
+- 'domain `personnel security adjudication`: 3 families -> 1 test (< 5); add sources'
+legacy_families:
+  OGE-2635-204a-6: OGE-2635-204
+  OGE-2635-204b-1: OGE-2635-204
+  OGE-2635-206a1-2: OGE-2635-206
 sources:
 - id: OHA-PSH-26-0100
   title: DOE OHA, In the Matter of Personnel Security Hearing, PSH-26-0100 (Administrative Judge decision, issued 2026-09-16)
@@ -87,6 +109,7 @@ sources:
     strand: National-security evals and case libraries
     source: DoD Encyclopedia of Ethical Failure (nearest catalog row; this source is the OGE regulation itself)
   domain: federal employee gifts and ethics
+  family_prefix: OGE
   why: 'Doctrine source of decision vignettes: each ''Example'' in the regulation is a short scenario with the Office of Government
     Ethics'' endorsed conclusion and the governing rule beside it. Decision ethics and law only, nothing operational; the
     decider recasts naturally as an ethics-assistant agent holding the employee''s delegation.'
