@@ -6,7 +6,8 @@ config:
     nodePlacementStrategy: BRANDES_KOEPF
 ---
 %% Benchbook data pipeline, design v2.4.1 + rulings of 2026-10-28, with data passed on every edge.
-%% v6 (2026-10-28, EC2 session): ingest split into R -> D -> E stores with 1b clean+normalize and 1d select batch.
+%% v6 (2026-10-28, EC2 session): ingest as raw corpus R -> span-tagged documents -> episode store, with 1b clean+normalize and 1d select batch.
+%%    New stores carry names, not letters (E is the equity registry; the design's R includes the span-tagged documents).
 %% Render: mmdc -i flow4.mmd -o flow4.svg -c mcfg.json -b white
 flowchart TD
   subgraph S1["1 · Ingest"]
@@ -15,18 +16,18 @@ flowchart TD
     FETCH["1a fetch<br/>honest UA · archive fallback<br/>PDF → text · OCR for scans"]:::code
     R[("Raw corpus R<br/>data/corpus/natsec/text<br/>data/raw (bytes by hash)")]:::store
     NORM["1b clean + normalize<br/>two-column repair · ligatures<br/>hyphenation · paragraphs"]:::code
-    D[("Documents D<br/>data/docs/‹sha›.jsonl<br/>paragraphs with span ids")]:::store
+    DOCS[("Span-tagged documents<br/>data/docs/‹sha›.jsonl<br/>paragraphs with span ids")]:::store
     EPI["1c find episodes<br/>4 pass/fail criteria<br/>one concrete decision<br/>rejects kept with reason"]:::bedrock
-    E[("Episode store E<br/>data/store/episodes/corpus<br/>8,617 episodes · rejects")]:::store
+    EPS[("Episode store<br/>data/store/episodes/corpus<br/>8,617 episodes · rejects")]:::store
     SEL["1d select batch<br/>stratified quotas · leak guard<br/>incident families (one Luna call)<br/>split per family"]:::code
     FB["fallback router (T2)<br/>false-positive refusals<br/>of in-scope content only"]:::deferred
     CAT -- "URLs" --> FETCH
     FETCH -- "text (layout kept)" --> R
     R -- "text" --> NORM
-    NORM -- "paragraphs + span ids" --> D
-    D -- "span-tagged doc" --> EPI
-    EPI -- "episode: decision, focus,<br/>span range, content_domain" --> E
-    E -- "candidate episodes" --> SEL
+    NORM -- "paragraphs + span ids" --> DOCS
+    DOCS -- "span-tagged doc" --> EPI
+    EPI -- "episode: decision, focus,<br/>span range, content_domain" --> EPS
+    EPS -- "candidate episodes" --> SEL
     EPI -. "refusal" .-> FB
   end
   subgraph S2["2 · extract  R → X"]
@@ -88,7 +89,7 @@ flowchart TD
   V2["v2: natural pairs · near-neighbor arm<br/>derived facts (R49) · multiple cases"]:::deferred
 
   SEL -- "episode + family + split,<br/>held-out flag" --> XFQ
-  D -- "spans in the episode range" --> XFQ
+  DOCS -- "spans in the episode range" --> XFQ
   XA -- "X = (F, Q, A)<br/>A = K, W, V, Φ,<br/>lesson, limits" --> STORE
   DER -.-> STORE
   SOLVEI -- "X′ = (F′, Q′, A′)" --> STORE
