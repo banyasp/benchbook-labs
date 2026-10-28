@@ -118,7 +118,7 @@ def report_for(recs: list[PairRecord], scen: dict[str, Scenario], store: Store |
 def build(store: Store, decoys: int = 2, seed: int = 0, write: bool = True, thin_share: float | None = None,
           position_tolerance: float | None = 0.15, check_leak: bool = True) -> dict:
     thin_share = config_thin_share() if thin_share is None else thin_share
-    scen = {s.id: s for s in store.scenarios() if not A.is_retired_copy(s)}
+    scen = {s.id: s for s in store.scenarios() if not A.is_retired_copy(s) and "legacy-2f" not in s.tags}
     skips = Skips()
     partials = A.load_partials(store)
     cands = (A.derived(partials, scen, skips) + A.reverse_restyle(partials, scen, skips) + A.augmented(partials, scen, skips)
