@@ -66,7 +66,8 @@ def validate_candidates(o: dict, ids: list[str]) -> list[str]:
 
 
 def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None = None, data: Path = DATA,
-                  addendum: str = "", relax: tuple[str, ...] = (), out_dir: Path | None = None) -> dict:
+                  addendum: str = "", relax: tuple[str, ...] = (), out_dir: Path | None = None,
+                  window_workers: int = 1) -> dict:
     """`addendum` is appended to the prompt (corpus-specific guidance); a candidate that fails only criteria in `relax`
     still passes and carries `relaxed: [...]` (doctrine: no stated choice -> model-solved gold, brief W8b)."""
     if complete_fn is None:
@@ -77,12 +78,24 @@ def find_episodes(source: dict, spans: list[dict], complete_fn: Callable | None 
     passes, rejects = [], []
     ids_all = [s["span"] for s in spans]
     base = scenario_domain_fields(source, {})
-    for wi, win in enumerate(windows(spans)):
+    def call(wi, win):
         ids = [s["span"] for s in win]
         try:
             obj, _, _ = call_json(f"EP{wi}", "extractor", sys_msg, tmpl.replace("{{SPANS}}", spans_text(win)) + addendum,
                                   lambda o: validate_candidates(o, ids), complete_fn, log_dir, source["id"])
+            return obj, None
         except ExtractionError as e:
+            return None, e
+
+    wins = windows(spans)
+    if window_workers > 1 and len(wins) > 1:               # windows are independent; results are used in window order
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(min(window_workers, len(wins))) as ex:
+            results = list(ex.map(lambda a: call(*a), enumerate(wins)))
+    else:
+        results = [call(wi, win) for wi, win in enumerate(wins)]
+    for wi, (obj, e) in enumerate(results):
+        if e is not None:
             refused = getattr(e, "reason", "") == "refusal"
             rejects.append({"source": source["id"], "window": wi, "failed": ["refusal" if refused else "finder-error"],
                             "reason": str(e)[:300], "refusal": getattr(e, "refusal", None),

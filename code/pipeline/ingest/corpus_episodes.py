@@ -122,7 +122,7 @@ def todo(only=None) -> tuple[list[dict], dict]:
     return out, skipped
 
 
-def run_one(row: dict, complete_fn=None) -> dict:
+def run_one(row: dict, complete_fn=None, window_workers: int = 1) -> dict:
     cid = row["id"]
     t0 = time.time()
     sha12, spans = normalize_text(cid, row)
@@ -133,7 +133,7 @@ def run_one(row: dict, complete_fn=None) -> dict:
     add = tmpl.replace("{{HEADER}}", hdr).replace("{{DOCTRINE}}", DOCTRINE_NOTE if doctrine else "")
     src = {"id": cid, "domain": "natsec-corpus", "refusal_sensitivity": None}
     res = find_episodes(src, spans, complete_fn, addendum=add, relax=("choice_stated",) if doctrine else (),
-                        out_dir=OUT)
+                        out_dir=OUT, window_workers=window_workers)
     eps = res["passed"]
     for e in eps:
         cd = e["content_domain"]
@@ -157,7 +157,9 @@ def run_one(row: dict, complete_fn=None) -> dict:
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", nargs="*")
-    ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--workers", type=int, default=32, help="documents in parallel")
+    ap.add_argument("--window-workers", type=int, default=4, help="windows of one document in parallel (Bedrock calls "
+                    "in flight <= workers x window-workers; throttling is retried with backoff in datagen/llm.py)")
     ap.add_argument("--redo", action="store_true", help="re-run documents that already have an output")
     ap.add_argument("--dry-run", action="store_true", help="list what would run")
     a = ap.parse_args(argv)
@@ -173,7 +175,7 @@ def main(argv=None):
 
     def safe(r):
         try:
-            out = run_one(r)
+            out = run_one(r, window_workers=a.window_workers)
         except Exception as e:                                        # noqa: BLE001 - one bad document must not sink the run
             out = {"id": r["id"], "error": f"{type(e).__name__}: {e}"[:300]}
         print(json.dumps(out, ensure_ascii=False), flush=True)

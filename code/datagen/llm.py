@@ -26,7 +26,9 @@ import hashlib
 import json
 import os
 import re
+import random
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -219,27 +221,48 @@ def _instance_role_session(boto3, region):
     return session, f"instance-role:{role}"
 
 
+_CLIENTS: dict = {}
+_CLIENTS_LOCK = threading.Lock()
+THROTTLE_TRIES = 12          # our own retries on ThrottlingException, on top of botocore's adaptive mode
+THROTTLE_MAX_SLEEP = 90.0
+
+
+def _bedrock_client(region, profile, instance_role):
+    """One bedrock-runtime client per credential source for the whole process (thread-safe; keeps botocore's adaptive
+    client-side rate limiting across calls, and avoids an STS round trip per call)."""
+    key = (region, profile, instance_role)
+    with _CLIENTS_LOCK:
+        if key in _CLIENTS:
+            return _CLIENTS[key]
+        try:
+            import boto3
+        except ImportError:
+            raise LLMError("boto3 is not installed (pip install boto3)")
+        if profile:
+            try:
+                session = boto3.session.Session(profile_name=profile, region_name=region)
+                creds = session.get_credentials()
+            except Exception as e:
+                raise LLMError(f"AWS profile `{profile}` could not be loaded: {type(e).__name__}")
+            if creds is None or getattr(creds, "method", "") in ("env", "iam-role", "container-role"):
+                raise LLMError(f"profile `{profile}` did not resolve to its own credentials (got {getattr(creds, 'method', None)}); refusing")
+            source = f"profile:{profile}"
+        else:
+            session, source = _instance_role_session(boto3, region)
+        from botocore.config import Config
+        client = session.client("bedrock-runtime", config=Config(
+            retries={"mode": "adaptive", "max_attempts": 10}, max_pool_connections=256, read_timeout=900))
+        _CLIENTS[key] = (client, source)
+        return _CLIENTS[key]
+
+
 def _bedrock(bare, messages, temperature, max_tokens, ctx):
     region, profile = os.environ.get("BENCHBOOK_AWS_REGION"), os.environ.get("BENCHBOOK_AWS_PROFILE")
     instance_role = os.environ.get("BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE") == "1"
     if not (region and (profile or instance_role)):
         raise LLMError("set BENCHBOOK_AWS_REGION and BENCHBOOK_AWS_PROFILE (or, on the EC2 box, "
                        "BENCHBOOK_AWS_ALLOW_INSTANCE_ROLE=1); the default AWS credential chain is never used otherwise")
-    try:
-        import boto3
-    except ImportError:
-        raise LLMError("boto3 is not installed (pip install boto3)")
-    if profile:
-        try:
-            session = boto3.session.Session(profile_name=profile, region_name=region)
-            creds = session.get_credentials()
-        except Exception as e:
-            raise LLMError(f"AWS profile `{profile}` could not be loaded: {type(e).__name__}")
-        if creds is None or getattr(creds, "method", "") in ("env", "iam-role", "container-role"):
-            raise LLMError(f"profile `{profile}` did not resolve to its own credentials (got {getattr(creds, 'method', None)}); refusing")
-        ctx["credential_source"] = f"profile:{profile}"
-    else:
-        session, ctx["credential_source"] = _instance_role_session(boto3, region)
+    client, ctx["credential_source"] = _bedrock_client(region, profile, instance_role)
     system = [{"text": m["content"]} for m in messages if m["role"] == "system"]
     convo = []
     for m in messages:
@@ -259,7 +282,15 @@ def _bedrock(bare, messages, temperature, max_tokens, ctx):
     if NO_TEMPERATURE.search(bare):  # Bedrock rejects the field for these models; record that it was not applied
         inference.pop("temperature")
         ctx["temperature_dropped"] = temperature
-    resp = session.client("bedrock-runtime").converse(modelId=bare, messages=convo, inferenceConfig=inference, **kwargs)
+    for i in range(THROTTLE_TRIES):
+        try:
+            resp = client.converse(modelId=bare, messages=convo, inferenceConfig=inference, **kwargs)
+            break
+        except Exception as e:                    # noqa: BLE001 - only throttling is retried here
+            if "Throttling" not in type(e).__name__ or i == THROTTLE_TRIES - 1:
+                raise
+            ctx["throttle_retries"] = i + 1
+            time.sleep(min(THROTTLE_MAX_SLEEP, 2.0 * 2 ** i) * (0.5 + random.random()))
     ctx["stop_reason"] = resp.get("stopReason")
     text = "".join(b.get("text", "") for b in (resp.get("output", {}).get("message", {}).get("content") or []))
     return text, resp.get("usage") or {}
@@ -305,6 +336,8 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
         rec["usage"] = usage
         if ctx.get("stop_reason"):
             rec["stop_reason"] = ctx["stop_reason"]
+        if ctx.get("throttle_retries"):
+            rec["throttle_retries"] = ctx["throttle_retries"]
         if "temperature_dropped" in ctx:
             rec["temperature"] = None
             rec["temperature_requested"] = ctx["temperature_dropped"]
