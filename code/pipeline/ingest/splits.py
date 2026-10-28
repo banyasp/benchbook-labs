@@ -46,7 +46,7 @@ def resplit(store: Store | None = None, reg: dict | None = None, write: bool = T
                                   notes=f"re-split {changed[-1][1]} -> {new} (document family {fam}); {R.SPLIT_RULE}")
                 store.save_scenario(s)
     scen = {s.id: s for s in store.scenarios()}
-    crossing, pairs_changed = [], []
+    crossing, pairs_changed, invalid = [], [], []
     for p in store.pairs():
         if p.trace_scenario not in scen:
             continue
@@ -58,8 +58,11 @@ def resplit(store: Store | None = None, reg: dict | None = None, write: bool = T
                 p.split = scen[p.trace_scenario].split
                 p.provenance.step(id=f"resplit.{len(p.provenance.steps)}", operator="registry",
                                   notes=f"re-split {pairs_changed[-1][1]} -> {p.split} with its trace scenario")
-                store.save_pair(p)
-    return {"changed": changed, "pairs_changed": pairs_changed, "unknown_family": unknown, "pairs_now_crossing_splits": crossing,
+                try:
+                    store.save_pair(p)
+                except ValueError as e:        # e.g. an eval-only arm whose trace moved to train: rebuild via pair
+                    invalid.append((p.id, str(e).splitlines()[1].strip() if "\n" in str(e) else str(e)))
+    return {"changed": changed, "pairs_changed": pairs_changed, "pairs_invalid_after_resplit": invalid, "unknown_family": unknown, "pairs_now_crossing_splits": crossing,
             "splits": Counter(s.split for s in scen.values())}
 
 

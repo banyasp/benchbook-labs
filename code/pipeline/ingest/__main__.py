@@ -1,8 +1,9 @@
-"""python -m pipeline.ingest {registry|acquire|normalize|extract [--source ID]|import-pilot|status|resplit|check-splits}"""
+"""python -m pipeline.ingest {registry|acquire|normalize|extract [--source ID]|import-pilot|status|resplit|check-splits|episodes --source ID}"""
 from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 from collections import Counter
 
 from pipeline.store import DATA, Store
@@ -17,10 +18,12 @@ def main(argv=None):
     a = sub.add_parser("acquire"); a.add_argument("--refresh", action="store_true")
     sub.add_parser("normalize")
     e = sub.add_parser("extract"); e.add_argument("--source"); e.add_argument("--episode", type=int)
+    e.add_argument("--data", help="scratch data dir for the store (default: real data/)")
     sub.add_parser("import-pilot")
     sub.add_parser("status")
     r = sub.add_parser("resplit"); r.add_argument("--dry-run", action="store_true")
     sub.add_parser("check-splits")
+    ep = sub.add_parser("episodes"); ep.add_argument("--source", required=True); ep.add_argument("--data", help="scratch data dir (default: real data/)")
     args = ap.parse_args(argv)
 
     if args.cmd == "resplit":
@@ -28,7 +31,9 @@ def main(argv=None):
         out = resplit(write=not args.dry_run)
         for sid, a, b in out["changed"]:
             print(f"{sid}: {a} -> {b}")
-        print(f"unknown family: {out['unknown_family']}\npairs now crossing splits: {out['pairs_now_crossing_splits']}"
+        print(f"pairs invalid after resplit (left unchanged; rebuild with pipeline.pair build): "
+              f"{len(out['pairs_invalid_after_resplit'])}")
+        print(f"unknown family: {out['unknown_family']}\npairs now crossing splits: {len(out['pairs_now_crossing_splits'])}"
               f"\nsplits: {dict(out['splits'])}")
         return 0
     if args.cmd == "check-splits":
@@ -36,6 +41,10 @@ def main(argv=None):
         errs = check_no_leak()
         print("\n".join(errs) or "ok: no eval item shares a lineage root with a train pair")
         return 1 if errs else 0
+    if args.cmd == "episodes":
+        from .episodes import run
+        print("\n".join(run(args.source, data=Path(args.data) if args.data else DATA)))
+        return 0
     if args.cmd == "registry":
         print(R.write_registry())
     elif args.cmd == "acquire":
@@ -52,7 +61,7 @@ def main(argv=None):
             print(s["id"], out, sum(1 for _ in open(out)), "paragraphs")
     elif args.cmd == "extract":
         from .extract import extract_all
-        for line in extract_all(args.source, args.episode):
+        for line in extract_all(args.source, args.episode, data=Path(args.data) if args.data else DATA):
             print(line)
     elif args.cmd == "import-pilot":
         from .importpilot import import_pilot
