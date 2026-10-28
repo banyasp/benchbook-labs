@@ -1,0 +1,411 @@
+round: '2'
+k: 4
+hinted: false
+rationalized: false
+accepted: false
+reasons:
+- relation differs from gold
+- via differs from gold
+stage: exact
+subscores:
+  finish_reason: stop
+  arm: augmented
+  gold_tier: source-endorsed
+  canonical_fixes:
+  - 'fact_mapping.case_only: filled empty list'
+  strict_ok: true
+  governs: 1
+  relation: 0
+  via: 0
+score: 0.0
+finish_reason: stop
+usage: {}
+seconds: 1241.62
+seed: 681693237
+raw_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should I restore the individual's access authorization?\"\
+  \n  decider: \"The Administrative Hearing Officer, under DOE policy and the adjudicative guidelines\"\n  my_role: \"I can\
+  \ decide now based on the evidence; I must apply the presumption against restoration and evaluate mitigating condition (a).\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The individual has six delinquent debt accounts\
+  \ totaling $20,525, as per DOE credit report.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"Local Security\
+  \ Office cited Guideline E (personal conduct) and Guideline F (financial considerations) for substantial doubt.\"}\n  -\
+  \ {id: LIVE-F3, kind: situation, status: confirmed, fact: \"Federal tax returns for 2021‑2024 were not filed; IRS issued\
+  \ notices of non‑filing.\"}\n  - {id: LIVE-F4, kind: capability, status: confirmed, fact: \"The individual submitted official\
+  \ creditor clearance letters showing zero balances and stamped IRS acceptance notices for tax returns 2021‑2024 showing\
+  \ no tax liability.\"}\n  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: \"The Administrative Judge concluded\
+  \ that the evidence satisfies mitigating condition (a) for Guidelines E and F.\"}\n  - {id: LIVE-F6, kind: authority, status:\
+  \ confirmed, fact: \"DOE policy presumes against granting or restoring a clearance unless the individual rebuts the presumption.\"\
+  }\noptions:\n  LIVE-O1: \"Restore the individual's access authorization.\"\n  LIVE-O2: \"Deny restoration of the individual's\
+  \ access authorization.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role:\
+  \ same_kind\nnote: \"Both cases involve deciding whether to restore a DOE employee's access authorization based on debt\
+  \ clearance and tax filing compliance. In REF1 the officer found mitigating condition (a) satisfied; in LIVE the officer\
+  \ also found mitigating condition (a) satisfied. The key difference is that REF1 had no pending verification (all creditor\
+  \ letters and IRS notices were already official), while LIVE has one debt still pending verification from a financial service\
+  \ provider.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}\nmatched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2,\
+  \ case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F5}]\ncorresponding: [{live: LIVE-F5, case:\
+  \ REF1-F6, note: \"In REF1 the judge concluded evidence satisfies mitigating condition (a); in LIVE the judge also concluded\
+  \ evidence satisfies mitigating condition (a).\"}, {live: LIVE-F6, case: REF1-F7, note: \"Both recognize the presumption\
+  \ against restoration.\"}]\nlive_only: [LIVE-F5]  # Note: LIVE-F5 is the judge's conclusion that evidence satisfies mitigating\
+  \ condition (a); but REF1 also has F6 same fact. Actually need to be precise: LIVE-F5 is the judge's conclusion that satisfies\
+  \ mitigating condition (a); REF1-F6 is the same. But we need a live-only fact: perhaps the pending verification status for\
+  \ one debt. Let's adjust: LIVE-F5 as judge's conclusion already, but REF1-F6 also judge's conclusion. Let's define LIVE-only\
+  \ as the pending verification: \"The financial service provider has requested additional verification, which remains pending.\"\
+  \ We'll rename LIVE-F5 as \"Judge concluded evidence satisfies mitigating condition (a)\" and live_only as \"Verification\
+  \ for one debt pending\". Let's restructure carefully.\n\nBetter:\n\nfacts:\n  LIVE-F1: credit report debt total $20,525\
+  \ (confirmed)\n  LIVE-F2: LSO cited Guidelines E/F (confirmed)\n  LIVE-F3: tax returns not filed (confirmed)\n  LIVE-F4:\
+  \ creditor letters zero balances + IRS acceptance notices (confirmed)\n  LIVE-F5: financial service provider requested additional\
+  \ verification, pending (assessed)\n  LIVE-F6: Judge concluded evidence satisfies mitigating condition (a) (assessed)\n\
+  \  LIVE-F7: DOE presumption against restoration (confirmed)\n\nmatched facts with REF1: F1, F2, F3, F4, F6 (since REF1-F6\
+  \ is judge's finding), F7. LIVE-only is F5 (pending verification). case_only might be none if we map all, but we need to\
+  \ assign REF1-F5? REF1-F5 is the creditor letters and IRS notices (confirmed), which is LIVE-F4. REF1-F6 is judge's finding\
+  \ (LIVE-F6). REF1-F? Actually REF1-F5 is capability (letters and notices), REF1-F6 is intelligence (judge's finding), REF1-F7\
+  \ is authority (presumption). So we can match: LIVE-F1↔REF1-F1, LIVE-F2↔REF1-F2, LIVE-F3↔REF1-F3, LIVE-F4↔REF1-F5, LIVE-F6↔REF1-F6,\
+  \ LIVE-F7↔REF1-F7. LIVE-only is LIVE-F5 (pending verification). REF1 has no counterpart; it's case-only? No, case-only would\
+  \ be if REF1 had extra facts not in LIVE, but all REF1 facts are covered. We'll set live_only = [LIVE-F5], case_only = [].\n\
+  \nBut we need to map in fact_mapping: matched list of pairs where live and case items match. Let's do matched: [{live: LIVE-F1,\
+  \ case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F5}, {live:\
+  \ LIVE-F6, case: REF1-F6}, {live: LIVE-F7, case: REF1-F7}]. corresponding: maybe none? But we can include corresponding\
+  \ for aspects like condition status. However the instruction says corresponding for same characteristic with different state.\
+  \ Here the difference is that LIVE has pending verification while REF1 had no pending verification (all creditor letters\
+  \ were already official). So we can have corresponding: [{live: LIVE-F5, case: REF1-F? there is no REF1-F5 for verification\
+  \ status; but we can note that REF1 had no pending verification because the letters were official. So we might treat that\
+  \ as case-only? Actually REF1-F5 states \"The Individual submitted official clearance letters from each creditor confirming\
+  \ zero balances\" implying verification already done. So the difference is in LIVE-F5 (pending verification). So we set\
+  \ live_only = [LIVE-F5] and case_only = [].\n\nNow continue.\n\noptions mapping: LIVE-O1 (restore) ↔ REF1-O1 (restore),\
+  \ LIVE-O2 (deny) ↔ REF1-O2 (deny).\n\nProceed.\n\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1,\
+  \ facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: \"Official creditor letters\
+  \ show zero balances and IRS acceptance notices show tax compliance; the judge concluded mitigating condition (a) is satisfied\
+  \ for Guidelines E and F.\"}\n  - {id: LIVE-C2, facts: [LIVE-F5], equity: due_process, favors: [LIVE-O1], weight: weak,\
+  \ why: \"Pending verification is a normal procedural step; having documentation in hand and a clear request for additional\
+  \ verification does not, by itself, defeat mitigation if it is reasonable and the employee is cooperating.\"}\n  - {id:\
+  \ LIVE-C3, facts: [LIVE-F7], equity: institutional_credibility, favors: [LIVE-O1], weight: strong, why: \"Rebting the presumption\
+  \ against restoration by satisfying mitigating condition (a) aligns with due process and avoids unnecessary denial.\"}\n\
+  \  - {id: LIVE-C4, facts: [LIVE-F2], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: \"Guideline E and F\
+  \ were invoked; ensuring no hidden financial issues remain is prudent.\"}\n---\nkind: consideration_mapping\ncase: REF1\n\
+  matched: [{live: LIVE-C1, case: REF1-C1, role: \"Guideline E satisfied because creditor letters show zero balances\"}]\n\
+  corresponding: [{live: LIVE-C2, case: REF1-C2, role: \"same for tax compliance\"}, {live: LIVE-C3, case: REF1-C3, role:\
+  \ \"due process rebuts presumption\"}]\nlive_only: [LIVE-C2]  # actually LIVE-C2 corresponds to pending verification\ncase_only:\
+  \ []\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns:\
+  \ true\nwhy: \"The situations match closely: both involve DOE access restoration after debt clearance and tax filing, with\
+  \ the same equities (lawful authority, due process, institutional credibility). The live case adds a pending verification\
+  \ for one debt, which reflects the same kind of procedural step present in REF1 but not explicitly covered. The core reasoning\
+  \ about mitigating condition (a) and rebutting the presumption applies.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach:\
+  \ \"In REF1, after finding mitigating condition (a) satisfied and the presumption rebutted, the officer restored access.\"\
+  \nweighing: \"LIVE-C1 (official letters + judge's finding) strongly favors restoration, as it meets Guidelines E and F.\
+  \ LIVE-C3 (due process) also strongly favors restoration because denying would ignore the fulfilled mitigation and conflict\
+  \ with due process. LIVE-C2 (pending verification) is weakly favorable because the verification request is reasonable and\
+  \ pending; it does not defeat mitigation if the employee cooperates. LIVE-C4 (complicity risk) is weak and does not outweigh\
+  \ the strong favorable considerations.\"\ntradecraft: \"Restoration decision documented in OHA memorandum. Notify Local\
+  \ Security Office of decision and provide rationale. Request the financial service provider complete verification promptly,\
+  \ but do not wait for it if the creditor letters already confirm zero balances and IRS notices confirm filing.\"\nuncertainty:\
+  \ \"If the pending verification reveals an unsatisfied debt or hidden liability, that could change the assessment. Watch\
+  \ for any new creditor letter indicating balance > $0 or IRS rejection of filing.\"\nhandoff: \"I decide now as the Administrative\
+  \ Hearing Officer; no further delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"The employee previously\
+  \ failed to disclose debts and did not file taxes; a cautious denial seems prudent.\"\n  why_wrong: \"The employee has provided\
+  \ official creditor clearance letters and IRS acceptance notices, satisfying mitigating condition (a). Pending verification\
+  \ is a normal step and does not retroactively negate compliance.\"\nrejected:\n  LIVE-O2: \"Denial would ignore the satisfied\
+  \ mitigating conditions and contradict due-process requirements.\"\n---\nkind: verdict\nchoice: LIVE-O1\ncourse: \"Restore\
+  \ the individual's access authorization while requesting prompt completion of the pending verification from the financial\
+  \ service provider.\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C3]\nnow:\n  - \"Issue the restoration order\
+  \ in writing to the employee and inform the Local Security Office of the decision and rationale.\"\n  - \"Send a follow-up\
+  \ request to the financial service provider for verification completion within 10 business days.\"\nflip_conditions:\n \
+  \ would_change:\n    - {id: LIVE-flip1, if: \"Pending verification reveals an outstanding debt balance > $0 or IRS rejects\
+  \ the tax return filing\", then: LIVE-O2, why: \"That would mean mitigating condition (a) is not satisfied, warranting denial.\"\
+  }\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"Verification completes showing zero balance and no IRS objection\"\
+  , why: \"Restoration stays appropriate.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any creditor letter or IRS notice\
+  \ indicating unresolved balance or rejection\", favors: [LIVE-O2], why: \"Would trigger flip condition.\"}\n\nNow output\
+  \ in the required format. We'll write the documents in order as above. Ensure YAML is valid. Use proper indentation. Let's\
+  \ write them.\n</think>\nkind: fact_enumeration\nframe:\n  question: \"Should I restore the individual's access authorization?\"\
+  \n  decider: \"The Administrative Hearing Officer, under DOE policy and the adjudicative guidelines\"\n  my_role: \"I can\
+  \ decide now based on the evidence; I must apply the presumption against restoration and evaluate mitigating condition (a).\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The individual has six delinquent debt accounts\
+  \ totaling $20,525, as per DOE credit report.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"Local Security\
+  \ Office cited Guideline E (personal conduct) and Guideline F (financial considerations) for substantial doubt.\"}\n  -\
+  \ {id: LIVE-F3, kind: situation, status: confirmed, fact: \"Federal tax returns for 2021‑2024 were not filed; IRS issued\
+  \ notices of non‑filing.\"}\n  - {id: LIVE-F4, kind: capability, status: confirmed, fact: \"The individual submitted official\
+  \ creditor clearance letters showing zero balances and stamped IRS acceptance notices for tax returns 2021‑2024 showing\
+  \ no tax liability.\"}\n  - {id: LIVE-F5, kind: capability, status: assessed, fact: \"A financial service provider has requested\
+  \ additional verification for one debt; verification remains pending.\"}\n  - {id: LIVE-F6, kind: intelligence, status:\
+  \ assessed, fact: \"The Administrative Judge concluded that the evidence satisfies mitigating condition (a) for Guidelines\
+  \ E and F.\"}\n  - {id: LIVE-F7, kind: authority, status: confirmed, fact: \"DOE policy presumes against granting or restoring\
+  \ a clearance unless the individual rebuts the presumption.\"}\noptions:\n  LIVE-O1: \"Restore the individual's access authorization.\"\
+  \n  LIVE-O2: \"Deny restoration of the individual's access authorization.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n\
+  \  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both cases involve deciding whether to restore\
+  \ a DOE employee's access authorization based on debt clearance and tax filing compliance. In REF1 the officer found mitigating\
+  \ condition (a) satisfied; in LIVE the officer also found mitigating condition (a) satisfied. LIVE adds that verification\
+  \ for one debt is pending, whereas REF1 had no pending verification because all creditor letters were already official.\"\
+  \noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case:\
+  \ REF1-F2}\n  - {live: LIVE-F3, case: REF1-F3}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n\
+  \  - {live: LIVE-F7, case: REF1-F7}\ncorresponding:\n  - {live: LIVE-F5, case: REF1-F?, note: \"REF1 had no pending verification;\
+  \ LIVE has pending verification for one debt.\"}\nlive_only: [LIVE-F5]\ncase_only: []\n---\nkind: consideration_enumeration\n\
+  considerations:\n  - {id: LIVE-C1, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong,\
+  \ why: \"Official creditor letters show zero balances and IRS acceptance notices show tax compliance; the judge concluded\
+  \ mitigating condition (a) is satisfied for Guidelines E and F.\"}\n  - {id: LIVE-C2, facts: [LIVE-F5], equity: due_process,\
+  \ favors: [LIVE-O1], weight: weak, why: \"Pending verification is a normal procedural step; having documentation in hand\
+  \ and a clear request for additional verification does not, by itself, defeat mitigation if the employee is cooperating.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F7, LIVE-F6], equity: due_process, favors: [LIVE-O1], weight: strong, why: \"Rebting the\
+  \ presumption against restoration by satisfying mitigating condition (a) aligns with due process and avoids unnecessary\
+  \ denial.\"}\n  - {id: LIVE-C4, facts: [LIVE-F2], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: \"Guideline\
+  \ E and F were invoked; ensuring no hidden financial issues remain is prudent.\"}\n---\nkind: consideration_mapping\ncase:\
+  \ REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Guideline E satisfied because creditor letters show zero balances\"\
+  }\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"tax compliance satisfied; pending verification analogous to\
+  \ typical follow-up\"}\n  - {live: LIVE-C3, case: REF1-C3, role: \"due process rebuts presumption\"}\nlive_only: [LIVE-C2]\n\
+  case_only: []\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  governs: true\nwhy: \"The situations match closely: both involve DOE access restoration after debt clearance and tax filing,\
+  \ with the same equities (lawful authority, due process, institutional credibility). LIVE adds a pending verification for\
+  \ one debt, which reflects the same kind of procedural step present in REF1 but not explicitly covered. The core reasoning\
+  \ about mitigating condition (a) and rebutting the presumption applies.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach:\
+  \ \"In REF1, after finding mitigating condition (a) satisfied and the presumption rebutted, the officer restored access.\"\
+  \nweighing: \"LIVE-C1 (official letters + judge's finding) strongly favors restoration, as it meets Guidelines E and F.\
+  \ LIVE-C3 (due process) also strongly favors restoration because denying would ignore the fulfilled mitigation and conflict\
+  \ with due process. LIVE-C2 (pending verification) is weakly favorable because the verification request is reasonable and\
+  \ pending; it does not defeat mitigation if the employee cooperates. LIVE-C4 (complicity risk) is weak and does not outweigh\
+  \ the strong favorable considerations.\"\ntradecraft: \"Restoration decision documented in OHA memorandum. Notify Local\
+  \ Security Office of decision and rationale. Request the financial service provider complete verification promptly, but\
+  \ do not wait for it if the creditor letters already confirm zero balances and IRS notices confirm filing.\"\nuncertainty:\
+  \ \"If the pending verification reveals an unsatisfied debt or hidden liability, that could change the assessment. Watch\
+  \ for any creditor letter indicating balance > $0 or IRS rejection of filing.\"\nhandoff: \"I decide now as the Administrative\
+  \ Hearing Officer; no further delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"The employee previously\
+  \ failed to disclose debts and did not file taxes; a cautious denial seems prudent.\"\n  why_wrong: \"The employee has provided\
+  \ official creditor clearance letters and IRS acceptance notices, satisfying mitigating condition (a). Pending verification\
+  \ is a normal step and does not retroactively negate compliance.\"\nrejected:\n  LIVE-O2: \"Denial would ignore the satisfied\
+  \ mitigating conditions and contradict due-process requirements.\"\n---\nkind: verdict\nchoice: LIVE-O1\ncourse: \"Restore\
+  \ the individual's access authorization while requesting prompt completion of the pending verification from the financial\
+  \ service provider.\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C3]\nnow:\n  - \"Issue the restoration order\
+  \ in writing to the employee and inform the Local Security Office of the decision and rationale.\"\n  - \"Send a follow-up\
+  \ request to the financial service provider for verification completion within 10 business days.\"\nflip_conditions:\n \
+  \ would_change:\n    - {id: LIVE-flip1, if: \"Pending verification reveals an outstanding debt balance > $0 or IRS rejects\
+  \ the tax return filing\", then: LIVE-O2, why: \"That would mean mitigating condition (a) is not satisfied, warranting denial.\"\
+  }\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"Verification completes showing zero balance and no IRS objection\"\
+  , why: \"Restoration stays appropriate.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any creditor letter or IRS notice\
+  \ indicating unresolved balance or rejection\", favors: [LIVE-O2], why: \"Would trigger flip condition.\"}\n\n</think>\n\
+  The reasoning and verdict have been written as required. The decision is to restore the individual's access authorization\
+  \ while requesting prompt verification of the pending debt claim. No tool calls are needed at this stage; the decision can\
+  \ be implemented with the documented steps."
+generated: "frame:\n  question: \"Should I restore the individual's access authorization?\"\n  decider: \"The Administrative\
+  \ Hearing Officer, under DOE policy and the adjudicative guidelines\"\n  my_role: \"I can decide now based on the evidence;\
+  \ I must apply the presumption against restoration and evaluate mitigating condition (a).\"\nfacts:\n  - {id: LIVE-F1, kind:\
+  \ situation, status: confirmed, fact: \"The individual has six delinquent debt accounts totaling $20,525, as per DOE credit\
+  \ report.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"Local Security Office cited Guideline E (personal\
+  \ conduct) and Guideline F (financial considerations) for substantial doubt.\"}\n  - {id: LIVE-F3, kind: situation, status:\
+  \ confirmed, fact: \"Federal tax returns for 2021‑2024 were not filed; IRS issued notices of non‑filing.\"}\n  - {id: LIVE-F4,\
+  \ kind: capability, status: confirmed, fact: \"The individual submitted official creditor clearance letters showing zero\
+  \ balances and stamped IRS acceptance notices for tax returns 2021‑2024 showing no tax liability.\"}\n  - {id: LIVE-F5,\
+  \ kind: intelligence, status: assessed, fact: \"The Administrative Judge concluded that the evidence satisfies mitigating\
+  \ condition (a) for Guidelines E and F.\"}\n  - {id: LIVE-F6, kind: authority, status: confirmed, fact: \"DOE policy presumes\
+  \ against granting or restoring a clearance unless the individual rebuts the presumption.\"}\noptions:\n  LIVE-O1: \"Restore\
+  \ the individual's access authorization.\"\n  LIVE-O2: \"Deny restoration of the individual's access authorization.\"\n\
+  ---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both\
+  \ cases involve deciding whether to restore a DOE employee's access authorization based on debt clearance and tax filing\
+  \ compliance. In REF1 the officer found mitigating condition (a) satisfied; in LIVE the officer also found mitigating condition\
+  \ (a) satisfied. The key difference is that REF1 had no pending verification (all creditor letters and IRS notices were\
+  \ already official), while LIVE has one debt still pending verification from a financial service provider.\"\noptions: {LIVE-O1:\
+  \ REF1-O1, LIVE-O2: REF1-O2}\nmatched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3,\
+  \ case: REF1-F3}, {live: LIVE-F4, case: REF1-F5}]\ncorresponding: [{live: LIVE-F5, case: REF1-F6, note: \"In REF1 the judge\
+  \ concluded evidence satisfies mitigating condition (a); in LIVE the judge also concluded evidence satisfies mitigating\
+  \ condition (a).\"}, {live: LIVE-F6, case: REF1-F7, note: \"Both recognize the presumption against restoration.\"}]\nlive_only:\
+  \ [LIVE-F5]  # Note: LIVE-F5 is the judge's conclusion that evidence satisfies mitigating condition (a); but REF1 also has\
+  \ F6 same fact. Actually need to be precise: LIVE-F5 is the judge's conclusion that satisfies mitigating condition (a);\
+  \ REF1-F6 is the same. But we need a live-only fact: perhaps the pending verification status for one debt. Let's adjust:\
+  \ LIVE-F5 as judge's conclusion already, but REF1-F6 also judge's conclusion. Let's define LIVE-only as the pending verification:\
+  \ \"The financial service provider has requested additional verification, which remains pending.\" We'll rename LIVE-F5\
+  \ as \"Judge concluded evidence satisfies mitigating condition (a)\" and live_only as \"Verification for one debt pending\"\
+  . Let's restructure carefully.\n\nBetter:\n\nfacts:\n  LIVE-F1: credit report debt total $20,525 (confirmed)\n  LIVE-F2:\
+  \ LSO cited Guidelines E/F (confirmed)\n  LIVE-F3: tax returns not filed (confirmed)\n  LIVE-F4: creditor letters zero balances\
+  \ + IRS acceptance notices (confirmed)\n  LIVE-F5: financial service provider requested additional verification, pending\
+  \ (assessed)\n  LIVE-F6: Judge concluded evidence satisfies mitigating condition (a) (assessed)\n  LIVE-F7: DOE presumption\
+  \ against restoration (confirmed)\n\nmatched facts with REF1: F1, F2, F3, F4, F6 (since REF1-F6 is judge's finding), F7.\
+  \ LIVE-only is F5 (pending verification). case_only might be none if we map all, but we need to assign REF1-F5? REF1-F5\
+  \ is the creditor letters and IRS notices (confirmed), which is LIVE-F4. REF1-F6 is judge's finding (LIVE-F6). REF1-F? Actually\
+  \ REF1-F5 is capability (letters and notices), REF1-F6 is intelligence (judge's finding), REF1-F7 is authority (presumption).\
+  \ So we can match: LIVE-F1↔REF1-F1, LIVE-F2↔REF1-F2, LIVE-F3↔REF1-F3, LIVE-F4↔REF1-F5, LIVE-F6↔REF1-F6, LIVE-F7↔REF1-F7.\
+  \ LIVE-only is LIVE-F5 (pending verification). REF1 has no counterpart; it's case-only? No, case-only would be if REF1 had\
+  \ extra facts not in LIVE, but all REF1 facts are covered. We'll set live_only = [LIVE-F5], case_only = [].\n\nBut we need\
+  \ to map in fact_mapping: matched list of pairs where live and case items match. Let's do matched: [{live: LIVE-F1, case:\
+  \ REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F5}, {live: LIVE-F6,\
+  \ case: REF1-F6}, {live: LIVE-F7, case: REF1-F7}]. corresponding: maybe none? But we can include corresponding for aspects\
+  \ like condition status. However the instruction says corresponding for same characteristic with different state. Here the\
+  \ difference is that LIVE has pending verification while REF1 had no pending verification (all creditor letters were already\
+  \ official). So we can have corresponding: [{live: LIVE-F5, case: REF1-F? there is no REF1-F5 for verification status; but\
+  \ we can note that REF1 had no pending verification because the letters were official. So we might treat that as case-only?\
+  \ Actually REF1-F5 states \"The Individual submitted official clearance letters from each creditor confirming zero balances\"\
+  \ implying verification already done. So the difference is in LIVE-F5 (pending verification). So we set live_only = [LIVE-F5]\
+  \ and case_only = [].\n\nNow continue.\n\noptions mapping: LIVE-O1 (restore) ↔ REF1-O1 (restore), LIVE-O2 (deny) ↔ REF1-O2\
+  \ (deny).\n\nProceed.\n\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts: [LIVE-F4, LIVE-F6],\
+  \ equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: \"Official creditor letters show zero balances and IRS\
+  \ acceptance notices show tax compliance; the judge concluded mitigating condition (a) is satisfied for Guidelines E and\
+  \ F.\"}\n  - {id: LIVE-C2, facts: [LIVE-F5], equity: due_process, favors: [LIVE-O1], weight: weak, why: \"Pending verification\
+  \ is a normal procedural step; having documentation in hand and a clear request for additional verification does not, by\
+  \ itself, defeat mitigation if it is reasonable and the employee is cooperating.\"}\n  - {id: LIVE-C3, facts: [LIVE-F7],\
+  \ equity: institutional_credibility, favors: [LIVE-O1], weight: strong, why: \"Rebting the presumption against restoration\
+  \ by satisfying mitigating condition (a) aligns with due process and avoids unnecessary denial.\"}\n  - {id: LIVE-C4, facts:\
+  \ [LIVE-F2], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: \"Guideline E and F were invoked; ensuring no\
+  \ hidden financial issues remain is prudent.\"}\n---\nkind: consideration_mapping\ncase: REF1\nmatched: [{live: LIVE-C1,\
+  \ case: REF1-C1, role: \"Guideline E satisfied because creditor letters show zero balances\"}]\ncorresponding: [{live: LIVE-C2,\
+  \ case: REF1-C2, role: \"same for tax compliance\"}, {live: LIVE-C3, case: REF1-C3, role: \"due process rebuts presumption\"\
+  }]\nlive_only: [LIVE-C2]  # actually LIVE-C2 corresponds to pending verification\ncase_only: []\n---\nkind: applicability\n\
+  case: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\nwhy: \"The situations\
+  \ match closely: both involve DOE access restoration after debt clearance and tax filing, with the same equities (lawful\
+  \ authority, due process, institutional credibility). The live case adds a pending verification for one debt, which reflects\
+  \ the same kind of procedural step present in REF1 but not explicitly covered. The core reasoning about mitigating condition\
+  \ (a) and rebutting the presumption applies.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"In REF1, after finding\
+  \ mitigating condition (a) satisfied and the presumption rebutted, the officer restored access.\"\nweighing: \"LIVE-C1 (official\
+  \ letters + judge's finding) strongly favors restoration, as it meets Guidelines E and F. LIVE-C3 (due process) also strongly\
+  \ favors restoration because denying would ignore the fulfilled mitigation and conflict with due process. LIVE-C2 (pending\
+  \ verification) is weakly favorable because the verification request is reasonable and pending; it does not defeat mitigation\
+  \ if the employee cooperates. LIVE-C4 (complicity risk) is weak and does not outweigh the strong favorable considerations.\"\
+  \ntradecraft: \"Restoration decision documented in OHA memorandum. Notify Local Security Office of decision and provide\
+  \ rationale. Request the financial service provider complete verification promptly, but do not wait for it if the creditor\
+  \ letters already confirm zero balances and IRS notices confirm filing.\"\nuncertainty: \"If the pending verification reveals\
+  \ an unsatisfied debt or hidden liability, that could change the assessment. Watch for any new creditor letter indicating\
+  \ balance > $0 or IRS rejection of filing.\"\nhandoff: \"I decide now as the Administrative Hearing Officer; no further\
+  \ delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"The employee previously failed to disclose debts and\
+  \ did not file taxes; a cautious denial seems prudent.\"\n  why_wrong: \"The employee has provided official creditor clearance\
+  \ letters and IRS acceptance notices, satisfying mitigating condition (a). Pending verification is a normal step and does\
+  \ not retroactively negate compliance.\"\nrejected:\n  LIVE-O2: \"Denial would ignore the satisfied mitigating conditions\
+  \ and contradict due-process requirements.\"\n---\nkind: verdict\nchoice: LIVE-O1\ncourse: \"Restore the individual's access\
+  \ authorization while requesting prompt completion of the pending verification from the financial service provider.\"\n\
+  relation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C3]\nnow:\n  - \"Issue the restoration order in writing to the employee\
+  \ and inform the Local Security Office of the decision and rationale.\"\n  - \"Send a follow-up request to the financial\
+  \ service provider for verification completion within 10 business days.\"\nflip_conditions:\n  would_change:\n    - {id:\
+  \ LIVE-flip1, if: \"Pending verification reveals an outstanding debt balance > $0 or IRS rejects the tax return filing\"\
+  , then: LIVE-O2, why: \"That would mean mitigating condition (a) is not satisfied, warranting denial.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"Verification completes showing zero balance and no IRS objection\", why: \"Restoration stays\
+  \ appropriate.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any creditor letter or IRS notice indicating unresolved\
+  \ balance or rejection\", favors: [LIVE-O2], why: \"Would trigger flip condition.\"}\n\nNow output in the required format.\
+  \ We'll write the documents in order as above. Ensure YAML is valid. Use proper indentation. Let's write them.\n</think>\n\
+  kind: fact_enumeration\nframe:\n  question: \"Should I restore the individual's access authorization?\"\n  decider: \"The\
+  \ Administrative Hearing Officer, under DOE policy and the adjudicative guidelines\"\n  my_role: \"I can decide now based\
+  \ on the evidence; I must apply the presumption against restoration and evaluate mitigating condition (a).\"\nfacts:\n \
+  \ - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The individual has six delinquent debt accounts totaling $20,525,\
+  \ as per DOE credit report.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"Local Security Office cited\
+  \ Guideline E (personal conduct) and Guideline F (financial considerations) for substantial doubt.\"}\n  - {id: LIVE-F3,\
+  \ kind: situation, status: confirmed, fact: \"Federal tax returns for 2021‑2024 were not filed; IRS issued notices of non‑filing.\"\
+  }\n  - {id: LIVE-F4, kind: capability, status: confirmed, fact: \"The individual submitted official creditor clearance letters\
+  \ showing zero balances and stamped IRS acceptance notices for tax returns 2021‑2024 showing no tax liability.\"}\n  - {id:\
+  \ LIVE-F5, kind: capability, status: assessed, fact: \"A financial service provider has requested additional verification\
+  \ for one debt; verification remains pending.\"}\n  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: \"The Administrative\
+  \ Judge concluded that the evidence satisfies mitigating condition (a) for Guidelines E and F.\"}\n  - {id: LIVE-F7, kind:\
+  \ authority, status: confirmed, fact: \"DOE policy presumes against granting or restoring a clearance unless the individual\
+  \ rebuts the presumption.\"}\noptions:\n  LIVE-O1: \"Restore the individual's access authorization.\"\n  LIVE-O2: \"Deny\
+  \ restoration of the individual's access authorization.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same_kind\nnote: \"Both cases involve deciding whether to restore a DOE employee's access\
+  \ authorization based on debt clearance and tax filing compliance. In REF1 the officer found mitigating condition (a) satisfied;\
+  \ in LIVE the officer also found mitigating condition (a) satisfied. LIVE adds that verification for one debt is pending,\
+  \ whereas REF1 had no pending verification because all creditor letters were already official.\"\noptions: {LIVE-O1: REF1-O1,\
+  \ LIVE-O2: REF1-O2}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3,\
+  \ case: REF1-F3}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F7, case: REF1-F7}\n\
+  corresponding:\n  - {live: LIVE-F5, case: REF1-F?, note: \"REF1 had no pending verification; LIVE has pending verification\
+  \ for one debt.\"}\nlive_only: [LIVE-F5]\ncase_only: []\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id:\
+  \ LIVE-C1, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: \"Official creditor\
+  \ letters show zero balances and IRS acceptance notices show tax compliance; the judge concluded mitigating condition (a)\
+  \ is satisfied for Guidelines E and F.\"}\n  - {id: LIVE-C2, facts: [LIVE-F5], equity: due_process, favors: [LIVE-O1], weight:\
+  \ weak, why: \"Pending verification is a normal procedural step; having documentation in hand and a clear request for additional\
+  \ verification does not, by itself, defeat mitigation if the employee is cooperating.\"}\n  - {id: LIVE-C3, facts: [LIVE-F7,\
+  \ LIVE-F6], equity: due_process, favors: [LIVE-O1], weight: strong, why: \"Rebting the presumption against restoration by\
+  \ satisfying mitigating condition (a) aligns with due process and avoids unnecessary denial.\"}\n  - {id: LIVE-C4, facts:\
+  \ [LIVE-F2], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: \"Guideline E and F were invoked; ensuring no\
+  \ hidden financial issues remain is prudent.\"}\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1,\
+  \ case: REF1-C1, role: \"Guideline E satisfied because creditor letters show zero balances\"}\ncorresponding:\n  - {live:\
+  \ LIVE-C2, case: REF1-C2, role: \"tax compliance satisfied; pending verification analogous to typical follow-up\"}\n  -\
+  \ {live: LIVE-C3, case: REF1-C3, role: \"due process rebuts presumption\"}\nlive_only: [LIVE-C2]\ncase_only: []\n---\nkind:\
+  \ applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\nwhy:\
+  \ \"The situations match closely: both involve DOE access restoration after debt clearance and tax filing, with the same\
+  \ equities (lawful authority, due process, institutional credibility). LIVE adds a pending verification for one debt, which\
+  \ reflects the same kind of procedural step present in REF1 but not explicitly covered. The core reasoning about mitigating\
+  \ condition (a) and rebutting the presumption applies.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"In REF1, after\
+  \ finding mitigating condition (a) satisfied and the presumption rebutted, the officer restored access.\"\nweighing: \"\
+  LIVE-C1 (official letters + judge's finding) strongly favors restoration, as it meets Guidelines E and F. LIVE-C3 (due process)\
+  \ also strongly favors restoration because denying would ignore the fulfilled mitigation and conflict with due process.\
+  \ LIVE-C2 (pending verification) is weakly favorable because the verification request is reasonable and pending; it does\
+  \ not defeat mitigation if the employee cooperates. LIVE-C4 (complicity risk) is weak and does not outweigh the strong favorable\
+  \ considerations.\"\ntradecraft: \"Restoration decision documented in OHA memorandum. Notify Local Security Office of decision\
+  \ and rationale. Request the financial service provider complete verification promptly, but do not wait for it if the creditor\
+  \ letters already confirm zero balances and IRS notices confirm filing.\"\nuncertainty: \"If the pending verification reveals\
+  \ an unsatisfied debt or hidden liability, that could change the assessment. Watch for any creditor letter indicating balance\
+  \ > $0 or IRS rejection of filing.\"\nhandoff: \"I decide now as the Administrative Hearing Officer; no further delegation\
+  \ needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"The employee previously failed to disclose debts and did not\
+  \ file taxes; a cautious denial seems prudent.\"\n  why_wrong: \"The employee has provided official creditor clearance letters\
+  \ and IRS acceptance notices, satisfying mitigating condition (a). Pending verification is a normal step and does not retroactively\
+  \ negate compliance.\"\nrejected:\n  LIVE-O2: \"Denial would ignore the satisfied mitigating conditions and contradict due-process\
+  \ requirements.\"\n---\nkind: verdict\nchoice: LIVE-O1\ncourse: \"Restore the individual's access authorization while requesting\
+  \ prompt completion of the pending verification from the financial service provider.\"\nrelation: follows\nvia: null\ndecisive:\
+  \ [LIVE-C1, LIVE-C3]\nnow:\n  - \"Issue the restoration order in writing to the employee and inform the Local Security Office\
+  \ of the decision and rationale.\"\n  - \"Send a follow-up request to the financial service provider for verification completion\
+  \ within 10 business days.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"Pending verification reveals\
+  \ an outstanding debt balance > $0 or IRS rejects the tax return filing\", then: LIVE-O2, why: \"That would mean mitigating\
+  \ condition (a) is not satisfied, warranting denial.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"Verification\
+  \ completes showing zero balance and no IRS objection\", why: \"Restoration stays appropriate.\"}\n  watch_for:\n    - {id:\
+  \ LIVE-watch1, what: \"Any creditor letter or IRS notice indicating unresolved balance or rejection\", favors: [LIVE-O2],\
+  \ why: \"Would trigger flip condition.\"}\n\n</think>\nThe reasoning and verdict have been written as required. The decision\
+  \ is to restore the individual's access authorization while requesting prompt verification of the pending debt claim. No\
+  \ tool calls are needed at this stage; the decision can be implemented with the documented steps."
+target_text: "<think>\nkind: fact_enumeration\nframe:\n  question: Should I restore the individual's access authorization?\n\
+  \  decider: The Administrative Hearing Officer, under DOE policy and the adjudicative guidelines\n  my_role: I can decide\
+  \ now based on the evidence; I must apply the presumption against restoration and evaluate mitigating\n    condition (a).\n\
+  facts:\n- id: LIVE-F1\n  kind: situation\n  status: confirmed\n  fact: The individual has six delinquent debt accounts totaling\
+  \ $20,525, as per DOE credit report.\n- id: LIVE-F2\n  kind: authority\n  status: confirmed\n  fact: Local Security Office\
+  \ cited Guideline E (personal conduct) and Guideline F (financial considerations) for substantial\n    doubt.\n- id: LIVE-F3\n\
+  \  kind: situation\n  status: confirmed\n  fact: Federal tax returns for 2021‑2024 were not filed; IRS issued notices of\
+  \ non‑filing.\n- id: LIVE-F4\n  kind: capability\n  status: confirmed\n  fact: The individual submitted official creditor\
+  \ clearance letters showing zero balances and stamped IRS acceptance notices\n    for tax returns 2021‑2024 showing no tax\
+  \ liability.\n- id: LIVE-F5\n  kind: capability\n  status: assessed\n  fact: A financial service provider has requested\
+  \ additional verification for one debt; verification remains pending.\n- id: LIVE-F6\n  kind: intelligence\n  status: assessed\n\
+  \  fact: The Administrative Judge concluded that the evidence satisfies mitigating condition (a) for Guidelines E and F.\n\
+  - id: LIVE-F7\n  kind: authority\n  status: confirmed\n  fact: DOE policy presumes against granting or restoring a clearance\
+  \ unless the individual rebuts the presumption.\noptions:\n  LIVE-O1: Restore the individual's access authorization.\n \
+  \ LIVE-O2: Deny restoration of the individual's access authorization.\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question:\
+  \ same_kind\n  decider: same_kind\n  role: same_kind\nnote: Both cases involve deciding whether to restore a DOE employee's\
+  \ access authorization based on debt clearance and tax\n  filing compliance. In REF1 the officer found mitigating condition\
+  \ (a) satisfied; in LIVE the officer also found mitigating\n  condition (a) satisfied. The key difference is that REF1 had\
+  \ no pending verification (all creditor letters and IRS notices\n  were already official), while LIVE has one debt still\
+  \ pending verification from a financial service provider.\noptions:\n  LIVE-O1: REF1-O1\n  LIVE-O2: REF1-O2\nmatched:\n\
+  - live: LIVE-F1\n  case: REF1-F1\n- live: LIVE-F2\n  case: REF1-F2\n- live: LIVE-F3\n  case: REF1-F3\n- live: LIVE-F4\n\
+  \  case: REF1-F5\ncorresponding:\n- live: LIVE-F5\n  case: REF1-F6\n  note: In REF1 the judge concluded evidence satisfies\
+  \ mitigating condition (a); in LIVE the judge also concluded evidence\n    satisfies mitigating condition (a).\n- live:\
+  \ LIVE-F6\n  case: REF1-F7\n  note: Both recognize the presumption against restoration.\nlive_only:\n- LIVE-F5\ncase_only:\
+  \ []\n---\nkind: consideration_enumeration\nconsiderations:\n- id: LIVE-C1\n  facts:\n  - LIVE-F4\n  - LIVE-F6\n  equity:\
+  \ lawful_authority\n  favors:\n  - LIVE-O1\n  weight: strong\n  why: Official creditor letters show zero balances and IRS\
+  \ acceptance notices show tax compliance; the judge concluded mitigating\n    condition (a) is satisfied for Guidelines\
+  \ E and F.\n- id: LIVE-C2\n  facts:\n  - LIVE-F5\n  equity: due_process\n  favors:\n  - LIVE-O1\n  weight: weak\n  why:\
+  \ Pending verification is a normal procedural step; having documentation in hand and a clear request for additional verification\n\
+  \    does not, by itself, defeat mitigation if the employee is cooperating.\n- id: LIVE-C3\n  facts:\n  - LIVE-F7\n  - LIVE-F6\n\
+  \  equity: due_process\n  favors:\n  - LIVE-O1\n  weight: strong\n  why: Rebting the presumption against restoration by\
+  \ satisfying mitigating condition (a) aligns with due process and avoids\n    unnecessary denial.\n- id: LIVE-C4\n  facts:\n\
+  \  - LIVE-F2\n  equity: complicity_risk\n  favors:\n  - LIVE-O2\n  weight: weak\n  why: Guideline E and F were invoked;\
+  \ ensuring no hidden financial issues remain is prudent.\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n- live:\
+  \ LIVE-C1\n  case: REF1-C1\n  role: Guideline E satisfied because creditor letters show zero balances\ncorresponding:\n\
+  - live: LIVE-C2\n  case: REF1-C2\n  role: tax compliance satisfied; pending verification analogous to typical follow-up\n\
+  - live: LIVE-C3\n  case: REF1-C3\n  role: due process rebuts presumption\nlive_only:\n- LIVE-C2\ncase_only: []\n---\nkind:\
+  \ applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\nwhy:\
+  \ 'The situations match closely: both involve DOE access restoration after debt clearance and tax filing, with the same\n\
+  \  equities (lawful authority, due process, institutional credibility). LIVE adds a pending verification for one debt, which\n\
+  \  reflects the same kind of procedural step present in REF1 but not explicitly covered. The core reasoning about mitigating\n\
+  \  condition (a) and rebutting the presumption applies.'\n---\nkind: reasoning\ncase: REF1\ncase_approach: In REF1, after\
+  \ finding mitigating condition (a) satisfied and the presumption rebutted, the officer restored\n  access.\nweighing: LIVE-C1\
+  \ (official letters + judge's finding) strongly favors restoration, as it meets Guidelines E and F. LIVE-C3\n  (due process)\
+  \ also strongly favors restoration because denying would ignore the fulfilled mitigation and conflict with due\n  process.\
+  \ LIVE-C2 (pending verification) is weakly favorable because the verification request is reasonable and pending;\n  it does\
+  \ not defeat mitigation if the employee cooperates. LIVE-C4 (complicity risk) is weak and does not outweigh the strong\n\
+  \  favorable considerations.\ntradecraft: Restoration decision documented in OHA memorandum. Notify Local Security Office\
+  \ of decision and rationale. Request\n  the financial service provider complete verification promptly, but do not wait for\
+  \ it if the creditor letters already confirm\n  zero balances and IRS notices confirm filing.\nuncertainty: If the pending\
+  \ verification reveals an unsatisfied debt or hidden liability, that could change the assessment.\n  Watch for any creditor\
+  \ letter indicating balance > $0 or IRS rejection of filing.\nhandoff: I decide now as the Administrative Hearing Officer;\
+  \ no further delegation needed.\ntempting_wrong:\n  option: LIVE-O2\n  pull: The employee previously failed to disclose\
+  \ debts and did not file taxes; a cautious denial seems prudent.\n  why_wrong: The employee has provided official creditor\
+  \ clearance letters and IRS acceptance notices, satisfying mitigating\n    condition (a). Pending verification is a normal\
+  \ step and does not retroactively negate compliance.\nrejected:\n  LIVE-O2: Denial would ignore the satisfied mitigating\
+  \ conditions and contradict due-process requirements.\n</think>\nkind: verdict\nchoice: LIVE-O1\ncourse: Restore the individual's\
+  \ access authorization while requesting prompt completion of the pending verification from\n  the financial service provider.\n\
+  relation: follows\nvia: null\ndecisive:\n- LIVE-C1\n- LIVE-C3\nnow:\n- Issue the restoration order in writing to the employee\
+  \ and inform the Local Security Office of the decision and rationale.\n- Send a follow-up request to the financial service\
+  \ provider for verification completion within 10 business days.\nflip_conditions:\n  would_change:\n  - id: LIVE-flip1\n\
+  \    if: Pending verification reveals an outstanding debt balance > $0 or IRS rejects the tax return filing\n    then: LIVE-O2\n\
+  \    why: That would mean mitigating condition (a) is not satisfied, warranting denial.\n  would_not_change:\n  - id: LIVE-noflip1\n\
+  \    if: Verification completes showing zero balance and no IRS objection\n    why: Restoration stays appropriate.\n  watch_for:\n\
+  \  - id: LIVE-watch1\n    what: Any creditor letter or IRS notice indicating unresolved balance or rejection\n    favors:\n\
+  \    - LIVE-O2\n    why: Would trigger flip condition.\n"
+prompt_sha256: 06d91644568925d449450235e19e622b65e60ee79f7feb1fe73e904dbde698d5
+writer: granite-rs
+chosen: false
+tags: []

@@ -279,6 +279,13 @@ def _write_jsonl(path: Path, rows: list[dict]):
     path.write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in rows))
 
 
+def _trace_ok(p: PairRecord, store: Store) -> bool:
+    try:
+        return trace_path(p, store).exists()
+    except (ValueError, FileNotFoundError, KeyError):
+        return False
+
+
 def project_all(store: Store, version: str, pairs: list[PairRecord] | None = None, *, mode: str,
                 settings: HarnessSettings | None = None, writers=DEFAULT_WRITERS, eval_cells_: str = "all",
                 max_length: int | None = None) -> dict:
@@ -286,6 +293,18 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
     if mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
     pairs = pairs if pairs is not None else store.active_pairs()
+    pre_skipped = []                 # batch 2026-10-28: no rendered trace (dropped at the render gates), or augmented not gated
+    keep = []
+    for p in pairs:
+        if p.arm not in ("none", "self") and not p.case_scenario:      # self serves the live scenario itself
+            pre_skipped.append({"pair": p.id, "reason": "no card"})
+        elif not _trace_ok(p, store):
+            pre_skipped.append({"pair": p.id, "reason": "no rendered trace (dropped at render)"})
+        elif p.arm == "augmented" and "gate-passed" not in p.tags:
+            pre_skipped.append({"pair": p.id, "reason": "augmented gate not passed"})
+        else:
+            keep.append(p)
+    pairs = keep
     settings = (settings or HarnessSettings()).with_(mode=mode)
     out = store.exports / version
     idx = pair_index(pairs)
@@ -296,7 +315,7 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
     if bad:
         raise ValueError(f"eval pairs share a family with train/dev pairs: {bad[:10]} ({len(bad)} in all)")
     rows = {"sft": [], "dev": [], "rl": [], "eval": []}
-    skipped, warns, hashes, leaks = [], {}, {}, []
+    skipped, warns, hashes, leaks = list(pre_skipped), {}, {}, []
 
     def inputs(p):
         return sha256_obj({"pair": p.dump(), "trace": json.loads(trace_path(p, store).read_text())["messages"]})

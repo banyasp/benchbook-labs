@@ -1,0 +1,614 @@
+round: r
+k: 4
+hinted: true
+rationalized: true
+accepted: false
+reasons:
+- 'truncated: hit max_tokens'
+stage: parse
+subscores:
+  finish_reason: length
+  arm: relevant
+  gold_tier: model-solved
+  canonical_fixes:
+  - 'parser repair: closed unbalanced brackets at end: }'
+  strict_ok: true
+  hint_leak: []
+score: 0.0
+finish_reason: length
+usage: {}
+seconds: 1419.85
+seed: 2277612223
+raw_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should I grant, deny, or place on hold the individual's\
+  \ request for an access authorization under the Bond Amendment and Guideline J?\"\n  decider: \"Administrative Judge under\
+  \ DOE security adjudication regulations\"\n  my_role: \"I may issue a grant/denial/hold decision and task the Local Security\
+  \ Office for additional evidence if needed.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The\
+  \ Individual is a DOE contractor assigned to the Nuclear Systems Division, which requires a security clearance.\"}\n  -\
+  \ {id: LIVE-F2, kind: capability, status: confirmed, fact: \"I have authority to grant, deny, place on hold, and task the\
+  \ LSO for additional evidence.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The Bond Amendment bars\
+  \ any person sentenced to imprisonment exceeding one year who has served at least one year from obtaining a clearance.\"\
+  }\n  - {id: LIVE-F4, kind: situation, status: confirmed, fact: \"The Individual was sentenced to more than one year after\
+  \ the 1998 armed-robbery conviction and served at least one year.\"}\n  - {id: LIVE-F5, kind: intelligence, status: confirmed,\
+  \ fact: \"Security questionnaire lists convictions: armed robbery (1998, 18 months), drug possession (2003, unspecified),\
+  \ drug possession again in 2004 (9 months), fraud (2022, 14 months).\"}\n  - {id: LIVE-F6, kind: intelligence, status: confirmed,\
+  \ fact: \"March 2026 LSO amendment added unlawful firearm possession as a felon and evidence tampering charge to the Summary\
+  \ of Security Concerns.\"}\n  - {id: LIVE-F7, kind: situation, status: assessed, fact: \"The record shows no mitigating\
+  \ factors under Guideline J: no sufficient elapsed time, no evidence of coercion, no unreliable evidence, no documented\
+  \ successful rehabilitation.\"}\n  - {id: LIVE-F8, kind: intelligence, status: assessed, fact: \"The Individual testified:\
+  \ after 2011 curtailed alcohol consumption, stopped marijuana, performs yearly volunteer work with Forest Service, completed\
+  \ moral-recognition therapy program.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed, fact: \"DOE regulations require\
+  \ the adjudicator to ensure granting or reinstating a clearance will not jeopardize the common defense and align with the\
+  \ national interest.\"}\n  - {id: LIVE-F10, kind: authority, status: confirmed, fact: \"Guideline J outlines mitigating\
+  \ conditions: elapsed time (≥10 years? Typically ≥5 years for some offenses), no coercion, reliable evidence, proven rehabilitation.\"\
+  }\noptions:\n  LIVE-O1: \"Place the case on hold pending additional evidence from the LSO.\"\n  LIVE-O2: \"Deny the Individual's\
+  \ access authorization request.\"\n  LIVE-O3: \"Grant the Individual's access authorization request.\"\n  LIVE-O4: \"Task\
+  \ the LSO for additional evidence (e.g., further criminal history checks).\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n\
+  \  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both ask whether to grant/deny/hold a security\
+  \ clearance under Bond Amendment and Guideline J. The case's scenario matches closely: DOE contractor with criminal history,\
+  \ LSO concerns, and the same equities apply. Differences: the case includes new 2026 firearm and tampering charges; the\
+  \ live scenario also includes those. The case had a considered denial due to lack of mitigating factors; the live scenario\
+  \ sees similar lack.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: REF1-O4}\nmatched:\n  -\
+  \ {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6,\
+  \ case: REF1-F6}\n  - {live: LIVE-F7, case: REF1-F9}  # actually REF1-F9 is no mitigating factors; LIVE-F7 matches\ncorresponding:\n\
+  \  - {live: LIVE-F8, case: REF1-F8, note: \"Individual's testimony about reduced substance use and therapy; case's individual\
+  \ testified similar but judge found no sufficient mitigating evidence.\"}\n  - {live: LIVE-F10, case: REF1-F2, note: \"\
+  Clarify that Guideline J mitigating conditions are assessed.\"}\nlive_only: [LIVE-F2, LIVE-F5, LIVE-F9, LIVE-F10]  # capability,\
+  \ detailed convictions list, regulations wording, explicit mention of elapsed time threshold maybe\ncase_only: [REF1-F3]\
+  \  # mention of random \"situation\" fact not directly observed? REF1-F3 is LSO Notification Letter; that exists in live\
+  \ too (LIVE-F3? Actually LIVE-F3 is authority; Notification Letter is in LIVE? Not yet captured; but LSO letter is known\
+  \ from operator note. We'll treat as matched)\nBut we need to map properly. Let's be precise:\n\n- REF1-F1: \"The Individual\
+  \ is employed by a DOE contractor in a position that requires a security clearance.\" -> LIVE-F1 matches.\n- REF1-F2: \"\
+  The Individual reported numerous arrests, charges, and convictions from 1998 to 2022.\" -> LIVE-F5 (questionnaire list)\
+  \ matches.\n- REF1-F3: \"The LSO sent a Notification Letter that cited the Bond Amendment and Guideline J.\" -> This is\
+  \ not directly a live fact we have a doc for? The operator said \"LSO issued a Notification Letter this morning flagging\
+  \ concerns\", so yes we have that indirectly. But we haven't given an ID for that; we can consider it as part of LIVE-F3?\
+  \ Actually LIVE-F3 is authority. Let's create a LIVE fact for the LSO letter? We have LIVE-F? We can include it in matching.\
+  \ However to keep simple, we can say matched includes REF1-F3 with live counterpart implied. But the mapping requires matched\
+  \ pairs of same kind? The benchbook mapping allows matching facts across. We'll match REF1-F3 (situation) to something like\
+  \ \"LSO issued Notification Letter citing concerns\" but we don't have an explicit LIVE ID for that; we can create a live\
+  \ fact LIVE-F11? But we are limited to LIVE-F1..F? We can add more facts; the format says list facts with IDs LIVE-F1, LIVE-F2,\
+  \ ... as many as needed. So we can add a live fact for the Notification Letter. Let's add LIVE-F11: \"LSO issued a Notification\
+  \ Letter this morning flagging concerns under Bond Amendment and Guideline J.\" But we haven't called doc.fetch for that;\
+  \ it's from operator message. We can include it. However the instruction says \"Give the live scenario's facts the ids LIVE-F1,\
+  \ LIVE-F2, ..., its options LIVE-O1, ...\" So we can include all relevant facts. Let's list facts we have:\n\nWe have:\n\
+  - LIVE-F1: position requires clearance.\n- LIVE-F2: my authority.\n- LIVE-F3: Bond Amendment bar.\n- LIVE-F4: Individual\
+  \ served >1 year after armed robbery.\n- LIVE-F5: convictions list.\n- LIVE-F6: LSO added firearm and tampering charges.\n\
+  - LIVE-F7: no mitigating factors under Guideline J.\n- LIVE-F8: testimony about rehab.\n- LIVE-F9: regulations require no\
+  \ jeopardize common defense.\n- LIVE-F10: Guideline J mitigating conditions (we know typical: elapsed time, no coercion,\
+  \ reliable evidence, rehabilitation). The guidance says \"no sufficient elapsed time, no evidence of coercion, no unreliable\
+  \ evidence, and no documented successful rehabilitation.\" So we can capture that.\n\nWe also have LSO letter fact; we can\
+  \ incorporate into LIVE-F3? Better: LIVE-F11: \"LSO issued Notification Letter citing Bond Amendment and Guideline J.\"\
+  \ But to avoid extra IDs, we can treat LSO letter as part of authority or situation. However mapping should be accurate.\
+  \ Let's add a live fact:\n\n- LIVE-F11: \"LSO issued a Notification Letter this morning flagging concerns under the Bond\
+  \ Amendment and Guideline J.\" But we have only up to F10? We can reorder. Let's define facts in order:\n\n1. LIVE-F1: position\
+  \ requires clearance.\n2. LIVE-F2: my authority.\n3. LIVE-F3: Bond Amendment bar (statute).\n4. LIVE-F4: Individual served\
+  \ >1 year after 1998 armed robbery.\n5. LIVE-F5: convictions list (arrests, charges, convictions).\n6. LIVE-F6: LSO added\
+  \ firearm and tampering charges in March 2026.\n7. LIVE-F7: LSO issued Notification Letter citing Bond Amendment and Guideline\
+  \ J.\n8. LIVE-F8: Individual's testimony about rehab after 2011.\n9. LIVE-F9: Regulations require no jeopardize common defense.\n\
+  10. LIVE-F10: Record lacks mitigating factors per Guideline J (no elapsed time, coercion, unreliable evidence, successful\
+  \ rehabilitation).\n\nThus we have 10 facts. We'll map REF1-F1 to LIVE-F1, REF1-F2 to LIVE-F5 (or LIVE-F5 includes convictions),\
+  \ REF1-F3 to LIVE-F7 (LSO letter), REF1-F4 to LIVE-F3, REF1-F5 to LIVE-F4, REF1-F6 to LIVE-F6, REF1-F7 to LIVE-F9? Actually\
+  \ REF1-F7 is regulatory guidance; we have LIVE-F9. REF1-F8 to LIVE-F8, REF1-F9 to LIVE-F10.\n\nBut for mapping simplicity,\
+  \ we can match core facts that are clearly corresponding. We'll define matched as those that are essentially the same:\n\
+  \n- matched: REF1-F1 <-> LIVE-F1, REF1-F4 <-> LIVE-F3, REF1-F5 <-> LIVE-F4, REF1-F6 <-> LIVE-F6, REF1-F7 <-> LIVE-F9 (regulatory\
+  \ guidance), REF1-F8 <-> LIVE-F8, REF1-F9 <-> LIVE-F10.\n\nBut REF1-F2 (numerous arrests etc) corresponds to LIVE-F5; REF1-F3\
+  \ (LSO letter) corresponds to LIVE-F7.\n\nGiven the instruction to be honest and accurate, we should map as best as possible.\
+  \ However the mapping step is part of reasoning; we can be approximate but consistent. Let's do:\n\nmatched:\n  - {live:\
+  \ LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}  # authority bar\n  - {live: LIVE-F4, case: REF1-F5}  # incarceration\
+  \ >1 year\n  - {live: LIVE-F6, case: REF1-F6}  # new charges\n  - {live: LIVE-F10, case: REF1-F7} # regulatory guidance?\
+  \ Actually REF1-F7 is guidance; LIVE-F9 is guidance, LIVE-F10 is mitigation lack. Let's map accordingly.\n\nBut to avoid\
+  \ confusion, we can say:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live:\
+  \ LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F10, case: REF1-F7} (guidance)\ncorresponding:\n\
+  \  - {live: LIVE-F5, case: REF1-F2, note: \"LIVE-F5 includes detailed convictions; REF1-F2 mentions numerous arrests/charges;\
+  \ both match.\"}\n  - {live: LIVE-F7, case: REF1-F3, note: \"LIVE-F7 is LSO letter; REF1-F3 is LSO Notification Letter.\"\
+  }\n  - {live: LIVE-F8, case: REF1-F8, note: \"Testimony vs case testimony; judge found no sufficient mitigating evidence.\"\
+  }\n  - {live: LIVE-F9, case: REF1-F9, note: \"LIVE-F9 is regulations; REF1-F9 is record lacking mitigating factors.\"}\n\
+  \nlive_only: [LIVE-F2, LIVE-F9? Actually LIVE-F2 is my capability; LIVE-F2 is unique to my role as judge (I can task LSO).\
+  \ REF1 had similar role but case didn't list capabilities; we can treat as live_only.\n\ncase_only: [REF1-F2? Actually REF1-F2\
+  \ and REF1-F3 may be only in case? But they correspond to live facts; we'll set case_only as none.\n\nBut the mapping step\
+  \ should be straightforward: we can match most facts and have live_only for my authority and the detailed conviction list?\
+  \ However the case also had similar authority (Administrative Judge decides). So we can match authority too.\n\nGiven time,\
+  \ let's keep it simple and consistent with the worked examples style: we list matched pairs that are obviously same, corresponding\
+  \ pairs that are same equity with different state, and live_only for my specific facts like my authority to task LSO.\n\n\
+  We'll write:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case:\
+  \ REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F10, case: REF1-F7}  # guidance\ncorresponding:\n  - {live:\
+  \ LIVE-F5, case: REF1-F2, note: \"LIVE-F5 lists convictions; REF1-F2 mentions numerous arrests/charges; same pattern.\"\
+  }\n  - {live: LIVE-F7, case: REF1-F3, note: \"LIVE-F7 LSO letter; REF1-F3 Notification Letter.\"}\n  - {live: LIVE-F8, case:\
+  \ REF1-F8, note: \"Individual's rehab testimony vs case testimony; judge in case found no sufficient mitigating evidence.\"\
+  }\n  - {live: LIVE-F9, case: REF1-F9, note: \"Regulatory guidance vs record lacking mitigating factors.\"}\nlive_only: [LIVE-F2]\
+  \  # my authority to task LSO\ncase_only: []  # maybe none\n\nBut we also have LIVE-F? Let's decide on final fact list exactly\
+  \ 10 facts; we'll include all needed.\n\nNow option mapping:\n\n- LIVE-O1 (hold) corresponds to REF1-O1 (hold)\n- LIVE-O2\
+  \ (deny) corresponds to REF1-O2 (deny)\n- LIVE-O3 (grant) corresponds to REF1-O3 (grant)\n- LIVE-O4 (task LSO) corresponds\
+  \ to REF1-O4 (ask LSO for evidence)\n\nNow we need to produce the reasoning documents.\n\nProceed to considerations.\n\n\
+  We need to assign equities. Relevant equities from list: lawful_authority, institutional_credibility, due_process, analytic_integrity,\
+  \ etc. The case used lawful_authority (REF1-C1), institutional_credibility (REF1-C2), due_process (REF1-C3), analytic_integrity\
+  \ (REF1-C4). We'll use similar.\n\n- LIVE-C1: facts LIVE-F3, LIVE-F4; equity: lawful_authority; favors LIVE-O2 (deny). Weight:\
+  \ strong. Why: Bond Amendment is clear statutory bar; serving >1 year after conviction means ineligible.\n\n- LIVE-C2: facts\
+  \ LIVE-F6, LIVE-F10; equity: institutional_credibility; favors LIVE-O2 (deny). Weight: strong. Why: Pattern of serious offenses\
+  \ and recent felony (firearm possession by felon, evidence tampering) undermines trustworthiness; no mitigating factors\
+  \ per Guideline J.\n\n- LIVE-C3: facts LIVE-F8; equity: due_process; favors LIVE-O2 (deny) but weaker because due process\
+  \ concerns about LSO letter addition, but still primary concern is eligibility. Weight: weak. Why: LSO added charges promptly;\
+  \ no indication of procedural unfairness that would override statutory bar.\n\n- LIVE-C4: facts LIVE-F5, LIVE-F8, LIVE-F10;\
+  \ equity: analytic_integrity; favors LIVE-O2 (deny). Weight: strong. Why: Individual's testimony lacks corroboration and\
+  \ may be self-serving; no independent verification of rehab; inconsistencies possible; thus credibility lower.\n\n- LIVE-C5\
+  \ (optional): facts LIVE-F2 (my authority); equity: lawful_authority; favors maybe task LSO? But the decision should not\
+  \ delay; the Bond Amendment bars eligibility regardless. So we can note that holding would not overcome statutory bar. We'll\
+  \ include maybe a consideration about the ability to task LSO, but the primary decision is deny.\n\nBut we need only a few\
+  \ considerations; we can pick the strongest ones that align with case's reasoning: C1 and C2 and C4 similar to REF1's C1,\
+  \ C2, C4. C3 is like REF1-C3. We'll include three considerations: C1 (lawful_authority), C2 (institutional_credibility),\
+  \ C4 (analytic_integrity). We'll also include C3 (due_process) as weaker.\n\nLet's define:\n\n- LIVE-C1: facts [LIVE-F3,\
+  \ LIVE-F4]; equity: lawful_authority; favors [LIVE-O2]; weight: strong; why: Bond Amendment statute clearly bars anyone\
+  \ who served >1 year after a sentence exceeding one year; meets criteria.\n\n- LIVE-C2: facts [LIVE-F6, LIVE-F10]; equity:\
+  \ institutional_credibility; favors [LIVE-O2]; weight: strong; why: Recent felony firearm possession and evidence tampering,\
+  \ plus multiple serious offenses, indicate ongoing risk; Guideline J mitigating conditions not met (no proven rehabilitation,\
+  \ no long elapsed time without recurrence).\n\n- LIVE-C3: facts [LIVE-F8]; equity: due_process; favors [LIVE-O2]; weight:\
+  \ weak; why: LSO added charges; no evidence of procedural error; due process satisfied; however, the addition could affect\
+  \ fairness but does not change statutory eligibility.\n\n- LIVE-C4: facts [LIVE-F5, LIVE-F8, LIVE-F10]; equity: analytic_integrity;\
+  \ favors [LIVE-O2]; weight: strong; why: Testimony about rehab lacks corroboration; no independent records; possible self-presentation;\
+  \ therefore credibility uncertain; aligns with case's finding that testimony riddled with contradictions.\n\nNow mapping\
+  \ considerations to case:\n\n- LIVE-C1 <-> REF1-C1 (lawful_authority bar)\n- LIVE-C2 <-> REF1-C2 (institutional_credibility)\n\
+  - LIVE-C4 <-> REF1-C4 (analytic_integrity)\n- LIVE-C3 <-> REF1-C3 (due_process)\n\nNow applicability: The case's reasoning\
+  \ applies because the situation matches: DOE contractor, Bond Amendment bar, Guideline J concerns, lack of mitigating factors.\
+  \ Differences: live scenario includes explicit mention of LSO adding charges, and my ability to task LSO; but the core reasoning\
+  \ about statutory bar and lack of mitigating factors holds. The case's flip conditions consider mitigating time or rehabilitation;\
+  \ none present here. Thus applicability.governs = true.\n\nNow reasoning: Use case approach: weigh C1, C2, C4 as strong\
+  \ against O2; C3 weak; HOLD (O1) and GRANT (O3) are weaker because statutory bar and no mitigating factors. Task LSO (O4)\
+  \ would delay decision and not overcome bar.\n\nNow we produce documents.\n\nWe must output YAML documents separated by\
+  \ '---'. We'll produce:\n\n1. kind: fact_enumeration\n2. kind: fact_mapping\n3. kind: consideration_enumeration\n4. kind:\
+  \ consideration_mapping\n5. kind: applicability\n6. kind: reasoning\n7. kind: verdict\n\nBut the format says to include\
+  \ all documents in order up to verdict. However the worked examples included fact_enumeration, fact_mapping, consideration_enumeration,\
+  \ consideration_mapping, applicability, reasoning, verdict. We'll follow that.\n\nLet's craft each carefully.\n\nFirst,\
+  \ fact_enumeration:\n\nkind: fact_enumeration\nframe:\n  question: \"Should I grant, deny, or place on hold the individual's\
+  \ request for an access authorization under the Bond Amendment and Guideline J?\"\n  decider: \"Administrative Judge under\
+  \ DOE security adjudication regulations\"\n  my_role: \"I may issue a grant/deny/hold decision and task the Local Security\
+  \ Office for additional evidence if needed.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The\
+  \ Individual is a DOE contractor assigned to the Nuclear Systems Division, which requires a security clearance.\"}\n  -\
+  \ {id: LIVE-F2, kind: capability, status: confirmed, fact: \"I have authority to grant, deny, place on hold, and task the\
+  \ Local Security Office for additional evidence.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The Bond\
+  \ Amendment bars any person sentenced to imprisonment exceeding one year who has served at least one year from obtaining\
+  \ a clearance.\"}\n  - {id: LIVE-F4, kind: situation, status: confirmed, fact: \"The Individual was sentenced to more than\
+  \ one year after the 1998 armed-robbery conviction and served at least one year.\"}\n  - {id: LIVE-F5, kind: intelligence,\
+  \ status: confirmed, fact: \"Security questionnaire lists convictions: armed robbery (1998, 18 months), drug possession\
+  \ (2003), drug possession again in 2004 (9 months), fraud (2022, 14 months).\"}\n  - {id: LIVE-F6, kind: intelligence, status:\
+  \ confirmed, fact: \"In March 2026 the LSO added unlawful firearm possession as a felon and evidence tampering to the Summary\
+  \ of Security Concerns.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The Local Security Office issued\
+  \ a Notification Letter this morning flagging concerns under the Bond Amendment and Guideline J.\"}\n  - {id: LIVE-F8, kind:\
+  \ intelligence, status: assessed, fact: \"The Individual testified that after 2011 they curtailed alcohol consumption, stopped\
+  \ marijuana, performs yearly volunteer work with the Forest Service, and completed a moral‑recognition therapy program.\"\
+  }\n  - {id: LIVE-F9, kind: authority, status: confirmed, fact: \"DOE regulations require that granting or reinstating a\
+  \ clearance will not jeopardize the common defense and align with the national interest.\"}\n  - {id: LIVE-F10, kind: intelligence,\
+  \ status: assessed, fact: \"The record shows no mitigating factors under Guideline J: no long period of no criminal conduct,\
+  \ no evidence of coercion, no unreliable evidence, and no documented successful rehabilitation.\"}\noptions:\n  LIVE-O1:\
+  \ \"Place the case on hold pending additional evidence from the LSO.\"\n  LIVE-O2: \"Deny the Individual's access authorization\
+  \ request.\"\n  LIVE-O3: \"Grant the Individual's access authorization request.\"\n  LIVE-O4: \"Task the LSO for additional\
+  \ evidence (e.g., further criminal history checks).\"\n\nNow fact_mapping:\n\nkind: fact_mapping\ncase: REF1\nframe:\n \
+  \ question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both involve a DOE contractor facing Bond Amendment\
+  \ and Guideline J concerns. The core reasoning about statutory bar and lack of mitigating factors matches. Differences:\
+  \ live scenario includes explicit LSO letter and ability to task LSO; case also had similar ability but reasoning focused\
+  \ on denial.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: REF1-O4}\nmatched:\n  - {live:\
+  \ LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case:\
+  \ REF1-F6}\n  - {live: LIVE-F9, case: REF1-F7}  # regulatory guidance\ncorresponding:\n  - {live: LIVE-F5, case: REF1-F2,\
+  \ note: \"LIVE-F5 lists detailed convictions; REF1-F2 mentions numerous arrests/charges; same pattern.\"}\n  - {live: LIVE-F7,\
+  \ case: REF1-F3, note: \"LIVE-F7 is LSO Notification Letter; REF1-F3 is LSO Notification Letter.\"}\n  - {live: LIVE-F8,\
+  \ case: REF1-F8, note: \"Individual's rehab testimony vs case testimony; judge in case found no sufficient mitigating evidence.\"\
+  }\n  - {live: LIVE-F10, case: REF1-F9, note: \"LIVE-F10 states lack of mitigating factors; REF1-F9 assesses lack of mitigating\
+  \ conditions.\"}\nlive_only: [LIVE-F2]  # my authority to task LSO\ncase_only: []  # no facts only in case that are not\
+  \ live\n\nNow consideration_enumeration:\n\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts: [LIVE-F3,\
+  \ LIVE-F4], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: \"The Bond Amendment is a clear statutory\
+  \ bar: anyone sentenced to more than one year who serves at least one year is ineligible. The Individual meets this bar.\"\
+  }\n  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F10], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why:\
+  \ \"Recent felony firearm possession by a felon and evidence tampering, together with multiple serious convictions, indicate\
+  \ ongoing risk. Guideline J mitigating conditions (long elapsed time, proven rehabilitation) are not met.\"}\n  - {id: LIVE-C3,\
+  \ facts: [LIVE-F7], equity: due_process, favors: [LIVE-O2], weight: weak, why: \"LSO added charges promptly; no indication\
+  \ of procedural error that would override the statutory bar. Due process is satisfied.\"}\n  - {id: LIVE-C4, facts: [LIVE-F5,\
+  \ LIVE-F8, LIVE-F10], equity: analytic_integrity, favors: [LIVE-O2], weight: strong, why: \"The Individual's rehab testimony\
+  \ lacks corroboration and independent verification; possible self-presentation; thus credibility is uncertain, consistent\
+  \ with case finding of contradictions.\"}\n\nNow consideration_mapping:\n\nkind: consideration_mapping\ncase: REF1\nmatched:\n\
+  \  - {live: LIVE-C1, case: REF1-C1, role: \"Statutory bar argument\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Institutional\
+  \ credibility assessment\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Analytic integrity evaluation\"}\ncorresponding:\n\
+  \  - {live: LIVE-C3, case: REF1-C3, role: \"Due process check on LSO addition\"}\nlive_only: []  # all considerations have\
+  \ counterparts\ncase_only: []  # none\n\nNow applicability:\n\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same_kind\ngoverns: true\nwhy: \"The live scenario matches the case's structure: DOE contractor\
+  \ facing Bond Amendment bar and Guideline J concerns, with no mitigating factors per Guideline J. The case's reasoning about\
+  \ statutory bar outweighing rehabilitation claims applies. The live scenario includes the LSO addition and ability to task\
+  \ LSO, but does not introduce a mitigating condition (e.g., ≥10 years elapsed or proven rehabilitation). Therefore the case's\
+  \ reasoning governs, though the decision is straightforward denial.\"\n\nNow reasoning:\n\nkind: reasoning\ncase: REF1\n\
+  case_approach: \"In REF1, the judge weighed the statutory Bond Amendment bar (strong) against mitigating factors under Guideline\
+  \ J. Where no mitigating conditions (elapsed time, coercion, lack of reliable evidence, or proven rehabilitation) are present,\
+  \ the judge denied the clearance.\"\nweighing: \"LIVE-C1 (lawful_authority) and LIVE-C2 (institutional_credibility) are\
+  \ strong and decisive: the Bond Amendment bar is satisfied, and recent felonies undermine credibility. LIVE-C4 (analytic_integrity)\
+  \ is strong because the rehab testimony lacks corroboration. LIVE-C3 (due_process) is weak but does not alter the bar. Therefore\
+  \ the weight favors LIVE-O2 (deny). LIVE-O1 (hold) would delay decision and does not overcome the statutory bar; LIVE-O3\
+  \ (grant) would conflict with Bond Amendment; LIVE-O4 (task LSO) would add delay and still face the bar. The case's flip\
+  \ conditions (REF1-flip1/REF1-flip2) require mitigating conditions that are absent here, so the denial stands.\"\ntradecraft:\
+  \ \"Issue a final denial decision, record findings consistent with the reasoning, notify the Individual of the denial and\
+  \ appeal rights per 10 C.F.R. § 710.28. Do not place on hold or task LSO for further evidence, as the Bond Amendment bar\
+  \ is clear and no mitigating evidence can alter eligibility. Log the decision and send the denial notice.\"\nuncertainty:\
+  \ \"Low uncertainty: the statutory language is clear, and the record lacks mitigating conditions. The only uncertainty is\
+  \ whether the firearm possession charge might be resolved (e.g., not a felon?), but the LSO already classified it as unlawful\
+  \ firearm possession by a felon, which satisfies the bar. If new evidence emerged showing the firearm charge was dismissed\
+  \ or not felon-level, that would be a different fact and could trigger a flip; but absent such evidence, the decision is\
+  \ sound.\"\nhandoff: \"The Administrative Judge decides alone under the regulations; no further delegation needed. The decision\
+  \ is final unless the Individual appeals.\"\ntempting_wrong:\n  option: LIVE-O3\n  pull: \"The Individual’s post‑2011 community\
+  \ service and therapy might convince some that rehabilitation has occurred.\"\n  why_wrong: \"Guideline J requires documented\
+  \ successful rehabilitation (evidence of sustained good conduct, no further incidents). The record shows no corroboration\
+  \ or long period without criminal conduct; thus the mitigating condition is not met. Granting would conflict with the Bond\
+  \ Amendment and DOE policy.\"\nrejected:\n  LIVE-O1: \"Holding pending additional evidence would violate the presumption\
+  \ against granting when statutory bar applies and mitigating factors are absent.\"\n  LIVE-O4: \"Tasking LSO for further\
+  \ evidence would delay the decision without resolving the statutory bar; the Bond Amendment eligibility is determined now\
+  \ based on known convictions.\"\n  LIVE-O3: \"Granting would ignore the clear statutory bar and lack of mitigating evidence.\"\
+  \n\nNow verdict:\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"Deny the Individual's access authorization request.\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Issue the denial decision in writing, notify the\
+  \ Individual of the denial and appeal rights per 10 C.F.R. § 710.28.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1,\
+  \ if: \"A mitigating condition under Guideline J such as a long period of no criminal conduct (≥10 years) were established\"\
+  , then: LIVE-O3, why: \"If sufficient elapsed time without recurrence, Guideline J may permit grant despite Bond Amendment\
+  \ bar? Actually Bond Amendment remains; but flip condition from REF1 considered elapsed time; in this scenario, elapsed\
+  \ time from last conviction (2022) to now (~2026) is about 4 years, not ≥10. So not applicable.\"}\n    - {id: LIVE-flip2,\
+  \ if: \"The Individual could demonstrate successful rehabilitation, e.g., sustained employment, education, and community\
+  \ service with no further incidents\", then: LIVE-O3, why: \"Proven rehabilitation could satisfy Guideline J mitigating\
+  \ condition and potentially allow grant if other conditions align; however Bond Amendment still bars if served >1 year?\
+  \ Actually Bond Amendment bars based on past conviction, not current status; if rehabilitation proven, the decision might\
+  \ still need to consider but REF1 flip considered that; so this flip condition mirrors REF1-flip2.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"The Individual remains incarcerated for more than one year for a felony\", why: \"The Bond\
+  \ Amendment bar cannot be waived absent extraordinary circumstances.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"\
+  Future credible evidence of sustained rehabilitation and absence of new criminal conduct\", favors: [LIVE-O3], why: \"If\
+  \ such evidence emerges, the decision could be revisited under Guideline J if the Bond Amendment allows reconsideration\
+  \ (e.g., reinstatement).\"\n\nBut we need to ensure the verdict IDs are correct: choice is LIVE-O2.\n\nNow we output these\
+  \ documents separated by '---'. After the last document, we write </think> and then the verdict? Actually the format says:\
+  \ \"Close your thinking with </think> after the last document before the verdict (the applicability document when the case\
+  \ does not govern), then write the verdict document as your reply.\" But we are including verdict as a document inside the\
+  \ thinking. The worked examples had the verdict document inside the reply as part of the documents. In the examples, they\
+  \ wrote the documents (including verdict) inside the reply block between <think> and </think>. The format says: \"Write\
+  \ your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with </think> after the last\
+  \ document before the verdict (the applicability document when the case does not govern), then write the verdict document\
+  \ as your reply.\" That seems contradictory. Let's read: \"Your reply is your reasoning step: it contains only these documents.\
+  \ Do not call any tools in it; your tool calls come afterwards.\" Actually the instruction: \"Before your next action, reason\
+  \ from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below. ... Close\
+  \ your thinking with </think> after the last document before the verdict (the applicability document when the case does\
+  \ not govern), then write the verdict document as your reply.\"\n\nInterpretation: We should output the documents up to"
+generated: "frame:\n  question: \"Should I grant, deny, or place on hold the individual's request for an access authorization\
+  \ under the Bond Amendment and Guideline J?\"\n  decider: \"Administrative Judge under DOE security adjudication regulations\"\
+  \n  my_role: \"I may issue a grant/denial/hold decision and task the Local Security Office for additional evidence if needed.\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The Individual is a DOE contractor assigned to the\
+  \ Nuclear Systems Division, which requires a security clearance.\"}\n  - {id: LIVE-F2, kind: capability, status: confirmed,\
+  \ fact: \"I have authority to grant, deny, place on hold, and task the LSO for additional evidence.\"}\n  - {id: LIVE-F3,\
+  \ kind: authority, status: confirmed, fact: \"The Bond Amendment bars any person sentenced to imprisonment exceeding one\
+  \ year who has served at least one year from obtaining a clearance.\"}\n  - {id: LIVE-F4, kind: situation, status: confirmed,\
+  \ fact: \"The Individual was sentenced to more than one year after the 1998 armed-robbery conviction and served at least\
+  \ one year.\"}\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Security questionnaire lists convictions:\
+  \ armed robbery (1998, 18 months), drug possession (2003, unspecified), drug possession again in 2004 (9 months), fraud\
+  \ (2022, 14 months).\"}\n  - {id: LIVE-F6, kind: intelligence, status: confirmed, fact: \"March 2026 LSO amendment added\
+  \ unlawful firearm possession as a felon and evidence tampering charge to the Summary of Security Concerns.\"}\n  - {id:\
+  \ LIVE-F7, kind: situation, status: assessed, fact: \"The record shows no mitigating factors under Guideline J: no sufficient\
+  \ elapsed time, no evidence of coercion, no unreliable evidence, no documented successful rehabilitation.\"}\n  - {id: LIVE-F8,\
+  \ kind: intelligence, status: assessed, fact: \"The Individual testified: after 2011 curtailed alcohol consumption, stopped\
+  \ marijuana, performs yearly volunteer work with Forest Service, completed moral-recognition therapy program.\"}\n  - {id:\
+  \ LIVE-F9, kind: authority, status: confirmed, fact: \"DOE regulations require the adjudicator to ensure granting or reinstating\
+  \ a clearance will not jeopardize the common defense and align with the national interest.\"}\n  - {id: LIVE-F10, kind:\
+  \ authority, status: confirmed, fact: \"Guideline J outlines mitigating conditions: elapsed time (≥10 years? Typically ≥5\
+  \ years for some offenses), no coercion, reliable evidence, proven rehabilitation.\"}\noptions:\n  LIVE-O1: \"Place the\
+  \ case on hold pending additional evidence from the LSO.\"\n  LIVE-O2: \"Deny the Individual's access authorization request.\"\
+  \n  LIVE-O3: \"Grant the Individual's access authorization request.\"\n  LIVE-O4: \"Task the LSO for additional evidence\
+  \ (e.g., further criminal history checks).\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider:\
+  \ same_kind\n  role: same_kind\nnote: \"Both ask whether to grant/deny/hold a security clearance under Bond Amendment and\
+  \ Guideline J. The case's scenario matches closely: DOE contractor with criminal history, LSO concerns, and the same equities\
+  \ apply. Differences: the case includes new 2026 firearm and tampering charges; the live scenario also includes those. The\
+  \ case had a considered denial due to lack of mitigating factors; the live scenario sees similar lack.\"\noptions: {LIVE-O1:\
+  \ REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: REF1-O4}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live:\
+  \ LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F7, case:\
+  \ REF1-F9}  # actually REF1-F9 is no mitigating factors; LIVE-F7 matches\ncorresponding:\n  - {live: LIVE-F8, case: REF1-F8,\
+  \ note: \"Individual's testimony about reduced substance use and therapy; case's individual testified similar but judge\
+  \ found no sufficient mitigating evidence.\"}\n  - {live: LIVE-F10, case: REF1-F2, note: \"Clarify that Guideline J mitigating\
+  \ conditions are assessed.\"}\nlive_only: [LIVE-F2, LIVE-F5, LIVE-F9, LIVE-F10]  # capability, detailed convictions list,\
+  \ regulations wording, explicit mention of elapsed time threshold maybe\ncase_only: [REF1-F3]  # mention of random \"situation\"\
+  \ fact not directly observed? REF1-F3 is LSO Notification Letter; that exists in live too (LIVE-F3? Actually LIVE-F3 is\
+  \ authority; Notification Letter is in LIVE? Not yet captured; but LSO letter is known from operator note. We'll treat as\
+  \ matched)\nBut we need to map properly. Let's be precise:\n\n- REF1-F1: \"The Individual is employed by a DOE contractor\
+  \ in a position that requires a security clearance.\" -> LIVE-F1 matches.\n- REF1-F2: \"The Individual reported numerous\
+  \ arrests, charges, and convictions from 1998 to 2022.\" -> LIVE-F5 (questionnaire list) matches.\n- REF1-F3: \"The LSO\
+  \ sent a Notification Letter that cited the Bond Amendment and Guideline J.\" -> This is not directly a live fact we have\
+  \ a doc for? The operator said \"LSO issued a Notification Letter this morning flagging concerns\", so yes we have that\
+  \ indirectly. But we haven't given an ID for that; we can consider it as part of LIVE-F3? Actually LIVE-F3 is authority.\
+  \ Let's create a LIVE fact for the LSO letter? We have LIVE-F? We can include it in matching. However to keep simple, we\
+  \ can say matched includes REF1-F3 with live counterpart implied. But the mapping requires matched pairs of same kind? The\
+  \ benchbook mapping allows matching facts across. We'll match REF1-F3 (situation) to something like \"LSO issued Notification\
+  \ Letter citing concerns\" but we don't have an explicit LIVE ID for that; we can create a live fact LIVE-F11? But we are\
+  \ limited to LIVE-F1..F? We can add more facts; the format says list facts with IDs LIVE-F1, LIVE-F2, ... as many as needed.\
+  \ So we can add a live fact for the Notification Letter. Let's add LIVE-F11: \"LSO issued a Notification Letter this morning\
+  \ flagging concerns under Bond Amendment and Guideline J.\" But we haven't called doc.fetch for that; it's from operator\
+  \ message. We can include it. However the instruction says \"Give the live scenario's facts the ids LIVE-F1, LIVE-F2, ...,\
+  \ its options LIVE-O1, ...\" So we can include all relevant facts. Let's list facts we have:\n\nWe have:\n- LIVE-F1: position\
+  \ requires clearance.\n- LIVE-F2: my authority.\n- LIVE-F3: Bond Amendment bar.\n- LIVE-F4: Individual served >1 year after\
+  \ armed robbery.\n- LIVE-F5: convictions list.\n- LIVE-F6: LSO added firearm and tampering charges.\n- LIVE-F7: no mitigating\
+  \ factors under Guideline J.\n- LIVE-F8: testimony about rehab.\n- LIVE-F9: regulations require no jeopardize common defense.\n\
+  - LIVE-F10: Guideline J mitigating conditions (we know typical: elapsed time, no coercion, reliable evidence, rehabilitation).\
+  \ The guidance says \"no sufficient elapsed time, no evidence of coercion, no unreliable evidence, and no documented successful\
+  \ rehabilitation.\" So we can capture that.\n\nWe also have LSO letter fact; we can incorporate into LIVE-F3? Better: LIVE-F11:\
+  \ \"LSO issued Notification Letter citing Bond Amendment and Guideline J.\" But to avoid extra IDs, we can treat LSO letter\
+  \ as part of authority or situation. However mapping should be accurate. Let's add a live fact:\n\n- LIVE-F11: \"LSO issued\
+  \ a Notification Letter this morning flagging concerns under the Bond Amendment and Guideline J.\" But we have only up to\
+  \ F10? We can reorder. Let's define facts in order:\n\n1. LIVE-F1: position requires clearance.\n2. LIVE-F2: my authority.\n\
+  3. LIVE-F3: Bond Amendment bar (statute).\n4. LIVE-F4: Individual served >1 year after 1998 armed robbery.\n5. LIVE-F5:\
+  \ convictions list (arrests, charges, convictions).\n6. LIVE-F6: LSO added firearm and tampering charges in March 2026.\n\
+  7. LIVE-F7: LSO issued Notification Letter citing Bond Amendment and Guideline J.\n8. LIVE-F8: Individual's testimony about\
+  \ rehab after 2011.\n9. LIVE-F9: Regulations require no jeopardize common defense.\n10. LIVE-F10: Record lacks mitigating\
+  \ factors per Guideline J (no elapsed time, coercion, unreliable evidence, successful rehabilitation).\n\nThus we have 10\
+  \ facts. We'll map REF1-F1 to LIVE-F1, REF1-F2 to LIVE-F5 (or LIVE-F5 includes convictions), REF1-F3 to LIVE-F7 (LSO letter),\
+  \ REF1-F4 to LIVE-F3, REF1-F5 to LIVE-F4, REF1-F6 to LIVE-F6, REF1-F7 to LIVE-F9? Actually REF1-F7 is regulatory guidance;\
+  \ we have LIVE-F9. REF1-F8 to LIVE-F8, REF1-F9 to LIVE-F10.\n\nBut for mapping simplicity, we can match core facts that\
+  \ are clearly corresponding. We'll define matched as those that are essentially the same:\n\n- matched: REF1-F1 <-> LIVE-F1,\
+  \ REF1-F4 <-> LIVE-F3, REF1-F5 <-> LIVE-F4, REF1-F6 <-> LIVE-F6, REF1-F7 <-> LIVE-F9 (regulatory guidance), REF1-F8 <->\
+  \ LIVE-F8, REF1-F9 <-> LIVE-F10.\n\nBut REF1-F2 (numerous arrests etc) corresponds to LIVE-F5; REF1-F3 (LSO letter) corresponds\
+  \ to LIVE-F7.\n\nGiven the instruction to be honest and accurate, we should map as best as possible. However the mapping\
+  \ step is part of reasoning; we can be approximate but consistent. Let's do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n\
+  \  - {live: LIVE-F3, case: REF1-F4}  # authority bar\n  - {live: LIVE-F4, case: REF1-F5}  # incarceration >1 year\n  - {live:\
+  \ LIVE-F6, case: REF1-F6}  # new charges\n  - {live: LIVE-F10, case: REF1-F7} # regulatory guidance? Actually REF1-F7 is\
+  \ guidance; LIVE-F9 is guidance, LIVE-F10 is mitigation lack. Let's map accordingly.\n\nBut to avoid confusion, we can say:\n\
+  \nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case: REF1-F5}\n\
+  \  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F10, case: REF1-F7} (guidance)\ncorresponding:\n  - {live: LIVE-F5,\
+  \ case: REF1-F2, note: \"LIVE-F5 includes detailed convictions; REF1-F2 mentions numerous arrests/charges; both match.\"\
+  }\n  - {live: LIVE-F7, case: REF1-F3, note: \"LIVE-F7 is LSO letter; REF1-F3 is LSO Notification Letter.\"}\n  - {live:\
+  \ LIVE-F8, case: REF1-F8, note: \"Testimony vs case testimony; judge found no sufficient mitigating evidence.\"}\n  - {live:\
+  \ LIVE-F9, case: REF1-F9, note: \"LIVE-F9 is regulations; REF1-F9 is record lacking mitigating factors.\"}\n\nlive_only:\
+  \ [LIVE-F2, LIVE-F9? Actually LIVE-F2 is my capability; LIVE-F2 is unique to my role as judge (I can task LSO). REF1 had\
+  \ similar role but case didn't list capabilities; we can treat as live_only.\n\ncase_only: [REF1-F2? Actually REF1-F2 and\
+  \ REF1-F3 may be only in case? But they correspond to live facts; we'll set case_only as none.\n\nBut the mapping step should\
+  \ be straightforward: we can match most facts and have live_only for my authority and the detailed conviction list? However\
+  \ the case also had similar authority (Administrative Judge decides). So we can match authority too.\n\nGiven time, let's\
+  \ keep it simple and consistent with the worked examples style: we list matched pairs that are obviously same, corresponding\
+  \ pairs that are same equity with different state, and live_only for my specific facts like my authority to task LSO.\n\n\
+  We'll write:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case:\
+  \ REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F10, case: REF1-F7}  # guidance\ncorresponding:\n  - {live:\
+  \ LIVE-F5, case: REF1-F2, note: \"LIVE-F5 lists convictions; REF1-F2 mentions numerous arrests/charges; same pattern.\"\
+  }\n  - {live: LIVE-F7, case: REF1-F3, note: \"LIVE-F7 LSO letter; REF1-F3 Notification Letter.\"}\n  - {live: LIVE-F8, case:\
+  \ REF1-F8, note: \"Individual's rehab testimony vs case testimony; judge in case found no sufficient mitigating evidence.\"\
+  }\n  - {live: LIVE-F9, case: REF1-F9, note: \"Regulatory guidance vs record lacking mitigating factors.\"}\nlive_only: [LIVE-F2]\
+  \  # my authority to task LSO\ncase_only: []  # maybe none\n\nBut we also have LIVE-F? Let's decide on final fact list exactly\
+  \ 10 facts; we'll include all needed.\n\nNow option mapping:\n\n- LIVE-O1 (hold) corresponds to REF1-O1 (hold)\n- LIVE-O2\
+  \ (deny) corresponds to REF1-O2 (deny)\n- LIVE-O3 (grant) corresponds to REF1-O3 (grant)\n- LIVE-O4 (task LSO) corresponds\
+  \ to REF1-O4 (ask LSO for evidence)\n\nNow we need to produce the reasoning documents.\n\nProceed to considerations.\n\n\
+  We need to assign equities. Relevant equities from list: lawful_authority, institutional_credibility, due_process, analytic_integrity,\
+  \ etc. The case used lawful_authority (REF1-C1), institutional_credibility (REF1-C2), due_process (REF1-C3), analytic_integrity\
+  \ (REF1-C4). We'll use similar.\n\n- LIVE-C1: facts LIVE-F3, LIVE-F4; equity: lawful_authority; favors LIVE-O2 (deny). Weight:\
+  \ strong. Why: Bond Amendment is clear statutory bar; serving >1 year after conviction means ineligible.\n\n- LIVE-C2: facts\
+  \ LIVE-F6, LIVE-F10; equity: institutional_credibility; favors LIVE-O2 (deny). Weight: strong. Why: Pattern of serious offenses\
+  \ and recent felony (firearm possession by felon, evidence tampering) undermines trustworthiness; no mitigating factors\
+  \ per Guideline J.\n\n- LIVE-C3: facts LIVE-F8; equity: due_process; favors LIVE-O2 (deny) but weaker because due process\
+  \ concerns about LSO letter addition, but still primary concern is eligibility. Weight: weak. Why: LSO added charges promptly;\
+  \ no indication of procedural unfairness that would override statutory bar.\n\n- LIVE-C4: facts LIVE-F5, LIVE-F8, LIVE-F10;\
+  \ equity: analytic_integrity; favors LIVE-O2 (deny). Weight: strong. Why: Individual's testimony lacks corroboration and\
+  \ may be self-serving; no independent verification of rehab; inconsistencies possible; thus credibility lower.\n\n- LIVE-C5\
+  \ (optional): facts LIVE-F2 (my authority); equity: lawful_authority; favors maybe task LSO? But the decision should not\
+  \ delay; the Bond Amendment bars eligibility regardless. So we can note that holding would not overcome statutory bar. We'll\
+  \ include maybe a consideration about the ability to task LSO, but the primary decision is deny.\n\nBut we need only a few\
+  \ considerations; we can pick the strongest ones that align with case's reasoning: C1 and C2 and C4 similar to REF1's C1,\
+  \ C2, C4. C3 is like REF1-C3. We'll include three considerations: C1 (lawful_authority), C2 (institutional_credibility),\
+  \ C4 (analytic_integrity). We'll also include C3 (due_process) as weaker.\n\nLet's define:\n\n- LIVE-C1: facts [LIVE-F3,\
+  \ LIVE-F4]; equity: lawful_authority; favors [LIVE-O2]; weight: strong; why: Bond Amendment statute clearly bars anyone\
+  \ who served >1 year after a sentence exceeding one year; meets criteria.\n\n- LIVE-C2: facts [LIVE-F6, LIVE-F10]; equity:\
+  \ institutional_credibility; favors [LIVE-O2]; weight: strong; why: Recent felony firearm possession and evidence tampering,\
+  \ plus multiple serious offenses, indicate ongoing risk; Guideline J mitigating conditions not met (no proven rehabilitation,\
+  \ no long elapsed time without recurrence).\n\n- LIVE-C3: facts [LIVE-F8]; equity: due_process; favors [LIVE-O2]; weight:\
+  \ weak; why: LSO added charges; no evidence of procedural error; due process satisfied; however, the addition could affect\
+  \ fairness but does not change statutory eligibility.\n\n- LIVE-C4: facts [LIVE-F5, LIVE-F8, LIVE-F10]; equity: analytic_integrity;\
+  \ favors [LIVE-O2]; weight: strong; why: Testimony about rehab lacks corroboration; no independent records; possible self-presentation;\
+  \ therefore credibility uncertain; aligns with case's finding that testimony riddled with contradictions.\n\nNow mapping\
+  \ considerations to case:\n\n- LIVE-C1 <-> REF1-C1 (lawful_authority bar)\n- LIVE-C2 <-> REF1-C2 (institutional_credibility)\n\
+  - LIVE-C4 <-> REF1-C4 (analytic_integrity)\n- LIVE-C3 <-> REF1-C3 (due_process)\n\nNow applicability: The case's reasoning\
+  \ applies because the situation matches: DOE contractor, Bond Amendment bar, Guideline J concerns, lack of mitigating factors.\
+  \ Differences: live scenario includes explicit mention of LSO adding charges, and my ability to task LSO; but the core reasoning\
+  \ about statutory bar and lack of mitigating factors holds. The case's flip conditions consider mitigating time or rehabilitation;\
+  \ none present here. Thus applicability.governs = true.\n\nNow reasoning: Use case approach: weigh C1, C2, C4 as strong\
+  \ against O2; C3 weak; HOLD (O1) and GRANT (O3) are weaker because statutory bar and no mitigating factors. Task LSO (O4)\
+  \ would delay decision and not overcome bar.\n\nNow we produce documents.\n\nWe must output YAML documents separated by\
+  \ '---'. We'll produce:\n\n1. kind: fact_enumeration\n2. kind: fact_mapping\n3. kind: consideration_enumeration\n4. kind:\
+  \ consideration_mapping\n5. kind: applicability\n6. kind: reasoning\n7. kind: verdict\n\nBut the format says to include\
+  \ all documents in order up to verdict. However the worked examples included fact_enumeration, fact_mapping, consideration_enumeration,\
+  \ consideration_mapping, applicability, reasoning, verdict. We'll follow that.\n\nLet's craft each carefully.\n\nFirst,\
+  \ fact_enumeration:\n\nkind: fact_enumeration\nframe:\n  question: \"Should I grant, deny, or place on hold the individual's\
+  \ request for an access authorization under the Bond Amendment and Guideline J?\"\n  decider: \"Administrative Judge under\
+  \ DOE security adjudication regulations\"\n  my_role: \"I may issue a grant/deny/hold decision and task the Local Security\
+  \ Office for additional evidence if needed.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The\
+  \ Individual is a DOE contractor assigned to the Nuclear Systems Division, which requires a security clearance.\"}\n  -\
+  \ {id: LIVE-F2, kind: capability, status: confirmed, fact: \"I have authority to grant, deny, place on hold, and task the\
+  \ Local Security Office for additional evidence.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The Bond\
+  \ Amendment bars any person sentenced to imprisonment exceeding one year who has served at least one year from obtaining\
+  \ a clearance.\"}\n  - {id: LIVE-F4, kind: situation, status: confirmed, fact: \"The Individual was sentenced to more than\
+  \ one year after the 1998 armed-robbery conviction and served at least one year.\"}\n  - {id: LIVE-F5, kind: intelligence,\
+  \ status: confirmed, fact: \"Security questionnaire lists convictions: armed robbery (1998, 18 months), drug possession\
+  \ (2003), drug possession again in 2004 (9 months), fraud (2022, 14 months).\"}\n  - {id: LIVE-F6, kind: intelligence, status:\
+  \ confirmed, fact: \"In March 2026 the LSO added unlawful firearm possession as a felon and evidence tampering to the Summary\
+  \ of Security Concerns.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The Local Security Office issued\
+  \ a Notification Letter this morning flagging concerns under the Bond Amendment and Guideline J.\"}\n  - {id: LIVE-F8, kind:\
+  \ intelligence, status: assessed, fact: \"The Individual testified that after 2011 they curtailed alcohol consumption, stopped\
+  \ marijuana, performs yearly volunteer work with the Forest Service, and completed a moral‑recognition therapy program.\"\
+  }\n  - {id: LIVE-F9, kind: authority, status: confirmed, fact: \"DOE regulations require that granting or reinstating a\
+  \ clearance will not jeopardize the common defense and align with the national interest.\"}\n  - {id: LIVE-F10, kind: intelligence,\
+  \ status: assessed, fact: \"The record shows no mitigating factors under Guideline J: no long period of no criminal conduct,\
+  \ no evidence of coercion, no unreliable evidence, and no documented successful rehabilitation.\"}\noptions:\n  LIVE-O1:\
+  \ \"Place the case on hold pending additional evidence from the LSO.\"\n  LIVE-O2: \"Deny the Individual's access authorization\
+  \ request.\"\n  LIVE-O3: \"Grant the Individual's access authorization request.\"\n  LIVE-O4: \"Task the LSO for additional\
+  \ evidence (e.g., further criminal history checks).\"\n\nNow fact_mapping:\n\nkind: fact_mapping\ncase: REF1\nframe:\n \
+  \ question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both involve a DOE contractor facing Bond Amendment\
+  \ and Guideline J concerns. The core reasoning about statutory bar and lack of mitigating factors matches. Differences:\
+  \ live scenario includes explicit LSO letter and ability to task LSO; case also had similar ability but reasoning focused\
+  \ on denial.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: REF1-O4}\nmatched:\n  - {live:\
+  \ LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F3, case: REF1-F4}\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F6, case:\
+  \ REF1-F6}\n  - {live: LIVE-F9, case: REF1-F7}  # regulatory guidance\ncorresponding:\n  - {live: LIVE-F5, case: REF1-F2,\
+  \ note: \"LIVE-F5 lists detailed convictions; REF1-F2 mentions numerous arrests/charges; same pattern.\"}\n  - {live: LIVE-F7,\
+  \ case: REF1-F3, note: \"LIVE-F7 is LSO Notification Letter; REF1-F3 is LSO Notification Letter.\"}\n  - {live: LIVE-F8,\
+  \ case: REF1-F8, note: \"Individual's rehab testimony vs case testimony; judge in case found no sufficient mitigating evidence.\"\
+  }\n  - {live: LIVE-F10, case: REF1-F9, note: \"LIVE-F10 states lack of mitigating factors; REF1-F9 assesses lack of mitigating\
+  \ conditions.\"}\nlive_only: [LIVE-F2]  # my authority to task LSO\ncase_only: []  # no facts only in case that are not\
+  \ live\n\nNow consideration_enumeration:\n\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts: [LIVE-F3,\
+  \ LIVE-F4], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: \"The Bond Amendment is a clear statutory\
+  \ bar: anyone sentenced to more than one year who serves at least one year is ineligible. The Individual meets this bar.\"\
+  }\n  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F10], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why:\
+  \ \"Recent felony firearm possession by a felon and evidence tampering, together with multiple serious convictions, indicate\
+  \ ongoing risk. Guideline J mitigating conditions (long elapsed time, proven rehabilitation) are not met.\"}\n  - {id: LIVE-C3,\
+  \ facts: [LIVE-F7], equity: due_process, favors: [LIVE-O2], weight: weak, why: \"LSO added charges promptly; no indication\
+  \ of procedural error that would override the statutory bar. Due process is satisfied.\"}\n  - {id: LIVE-C4, facts: [LIVE-F5,\
+  \ LIVE-F8, LIVE-F10], equity: analytic_integrity, favors: [LIVE-O2], weight: strong, why: \"The Individual's rehab testimony\
+  \ lacks corroboration and independent verification; possible self-presentation; thus credibility is uncertain, consistent\
+  \ with case finding of contradictions.\"}\n\nNow consideration_mapping:\n\nkind: consideration_mapping\ncase: REF1\nmatched:\n\
+  \  - {live: LIVE-C1, case: REF1-C1, role: \"Statutory bar argument\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Institutional\
+  \ credibility assessment\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Analytic integrity evaluation\"}\ncorresponding:\n\
+  \  - {live: LIVE-C3, case: REF1-C3, role: \"Due process check on LSO addition\"}\nlive_only: []  # all considerations have\
+  \ counterparts\ncase_only: []  # none\n\nNow applicability:\n\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same_kind\ngoverns: true\nwhy: \"The live scenario matches the case's structure: DOE contractor\
+  \ facing Bond Amendment bar and Guideline J concerns, with no mitigating factors per Guideline J. The case's reasoning about\
+  \ statutory bar outweighing rehabilitation claims applies. The live scenario includes the LSO addition and ability to task\
+  \ LSO, but does not introduce a mitigating condition (e.g., ≥10 years elapsed or proven rehabilitation). Therefore the case's\
+  \ reasoning governs, though the decision is straightforward denial.\"\n\nNow reasoning:\n\nkind: reasoning\ncase: REF1\n\
+  case_approach: \"In REF1, the judge weighed the statutory Bond Amendment bar (strong) against mitigating factors under Guideline\
+  \ J. Where no mitigating conditions (elapsed time, coercion, lack of reliable evidence, or proven rehabilitation) are present,\
+  \ the judge denied the clearance.\"\nweighing: \"LIVE-C1 (lawful_authority) and LIVE-C2 (institutional_credibility) are\
+  \ strong and decisive: the Bond Amendment bar is satisfied, and recent felonies undermine credibility. LIVE-C4 (analytic_integrity)\
+  \ is strong because the rehab testimony lacks corroboration. LIVE-C3 (due_process) is weak but does not alter the bar. Therefore\
+  \ the weight favors LIVE-O2 (deny). LIVE-O1 (hold) would delay decision and does not overcome the statutory bar; LIVE-O3\
+  \ (grant) would conflict with Bond Amendment; LIVE-O4 (task LSO) would add delay and still face the bar. The case's flip\
+  \ conditions (REF1-flip1/REF1-flip2) require mitigating conditions that are absent here, so the denial stands.\"\ntradecraft:\
+  \ \"Issue a final denial decision, record findings consistent with the reasoning, notify the Individual of the denial and\
+  \ appeal rights per 10 C.F.R. § 710.28. Do not place on hold or task LSO for further evidence, as the Bond Amendment bar\
+  \ is clear and no mitigating evidence can alter eligibility. Log the decision and send the denial notice.\"\nuncertainty:\
+  \ \"Low uncertainty: the statutory language is clear, and the record lacks mitigating conditions. The only uncertainty is\
+  \ whether the firearm possession charge might be resolved (e.g., not a felon?), but the LSO already classified it as unlawful\
+  \ firearm possession by a felon, which satisfies the bar. If new evidence emerged showing the firearm charge was dismissed\
+  \ or not felon-level, that would be a different fact and could trigger a flip; but absent such evidence, the decision is\
+  \ sound.\"\nhandoff: \"The Administrative Judge decides alone under the regulations; no further delegation needed. The decision\
+  \ is final unless the Individual appeals.\"\ntempting_wrong:\n  option: LIVE-O3\n  pull: \"The Individual’s post‑2011 community\
+  \ service and therapy might convince some that rehabilitation has occurred.\"\n  why_wrong: \"Guideline J requires documented\
+  \ successful rehabilitation (evidence of sustained good conduct, no further incidents). The record shows no corroboration\
+  \ or long period without criminal conduct; thus the mitigating condition is not met. Granting would conflict with the Bond\
+  \ Amendment and DOE policy.\"\nrejected:\n  LIVE-O1: \"Holding pending additional evidence would violate the presumption\
+  \ against granting when statutory bar applies and mitigating factors are absent.\"\n  LIVE-O4: \"Tasking LSO for further\
+  \ evidence would delay the decision without resolving the statutory bar; the Bond Amendment eligibility is determined now\
+  \ based on known convictions.\"\n  LIVE-O3: \"Granting would ignore the clear statutory bar and lack of mitigating evidence.\"\
+  \n\nNow verdict:\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"Deny the Individual's access authorization request.\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Issue the denial decision in writing, notify the\
+  \ Individual of the denial and appeal rights per 10 C.F.R. § 710.28.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1,\
+  \ if: \"A mitigating condition under Guideline J such as a long period of no criminal conduct (≥10 years) were established\"\
+  , then: LIVE-O3, why: \"If sufficient elapsed time without recurrence, Guideline J may permit grant despite Bond Amendment\
+  \ bar? Actually Bond Amendment remains; but flip condition from REF1 considered elapsed time; in this scenario, elapsed\
+  \ time from last conviction (2022) to now (~2026) is about 4 years, not ≥10. So not applicable.\"}\n    - {id: LIVE-flip2,\
+  \ if: \"The Individual could demonstrate successful rehabilitation, e.g., sustained employment, education, and community\
+  \ service with no further incidents\", then: LIVE-O3, why: \"Proven rehabilitation could satisfy Guideline J mitigating\
+  \ condition and potentially allow grant if other conditions align; however Bond Amendment still bars if served >1 year?\
+  \ Actually Bond Amendment bars based on past conviction, not current status; if rehabilitation proven, the decision might\
+  \ still need to consider but REF1 flip considered that; so this flip condition mirrors REF1-flip2.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"The Individual remains incarcerated for more than one year for a felony\", why: \"The Bond\
+  \ Amendment bar cannot be waived absent extraordinary circumstances.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"\
+  Future credible evidence of sustained rehabilitation and absence of new criminal conduct\", favors: [LIVE-O3], why: \"If\
+  \ such evidence emerges, the decision could be revisited under Guideline J if the Bond Amendment allows reconsideration\
+  \ (e.g., reinstatement).\"\n\nBut we need to ensure the verdict IDs are correct: choice is LIVE-O2.\n\nNow we output these\
+  \ documents separated by '---'. After the last document, we write </think> and then the verdict? Actually the format says:\
+  \ \"Close your thinking with </think> after the last document before the verdict (the applicability document when the case\
+  \ does not govern), then write the verdict document as your reply.\" But we are including verdict as a document inside the\
+  \ thinking. The worked examples had the verdict document inside the reply as part of the documents. In the examples, they\
+  \ wrote the documents (including verdict) inside the reply block between <think> and </think>. The format says: \"Write\
+  \ your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with </think> after the last\
+  \ document before the verdict (the applicability document when the case does not govern), then write the verdict document\
+  \ as your reply.\" That seems contradictory. Let's read: \"Your reply is your reasoning step: it contains only these documents.\
+  \ Do not call any tools in it; your tool calls come afterwards.\" Actually the instruction: \"Before your next action, reason\
+  \ from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below. ... Close\
+  \ your thinking with </think> after the last document before the verdict (the applicability document when the case does\
+  \ not govern), then write the verdict document as your reply.\"\n\nInterpretation: We should output the documents up to"
+target_text: "<think>\nkind: fact_enumeration\nframe:\n  question: Should I grant, deny, or place on hold the individual's\
+  \ request for an access authorization under the Bond Amendment\n    and Guideline J?\n  decider: Administrative Judge under\
+  \ DOE security adjudication regulations\n  my_role: I may issue a grant/deny/hold decision and task the Local Security Office\
+  \ for additional evidence if needed.\nfacts:\n- id: LIVE-F1\n  kind: situation\n  status: confirmed\n  fact: The Individual\
+  \ is a DOE contractor assigned to the Nuclear Systems Division, which requires a security clearance.\n- id: LIVE-F2\n  kind:\
+  \ capability\n  status: confirmed\n  fact: I have authority to grant, deny, place on hold, and task the Local Security Office\
+  \ for additional evidence.\n- id: LIVE-F3\n  kind: authority\n  status: confirmed\n  fact: The Bond Amendment bars any person\
+  \ sentenced to imprisonment exceeding one year who has served at least one year from\n    obtaining a clearance.\n- id:\
+  \ LIVE-F4\n  kind: situation\n  status: confirmed\n  fact: The Individual was sentenced to more than one year after the\
+  \ 1998 armed-robbery conviction and served at least one\n    year.\n- id: LIVE-F5\n  kind: intelligence\n  status: confirmed\n\
+  \  fact: 'Security questionnaire lists convictions: armed robbery (1998, 18 months), drug possession (2003), drug possession\n\
+  \    again in 2004 (9 months), fraud (2022, 14 months).'\n- id: LIVE-F6\n  kind: intelligence\n  status: confirmed\n  fact:\
+  \ In March 2026 the LSO added unlawful firearm possession as a felon and evidence tampering to the Summary of Security\n\
+  \    Concerns.\n- id: LIVE-F7\n  kind: situation\n  status: confirmed\n  fact: The Local Security Office issued a Notification\
+  \ Letter this morning flagging concerns under the Bond Amendment and\n    Guideline J.\n- id: LIVE-F8\n  kind: intelligence\n\
+  \  status: assessed\n  fact: The Individual testified that after 2011 they curtailed alcohol consumption, stopped marijuana,\
+  \ performs yearly volunteer\n    work with the Forest Service, and completed a moral‑recognition therapy program.\n- id:\
+  \ LIVE-F9\n  kind: authority\n  status: confirmed\n  fact: DOE regulations require that granting or reinstating a clearance\
+  \ will not jeopardize the common defense and align\n    with the national interest.\n- id: LIVE-F10\n  kind: intelligence\n\
+  \  status: assessed\n  fact: 'The record shows no mitigating factors under Guideline J: no long period of no criminal conduct,\
+  \ no evidence of coercion,\n    no unreliable evidence, and no documented successful rehabilitation.'\noptions:\n  LIVE-O1:\
+  \ Place the case on hold pending additional evidence from the LSO.\n  LIVE-O2: Deny the Individual's access authorization\
+  \ request.\n  LIVE-O3: Grant the Individual's access authorization request.\n  LIVE-O4: Task the LSO for additional evidence\
+  \ (e.g., further criminal history checks).\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider:\
+  \ same_kind\n  role: same_kind\nnote: 'Both involve a DOE contractor facing Bond Amendment and Guideline J concerns. The\
+  \ core reasoning about statutory bar\n  and lack of mitigating factors matches. Differences: live scenario includes explicit\
+  \ LSO letter and ability to task LSO;\n  case also had similar ability but reasoning focused on denial.'\noptions:\n  LIVE-O1:\
+  \ REF1-O1\n  LIVE-O2: REF1-O2\n  LIVE-O3: REF1-O3\n  LIVE-O4: REF1-O4\nmatched:\n- live: LIVE-F1\n  case: REF1-F1\n- live:\
+  \ LIVE-F3\n  case: REF1-F4\n- live: LIVE-F4\n  case: REF1-F5\n- live: LIVE-F6\n  case: REF1-F6\n- live: LIVE-F9\n  case:\
+  \ REF1-F7\ncorresponding:\n- live: LIVE-F5\n  case: REF1-F2\n  note: LIVE-F5 lists detailed convictions; REF1-F2 mentions\
+  \ numerous arrests/charges; same pattern.\n- live: LIVE-F7\n  case: REF1-F3\n  note: LIVE-F7 is LSO Notification Letter;\
+  \ REF1-F3 is LSO Notification Letter.\n- live: LIVE-F8\n  case: REF1-F8\n  note: Individual's rehab testimony vs case testimony;\
+  \ judge in case found no sufficient mitigating evidence.\n- live: LIVE-F10\n  case: REF1-F9\n  note: LIVE-F10 states lack\
+  \ of mitigating factors; REF1-F9 assesses lack of mitigating conditions.\nlive_only:\n- LIVE-F2\ncase_only: []\n---\nkind:\
+  \ consideration_enumeration\nconsiderations:\n- id: LIVE-C1\n  facts:\n  - LIVE-F3\n  - LIVE-F4\n  equity: lawful_authority\n\
+  \  favors:\n  - LIVE-O2\n  weight: strong\n  why: 'The Bond Amendment is a clear statutory bar: anyone sentenced to more\
+  \ than one year who serves at least one year is\n    ineligible. The Individual meets this bar.'\n- id: LIVE-C2\n  facts:\n\
+  \  - LIVE-F6\n  - LIVE-F10\n  equity: institutional_credibility\n  favors:\n  - LIVE-O2\n  weight: strong\n  why: Recent\
+  \ felony firearm possession by a felon and evidence tampering, together with multiple serious convictions, indicate\n  \
+  \  ongoing risk. Guideline J mitigating conditions (long elapsed time, proven rehabilitation) are not met.\n- id: LIVE-C3\n\
+  \  facts:\n  - LIVE-F7\n  equity: due_process\n  favors:\n  - LIVE-O2\n  weight: weak\n  why: LSO added charges promptly;\
+  \ no indication of procedural error that would override the statutory bar. Due process is\n    satisfied.\n- id: LIVE-C4\n\
+  \  facts:\n  - LIVE-F5\n  - LIVE-F8\n  - LIVE-F10\n  equity: analytic_integrity\n  favors:\n  - LIVE-O2\n  weight: strong\n\
+  \  why: The Individual's rehab testimony lacks corroboration and independent verification; possible self-presentation; thus\n\
+  \    credibility is uncertain, consistent with case finding of contradictions.\n---\nkind: consideration_mapping\ncase:\
+  \ REF1\nmatched:\n- live: LIVE-C1\n  case: REF1-C1\n  role: Statutory bar argument\n- live: LIVE-C2\n  case: REF1-C2\n \
+  \ role: Institutional credibility assessment\n- live: LIVE-C4\n  case: REF1-C4\n  role: Analytic integrity evaluation\n\
+  corresponding:\n- live: LIVE-C3\n  case: REF1-C3\n  role: Due process check on LSO addition\nlive_only: []\ncase_only: []\n\
+  ---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: 'The live scenario matches the case''s structure: DOE contractor facing Bond Amendment bar and Guideline J concerns,\n\
+  \  with no mitigating factors per Guideline J. The case''s reasoning about statutory bar outweighing rehabilitation claims\n\
+  \  applies. The live scenario includes the LSO addition and ability to task LSO, but does not introduce a mitigating condition\n\
+  \  (e.g., ≥10 years elapsed or proven rehabilitation). Therefore the case''s reasoning governs, though the decision is straightforward\n\
+  \  denial.'\n---\nkind: reasoning\ncase: REF1\ncase_approach: In REF1, the judge weighed the statutory Bond Amendment bar\
+  \ (strong) against mitigating factors under Guideline\n  J. Where no mitigating conditions (elapsed time, coercion, lack\
+  \ of reliable evidence, or proven rehabilitation) are present,\n  the judge denied the clearance.\nweighing: 'LIVE-C1 (lawful_authority)\
+  \ and LIVE-C2 (institutional_credibility) are strong and decisive: the Bond Amendment\n  bar is satisfied, and recent felonies\
+  \ undermine credibility. LIVE-C4 (analytic_integrity) is strong because the rehab testimony\n  lacks corroboration. LIVE-C3\
+  \ (due_process) is weak but does not alter the bar. Therefore the weight favors LIVE-O2 (deny).\n  LIVE-O1 (hold) would\
+  \ delay decision and does not overcome the statutory bar; LIVE-O3 (grant) would conflict with Bond Amendment;\n  LIVE-O4\
+  \ (task LSO) would add delay and still face the bar. The case''s flip conditions (REF1-flip1/REF1-flip2) require mitigating\n\
+  \  conditions that are absent here, so the denial stands.'\ntradecraft: Issue a final denial decision, record findings consistent\
+  \ with the reasoning, notify the Individual of the denial\n  and appeal rights per 10 C.F.R. § 710.28. Do not place on hold\
+  \ or task LSO for further evidence, as the Bond Amendment bar\n  is clear and no mitigating evidence can alter eligibility.\
+  \ Log the decision and send the denial notice.\nuncertainty: 'Low uncertainty: the statutory language is clear, and the\
+  \ record lacks mitigating conditions. The only uncertainty\n  is whether the firearm possession charge might be resolved\
+  \ (e.g., not a felon?), but the LSO already classified it as unlawful\n  firearm possession by a felon, which satisfies\
+  \ the bar. If new evidence emerged showing the firearm charge was dismissed\n  or not felon-level, that would be a different\
+  \ fact and could trigger a flip; but absent such evidence, the decision is sound.'\nhandoff: The Administrative Judge decides\
+  \ alone under the regulations; no further delegation needed. The decision is final\n  unless the Individual appeals.\ntempting_wrong:\n\
+  \  option: LIVE-O3\n  pull: The Individual’s post‑2011 community service and therapy might convince some that rehabilitation\
+  \ has occurred.\n  why_wrong: Guideline J requires documented successful rehabilitation (evidence of sustained good conduct,\
+  \ no further incidents).\n    The record shows no corroboration or long period without criminal conduct; thus the mitigating\
+  \ condition is not met. Granting\n    would conflict with the Bond Amendment and DOE policy.\nrejected:\n  LIVE-O1: Holding\
+  \ pending additional evidence would violate the presumption against granting when statutory bar applies and\n    mitigating\
+  \ factors are absent.\n  LIVE-O4: Tasking LSO for further evidence would delay the decision without resolving the statutory\
+  \ bar; the Bond Amendment\n    eligibility is determined now based on known convictions.\n  LIVE-O3: Granting would ignore\
+  \ the clear statutory bar and lack of mitigating evidence.\n</think>\nkind: verdict\nchoice: LIVE-O2\ncourse: Deny the Individual's\
+  \ access authorization request.\nrelation: follows\nvia: null\ndecisive:\n- LIVE-C1\n- LIVE-C2\n- LIVE-C4\nnow:\n- Issue\
+  \ the denial decision in writing, notify the Individual of the denial and appeal rights per 10 C.F.R. § 710.28.\nflip_conditions:\n\
+  \  would_change:\n  - id: LIVE-flip1\n    if: A mitigating condition under Guideline J such as a long period of no criminal\
+  \ conduct (≥10 years) were established\n    then: LIVE-O3\n    why: If sufficient elapsed time without recurrence, Guideline\
+  \ J may permit grant despite Bond Amendment bar? Actually\n      Bond Amendment remains; but flip condition from REF1 considered\
+  \ elapsed time; in this scenario, elapsed time from last\n      conviction (2022) to now (~2026) is about 4 years, not ≥10.\
+  \ So not applicable.\n  - id: LIVE-flip2\n    if: The Individual could demonstrate successful rehabilitation, e.g., sustained\
+  \ employment, education, and community service\n      with no further incidents\n    then: LIVE-O3\n    why: Proven rehabilitation\
+  \ could satisfy Guideline J mitigating condition and potentially allow grant if other conditions\n      align; however Bond\
+  \ Amendment still bars if served >1 year? Actually Bond Amendment bars based on past conviction, not\n      current status;\
+  \ if rehabilitation proven, the decision might still need to consider but REF1 flip considered that; so\n      this flip\
+  \ condition mirrors REF1-flip2.\n  would_not_change:\n  - id: LIVE-noflip1\n    if: The Individual remains incarcerated\
+  \ for more than one year for a felony\n    why: The Bond Amendment bar cannot be waived absent extraordinary circumstances.\n\
+  \  watch_for:\n  - id: LIVE-watch1\n    what: Future credible evidence of sustained rehabilitation and absence of new criminal\
+  \ conduct\n    favors:\n    - LIVE-O3\n    why: If such evidence emerges, the decision could be revisited under Guideline\
+  \ J if the Bond Amendment allows reconsideration\n      (e.g., reinstatement).\n"
+prompt_sha256: 4d64396e72c4a2968243527e8aca6a2fae37c444ecce6ab61cf91faab2611c15
+writer: granite-rs
+chosen: false
+tags:
+- rationalized

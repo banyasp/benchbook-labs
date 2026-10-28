@@ -1,0 +1,688 @@
+round: r
+k: 4
+hinted: true
+rationalized: true
+accepted: false
+reasons:
+- 'parse: missing [''reasoning'']; fact_mapping: corresponding.2.case: Input should be a valid string; consideration_enumeration:
+  considerations.5.weight: Input should be ''strong'', ''weak'' or ''bar''; consideratio; consideration_mapping: corresponding.0.case:
+  Input should be a valid string; corresponding.1.case: Inpu'
+stage: parse
+subscores:
+  finish_reason: stop
+  arm: relevant
+  gold_tier: model-solved
+  canonical_fixes:
+  - missing ['reasoning']
+  strict_ok: false
+  hint_leak: []
+score: 0.0
+finish_reason: stop
+usage: {}
+seconds: 1513.54
+seed: 3604356478
+raw_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should the Administrative Judge restore the employee’s security\
+  \ clearance now, conditionally restore it with restrictions, or hold the decision pending treatment compliance verification?\"\
+  \n  decider: \"The Administrative Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative guidelines\
+  \ and 10 C.F.R. Part 710.\"\n  my_role: \"I may decide now, may condition a restoration on compliance verification, or may\
+  \ hold the decision pending further review; I cannot delegate the decision to another office but can request follow‑up evaluations.\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI on 25 May 2025\
+  \ with blood‑alcohol levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The\
+  \ employee failed to report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day reporting\
+  \ window.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and issued a\
+  \ Notification Letter citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed,\
+  \ fact: \"The DOE psychologist (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability,\
+  \ and trustworthiness, with tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational\
+  \ poor judgment rather than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence,\
+  \ status: assessed, fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking\
+  \ to police and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee\
+  \ has not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ authority, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment (i.e., request treatment verification and not restore now).\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n\
+  \  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both involve a DOE administrative judge deciding\
+  \ whether to restore a security clearance after a DUI arrest, untimely reporting, and psychologist findings. The case REF1\
+  \ chose denial (O2) because the employee had not treated; the live scenario also has no treatment yet. Differences: live\
+  \ scenario includes the note that no other qualified staff are available, and the operator asked for when the LSO completes\
+  \ the new psychological evaluation.\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O4, LIVE-O4: REF1-O1}\
+  \  # careful mapping: REF1-O2 is deny, REF1-O1 is follow-up eval (not appropriate), REF1-O3 is restore without restriction,\
+  \ REF1-O4 is hold pending review. We need to map correctly: REF1-O2 = deny (full denial), REF1-O3 = restore without restriction,\
+  \ REF1-O1 = follow-up eval, REF1-O4 = hold pending review. So LIVE-O1 (deny) ↔ REF1-O2, LIVE-O2 (restore without restriction)\
+  \ ↔ REF1-O3, LIVE-O3 (conditional restore) has no exact counterpart (maybe O4 if we consider hold?), but we choose O4 for\
+  \ hold; LIVE-O4 (hold) ↔ REF1-O4? Actually REF1-O4 is \"holds the decision pending further review of treatment compliance\"\
+  \ – that matches our LIVE-O4. So mapping: LIVE-O1 → REF1-O2, LIVE-O2 → REF1-O3, LIVE-O3 → (no exact; but we can treat as\
+  \ modified O3), LIVE-O4 → REF1-O4. We'll map matched for the obvious ones: LIVE-F1↔REF1-F1, LIVE-F2↔REF1-F2, LIVE-F4↔REF1-F4,\
+  \ LIVE-F7↔REF1-F7. Corresponding: LIVE-F5 (consulting psychologist) vs REF1-F5; LIVE-F8 (critical role) vs REF1 no equivalent\
+  \ but institutional credibility; LIVE-F9 (procedure) vs REF1-F8 authority. live_only: LIVE-F8, LIVE-F9 maybe. case_only:\
+  \ REF1-F3 (LSO suspension) is similar but we already have LIVE-F3; we can include REF1-F3 as matched? Actually REF1-F3 is\
+  \ LSO suspension, which matches LIVE-F3. So matched includes LIVE-F3↔REF1-F3. Let's decide matched: LIVE-F1, LIVE-F2, LIVE-F3,\
+  \ LIVE-F4, LIVE-F7. Corresponding: LIVE-F5 ↔ REF1-F5, LIVE-F6 ↔ REF1-F6 (inconsistent statements), LIVE-F8 ↔ REF1-C considerations?\
+  \ Not a fact. We'll keep simple.\nmatched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3,\
+  \ case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case:\
+  \ REF1-F5, note: \"Consulting psychologist sees situational poor judgment; DOE psychologist sees mental condition.\"}, {live:\
+  \ LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent statements; similar pattern.\"}, {live: LIVE-F8, case: null,\
+  \ note: \"Critical role with no backup; adds urgency.\"}]\nlive_only: [LIVE-F8, LIVE-F9]\ncase_only: []  # all case facts\
+  \ are matched\noptions mapping: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1 (follow-up eval) or none? Actually\
+  \ follow-up eval (O1) is not appropriate because case already did that? We'll map LIVE-O4 to REF1-O4, LIVE-O1 to REF1-O2.\
+  \ So:\n  LIVE-O1 → REF1-O2 (deny)\n  LIVE-O2 → REF1-O3 (restore without restriction)\n  LIVE-O3 → REF1-O1 (follow-up eval)\
+  \ – but follow-up eval would not address treatment compliance; may be considered but less direct.\n  LIVE-O4 → REF1-O4 (hold\
+  \ pending treatment compliance)\nWe'll set mapping accordingly.\n---\nkind: consideration_enumeration\nconsiderations:\n\
+  \  - {id: LIVE-C1, facts: [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing\
+  \ the three‑business‑day reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I; the employee\
+  \ did not follow the mandatory reporting rule.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4], equity: institutional_credibility,\
+  \ favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The DOE psychologist identified a mental condition that impairs judgment,\
+  \ reliability, and trustworthiness, with tendencies toward minimization and deception; this directly satisfies Guideline\
+  \ I concerns.\"}\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight:\
+  \ strong, why: \"The employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating\
+  \ a pattern of minimizing or deceptive behavior that supports the mental‑condition finding.\"}\n  - {id: LIVE-C4, facts:\
+  \ [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The employee has not pursued any treatment\
+  \ despite the DOE psychologist’s recommendation; absent treatment, mitigating condition (b) of Guideline I is not satisfied.\"\
+  }\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3, LIVE-O4], weight: weak, why:\
+  \ \"The consulting psychologist saw situational poor judgment rather than chronic condition and recommended voluntary counseling;\
+  \ if the employee engages in effective counseling, it could mitigate concerns.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity:\
+  \ own_force_life (or resource_stewardship), favors: [LIVE-O4], weight: moderate, why: \"The employee holds a critical nuclear‑weapons\
+  \ design role with no other qualified staff available; restoring clearance without verification risks operational impact\
+  \ if concerns remain unresolved.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority, favors: [LIVE-O4], weight:\
+  \ moderate, why: \"Standard procedure permits a new psychological evaluation and allows the judge to request treatment verification;\
+  \ holding the decision pending verification aligns with policy and gives the employee a chance to demonstrate compliance.\"\
+  }\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Aggravating factor\
+  \ of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist finding of impaired judgment and reliability.\"\
+  }\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory statements and deception.\"}\n  - {live: LIVE-C4,\
+  \ case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting\
+  \ psychologist’s view of situational poor judgment.\"}\ncorresponding:\n  - {live: LIVE-C6, case: null, role: \"Critical\
+  \ role with no backup; adds urgency but does not override security concerns.\"}\n  - {live: LIVE-C7, case: null, role: \"\
+  Policy allows evaluation and verification; aligns with holding decision.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only: []\n\
+  ---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The core facts (DUI arrest, untimely reporting, psychologist findings of mental condition and inconsistency, lack\
+  \ of treatment) match REF1 closely. The live scenario adds a critical role with no backup and a request for follow‑up evaluation,\
+  \ but these do not change the fundamental Guideline I analysis. Therefore REF1's reasoning applies, though the presence\
+  \ of urgency may influence the appropriate conditional approach.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"\
+  REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception)\
+  \ against mitigating factors (consulting psychologist’s situational view and recommendation for counseling), found the adverse\
+  \ evidence not overcome, and chose denial because treatment had not been completed.\"\nweighing: \"In this live scenario,\
+  \ the aggravating factors remain strong: the employee missed the reporting deadline (C1), the DOE psychologist identified\
+  \ a condition impairing judgment (C2), the inconsistent statements (C3), and no treatment pursued (C4). The weak mitigating\
+  \ factor is the consulting psychologist’s view of situational poor judgment (C5) and the chance for voluntary counseling\
+  \ (C5). Urgency due to no backup staff (C6) is important but does not outweigh security concerns under Guideline I. Holding\
+  \ the decision pending treatment verification (O4) balances urgency with security: it allows the employee to demonstrate\
+  \ compliance with recommended treatment while preventing restoration that could risk operations if concerns remain. Conditional\
+  \ restoration (O3) would require verified effective treatment, which we have no evidence of yet. Full denial (O1) would\
+  \ disregard the possibility of remediation, while immediate restoration (O2) would ignore unresolved concerns.\"\ntradecraft:\
+  \ \"Request verification of treatment compliance within a reasonable timeframe (e.g., 30 days), specifying that the employee\
+  \ must attend a qualified mental‑health program deemed effective by a DOE‑approved professional and provide documentation\
+  \ of attendance and progress. Record the decision to hold pending verification in the administrative record, citing DOE\
+  \ Order 472.2A and Guideline I. Communicate the requirement clearly to the employee and the LSO.\"\nuncertainty: \"The exact\
+  \ effectiveness of the voluntary counseling program and the employee’s willingness to engage are uncertain; if he completes\
+  \ a verified program with favorable prognosis, the concern could be mitigated (LIVE-flip1). Also, if he reports future incidents\
+  \ promptly, that would reduce the aggravating factor (LIVE-flip2).\"\nhandoff: \"The judge decides now to hold the clearance\
+  \ decision pending treatment verification; no further delegation is needed. The LSO will conduct or confirm the new psychological\
+  \ evaluation and monitor compliance.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore\
+  \ the clearance given the employee’s willingness to seek counseling and the critical need for staff.\"\n  why_wrong: \"\
+  Restoring without verified treatment ignores the documented mental‑condition finding, pattern of deception, and missed reporting\
+  \ deadline, which satisfy Guideline I concerns. Doing so could risk nuclear‑weapons design integrity and operational safety.\"\
+  \nrejected:\n  LIVE-O1: \"Denying outright would disregard the possibility of remediation and the employee’s chance to address\
+  \ concerns; holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification\
+  \ would be premature; we lack evidence that treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow-up eval\
+  \ alone does not address the lack of treatment and would delay resolution, contrary to urgency.\"\n---\nkind: verdict\n\
+  choice: LIVE-O4\ncourse: \"Hold the decision pending verification that the employee has voluntarily entered and completed\
+  \ an effective treatment program for the mental‑condition concerns, with a reasonable timeframe (e.g., 30 days).\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Send a written notice to the employee outlining\
+  \ the requirement to enroll in and complete a DOE‑approved mental‑health treatment program deemed effective by a qualified\
+  \ professional, and provide a deadline (e.g., 30 days) for verification of enrollment and progress.\"\n  - \"Instruct the\
+  \ LSO to complete the new psychological evaluation promptly and share the report with the judge.\"\n  - \"Request the consulting\
+  \ psychologist’s updated assessment if the employee begins treatment, to evaluate effectiveness.\"\nflip_conditions:\n \
+  \ would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily enters and completes a treatment program that a qualified\
+  \ mental‑health professional deems effective with a favorable prognosis\", then: LIVE-O3, why: \"Mitigating condition (b)\
+  \ would be satisfied, allowing conditional restoration.\"}\n    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest\
+  \ within the three‑business‑day window\", then: LIVE-O3, why: \"Removal of the aggravating reporting failure would lessen\
+  \ overall concerns.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"The consulting psychologist’s opinion were given\
+  \ full weight\", why: \"The judge still finds the DOE psychologist’s finding and lack of treatment decisive.\"}\n  watch_for:\n\
+  \    - {id: LIVE-watch1, what: \"Future incidents showing continued minimization or deception or failure to attend treatment\"\
+  , favors: [LIVE-O1], why: \"Such behavior would reaffirm security concerns and support continued hold or denial.\"}\n</reply>\n\
+  </think>\nkind: fact_enumeration\nframe:\n  question: \"Should the Administrative Judge restore the employee’s security\
+  \ clearance now, conditionally restore it with restrictions, or hold the decision pending treatment compliance verification?\"\
+  \n  decider: \"The Administrative Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative guidelines\
+  \ and 10 C.F.R. Part 710.\"\n  my_role: \"I may decide now, may condition a restoration on compliance verification, or may\
+  \ hold the decision pending further review; I cannot delegate the decision to another office but can request follow‑up evaluations.\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI on 25 May 2025\
+  \ with blood‑alcohol levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The\
+  \ employee failed to report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day reporting\
+  \ window.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and issued a\
+  \ Notification Letter citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed,\
+  \ fact: \"The DOE psychologist (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability,\
+  \ and trustworthiness, with tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational\
+  \ poor judgment rather than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence,\
+  \ status: assessed, fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking\
+  \ to police and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee\
+  \ has not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ situation, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  note: \"Both involve a DOE administrative judge deciding whether to restore a security clearance after a DUI arrest, untimely\
+  \ reporting, and psychologist findings. REF1 chose denial because no treatment was pursued. The live scenario also has no\
+  \ treatment yet, but adds urgency due to no backup staff. Differences are minor fact states (critical role urgency, request\
+  \ for evaluation).\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1, LIVE-O4: REF1-O4}\nmatched: [{live:\
+  \ LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4},\
+  \ {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case: REF1-F5, note: \"Consulting psychologist sees situational\
+  \ poor judgment; DOE psychologist sees mental condition.\"}, {live: LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent\
+  \ statements; similar pattern.\"}, {live: LIVE-F8, case: null, note: \"Critical role with no backup adds urgency.\"}]\n\
+  live_only: [LIVE-F8, LIVE-F9]\ncase_only: []\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing the three‑business‑day\
+  \ reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4],\
+  \ equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"DOE psychologist identified a mental\
+  \ condition that impairs judgment, reliability, and trustworthiness, with tendencies toward minimization and deception.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why:\
+  \ \"Employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating a pattern of\
+  \ minimizing or deceptive behavior.\"}\n  - {id: LIVE-C4, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4],\
+  \ weight: strong, why: \"Employee has not pursued any treatment despite the DOE psychologist’s recommendation; mitigating\
+  \ condition (b) is not satisfied.\"}\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3,\
+  \ LIVE-O4], weight: weak, why: \"Consulting psychologist saw situational poor judgment rather than chronic condition and\
+  \ recommended voluntary counseling; if effective, could mitigate.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity: own_force_life,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Critical nuclear‑weapons design role with no other qualified staff; restoring\
+  \ without verification risks operational impact if concerns remain.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Policy allows new psychological evaluation and permits holding decision pending\
+  \ verification; aligns with prudent approach.\"}\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1,\
+  \ case: REF1-C1, role: \"Aggravating factor of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist\
+  \ finding of impaired judgment and reliability.\"}\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory\
+  \ statements and deception.\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n\
+  \  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting psychologist’s view of situational poor judgment.\"}\ncorresponding:\n\
+  \  - {live: LIVE-C6, case: null, role: \"Critical role urgency; does not override security concerns.\"}\n  - {live: LIVE-C7,\
+  \ case: null, role: \"Policy supports holding decision pending verification.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only:\
+  \ []\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns:\
+  \ true\nwhy: \"Core facts (DUI arrest, untimely reporting, psychologist findings, no treatment) match REF1 closely. Urgency\
+  \ from no backup staff adds a live consideration but does not change the Guideline I analysis; therefore REF1's reasoning\
+  \ applies, and we can follow its approach with appropriate conditional holding.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach:\
+  \ \"REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception,\
+  \ lack of treatment) against weak mitigating factor (consulting psychologist’s situational view) and chose denial because\
+  \ treatment had not been completed.\"\nweighing: \"Here aggravating factors remain strong: missed reporting deadline (C1),\
+  \ DOE psychologist’s mental‑condition finding (C2), inconsistent statements (C3), no treatment (C4). Weak mitigating factor\
+  \ is consulting psychologist’s situational view (C5). Urgency (C6) is important but cannot override security concerns under\
+  \ Guideline I. Holding the decision pending treatment verification (O4) balances urgency with security: it allows employee\
+  \ to demonstrate compliance while preventing premature restoration. Conditional restoration (O3) would require verified\
+  \ effective treatment, which we lack evidence of yet. Immediate restoration (O2) would ignore unresolved concerns; follow‑up\
+  \ eval alone (O1) would delay resolution.\"\ntradecraft: \"Send written notice to employee requiring enrollment in a DOE‑approved\
+  \ mental‑health program deemed effective by a qualified professional, with a reasonable deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress. LSO completes new psychological evaluation promptly and shares report. Judge records decision\
+  \ to hold pending verification, citing DOE Order 472.2A and Guideline I.\"\nuncertainty: \"Effectiveness of voluntary counseling\
+  \ and employee’s willingness to engage are uncertain; if employee completes verified effective treatment with favorable\
+  \ prognosis (LIVE-flip1), concerns could be mitigated. Prompt reporting of future incidents would reduce aggravating factor\
+  \ (LIVE-flip2).\"\nhandoff: \"Judge decides now to hold pending verification; LSO conducts evaluation and monitors compliance.\
+  \ No further delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore clearance\
+  \ given willingness to seek counseling and critical staff need.\"\n  why_wrong: \"Restoring without verified treatment ignores\
+  \ documented mental‑condition finding, pattern of deception, and missed reporting deadline, which satisfy Guideline I concerns\
+  \ and could risk nuclear‑weapons design integrity.\"\nrejected:\n  LIVE-O1: \"Denial would disregard remediation chance;\
+  \ holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification would\
+  \ be premature; no evidence treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow‑up eval alone would\
+  \ delay resolution, contrary to urgency.\"\n---\nkind: verdict\nchoice: LIVE-O4\ncourse: \"Hold the decision pending verification\
+  \ that the employee voluntarily enters and completes an effective treatment program for the mental‑condition concerns, with\
+  \ a reasonable timeframe (e.g., 30 days).\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n\
+  \  - \"Send written notice to the employee outlining the requirement to enroll in and complete a DOE‑approved mental‑health\
+  \ treatment program deemed effective by a qualified professional, and provide a deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress.\"\n  - \"Instruct the LSO to complete the new psychological evaluation promptly and share\
+  \ the report with the judge.\"\n  - \"Request the consulting psychologist’s updated assessment if the employee begins treatment,\
+  \ to evaluate effectiveness.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily\
+  \ enters and completes a treatment program that a qualified mental‑health professional deems effective with a favorable\
+  \ prognosis\", then: LIVE-O3, why: \"Mitigating condition (b) would be satisfied, allowing conditional restoration.\"}\n\
+  \    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest within the three‑business‑day window\", then: LIVE-O3,\
+  \ why: \"Removal of the aggravating reporting failure would lessen overall concerns.\"}\n  would_not_change:\n    - {id:\
+  \ LIVE-noflip1, if: \"The consulting psychologist’s opinion were given full weight\", why: \"Judge still finds DOE psychologist’s\
+  \ finding and lack of treatment decisive.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Future incidents showing continued\
+  \ minimization or deception or failure to attend treatment\", favors: [LIVE-O1], why: \"Such behavior would reaffirm security\
+  \ concerns and support continued hold or denial.\"}"
+generated: "frame:\n  question: \"Should the Administrative Judge restore the employee’s security clearance now, conditionally\
+  \ restore it with restrictions, or hold the decision pending treatment compliance verification?\"\n  decider: \"The Administrative\
+  \ Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative guidelines and 10 C.F.R. Part 710.\"\n\
+  \  my_role: \"I may decide now, may condition a restoration on compliance verification, or may hold the decision pending\
+  \ further review; I cannot delegate the decision to another office but can request follow‑up evaluations.\"\nfacts:\n  -\
+  \ {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI on 25 May 2025 with blood‑alcohol\
+  \ levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The employee failed to\
+  \ report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day reporting window.\"}\n  - {id:\
+  \ LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and issued a Notification Letter\
+  \ citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: \"The DOE psychologist\
+  \ (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability, and trustworthiness, with\
+  \ tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind: intelligence, status:\
+  \ assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational poor judgment rather\
+  \ than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence, status: assessed,\
+  \ fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking to police\
+  \ and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee has\
+  \ not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ authority, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment (i.e., request treatment verification and not restore now).\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n\
+  \  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both involve a DOE administrative judge deciding\
+  \ whether to restore a security clearance after a DUI arrest, untimely reporting, and psychologist findings. The case REF1\
+  \ chose denial (O2) because the employee had not treated; the live scenario also has no treatment yet. Differences: live\
+  \ scenario includes the note that no other qualified staff are available, and the operator asked for when the LSO completes\
+  \ the new psychological evaluation.\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O4, LIVE-O4: REF1-O1}\
+  \  # careful mapping: REF1-O2 is deny, REF1-O1 is follow-up eval (not appropriate), REF1-O3 is restore without restriction,\
+  \ REF1-O4 is hold pending review. We need to map correctly: REF1-O2 = deny (full denial), REF1-O3 = restore without restriction,\
+  \ REF1-O1 = follow-up eval, REF1-O4 = hold pending review. So LIVE-O1 (deny) ↔ REF1-O2, LIVE-O2 (restore without restriction)\
+  \ ↔ REF1-O3, LIVE-O3 (conditional restore) has no exact counterpart (maybe O4 if we consider hold?), but we choose O4 for\
+  \ hold; LIVE-O4 (hold) ↔ REF1-O4? Actually REF1-O4 is \"holds the decision pending further review of treatment compliance\"\
+  \ – that matches our LIVE-O4. So mapping: LIVE-O1 → REF1-O2, LIVE-O2 → REF1-O3, LIVE-O3 → (no exact; but we can treat as\
+  \ modified O3), LIVE-O4 → REF1-O4. We'll map matched for the obvious ones: LIVE-F1↔REF1-F1, LIVE-F2↔REF1-F2, LIVE-F4↔REF1-F4,\
+  \ LIVE-F7↔REF1-F7. Corresponding: LIVE-F5 (consulting psychologist) vs REF1-F5; LIVE-F8 (critical role) vs REF1 no equivalent\
+  \ but institutional credibility; LIVE-F9 (procedure) vs REF1-F8 authority. live_only: LIVE-F8, LIVE-F9 maybe. case_only:\
+  \ REF1-F3 (LSO suspension) is similar but we already have LIVE-F3; we can include REF1-F3 as matched? Actually REF1-F3 is\
+  \ LSO suspension, which matches LIVE-F3. So matched includes LIVE-F3↔REF1-F3. Let's decide matched: LIVE-F1, LIVE-F2, LIVE-F3,\
+  \ LIVE-F4, LIVE-F7. Corresponding: LIVE-F5 ↔ REF1-F5, LIVE-F6 ↔ REF1-F6 (inconsistent statements), LIVE-F8 ↔ REF1-C considerations?\
+  \ Not a fact. We'll keep simple.\nmatched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3,\
+  \ case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case:\
+  \ REF1-F5, note: \"Consulting psychologist sees situational poor judgment; DOE psychologist sees mental condition.\"}, {live:\
+  \ LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent statements; similar pattern.\"}, {live: LIVE-F8, case: null,\
+  \ note: \"Critical role with no backup; adds urgency.\"}]\nlive_only: [LIVE-F8, LIVE-F9]\ncase_only: []  # all case facts\
+  \ are matched\noptions mapping: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1 (follow-up eval) or none? Actually\
+  \ follow-up eval (O1) is not appropriate because case already did that? We'll map LIVE-O4 to REF1-O4, LIVE-O1 to REF1-O2.\
+  \ So:\n  LIVE-O1 → REF1-O2 (deny)\n  LIVE-O2 → REF1-O3 (restore without restriction)\n  LIVE-O3 → REF1-O1 (follow-up eval)\
+  \ – but follow-up eval would not address treatment compliance; may be considered but less direct.\n  LIVE-O4 → REF1-O4 (hold\
+  \ pending treatment compliance)\nWe'll set mapping accordingly.\n---\nkind: consideration_enumeration\nconsiderations:\n\
+  \  - {id: LIVE-C1, facts: [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing\
+  \ the three‑business‑day reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I; the employee\
+  \ did not follow the mandatory reporting rule.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4], equity: institutional_credibility,\
+  \ favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The DOE psychologist identified a mental condition that impairs judgment,\
+  \ reliability, and trustworthiness, with tendencies toward minimization and deception; this directly satisfies Guideline\
+  \ I concerns.\"}\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight:\
+  \ strong, why: \"The employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating\
+  \ a pattern of minimizing or deceptive behavior that supports the mental‑condition finding.\"}\n  - {id: LIVE-C4, facts:\
+  \ [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The employee has not pursued any treatment\
+  \ despite the DOE psychologist’s recommendation; absent treatment, mitigating condition (b) of Guideline I is not satisfied.\"\
+  }\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3, LIVE-O4], weight: weak, why:\
+  \ \"The consulting psychologist saw situational poor judgment rather than chronic condition and recommended voluntary counseling;\
+  \ if the employee engages in effective counseling, it could mitigate concerns.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity:\
+  \ own_force_life (or resource_stewardship), favors: [LIVE-O4], weight: moderate, why: \"The employee holds a critical nuclear‑weapons\
+  \ design role with no other qualified staff available; restoring clearance without verification risks operational impact\
+  \ if concerns remain unresolved.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority, favors: [LIVE-O4], weight:\
+  \ moderate, why: \"Standard procedure permits a new psychological evaluation and allows the judge to request treatment verification;\
+  \ holding the decision pending verification aligns with policy and gives the employee a chance to demonstrate compliance.\"\
+  }\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Aggravating factor\
+  \ of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist finding of impaired judgment and reliability.\"\
+  }\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory statements and deception.\"}\n  - {live: LIVE-C4,\
+  \ case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting\
+  \ psychologist’s view of situational poor judgment.\"}\ncorresponding:\n  - {live: LIVE-C6, case: null, role: \"Critical\
+  \ role with no backup; adds urgency but does not override security concerns.\"}\n  - {live: LIVE-C7, case: null, role: \"\
+  Policy allows evaluation and verification; aligns with holding decision.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only: []\n\
+  ---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The core facts (DUI arrest, untimely reporting, psychologist findings of mental condition and inconsistency, lack\
+  \ of treatment) match REF1 closely. The live scenario adds a critical role with no backup and a request for follow‑up evaluation,\
+  \ but these do not change the fundamental Guideline I analysis. Therefore REF1's reasoning applies, though the presence\
+  \ of urgency may influence the appropriate conditional approach.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"\
+  REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception)\
+  \ against mitigating factors (consulting psychologist’s situational view and recommendation for counseling), found the adverse\
+  \ evidence not overcome, and chose denial because treatment had not been completed.\"\nweighing: \"In this live scenario,\
+  \ the aggravating factors remain strong: the employee missed the reporting deadline (C1), the DOE psychologist identified\
+  \ a condition impairing judgment (C2), the inconsistent statements (C3), and no treatment pursued (C4). The weak mitigating\
+  \ factor is the consulting psychologist’s view of situational poor judgment (C5) and the chance for voluntary counseling\
+  \ (C5). Urgency due to no backup staff (C6) is important but does not outweigh security concerns under Guideline I. Holding\
+  \ the decision pending treatment verification (O4) balances urgency with security: it allows the employee to demonstrate\
+  \ compliance with recommended treatment while preventing restoration that could risk operations if concerns remain. Conditional\
+  \ restoration (O3) would require verified effective treatment, which we have no evidence of yet. Full denial (O1) would\
+  \ disregard the possibility of remediation, while immediate restoration (O2) would ignore unresolved concerns.\"\ntradecraft:\
+  \ \"Request verification of treatment compliance within a reasonable timeframe (e.g., 30 days), specifying that the employee\
+  \ must attend a qualified mental‑health program deemed effective by a DOE‑approved professional and provide documentation\
+  \ of attendance and progress. Record the decision to hold pending verification in the administrative record, citing DOE\
+  \ Order 472.2A and Guideline I. Communicate the requirement clearly to the employee and the LSO.\"\nuncertainty: \"The exact\
+  \ effectiveness of the voluntary counseling program and the employee’s willingness to engage are uncertain; if he completes\
+  \ a verified program with favorable prognosis, the concern could be mitigated (LIVE-flip1). Also, if he reports future incidents\
+  \ promptly, that would reduce the aggravating factor (LIVE-flip2).\"\nhandoff: \"The judge decides now to hold the clearance\
+  \ decision pending treatment verification; no further delegation is needed. The LSO will conduct or confirm the new psychological\
+  \ evaluation and monitor compliance.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore\
+  \ the clearance given the employee’s willingness to seek counseling and the critical need for staff.\"\n  why_wrong: \"\
+  Restoring without verified treatment ignores the documented mental‑condition finding, pattern of deception, and missed reporting\
+  \ deadline, which satisfy Guideline I concerns. Doing so could risk nuclear‑weapons design integrity and operational safety.\"\
+  \nrejected:\n  LIVE-O1: \"Denying outright would disregard the possibility of remediation and the employee’s chance to address\
+  \ concerns; holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification\
+  \ would be premature; we lack evidence that treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow-up eval\
+  \ alone does not address the lack of treatment and would delay resolution, contrary to urgency.\"\n---\nkind: verdict\n\
+  choice: LIVE-O4\ncourse: \"Hold the decision pending verification that the employee has voluntarily entered and completed\
+  \ an effective treatment program for the mental‑condition concerns, with a reasonable timeframe (e.g., 30 days).\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Send a written notice to the employee outlining\
+  \ the requirement to enroll in and complete a DOE‑approved mental‑health treatment program deemed effective by a qualified\
+  \ professional, and provide a deadline (e.g., 30 days) for verification of enrollment and progress.\"\n  - \"Instruct the\
+  \ LSO to complete the new psychological evaluation promptly and share the report with the judge.\"\n  - \"Request the consulting\
+  \ psychologist’s updated assessment if the employee begins treatment, to evaluate effectiveness.\"\nflip_conditions:\n \
+  \ would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily enters and completes a treatment program that a qualified\
+  \ mental‑health professional deems effective with a favorable prognosis\", then: LIVE-O3, why: \"Mitigating condition (b)\
+  \ would be satisfied, allowing conditional restoration.\"}\n    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest\
+  \ within the three‑business‑day window\", then: LIVE-O3, why: \"Removal of the aggravating reporting failure would lessen\
+  \ overall concerns.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"The consulting psychologist’s opinion were given\
+  \ full weight\", why: \"The judge still finds the DOE psychologist’s finding and lack of treatment decisive.\"}\n  watch_for:\n\
+  \    - {id: LIVE-watch1, what: \"Future incidents showing continued minimization or deception or failure to attend treatment\"\
+  , favors: [LIVE-O1], why: \"Such behavior would reaffirm security concerns and support continued hold or denial.\"}\n</reply>\n\
+  </think>\nkind: fact_enumeration\nframe:\n  question: \"Should the Administrative Judge restore the employee’s security\
+  \ clearance now, conditionally restore it with restrictions, or hold the decision pending treatment compliance verification?\"\
+  \n  decider: \"The Administrative Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative guidelines\
+  \ and 10 C.F.R. Part 710.\"\n  my_role: \"I may decide now, may condition a restoration on compliance verification, or may\
+  \ hold the decision pending further review; I cannot delegate the decision to another office but can request follow‑up evaluations.\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI on 25 May 2025\
+  \ with blood‑alcohol levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The\
+  \ employee failed to report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day reporting\
+  \ window.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and issued a\
+  \ Notification Letter citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed,\
+  \ fact: \"The DOE psychologist (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability,\
+  \ and trustworthiness, with tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational\
+  \ poor judgment rather than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence,\
+  \ status: assessed, fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking\
+  \ to police and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee\
+  \ has not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ situation, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  note: \"Both involve a DOE administrative judge deciding whether to restore a security clearance after a DUI arrest, untimely\
+  \ reporting, and psychologist findings. REF1 chose denial because no treatment was pursued. The live scenario also has no\
+  \ treatment yet, but adds urgency due to no backup staff. Differences are minor fact states (critical role urgency, request\
+  \ for evaluation).\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1, LIVE-O4: REF1-O4}\nmatched: [{live:\
+  \ LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4},\
+  \ {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case: REF1-F5, note: \"Consulting psychologist sees situational\
+  \ poor judgment; DOE psychologist sees mental condition.\"}, {live: LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent\
+  \ statements; similar pattern.\"}, {live: LIVE-F8, case: null, note: \"Critical role with no backup adds urgency.\"}]\n\
+  live_only: [LIVE-F8, LIVE-F9]\ncase_only: []\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing the three‑business‑day\
+  \ reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4],\
+  \ equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"DOE psychologist identified a mental\
+  \ condition that impairs judgment, reliability, and trustworthiness, with tendencies toward minimization and deception.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why:\
+  \ \"Employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating a pattern of\
+  \ minimizing or deceptive behavior.\"}\n  - {id: LIVE-C4, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4],\
+  \ weight: strong, why: \"Employee has not pursued any treatment despite the DOE psychologist’s recommendation; mitigating\
+  \ condition (b) is not satisfied.\"}\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3,\
+  \ LIVE-O4], weight: weak, why: \"Consulting psychologist saw situational poor judgment rather than chronic condition and\
+  \ recommended voluntary counseling; if effective, could mitigate.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity: own_force_life,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Critical nuclear‑weapons design role with no other qualified staff; restoring\
+  \ without verification risks operational impact if concerns remain.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Policy allows new psychological evaluation and permits holding decision pending\
+  \ verification; aligns with prudent approach.\"}\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1,\
+  \ case: REF1-C1, role: \"Aggravating factor of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist\
+  \ finding of impaired judgment and reliability.\"}\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory\
+  \ statements and deception.\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n\
+  \  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting psychologist’s view of situational poor judgment.\"}\ncorresponding:\n\
+  \  - {live: LIVE-C6, case: null, role: \"Critical role urgency; does not override security concerns.\"}\n  - {live: LIVE-C7,\
+  \ case: null, role: \"Policy supports holding decision pending verification.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only:\
+  \ []\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns:\
+  \ true\nwhy: \"Core facts (DUI arrest, untimely reporting, psychologist findings, no treatment) match REF1 closely. Urgency\
+  \ from no backup staff adds a live consideration but does not change the Guideline I analysis; therefore REF1's reasoning\
+  \ applies, and we can follow its approach with appropriate conditional holding.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach:\
+  \ \"REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception,\
+  \ lack of treatment) against weak mitigating factor (consulting psychologist’s situational view) and chose denial because\
+  \ treatment had not been completed.\"\nweighing: \"Here aggravating factors remain strong: missed reporting deadline (C1),\
+  \ DOE psychologist’s mental‑condition finding (C2), inconsistent statements (C3), no treatment (C4). Weak mitigating factor\
+  \ is consulting psychologist’s situational view (C5). Urgency (C6) is important but cannot override security concerns under\
+  \ Guideline I. Holding the decision pending treatment verification (O4) balances urgency with security: it allows employee\
+  \ to demonstrate compliance while preventing premature restoration. Conditional restoration (O3) would require verified\
+  \ effective treatment, which we lack evidence of yet. Immediate restoration (O2) would ignore unresolved concerns; follow‑up\
+  \ eval alone (O1) would delay resolution.\"\ntradecraft: \"Send written notice to employee requiring enrollment in a DOE‑approved\
+  \ mental‑health program deemed effective by a qualified professional, with a reasonable deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress. LSO completes new psychological evaluation promptly and shares report. Judge records decision\
+  \ to hold pending verification, citing DOE Order 472.2A and Guideline I.\"\nuncertainty: \"Effectiveness of voluntary counseling\
+  \ and employee’s willingness to engage are uncertain; if employee completes verified effective treatment with favorable\
+  \ prognosis (LIVE-flip1), concerns could be mitigated. Prompt reporting of future incidents would reduce aggravating factor\
+  \ (LIVE-flip2).\"\nhandoff: \"Judge decides now to hold pending verification; LSO conducts evaluation and monitors compliance.\
+  \ No further delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore clearance\
+  \ given willingness to seek counseling and critical staff need.\"\n  why_wrong: \"Restoring without verified treatment ignores\
+  \ documented mental‑condition finding, pattern of deception, and missed reporting deadline, which satisfy Guideline I concerns\
+  \ and could risk nuclear‑weapons design integrity.\"\nrejected:\n  LIVE-O1: \"Denial would disregard remediation chance;\
+  \ holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification would\
+  \ be premature; no evidence treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow‑up eval alone would\
+  \ delay resolution, contrary to urgency.\"\n---\nkind: verdict\nchoice: LIVE-O4\ncourse: \"Hold the decision pending verification\
+  \ that the employee voluntarily enters and completes an effective treatment program for the mental‑condition concerns, with\
+  \ a reasonable timeframe (e.g., 30 days).\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n\
+  \  - \"Send written notice to the employee outlining the requirement to enroll in and complete a DOE‑approved mental‑health\
+  \ treatment program deemed effective by a qualified professional, and provide a deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress.\"\n  - \"Instruct the LSO to complete the new psychological evaluation promptly and share\
+  \ the report with the judge.\"\n  - \"Request the consulting psychologist’s updated assessment if the employee begins treatment,\
+  \ to evaluate effectiveness.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily\
+  \ enters and completes a treatment program that a qualified mental‑health professional deems effective with a favorable\
+  \ prognosis\", then: LIVE-O3, why: \"Mitigating condition (b) would be satisfied, allowing conditional restoration.\"}\n\
+  \    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest within the three‑business‑day window\", then: LIVE-O3,\
+  \ why: \"Removal of the aggravating reporting failure would lessen overall concerns.\"}\n  would_not_change:\n    - {id:\
+  \ LIVE-noflip1, if: \"The consulting psychologist’s opinion were given full weight\", why: \"Judge still finds DOE psychologist’s\
+  \ finding and lack of treatment decisive.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Future incidents showing continued\
+  \ minimization or deception or failure to attend treatment\", favors: [LIVE-O1], why: \"Such behavior would reaffirm security\
+  \ concerns and support continued hold or denial.\"}"
+target_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should the Administrative Judge restore the employee’s\
+  \ security clearance now, conditionally restore it with restrictions, or hold the decision pending treatment compliance\
+  \ verification?\"\n  decider: \"The Administrative Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative\
+  \ guidelines and 10 C.F.R. Part 710.\"\n  my_role: \"I may decide now, may condition a restoration on compliance verification,\
+  \ or may hold the decision pending further review; I cannot delegate the decision to another office but can request follow‑up\
+  \ evaluations.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI\
+  \ on 25 May 2025 with blood‑alcohol levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed,\
+  \ fact: \"The employee failed to report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day\
+  \ reporting window.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and\
+  \ issued a Notification Letter citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed,\
+  \ fact: \"The DOE psychologist (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability,\
+  \ and trustworthiness, with tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational\
+  \ poor judgment rather than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence,\
+  \ status: assessed, fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking\
+  \ to police and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee\
+  \ has not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ authority, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment (i.e., request treatment verification and not restore now).\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n\
+  \  question: same_kind\n  decider: same_kind\n  role: same_kind\nnote: \"Both involve a DOE administrative judge deciding\
+  \ whether to restore a security clearance after a DUI arrest, untimely reporting, and psychologist findings. The case REF1\
+  \ chose denial (O2) because the employee had not treated; the live scenario also has no treatment yet. Differences: live\
+  \ scenario includes the note that no other qualified staff are available, and the operator asked for when the LSO completes\
+  \ the new psychological evaluation.\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O4, LIVE-O4: REF1-O1}\
+  \  # careful mapping: REF1-O2 is deny, REF1-O1 is follow-up eval (not appropriate), REF1-O3 is restore without restriction,\
+  \ REF1-O4 is hold pending review. We need to map correctly: REF1-O2 = deny (full denial), REF1-O3 = restore without restriction,\
+  \ REF1-O1 = follow-up eval, REF1-O4 = hold pending review. So LIVE-O1 (deny) ↔ REF1-O2, LIVE-O2 (restore without restriction)\
+  \ ↔ REF1-O3, LIVE-O3 (conditional restore) has no exact counterpart (maybe O4 if we consider hold?), but we choose O4 for\
+  \ hold; LIVE-O4 (hold) ↔ REF1-O4? Actually REF1-O4 is \"holds the decision pending further review of treatment compliance\"\
+  \ – that matches our LIVE-O4. So mapping: LIVE-O1 → REF1-O2, LIVE-O2 → REF1-O3, LIVE-O3 → (no exact; but we can treat as\
+  \ modified O3), LIVE-O4 → REF1-O4. We'll map matched for the obvious ones: LIVE-F1↔REF1-F1, LIVE-F2↔REF1-F2, LIVE-F4↔REF1-F4,\
+  \ LIVE-F7↔REF1-F7. Corresponding: LIVE-F5 (consulting psychologist) vs REF1-F5; LIVE-F8 (critical role) vs REF1 no equivalent\
+  \ but institutional credibility; LIVE-F9 (procedure) vs REF1-F8 authority. live_only: LIVE-F8, LIVE-F9 maybe. case_only:\
+  \ REF1-F3 (LSO suspension) is similar but we already have LIVE-F3; we can include REF1-F3 as matched? Actually REF1-F3 is\
+  \ LSO suspension, which matches LIVE-F3. So matched includes LIVE-F3↔REF1-F3. Let's decide matched: LIVE-F1, LIVE-F2, LIVE-F3,\
+  \ LIVE-F4, LIVE-F7. Corresponding: LIVE-F5 ↔ REF1-F5, LIVE-F6 ↔ REF1-F6 (inconsistent statements), LIVE-F8 ↔ REF1-C considerations?\
+  \ Not a fact. We'll keep simple.\nmatched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3,\
+  \ case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case:\
+  \ REF1-F5, note: \"Consulting psychologist sees situational poor judgment; DOE psychologist sees mental condition.\"}, {live:\
+  \ LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent statements; similar pattern.\"}, {live: LIVE-F8, case: null,\
+  \ note: \"Critical role with no backup; adds urgency.\"}]\nlive_only: [LIVE-F8, LIVE-F9]\ncase_only: []  # all case facts\
+  \ are matched\noptions mapping: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1 (follow-up eval) or none? Actually\
+  \ follow-up eval (O1) is not appropriate because case already did that? We'll map LIVE-O4 to REF1-O4, LIVE-O1 to REF1-O2.\
+  \ So:\n  LIVE-O1 → REF1-O2 (deny)\n  LIVE-O2 → REF1-O3 (restore without restriction)\n  LIVE-O3 → REF1-O1 (follow-up eval)\
+  \ – but follow-up eval would not address treatment compliance; may be considered but less direct.\n  LIVE-O4 → REF1-O4 (hold\
+  \ pending treatment compliance)\nWe'll set mapping accordingly.\n---\nkind: consideration_enumeration\nconsiderations:\n\
+  \  - {id: LIVE-C1, facts: [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing\
+  \ the three‑business‑day reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I; the employee\
+  \ did not follow the mandatory reporting rule.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4], equity: institutional_credibility,\
+  \ favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The DOE psychologist identified a mental condition that impairs judgment,\
+  \ reliability, and trustworthiness, with tendencies toward minimization and deception; this directly satisfies Guideline\
+  \ I concerns.\"}\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight:\
+  \ strong, why: \"The employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating\
+  \ a pattern of minimizing or deceptive behavior that supports the mental‑condition finding.\"}\n  - {id: LIVE-C4, facts:\
+  \ [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"The employee has not pursued any treatment\
+  \ despite the DOE psychologist’s recommendation; absent treatment, mitigating condition (b) of Guideline I is not satisfied.\"\
+  }\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3, LIVE-O4], weight: weak, why:\
+  \ \"The consulting psychologist saw situational poor judgment rather than chronic condition and recommended voluntary counseling;\
+  \ if the employee engages in effective counseling, it could mitigate concerns.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity:\
+  \ own_force_life (or resource_stewardship), favors: [LIVE-O4], weight: moderate, why: \"The employee holds a critical nuclear‑weapons\
+  \ design role with no other qualified staff available; restoring clearance without verification risks operational impact\
+  \ if concerns remain unresolved.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority, favors: [LIVE-O4], weight:\
+  \ moderate, why: \"Standard procedure permits a new psychological evaluation and allows the judge to request treatment verification;\
+  \ holding the decision pending verification aligns with policy and gives the employee a chance to demonstrate compliance.\"\
+  }\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Aggravating factor\
+  \ of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist finding of impaired judgment and reliability.\"\
+  }\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory statements and deception.\"}\n  - {live: LIVE-C4,\
+  \ case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting\
+  \ psychologist’s view of situational poor judgment.\"}\ncorresponding:\n  - {live: LIVE-C6, case: null, role: \"Critical\
+  \ role with no backup; adds urgency but does not override security concerns.\"}\n  - {live: LIVE-C7, case: null, role: \"\
+  Policy allows evaluation and verification; aligns with holding decision.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only: []\n\
+  ---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The core facts (DUI arrest, untimely reporting, psychologist findings of mental condition and inconsistency, lack\
+  \ of treatment) match REF1 closely. The live scenario adds a critical role with no backup and a request for follow‑up evaluation,\
+  \ but these do not change the fundamental Guideline I analysis. Therefore REF1's reasoning applies, though the presence\
+  \ of urgency may influence the appropriate conditional approach.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"\
+  REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception)\
+  \ against mitigating factors (consulting psychologist’s situational view and recommendation for counseling), found the adverse\
+  \ evidence not overcome, and chose denial because treatment had not been completed.\"\nweighing: \"In this live scenario,\
+  \ the aggravating factors remain strong: the employee missed the reporting deadline (C1), the DOE psychologist identified\
+  \ a condition impairing judgment (C2), the inconsistent statements (C3), and no treatment pursued (C4). The weak mitigating\
+  \ factor is the consulting psychologist’s view of situational poor judgment (C5) and the chance for voluntary counseling\
+  \ (C5). Urgency due to no backup staff (C6) is important but does not outweigh security concerns under Guideline I. Holding\
+  \ the decision pending treatment verification (O4) balances urgency with security: it allows the employee to demonstrate\
+  \ compliance with recommended treatment while preventing restoration that could risk operations if concerns remain. Conditional\
+  \ restoration (O3) would require verified effective treatment, which we have no evidence of yet. Full denial (O1) would\
+  \ disregard the possibility of remediation, while immediate restoration (O2) would ignore unresolved concerns.\"\ntradecraft:\
+  \ \"Request verification of treatment compliance within a reasonable timeframe (e.g., 30 days), specifying that the employee\
+  \ must attend a qualified mental‑health program deemed effective by a DOE‑approved professional and provide documentation\
+  \ of attendance and progress. Record the decision to hold pending verification in the administrative record, citing DOE\
+  \ Order 472.2A and Guideline I. Communicate the requirement clearly to the employee and the LSO.\"\nuncertainty: \"The exact\
+  \ effectiveness of the voluntary counseling program and the employee’s willingness to engage are uncertain; if he completes\
+  \ a verified program with favorable prognosis, the concern could be mitigated (LIVE-flip1). Also, if he reports future incidents\
+  \ promptly, that would reduce the aggravating factor (LIVE-flip2).\"\nhandoff: \"The judge decides now to hold the clearance\
+  \ decision pending treatment verification; no further delegation is needed. The LSO will conduct or confirm the new psychological\
+  \ evaluation and monitor compliance.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore\
+  \ the clearance given the employee’s willingness to seek counseling and the critical need for staff.\"\n  why_wrong: \"\
+  Restoring without verified treatment ignores the documented mental‑condition finding, pattern of deception, and missed reporting\
+  \ deadline, which satisfy Guideline I concerns. Doing so could risk nuclear‑weapons design integrity and operational safety.\"\
+  \nrejected:\n  LIVE-O1: \"Denying outright would disregard the possibility of remediation and the employee’s chance to address\
+  \ concerns; holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification\
+  \ would be premature; we lack evidence that treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow-up eval\
+  \ alone does not address the lack of treatment and would delay resolution, contrary to urgency.\"\n---\nkind: verdict\n\
+  choice: LIVE-O4\ncourse: \"Hold the decision pending verification that the employee has voluntarily entered and completed\
+  \ an effective treatment program for the mental‑condition concerns, with a reasonable timeframe (e.g., 30 days).\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Send a written notice to the employee outlining\
+  \ the requirement to enroll in and complete a DOE‑approved mental‑health treatment program deemed effective by a qualified\
+  \ professional, and provide a deadline (e.g., 30 days) for verification of enrollment and progress.\"\n  - \"Instruct the\
+  \ LSO to complete the new psychological evaluation promptly and share the report with the judge.\"\n  - \"Request the consulting\
+  \ psychologist’s updated assessment if the employee begins treatment, to evaluate effectiveness.\"\nflip_conditions:\n \
+  \ would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily enters and completes a treatment program that a qualified\
+  \ mental‑health professional deems effective with a favorable prognosis\", then: LIVE-O3, why: \"Mitigating condition (b)\
+  \ would be satisfied, allowing conditional restoration.\"}\n    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest\
+  \ within the three‑business‑day window\", then: LIVE-O3, why: \"Removal of the aggravating reporting failure would lessen\
+  \ overall concerns.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"The consulting psychologist’s opinion were given\
+  \ full weight\", why: \"The judge still finds the DOE psychologist’s finding and lack of treatment decisive.\"}\n  watch_for:\n\
+  \    - {id: LIVE-watch1, what: \"Future incidents showing continued minimization or deception or failure to attend treatment\"\
+  , favors: [LIVE-O1], why: \"Such behavior would reaffirm security concerns and support continued hold or denial.\"}\n</reply>\n\
+  </think>\nkind: fact_enumeration\nframe:\n  question: \"Should the Administrative Judge restore the employee’s security\
+  \ clearance now, conditionally restore it with restrictions, or hold the decision pending treatment compliance verification?\"\
+  \n  decider: \"The Administrative Judge for the DOE Office of Hearings and Appeals, acting under DOE adjudicative guidelines\
+  \ and 10 C.F.R. Part 710.\"\n  my_role: \"I may decide now, may condition a restoration on compliance verification, or may\
+  \ hold the decision pending further review; I cannot delegate the decision to another office but can request follow‑up evaluations.\"\
+  \nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee was arrested for DUI on 25 May 2025\
+  \ with blood‑alcohol levels of 0.21 % and 0.22 %.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The\
+  \ employee failed to report the arrest to the LSO until 17 July 2025, exceeding the required three‑business‑day reporting\
+  \ window.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The LSO suspended his clearance and issued a\
+  \ Notification Letter citing Guideline I security concerns.\"}\n  - {id: LIVE-F4, kind: intelligence, status: confirmed,\
+  \ fact: \"The DOE psychologist (12 Oct 2025) concluded the employee has a mental condition that impairs judgment, reliability,\
+  \ and trustworthiness, with tendencies toward minimization, deception, and poor decision‑making.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: assessed, fact: \"The consulting psychologist (15 Oct 2025) concluded the conduct reflects situational\
+  \ poor judgment rather than a chronic condition and recommended voluntary counseling.\"}\n  - {id: LIVE-F6, kind: intelligence,\
+  \ status: assessed, fact: \"The employee gave inconsistent accounts of his alcohol use and reporting; e.g., downplayed drinking\
+  \ to police and later asserted full disclosure.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"The employee\
+  \ has not pursued any treatment despite the DOE psychologist’s recommendation as of 20 Oct 2025.\"}\n  - {id: LIVE-F8, kind:\
+  \ situation, status: confirmed, fact: \"The employee holds a critical position in the nuclear‑weapons design program; no\
+  \ other qualified staff are presently available to cover his duties.\"}\n  - {id: LIVE-F9, kind: authority, status: confirmed,\
+  \ fact: \"Standard procedure allows the LSO to conduct a new psychological evaluation before any clearance action; the judge\
+  \ may also consider voluntary counseling and compliance verification.\"}\noptions:\n  LIVE-O1: \"Deny restoration of the\
+  \ employee’s access authorization (full denial).\"\n  LIVE-O2: \"Restore the clearance without restriction.\"\n  LIVE-O3:\
+  \ \"Restore the clearance conditionally on the employee’s voluntary participation in and completion of a treatment program\
+  \ deemed effective.\"\n  LIVE-O4: \"Hold the decision pending verification of the employee’s compliance with the recommended\
+  \ treatment.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  note: \"Both involve a DOE administrative judge deciding whether to restore a security clearance after a DUI arrest, untimely\
+  \ reporting, and psychologist findings. REF1 chose denial because no treatment was pursued. The live scenario also has no\
+  \ treatment yet, but adds urgency due to no backup staff. Differences are minor fact states (critical role urgency, request\
+  \ for evaluation).\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1, LIVE-O4: REF1-O4}\nmatched: [{live:\
+  \ LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4},\
+  \ {live: LIVE-F7, case: REF1-F7}]\ncorresponding: [{live: LIVE-F5, case: REF1-F5, note: \"Consulting psychologist sees situational\
+  \ poor judgment; DOE psychologist sees mental condition.\"}, {live: LIVE-F6, case: REF1-F6, note: \"Employee gave inconsistent\
+  \ statements; similar pattern.\"}, {live: LIVE-F8, case: null, note: \"Critical role with no backup adds urgency.\"}]\n\
+  live_only: [LIVE-F8, LIVE-F9]\ncase_only: []\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F2], equity: lawful_authority, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"Missing the three‑business‑day\
+  \ reporting deadline is an aggravating factor under DOE Order 472.2A and Guideline I.\"}\n  - {id: LIVE-C2, facts: [LIVE-F4],\
+  \ equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why: \"DOE psychologist identified a mental\
+  \ condition that impairs judgment, reliability, and trustworthiness, with tendencies toward minimization and deception.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why:\
+  \ \"Employee gave inconsistent accounts (downplaying to police, later claiming full disclosure), indicating a pattern of\
+  \ minimizing or deceptive behavior.\"}\n  - {id: LIVE-C4, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O1, LIVE-O4],\
+  \ weight: strong, why: \"Employee has not pursued any treatment despite the DOE psychologist’s recommendation; mitigating\
+  \ condition (b) is not satisfied.\"}\n  - {id: LIVE-C5, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O3,\
+  \ LIVE-O4], weight: weak, why: \"Consulting psychologist saw situational poor judgment rather than chronic condition and\
+  \ recommended voluntary counseling; if effective, could mitigate.\"}\n  - {id: LIVE-C6, facts: [LIVE-F8], equity: own_force_life,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Critical nuclear‑weapons design role with no other qualified staff; restoring\
+  \ without verification risks operational impact if concerns remain.\"}\n  - {id: LIVE-C7, facts: [LIVE-F9], equity: lawful_authority,\
+  \ favors: [LIVE-O4], weight: moderate, why: \"Policy allows new psychological evaluation and permits holding decision pending\
+  \ verification; aligns with prudent approach.\"}\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1,\
+  \ case: REF1-C1, role: \"Aggravating factor of untimely reporting.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Psychologist\
+  \ finding of impaired judgment and reliability.\"}\n  - {live: LIVE-C3, case: REF1-C3, role: \"Pattern of contradictory\
+  \ statements and deception.\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Lack of treatment despite recommendation.\"}\n\
+  \  - {live: LIVE-C5, case: REF1-C5, role: \"Consulting psychologist’s view of situational poor judgment.\"}\ncorresponding:\n\
+  \  - {live: LIVE-C6, case: null, role: \"Critical role urgency; does not override security concerns.\"}\n  - {live: LIVE-C7,\
+  \ case: null, role: \"Policy supports holding decision pending verification.\"}\nlive_only: [LIVE-C6, LIVE-C7]\ncase_only:\
+  \ []\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns:\
+  \ true\nwhy: \"Core facts (DUI arrest, untimely reporting, psychologist findings, no treatment) match REF1 closely. Urgency\
+  \ from no backup staff adds a live consideration but does not change the Guideline I analysis; therefore REF1's reasoning\
+  \ applies, and we can follow its approach with appropriate conditional holding.\"\n---\nkind: reasoning\ncase: REF1\ncase_approach:\
+  \ \"REF1 weighed aggravating factors (untimely reporting, DOE psychologist’s mental‑condition finding, pattern of deception,\
+  \ lack of treatment) against weak mitigating factor (consulting psychologist’s situational view) and chose denial because\
+  \ treatment had not been completed.\"\nweighing: \"Here aggravating factors remain strong: missed reporting deadline (C1),\
+  \ DOE psychologist’s mental‑condition finding (C2), inconsistent statements (C3), no treatment (C4). Weak mitigating factor\
+  \ is consulting psychologist’s situational view (C5). Urgency (C6) is important but cannot override security concerns under\
+  \ Guideline I. Holding the decision pending treatment verification (O4) balances urgency with security: it allows employee\
+  \ to demonstrate compliance while preventing premature restoration. Conditional restoration (O3) would require verified\
+  \ effective treatment, which we lack evidence of yet. Immediate restoration (O2) would ignore unresolved concerns; follow‑up\
+  \ eval alone (O1) would delay resolution.\"\ntradecraft: \"Send written notice to employee requiring enrollment in a DOE‑approved\
+  \ mental‑health program deemed effective by a qualified professional, with a reasonable deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress. LSO completes new psychological evaluation promptly and shares report. Judge records decision\
+  \ to hold pending verification, citing DOE Order 472.2A and Guideline I.\"\nuncertainty: \"Effectiveness of voluntary counseling\
+  \ and employee’s willingness to engage are uncertain; if employee completes verified effective treatment with favorable\
+  \ prognosis (LIVE-flip1), concerns could be mitigated. Prompt reporting of future incidents would reduce aggravating factor\
+  \ (LIVE-flip2).\"\nhandoff: \"Judge decides now to hold pending verification; LSO conducts evaluation and monitors compliance.\
+  \ No further delegation needed.\"\ntempting_wrong:\n  option: LIVE-O2\n  pull: \"It might seem generous to restore clearance\
+  \ given willingness to seek counseling and critical staff need.\"\n  why_wrong: \"Restoring without verified treatment ignores\
+  \ documented mental‑condition finding, pattern of deception, and missed reporting deadline, which satisfy Guideline I concerns\
+  \ and could risk nuclear‑weapons design integrity.\"\nrejected:\n  LIVE-O1: \"Denial would disregard remediation chance;\
+  \ holding pending verification is more proportionate.\"\n  LIVE-O3: \"Conditional restoration without verification would\
+  \ be premature; no evidence treatment will be effective or completed.\"\n  LIVE-O1 (REF1-O1) follow‑up eval alone would\
+  \ delay resolution, contrary to urgency.\"\n---\nkind: verdict\nchoice: LIVE-O4\ncourse: \"Hold the decision pending verification\
+  \ that the employee voluntarily enters and completes an effective treatment program for the mental‑condition concerns, with\
+  \ a reasonable timeframe (e.g., 30 days).\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n\
+  \  - \"Send written notice to the employee outlining the requirement to enroll in and complete a DOE‑approved mental‑health\
+  \ treatment program deemed effective by a qualified professional, and provide a deadline (e.g., 30 days) for verification\
+  \ of enrollment and progress.\"\n  - \"Instruct the LSO to complete the new psychological evaluation promptly and share\
+  \ the report with the judge.\"\n  - \"Request the consulting psychologist’s updated assessment if the employee begins treatment,\
+  \ to evaluate effectiveness.\"\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The employee voluntarily\
+  \ enters and completes a treatment program that a qualified mental‑health professional deems effective with a favorable\
+  \ prognosis\", then: LIVE-O3, why: \"Mitigating condition (b) would be satisfied, allowing conditional restoration.\"}\n\
+  \    - {id: LIVE-flip2, if: \"The employee reports the DUI arrest within the three‑business‑day window\", then: LIVE-O3,\
+  \ why: \"Removal of the aggravating reporting failure would lessen overall concerns.\"}\n  would_not_change:\n    - {id:\
+  \ LIVE-noflip1, if: \"The consulting psychologist’s opinion were given full weight\", why: \"Judge still finds DOE psychologist’s\
+  \ finding and lack of treatment decisive.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Future incidents showing continued\
+  \ minimization or deception or failure to attend treatment\", favors: [LIVE-O1], why: \"Such behavior would reaffirm security\
+  \ concerns and support continued hold or denial.\"}"
+prompt_sha256: 7a4b2328054bb312031a89ffb94865ee3a0c12ea6ec038a29acb5722551a444b
+writer: granite-rs
+chosen: false
+tags:
+- rationalized

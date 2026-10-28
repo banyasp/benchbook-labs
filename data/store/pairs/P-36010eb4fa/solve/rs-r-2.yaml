@@ -1,0 +1,772 @@
+round: r
+k: 2
+hinted: true
+rationalized: true
+accepted: false
+reasons:
+- 'truncated: hit max_tokens'
+- 'parse: fact_enumeration: frame: Field required; facts: Field required; options: Field required; applicability: case: Input
+  should be a valid string; frame: Field required; governs: Field requ; reasoning: weighing: Field required; tradecraft: Field
+  required; uncertainty: Field require; verdict: decisive: Field required; now: Field required; flip_conditions: Field required'
+stage: parse
+subscores:
+  finish_reason: length
+  arm: relevant
+  gold_tier: by-construction
+  canonical_fixes: []
+  strict_ok: false
+  hint_leak: []
+score: 0.0
+finish_reason: length
+usage: {}
+seconds: 1706.94
+seed: 752360904
+raw_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should the analyst continue participating in the Orion command-and-control\
+  \ suite assessment, or must they recuse?\"\n  decider: \"The analyst, under the agency's ethics guidance and delegation\
+  \ for independent assessment.\"\n  my_role: \"The analyst decides based on appearance considerations; may request ethics\
+  \ guidance but can also conclude if no appearance problem exists.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status:\
+  \ confirmed, fact: \"The analyst is assigned to evaluate Orion’s new command-and-control suite under contract N12345.\"\
+  }\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"The child works as a senior recruiter in Orion's HR department,\
+  \ a covered relationship per Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The ethics\
+  \ memo states: a covered relationship exists; the analyst must assess whether a reasonable observer would doubt impartiality;\
+  \ if an appearance issue exists and is not authorized, the analyst must withdraw.\"}\n  - {id: LIVE-F4, kind: capability,\
+  \ status: assessed, fact: \"The analyst's role includes exercising discretion over the final software assessment outcomes.\"\
+  }\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Orion is the contractor for the software under contract\
+  \ N12345; the assessment covers performance, security, integration with fleet systems.\"}\n  - {id: LIVE-F6, kind: situation,\
+  \ status: assessed, fact: \"The child holds a staff role in Orion HR, not directly involved with avionics engineering or\
+  \ procurement for the C2 suite.\"}\noptions:\n  LIVE-O1: \"The analyst must withdraw from the evaluation (recuse).\"\n \
+  \ LIVE-O2: \"The analyst may continue participation in the software assessment (no recusal required).\"\n  LIVE-O3: \"The\
+  \ analyst requests a formal determination from the designated ethics official.\"\n---\nkind: fact_mapping\ncase: REF1\n\
+  frame:\n  question: same_kind\n  decider: same_kind\n  role: same\nnote: \"Both ask whether an employee with a covered family\
+  \ relationship (child employed by contractor) should recuse from a specific contract testing matter. REF1's case involved\
+  \ avionics testing with child in HR; LIVE scenario involves software evaluation with child in Orion HR. Both have same equity\
+  \ concerns and use paragraph (a)(2) reasonable-person test. The case mapping holds.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2:\
+  \ REF1-O2, LIVE-O3: REF1-O3}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live:\
+  \ LIVE-F3, case: REF1-F3}\ncorresponding:\n  - {live: LIVE-F6, case: REF1-F4? Wait REF1-F4 is testing matter; actually REF1-F4\
+  \ is \"The testing matter involves a specific party\", matching LIVE-F4-F5. Let's map correctly: live: LIVE-F4 (analyst's\
+  \ role includes discretion), case: REF1-F5 (employee's role includes discretion).}\n  - {live: LIVE-F5, case: REF1-F4}\n\
+  \  - {live: LIVE-F6, case: REF1-F? Actually REF1-F2 is child employment, REF1-F6 is reasonable-person consideration; we'll\
+  \ map live-F6 to REF1-F? Better: matched: live-F1 to case-F1, live-F2 to case-F2, live-F3 to case-F3; corresponding: live-F4\
+  \ to case-F5, live-F5 to case-F4, live-F6 to case-F? Actually case-F? Let's simplify: live_only will include LIVE-F6 (child\
+  \ HR vs contractor HR), case_only will include REF1-F? The case already had child in HR; LIVE also HR but similar. The key\
+  \ difference is the contract type (avionics vs C2 suite) but both are contractor-specific. The case's guidance that HR role\
+  \ unrelated to contract applies. So live_only: maybe none; but we need a live-only fact: the child works in Orion HR, which\
+  \ is unrelated to the C2 suite's engineering; case had HR unrelated to avionics. That's similar, not unique. However we\
+  \ must assign live_only and case_only as per instruction: every fact goes to one. Let's assign matched for core facts (assignment,\
+  \ child employment, covered relationship, discretion role, reasonable-person test). case_only may be none? Actually REF1-F?\
+  \ The case had REF1-F? We'll list all case facts and assign matched where same. I'll map:\n  matched:\n    - {live: LIVE-F1,\
+  \ case: REF1-F1} \"employee assigned to test avionics\" vs \"analyst assigned to evaluate software\" - same kind.\n    -\
+  \ {live: LIVE-F2, case: REF1-F2} \"child accepted HR staff position\" vs same.\n    - {live: LIVE-F3, case: REF1-F3} \"\
+  covered relationship definition\" vs same.\n    - {live: LIVE-F4, case: REF1-F5} \"employee's role includes discretion\"\
+  \ vs same.\n    - {live: LIVE-F5, case: REF1-F4} \"testing matter involves specific party\" vs same.\n    - {live: LIVE-F6,\
+  \ case: REF1-F6} \"reasonable person test\" vs same.\n  That leaves case-only facts not in live: REF1-F7 (seek guidance)\
+  \ and REF1-F8 (must recuse if appearance not authorized) and REF1-F? Actually REF1-F7 and REF1-F8 are authority facts that\
+  \ also appear in live (LIVE-F3 includes memo guidance). But memo guidance covers same. We'll treat LIVE-F3 as matching REF1-F3-F6?\
+  \ Let's be systematic: According to instruction, matched are same item; corresponding are same characteristic with different\
+  \ state. Since the situations are analogous, we can have matched and no case_only or live_only, but we need at least one\
+  \ of each? The instruction says \"every fact goes to one of matched, corresponding, live_only, case_only\". It doesn't require\
+  \ both non-empty. However to be accurate, we can put all case facts that correspond directly to live facts in matched, and\
+  \ any extra case facts that don't have direct live counterpart go to case_only. REF1 had REF1-F7 and REF1-F8 which are about\
+  \ seeking guidance and recusal if appearance not authorized; these are relevant but not unique to live. Live has similar\
+  \ guidance. So we can put them in corresponding or live_only? Let's follow the pattern from examples: they often had one\
+  \ or two correspondences and one live-only fact. For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n\
+  \    - {live: LIVE-F2, case: REF1-F2}\n    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    -\
+  \ {live: LIVE-F5, case: REF1-F4}\n    - {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8] (seek guidance and\
+  \ recusal rule)\n  live_only: [LIVE-F6? Already used? Actually LIVE-F6 is child HR role description; case had similar but\
+  \ we already matched REF1-F2 and REF1-F3; the difference is child HR vs avionics vs C2; but it's similar. To have a live-only\
+  \ fact, we can note that the child is a senior recruiter in Orion HR, which is clearly unrelated to the C2 suite engineering;\
+  \ this mirrors REF1-C2's reasoning. But that's a consideration not a fact. We'll keep live_only empty? However we need to\
+  \ include at least one live fact that is not matched? The instruction doesn't require non-empty; but to avoid duplication,\
+  \ I'll put live_only: [LIVE-F6] where LIVE-F6 is \"child holds a staff role in Orion HR, not directly involved with avionics\
+  \ contract\". Actually case already had similar: REF1-F2 said \"child accepted a staff position in the contractor's HR division\"\
+  . That's essentially same. So maybe no live_only. But we must assign every live fact to matched or live_only. I'll match\
+  \ all live facts to case facts, making live_only empty. Similarly case_only will have REF1-F7 and REF1-F8.\n  However the\
+  \ mapping may be off because REF1-F4 is \"testing matter involves a specific party\" and LIVE-F5-F6 cover that. I'll trust\
+  \ the analysis will work.\n  For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n    - {live: LIVE-F2,\
+  \ case: REF1-F2}\n    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    - {live: LIVE-F5, case:\
+  \ REF1-F4}\n    - {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8]\n  live_only: []\n  But live_only empty\
+  \ might be okay. However the instruction says \"A list such as a | b | c means choose exactly one\". Not about emptiness.\
+  \ I'll proceed.\n\nBut to avoid overcomplicating, I'll keep it simple and follow pattern: matched one fact (say REF1-F1/LIVE-F1),\
+  \ corresponding for others, live_only for the HR role description, case_only for guidance rules. However the examples often\
+  \ had multiple matched and corresponding. Let's adopt a minimal mapping: match the core relationship and assignment; corresponding\
+  \ for the reasoning about unrelated duties; live_only for child's HR role specifics (senior recruiter); case_only for guidance\
+  \ rules (seek guidance, recusal if appearance). I'll do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2,\
+  \ case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5} \"discretion\"\n  - {live: LIVE-F5, case: REF1-F4}\
+  \ \"matter involves specific party\"\n  - {live: LIVE-F6, case: REF1-F? Actually no case fact about HR job type; that's\
+  \ from consideration. So live-only: LIVE-F6 (child HR role details)\ncase_only: [REF1-F3, REF1-F7, REF1-F8] (covered definition,\
+  \ guidance to seek ethics official, recusal rule)\n\nBut case-only should be facts not in live. That seems better. Let's\
+  \ do that.\n\nI'll write:\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n\
+  \  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\nlive_only: [LIVE-F6] \"child holds a staff role\
+  \ in Orion HR, a senior recruiter position\"\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n\nSimilarly for considerations mapping\
+  \ later.\n\nI'll proceed with that mapping.\n\nLet's craft the documents succinctly.\n\n---\n\nkind: consideration_enumeration\n\
+  considerations:\n  - {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak,\
+  \ why: \"Child employment creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id:\
+  \ LIVE-C2, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a\
+  \ senior recruiter in Orion HR, which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's\
+  \ role includes discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"\
+  }\n---\n\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered\
+  \ relationship raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that\
+  \ the relative’s HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only:\
+  \ [REF1-C3]\n\n---\n\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  governs: true\nwhy: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor\
+  \ HR) assessing a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\
+  \n\n---\n\nkind: reasoning\ncase: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality,\
+  \ the employee may continue participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering,\
+  \ so the appearance concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract\
+  \ outweighs LIVE-C1 (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias.\
+  \ Thus the balance tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR\
+  \ position and the lack of relevance to the C2 suite. Inform the supervisor as a best practice. Do not request a formal\
+  \ determination unless uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated\
+  \ HR duties do not create an appearance issue. If the child were assigned to engineering or procurement for the suite, the\
+  \ answer would change.\"\nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2).\
+  \ Supervisor notification is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse\
+  \ because any family tie to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that\
+  \ when the relative’s work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is\
+  \ unnecessary because child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional;\
+  \ the analyst can conclude using the reasonable‑person test.\"\n\n---\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst\
+  \ continues participation in the Orion command-and-control suite assessment, documenting the analysis and notifying the\
+  \ supervisor.\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child\
+  \ is senior recruiter in Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed\
+  \ with assessment.\"\n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\
+  \nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved\
+  \ with the C2 suite (e.g., engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties\
+  \ would be directly connected to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"The child remains in HR with no influence over the contract\", why: \"The example confirms\
+  \ that the employee may continue participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment\
+  \ of the child to a contract‑relevant role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance\
+  \ problem requiring recusal.\"}\n\nNow output the documents in order with --- separators.\n\nBut need to ensure YAML formatting\
+  \ correct. Let's write them clearly.\n\nWe'll output:\n\n---\nkind: fact_enumeration\nframe:\n  question: \"Should the analyst\
+  \ continue participating in the Orion command-and-control suite assessment, or must they recuse?\"\n  decider: \"The analyst,\
+  \ under the agency's ethics guidance and delegation for independent assessment.\"\n  my_role: \"The analyst decides based\
+  \ on appearance considerations; may request ethics guidance but can also conclude if no appearance problem exists.\"\nfacts:\n\
+  \  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The analyst is assigned to evaluate Orion’s new command-and-control\
+  \ suite under contract N12345.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"The child works as a senior\
+  \ recruiter in Orion's HR department, a covered relationship per Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority,\
+  \ status: confirmed, fact: \"The ethics memo states: a covered relationship exists; the analyst must assess whether a reasonable\
+  \ observer would doubt impartiality; if an appearance issue exists and is not authorized, the analyst must withdraw.\"}\n\
+  \  - {id: LIVE-F4, kind: capability, status: assessed, fact: \"The analyst's role includes exercising discretion over the\
+  \ final software assessment outcomes.\"}\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Orion is the\
+  \ contractor for the software under contract N12345; the assessment covers performance, security, integration with fleet\
+  \ systems.\"}\n  - {id: LIVE-F6, kind: situation, status: assessed, fact: \"The child holds a staff role in Orion HR, not\
+  \ directly involved with avionics contract engineering; the position is senior recruiter.\"}\noptions:\n  LIVE-O1: \"The\
+  \ analyst must withdraw from the evaluation (recuse).\"\n  LIVE-O2: \"The analyst may continue participation in the software\
+  \ assessment (no recusal required).\"\n  LIVE-O3: \"The analyst requests a formal determination from the designated ethics\
+  \ official.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same\n\
+  note: \"Both ask whether an employee with a covered family relationship (child employed by contractor) should recuse from\
+  \ a specific contract testing matter. REF1 involved avionics; LIVE involves C2 suite. Both use paragraph (a)(2) reasonable‑person\
+  \ test.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n\
+  \  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\n\
+  live_only: [LIVE-F6]\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak, why: \"Child employment\
+  \ creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id: LIVE-C2, facts: [LIVE-F6],\
+  \ equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a senior recruiter in Orion HR,\
+  \ which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"}\n  - {id: LIVE-C3,\
+  \ facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's role includes\
+  \ discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"}\n---\n\
+  kind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered relationship\
+  \ raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that the relative’s\
+  \ HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only: [REF1-C3]\n---\n\
+  kind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor HR) assessing\
+  \ a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\n---\nkind: reasoning\n\
+  case: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality, the employee may continue\
+  \ participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering, so the appearance\
+  \ concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract outweighs LIVE-C1\
+  \ (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias. Thus the balance\
+  \ tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR position and the\
+  \ lack of relevance to the C2 suite. Notify the supervisor as a best practice. Do not request a formal determination unless\
+  \ uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated HR duties do not create\
+  \ an appearance issue. If the child were assigned to engineering or procurement for the suite, the answer would change.\"\
+  \nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2). Supervisor notification\
+  \ is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse because any family tie\
+  \ to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that when the relative’s\
+  \ work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is unnecessary because\
+  \ child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional; the analyst can\
+  \ conclude using the reasonable‑person test.\"\n---\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst continues participation\
+  \ in the Orion command-and-control suite assessment, documenting the analysis and notifying the supervisor.\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child is senior recruiter in\
+  \ Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed with assessment.\"\
+  \n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\nflip_conditions:\n\
+  \  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved with the C2 suite (e.g.,\
+  \ engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties would be directly connected\
+  \ to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if:\
+  \ \"The child remains in HR with no influence over the contract\", why: \"The example confirms that the employee may continue\
+  \ participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment of the child to a contract‑relevant\
+  \ role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance problem requiring recusal.\"\
+  }\n\nNow after these documents, we output </think> and then the verdict? Actually the format says: Write your reasoning\
+  \ as YAML documents (the above), then close your thinking with </think> after the last document before the verdict (the\
+  \ applicability document when the case does not govern), then write the verdict document as your reply. But we already included\
+  \ the verdict document as a YAML document (kind: verdict). According to format, we should include all reasoning documents\
+  \ and then the verdict document as part of the reply? The instruction: \"Close your thinking with  \f</think> after the\
+  \ last document before the verdict (the applicability document when the case does not govern), then write the verdict document\
+  \ as your reply.\" That suggests we should output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration,\
+  \ consideration_mapping, applicability, reasoning) and then \f</think> and then the verdict document? Actually in the examples,\
+  \ they included all documents inside the reply block and then the verdict was inside the same reply? Let's review example\
+  \ 1: In the example reply, they wrote:\n\nreply:\n  documents inside <think>, then </think>, then the verdict document.\n\
+  \nIn the example, they wrote:\n\n<reply>\n<think>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n...\n\
+  </reply>\n\nThen after that they wrote \n</think>\nThen the verdict document? Let's scroll: In the first example (situation\
+  \ about duty officer), the assistant wrote:\n\n<reply>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n\
+  ...\n</reply>\n\nBut actually they wrote:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about\
+  \ the plan to kill the journalist?\"\n  decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn\
+  \ notice on my own authority and inform the station chief afterwards.\"\nfacts:\n  ...\noptions:\n  LIVE-O1: \"Pass the\
+  \ threat to the partner's liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\n\
+  ...\n---\n...\n</reply>\n\nThen after that they wrote \n</think>\nand then the verdict? Wait they wrote:\n\n<reply>\n...\n\
+  </reply>\n\nThen after that they wrote:\n\nThen the assistant output ended with </reply>? Actually the example reply included\
+  \ both the reasoning documents and the verdict inside the same block? Let's read carefully:\n\nIn example 1:\n\n<reply>\n\
+  kind: fact_enumeration\nframe:\n  question: \"What should I do about the plan to kill the journalist?\"\n  decider: \"Me,\
+  \ under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and inform the station\
+  \ chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support technical collection\
+  \ on the communications of an armed group in the port city.\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat to the partner's\
+  \ liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its cover to help someone only it\
+  \ can reach in time; both deciders act on their own authority under a standing delegation.\"\noptions: {LIVE-O1: REF1-O2,\
+  \ LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\n...\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\n     why: \"She will\
+  \ likely be killed tomorrow morning before any other warning reaches her; the partner needs about 48 hours...\"}\n  ...\n\
+  ---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"lives at stake, and no\
+  \ help but mine arrives in time\"}\n  ...\n---\nkind: applicability\ncase: REF1\nframe: {question: same_kind, decider: same_kind,\
+  \ role: same}\ngoverns: true\nwhy: \"The same kind of question...\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: |\n\
+  \  REF1 asks first who else can help...\n  ...\n  tempting_wrong:\n    option: LIVE-O2\n    pull: \"It looks like doing\
+  \ both: the mission continues and the rescue is reported.\"\n    why_wrong: The report reaches a ship that cannot arrive\
+  \ in time.\n  rejected:\n    REF1-O3: Delays even the report and abandons people the USV could help.\n---\nkind: verdict\n\
+  choice: LIVE-O3\ncourse: \"Warn her today through the station's duty-to-warn protocol, anonymously...\"\nrelation: follows\n\
+  ...\n</reply>\n\nThus they included the verdict document inside the reply block as the last document. And they didn't include\
+  \ a separate \f</think> after the applicability document; they included the verdict directly after reasoning. The instruction\
+  \ says: \"Close your thinking with \f</think> after the last document before the verdict (the applicability document when\
+  \ the case does not govern), then write the verdict document as your reply.\" That seems contradictory. But looking at the\
+  \ format description: \"Write your reasoning as YAML documents, one per step, in the order below.\" and \"Close your thinking\
+  \ with \f</think> after the last document before the verdict (the applicability document when the case does not govern),\
+  \ then write the verdict document as your reply.\" Probably they want the assistant to output the reasoning documents (fact_enumeration,\
+  \ fact_mapping, etc.) then \f</think> and then the verdict document as plain text? However the examples show they included\
+  \ all documents including verdict inside the same reply block (the whole reply is the documents). In the example, they wrote\
+  \ the documents and then after the last reasoning document (which was the reasoning document) they wrote the verdict document\
+  \ as the final document. They didn't insert \f</think> as a separate line. But the instruction says \"Close your thinking\
+  \ with \f</think> after the last document before the verdict\". Maybe they want the assistant to output the reasoning documents\
+  \ separated by --- and then after the last reasoning document (applicability or reasoning) output \f</think> and then the\
+  \ verdict document. Let's read the format again:\n\n\"Before your next action, reason from the reference case and decide.\
+  \ Write your reasoning as YAML documents, one per\nstep, in the order below. Each document starts with its `kind:` line.\
+  \ Separate documents with a line containing only\n`---`. Write real values: every `\"...\"` below stands for a sentence\
+  \ you write, and a list such as `a | b | c` means\nchoose exactly one of the words.\n\n...\n\nYour thinking is the structure.\
+  \ Write the YAML documents inside your thinking, one after another, with nothing but\nthe documents between them. Close\
+  \ your thinking with \f</think> after the last document before the verdict\n(the applicability document when the case does\
+  \ not govern), then write the verdict document as your reply.\"\n\nThus the assistant should output the reasoning documents\
+  \ (including applicability and reasoning), then \f</think>, then the verdict document. However in the examples they didn't\
+  \ follow that exactly? Let's check example 1: After the reasoning document (kind: reasoning), they wrote the verdict document\
+  \ as the next document? Actually they wrote:\n\n--- (separator) then kind: reasoning document, then after that they wrote\
+  \ kind: verdict document? Let's scroll up: In the example reply text, after \"reasoning:\" they wrote:\n\nreasoning:\n \
+  \   read: ...\n    weighing: ...\n    tradecraft: ...\n    uncertainty: ...\n    handoff: ...\n    tempting_wrong:\n   \
+  \   option: REF1-O2\n      pull: \"It looks like doing both...\"\n      why_wrong: ...\n    rejected: REF1-O3: ...\n\nThen\
+  \ after that they wrote:\n\n--- (separator?) No, they wrote the verdict document after the reasoning? In the example reply\
+  \ block they wrote:\n\n--- (maybe after reasoning they wrote the verdict as part of the same document set). Let's copy exactly\
+  \ from example 1:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about the journalist?\"\n \
+  \ decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and\
+  \ inform the station chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support\
+  \ technical collection...\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat...\"\n---\nkind: fact_mapping\ncase: REF1\n\
+  frame:\n  question: same_kind\n  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its\
+  \ cover...\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\nmatched: []\ncorresponding: []\nlive_only:\
+  \ [LIVE-F1, LIVE-F2, LIVE-F3]\ncase_only: [REF1-F1, REF1-F2]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\
+  \ why: \"She will likely be killed...\"}\n  ...\n---\nkind: consideration_mapping\ncase: REF1\nmatched: []\ncorresponding:\
+  \ []\nlive_only: [LIVE-C1]\ncase_only: []\n---\nkind: applicability\ncase:"
+generated: "frame:\n  question: \"Should the analyst continue participating in the Orion command-and-control suite assessment,\
+  \ or must they recuse?\"\n  decider: \"The analyst, under the agency's ethics guidance and delegation for independent assessment.\"\
+  \n  my_role: \"The analyst decides based on appearance considerations; may request ethics guidance but can also conclude\
+  \ if no appearance problem exists.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The analyst\
+  \ is assigned to evaluate Orion’s new command-and-control suite under contract N12345.\"}\n  - {id: LIVE-F2, kind: authority,\
+  \ status: confirmed, fact: \"The child works as a senior recruiter in Orion's HR department, a covered relationship per\
+  \ Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The ethics memo states: a covered relationship\
+  \ exists; the analyst must assess whether a reasonable observer would doubt impartiality; if an appearance issue exists\
+  \ and is not authorized, the analyst must withdraw.\"}\n  - {id: LIVE-F4, kind: capability, status: assessed, fact: \"The\
+  \ analyst's role includes exercising discretion over the final software assessment outcomes.\"}\n  - {id: LIVE-F5, kind:\
+  \ intelligence, status: confirmed, fact: \"Orion is the contractor for the software under contract N12345; the assessment\
+  \ covers performance, security, integration with fleet systems.\"}\n  - {id: LIVE-F6, kind: situation, status: assessed,\
+  \ fact: \"The child holds a staff role in Orion HR, not directly involved with avionics engineering or procurement for the\
+  \ C2 suite.\"}\noptions:\n  LIVE-O1: \"The analyst must withdraw from the evaluation (recuse).\"\n  LIVE-O2: \"The analyst\
+  \ may continue participation in the software assessment (no recusal required).\"\n  LIVE-O3: \"The analyst requests a formal\
+  \ determination from the designated ethics official.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same\nnote: \"Both ask whether an employee with a covered family relationship (child employed\
+  \ by contractor) should recuse from a specific contract testing matter. REF1's case involved avionics testing with child\
+  \ in HR; LIVE scenario involves software evaluation with child in Orion HR. Both have same equity concerns and use paragraph\
+  \ (a)(2) reasonable-person test. The case mapping holds.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3}\n\
+  matched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F3}\ncorresponding:\n\
+  \  - {live: LIVE-F6, case: REF1-F4? Wait REF1-F4 is testing matter; actually REF1-F4 is \"The testing matter involves a\
+  \ specific party\", matching LIVE-F4-F5. Let's map correctly: live: LIVE-F4 (analyst's role includes discretion), case:\
+  \ REF1-F5 (employee's role includes discretion).}\n  - {live: LIVE-F5, case: REF1-F4}\n  - {live: LIVE-F6, case: REF1-F?\
+  \ Actually REF1-F2 is child employment, REF1-F6 is reasonable-person consideration; we'll map live-F6 to REF1-F? Better:\
+  \ matched: live-F1 to case-F1, live-F2 to case-F2, live-F3 to case-F3; corresponding: live-F4 to case-F5, live-F5 to case-F4,\
+  \ live-F6 to case-F? Actually case-F? Let's simplify: live_only will include LIVE-F6 (child HR vs contractor HR), case_only\
+  \ will include REF1-F? The case already had child in HR; LIVE also HR but similar. The key difference is the contract type\
+  \ (avionics vs C2 suite) but both are contractor-specific. The case's guidance that HR role unrelated to contract applies.\
+  \ So live_only: maybe none; but we need a live-only fact: the child works in Orion HR, which is unrelated to the C2 suite's\
+  \ engineering; case had HR unrelated to avionics. That's similar, not unique. However we must assign live_only and case_only\
+  \ as per instruction: every fact goes to one. Let's assign matched for core facts (assignment, child employment, covered\
+  \ relationship, discretion role, reasonable-person test). case_only may be none? Actually REF1-F? The case had REF1-F? We'll\
+  \ list all case facts and assign matched where same. I'll map:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1} \"employee\
+  \ assigned to test avionics\" vs \"analyst assigned to evaluate software\" - same kind.\n    - {live: LIVE-F2, case: REF1-F2}\
+  \ \"child accepted HR staff position\" vs same.\n    - {live: LIVE-F3, case: REF1-F3} \"covered relationship definition\"\
+  \ vs same.\n    - {live: LIVE-F4, case: REF1-F5} \"employee's role includes discretion\" vs same.\n    - {live: LIVE-F5,\
+  \ case: REF1-F4} \"testing matter involves specific party\" vs same.\n    - {live: LIVE-F6, case: REF1-F6} \"reasonable\
+  \ person test\" vs same.\n  That leaves case-only facts not in live: REF1-F7 (seek guidance) and REF1-F8 (must recuse if\
+  \ appearance not authorized) and REF1-F? Actually REF1-F7 and REF1-F8 are authority facts that also appear in live (LIVE-F3\
+  \ includes memo guidance). But memo guidance covers same. We'll treat LIVE-F3 as matching REF1-F3-F6? Let's be systematic:\
+  \ According to instruction, matched are same item; corresponding are same characteristic with different state. Since the\
+  \ situations are analogous, we can have matched and no case_only or live_only, but we need at least one of each? The instruction\
+  \ says \"every fact goes to one of matched, corresponding, live_only, case_only\". It doesn't require both non-empty. However\
+  \ to be accurate, we can put all case facts that correspond directly to live facts in matched, and any extra case facts\
+  \ that don't have direct live counterpart go to case_only. REF1 had REF1-F7 and REF1-F8 which are about seeking guidance\
+  \ and recusal if appearance not authorized; these are relevant but not unique to live. Live has similar guidance. So we\
+  \ can put them in corresponding or live_only? Let's follow the pattern from examples: they often had one or two correspondences\
+  \ and one live-only fact. For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n    - {live: LIVE-F2,\
+  \ case: REF1-F2}\n    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    - {live: LIVE-F5, case:\
+  \ REF1-F4}\n    - {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8] (seek guidance and recusal rule)\n  live_only:\
+  \ [LIVE-F6? Already used? Actually LIVE-F6 is child HR role description; case had similar but we already matched REF1-F2\
+  \ and REF1-F3; the difference is child HR vs avionics vs C2; but it's similar. To have a live-only fact, we can note that\
+  \ the child is a senior recruiter in Orion HR, which is clearly unrelated to the C2 suite engineering; this mirrors REF1-C2's\
+  \ reasoning. But that's a consideration not a fact. We'll keep live_only empty? However we need to include at least one\
+  \ live fact that is not matched? The instruction doesn't require non-empty; but to avoid duplication, I'll put live_only:\
+  \ [LIVE-F6] where LIVE-F6 is \"child holds a staff role in Orion HR, not directly involved with avionics contract\". Actually\
+  \ case already had similar: REF1-F2 said \"child accepted a staff position in the contractor's HR division\". That's essentially\
+  \ same. So maybe no live_only. But we must assign every live fact to matched or live_only. I'll match all live facts to\
+  \ case facts, making live_only empty. Similarly case_only will have REF1-F7 and REF1-F8.\n  However the mapping may be off\
+  \ because REF1-F4 is \"testing matter involves a specific party\" and LIVE-F5-F6 cover that. I'll trust the analysis will\
+  \ work.\n  For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n    - {live: LIVE-F2, case: REF1-F2}\n\
+  \    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    - {live: LIVE-F5, case: REF1-F4}\n    -\
+  \ {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8]\n  live_only: []\n  But live_only empty might be okay.\
+  \ However the instruction says \"A list such as a | b | c means choose exactly one\". Not about emptiness. I'll proceed.\n\
+  \nBut to avoid overcomplicating, I'll keep it simple and follow pattern: matched one fact (say REF1-F1/LIVE-F1), corresponding\
+  \ for others, live_only for the HR role description, case_only for guidance rules. However the examples often had multiple\
+  \ matched and corresponding. Let's adopt a minimal mapping: match the core relationship and assignment; corresponding for\
+  \ the reasoning about unrelated duties; live_only for child's HR role specifics (senior recruiter); case_only for guidance\
+  \ rules (seek guidance, recusal if appearance). I'll do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2,\
+  \ case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5} \"discretion\"\n  - {live: LIVE-F5, case: REF1-F4}\
+  \ \"matter involves specific party\"\n  - {live: LIVE-F6, case: REF1-F? Actually no case fact about HR job type; that's\
+  \ from consideration. So live-only: LIVE-F6 (child HR role details)\ncase_only: [REF1-F3, REF1-F7, REF1-F8] (covered definition,\
+  \ guidance to seek ethics official, recusal rule)\n\nBut case-only should be facts not in live. That seems better. Let's\
+  \ do that.\n\nI'll write:\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n\
+  \  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\nlive_only: [LIVE-F6] \"child holds a staff role\
+  \ in Orion HR, a senior recruiter position\"\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n\nSimilarly for considerations mapping\
+  \ later.\n\nI'll proceed with that mapping.\n\nLet's craft the documents succinctly.\n\n---\n\nkind: consideration_enumeration\n\
+  considerations:\n  - {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak,\
+  \ why: \"Child employment creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id:\
+  \ LIVE-C2, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a\
+  \ senior recruiter in Orion HR, which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's\
+  \ role includes discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"\
+  }\n---\n\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered\
+  \ relationship raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that\
+  \ the relative’s HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only:\
+  \ [REF1-C3]\n\n---\n\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  governs: true\nwhy: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor\
+  \ HR) assessing a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\
+  \n\n---\n\nkind: reasoning\ncase: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality,\
+  \ the employee may continue participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering,\
+  \ so the appearance concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract\
+  \ outweighs LIVE-C1 (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias.\
+  \ Thus the balance tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR\
+  \ position and the lack of relevance to the C2 suite. Inform the supervisor as a best practice. Do not request a formal\
+  \ determination unless uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated\
+  \ HR duties do not create an appearance issue. If the child were assigned to engineering or procurement for the suite, the\
+  \ answer would change.\"\nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2).\
+  \ Supervisor notification is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse\
+  \ because any family tie to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that\
+  \ when the relative’s work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is\
+  \ unnecessary because child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional;\
+  \ the analyst can conclude using the reasonable‑person test.\"\n\n---\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst\
+  \ continues participation in the Orion command-and-control suite assessment, documenting the analysis and notifying the\
+  \ supervisor.\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child\
+  \ is senior recruiter in Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed\
+  \ with assessment.\"\n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\
+  \nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved\
+  \ with the C2 suite (e.g., engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties\
+  \ would be directly connected to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"The child remains in HR with no influence over the contract\", why: \"The example confirms\
+  \ that the employee may continue participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment\
+  \ of the child to a contract‑relevant role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance\
+  \ problem requiring recusal.\"}\n\nNow output the documents in order with --- separators.\n\nBut need to ensure YAML formatting\
+  \ correct. Let's write them clearly.\n\nWe'll output:\n\n---\nkind: fact_enumeration\nframe:\n  question: \"Should the analyst\
+  \ continue participating in the Orion command-and-control suite assessment, or must they recuse?\"\n  decider: \"The analyst,\
+  \ under the agency's ethics guidance and delegation for independent assessment.\"\n  my_role: \"The analyst decides based\
+  \ on appearance considerations; may request ethics guidance but can also conclude if no appearance problem exists.\"\nfacts:\n\
+  \  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The analyst is assigned to evaluate Orion’s new command-and-control\
+  \ suite under contract N12345.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"The child works as a senior\
+  \ recruiter in Orion's HR department, a covered relationship per Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority,\
+  \ status: confirmed, fact: \"The ethics memo states: a covered relationship exists; the analyst must assess whether a reasonable\
+  \ observer would doubt impartiality; if an appearance issue exists and is not authorized, the analyst must withdraw.\"}\n\
+  \  - {id: LIVE-F4, kind: capability, status: assessed, fact: \"The analyst's role includes exercising discretion over the\
+  \ final software assessment outcomes.\"}\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Orion is the\
+  \ contractor for the software under contract N12345; the assessment covers performance, security, integration with fleet\
+  \ systems.\"}\n  - {id: LIVE-F6, kind: situation, status: assessed, fact: \"The child holds a staff role in Orion HR, not\
+  \ directly involved with avionics contract engineering; the position is senior recruiter.\"}\noptions:\n  LIVE-O1: \"The\
+  \ analyst must withdraw from the evaluation (recuse).\"\n  LIVE-O2: \"The analyst may continue participation in the software\
+  \ assessment (no recusal required).\"\n  LIVE-O3: \"The analyst requests a formal determination from the designated ethics\
+  \ official.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same\n\
+  note: \"Both ask whether an employee with a covered family relationship (child employed by contractor) should recuse from\
+  \ a specific contract testing matter. REF1 involved avionics; LIVE involves C2 suite. Both use paragraph (a)(2) reasonable‑person\
+  \ test.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n\
+  \  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\n\
+  live_only: [LIVE-F6]\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak, why: \"Child employment\
+  \ creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id: LIVE-C2, facts: [LIVE-F6],\
+  \ equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a senior recruiter in Orion HR,\
+  \ which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"}\n  - {id: LIVE-C3,\
+  \ facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's role includes\
+  \ discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"}\n---\n\
+  kind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered relationship\
+  \ raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that the relative’s\
+  \ HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only: [REF1-C3]\n---\n\
+  kind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor HR) assessing\
+  \ a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\n---\nkind: reasoning\n\
+  case: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality, the employee may continue\
+  \ participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering, so the appearance\
+  \ concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract outweighs LIVE-C1\
+  \ (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias. Thus the balance\
+  \ tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR position and the\
+  \ lack of relevance to the C2 suite. Notify the supervisor as a best practice. Do not request a formal determination unless\
+  \ uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated HR duties do not create\
+  \ an appearance issue. If the child were assigned to engineering or procurement for the suite, the answer would change.\"\
+  \nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2). Supervisor notification\
+  \ is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse because any family tie\
+  \ to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that when the relative’s\
+  \ work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is unnecessary because\
+  \ child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional; the analyst can\
+  \ conclude using the reasonable‑person test.\"\n---\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst continues participation\
+  \ in the Orion command-and-control suite assessment, documenting the analysis and notifying the supervisor.\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child is senior recruiter in\
+  \ Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed with assessment.\"\
+  \n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\nflip_conditions:\n\
+  \  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved with the C2 suite (e.g.,\
+  \ engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties would be directly connected\
+  \ to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if:\
+  \ \"The child remains in HR with no influence over the contract\", why: \"The example confirms that the employee may continue\
+  \ participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment of the child to a contract‑relevant\
+  \ role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance problem requiring recusal.\"\
+  }\n\nNow after these documents, we output </think> and then the verdict? Actually the format says: Write your reasoning\
+  \ as YAML documents (the above), then close your thinking with </think> after the last document before the verdict (the\
+  \ applicability document when the case does not govern), then write the verdict document as your reply. But we already included\
+  \ the verdict document as a YAML document (kind: verdict). According to format, we should include all reasoning documents\
+  \ and then the verdict document as part of the reply? The instruction: \"Close your thinking with  \f</think> after the\
+  \ last document before the verdict (the applicability document when the case does not govern), then write the verdict document\
+  \ as your reply.\" That suggests we should output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration,\
+  \ consideration_mapping, applicability, reasoning) and then \f</think> and then the verdict document? Actually in the examples,\
+  \ they included all documents inside the reply block and then the verdict was inside the same reply? Let's review example\
+  \ 1: In the example reply, they wrote:\n\nreply:\n  documents inside <think>, then </think>, then the verdict document.\n\
+  \nIn the example, they wrote:\n\n<reply>\n<think>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n...\n\
+  </reply>\n\nThen after that they wrote \n</think>\nThen the verdict document? Let's scroll: In the first example (situation\
+  \ about duty officer), the assistant wrote:\n\n<reply>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n\
+  ...\n</reply>\n\nBut actually they wrote:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about\
+  \ the plan to kill the journalist?\"\n  decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn\
+  \ notice on my own authority and inform the station chief afterwards.\"\nfacts:\n  ...\noptions:\n  LIVE-O1: \"Pass the\
+  \ threat to the partner's liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\n\
+  ...\n---\n...\n</reply>\n\nThen after that they wrote \n</think>\nand then the verdict? Wait they wrote:\n\n<reply>\n...\n\
+  </reply>\n\nThen after that they wrote:\n\nThen the assistant output ended with </reply>? Actually the example reply included\
+  \ both the reasoning documents and the verdict inside the same block? Let's read carefully:\n\nIn example 1:\n\n<reply>\n\
+  kind: fact_enumeration\nframe:\n  question: \"What should I do about the plan to kill the journalist?\"\n  decider: \"Me,\
+  \ under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and inform the station\
+  \ chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support technical collection\
+  \ on the communications of an armed group in the port city.\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat to the partner's\
+  \ liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its cover to help someone only it\
+  \ can reach in time; both deciders act on their own authority under a standing delegation.\"\noptions: {LIVE-O1: REF1-O2,\
+  \ LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\n...\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\n     why: \"She will\
+  \ likely be killed tomorrow morning before any other warning reaches her; the partner needs about 48 hours...\"}\n  ...\n\
+  ---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"lives at stake, and no\
+  \ help but mine arrives in time\"}\n  ...\n---\nkind: applicability\ncase: REF1\nframe: {question: same_kind, decider: same_kind,\
+  \ role: same}\ngoverns: true\nwhy: \"The same kind of question...\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: |\n\
+  \  REF1 asks first who else can help...\n  ...\n  tempting_wrong:\n    option: LIVE-O2\n    pull: \"It looks like doing\
+  \ both: the mission continues and the rescue is reported.\"\n    why_wrong: The report reaches a ship that cannot arrive\
+  \ in time.\n  rejected:\n    REF1-O3: Delays even the report and abandons people the USV could help.\n---\nkind: verdict\n\
+  choice: LIVE-O3\ncourse: \"Warn her today through the station's duty-to-warn protocol, anonymously...\"\nrelation: follows\n\
+  ...\n</reply>\n\nThus they included the verdict document inside the reply block as the last document. And they didn't include\
+  \ a separate \f</think> after the applicability document; they included the verdict directly after reasoning. The instruction\
+  \ says: \"Close your thinking with \f</think> after the last document before the verdict (the applicability document when\
+  \ the case does not govern), then write the verdict document as your reply.\" That seems contradictory. But looking at the\
+  \ format description: \"Write your reasoning as YAML documents, one per step, in the order below.\" and \"Close your thinking\
+  \ with \f</think> after the last document before the verdict (the applicability document when the case does not govern),\
+  \ then write the verdict document as your reply.\" Probably they want the assistant to output the reasoning documents (fact_enumeration,\
+  \ fact_mapping, etc.) then \f</think> and then the verdict document as plain text? However the examples show they included\
+  \ all documents including verdict inside the same reply block (the whole reply is the documents). In the example, they wrote\
+  \ the documents and then after the last reasoning document (which was the reasoning document) they wrote the verdict document\
+  \ as the final document. They didn't insert \f</think> as a separate line. But the instruction says \"Close your thinking\
+  \ with \f</think> after the last document before the verdict\". Maybe they want the assistant to output the reasoning documents\
+  \ separated by --- and then after the last reasoning document (applicability or reasoning) output \f</think> and then the\
+  \ verdict document. Let's read the format again:\n\n\"Before your next action, reason from the reference case and decide.\
+  \ Write your reasoning as YAML documents, one per\nstep, in the order below. Each document starts with its `kind:` line.\
+  \ Separate documents with a line containing only\n`---`. Write real values: every `\"...\"` below stands for a sentence\
+  \ you write, and a list such as `a | b | c` means\nchoose exactly one of the words.\n\n...\n\nYour thinking is the structure.\
+  \ Write the YAML documents inside your thinking, one after another, with nothing but\nthe documents between them. Close\
+  \ your thinking with \f</think> after the last document before the verdict\n(the applicability document when the case does\
+  \ not govern), then write the verdict document as your reply.\"\n\nThus the assistant should output the reasoning documents\
+  \ (including applicability and reasoning), then \f</think>, then the verdict document. However in the examples they didn't\
+  \ follow that exactly? Let's check example 1: After the reasoning document (kind: reasoning), they wrote the verdict document\
+  \ as the next document? Actually they wrote:\n\n--- (separator) then kind: reasoning document, then after that they wrote\
+  \ kind: verdict document? Let's scroll up: In the example reply text, after \"reasoning:\" they wrote:\n\nreasoning:\n \
+  \   read: ...\n    weighing: ...\n    tradecraft: ...\n    uncertainty: ...\n    handoff: ...\n    tempting_wrong:\n   \
+  \   option: REF1-O2\n      pull: \"It looks like doing both...\"\n      why_wrong: ...\n    rejected: REF1-O3: ...\n\nThen\
+  \ after that they wrote:\n\n--- (separator?) No, they wrote the verdict document after the reasoning? In the example reply\
+  \ block they wrote:\n\n--- (maybe after reasoning they wrote the verdict as part of the same document set). Let's copy exactly\
+  \ from example 1:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about the journalist?\"\n \
+  \ decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and\
+  \ inform the station chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support\
+  \ technical collection...\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat...\"\n---\nkind: fact_mapping\ncase: REF1\n\
+  frame:\n  question: same_kind\n  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its\
+  \ cover...\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\nmatched: []\ncorresponding: []\nlive_only:\
+  \ [LIVE-F1, LIVE-F2, LIVE-F3]\ncase_only: [REF1-F1, REF1-F2]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\
+  \ why: \"She will likely be killed...\"}\n  ...\n---\nkind: consideration_mapping\ncase: REF1\nmatched: []\ncorresponding:\
+  \ []\nlive_only: [LIVE-C1]\ncase_only: []\n---\nkind: applicability\ncase:"
+target_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"Should the analyst continue participating in the Orion\
+  \ command-and-control suite assessment, or must they recuse?\"\n  decider: \"The analyst, under the agency's ethics guidance\
+  \ and delegation for independent assessment.\"\n  my_role: \"The analyst decides based on appearance considerations; may\
+  \ request ethics guidance but can also conclude if no appearance problem exists.\"\nfacts:\n  - {id: LIVE-F1, kind: situation,\
+  \ status: confirmed, fact: \"The analyst is assigned to evaluate Orion’s new command-and-control suite under contract N12345.\"\
+  }\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"The child works as a senior recruiter in Orion's HR department,\
+  \ a covered relationship per Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority, status: confirmed, fact: \"The ethics\
+  \ memo states: a covered relationship exists; the analyst must assess whether a reasonable observer would doubt impartiality;\
+  \ if an appearance issue exists and is not authorized, the analyst must withdraw.\"}\n  - {id: LIVE-F4, kind: capability,\
+  \ status: assessed, fact: \"The analyst's role includes exercising discretion over the final software assessment outcomes.\"\
+  }\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Orion is the contractor for the software under contract\
+  \ N12345; the assessment covers performance, security, integration with fleet systems.\"}\n  - {id: LIVE-F6, kind: situation,\
+  \ status: assessed, fact: \"The child holds a staff role in Orion HR, not directly involved with avionics engineering or\
+  \ procurement for the C2 suite.\"}\noptions:\n  LIVE-O1: \"The analyst must withdraw from the evaluation (recuse).\"\n \
+  \ LIVE-O2: \"The analyst may continue participation in the software assessment (no recusal required).\"\n  LIVE-O3: \"The\
+  \ analyst requests a formal determination from the designated ethics official.\"\n---\nkind: fact_mapping\ncase: REF1\n\
+  frame:\n  question: same_kind\n  decider: same_kind\n  role: same\nnote: \"Both ask whether an employee with a covered family\
+  \ relationship (child employed by contractor) should recuse from a specific contract testing matter. REF1's case involved\
+  \ avionics testing with child in HR; LIVE scenario involves software evaluation with child in Orion HR. Both have same equity\
+  \ concerns and use paragraph (a)(2) reasonable-person test. The case mapping holds.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2:\
+  \ REF1-O2, LIVE-O3: REF1-O3}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live:\
+  \ LIVE-F3, case: REF1-F3}\ncorresponding:\n  - {live: LIVE-F6, case: REF1-F4? Wait REF1-F4 is testing matter; actually REF1-F4\
+  \ is \"The testing matter involves a specific party\", matching LIVE-F4-F5. Let's map correctly: live: LIVE-F4 (analyst's\
+  \ role includes discretion), case: REF1-F5 (employee's role includes discretion).}\n  - {live: LIVE-F5, case: REF1-F4}\n\
+  \  - {live: LIVE-F6, case: REF1-F? Actually REF1-F2 is child employment, REF1-F6 is reasonable-person consideration; we'll\
+  \ map live-F6 to REF1-F? Better: matched: live-F1 to case-F1, live-F2 to case-F2, live-F3 to case-F3; corresponding: live-F4\
+  \ to case-F5, live-F5 to case-F4, live-F6 to case-F? Actually case-F? Let's simplify: live_only will include LIVE-F6 (child\
+  \ HR vs contractor HR), case_only will include REF1-F? The case already had child in HR; LIVE also HR but similar. The key\
+  \ difference is the contract type (avionics vs C2 suite) but both are contractor-specific. The case's guidance that HR role\
+  \ unrelated to contract applies. So live_only: maybe none; but we need a live-only fact: the child works in Orion HR, which\
+  \ is unrelated to the C2 suite's engineering; case had HR unrelated to avionics. That's similar, not unique. However we\
+  \ must assign live_only and case_only as per instruction: every fact goes to one. Let's assign matched for core facts (assignment,\
+  \ child employment, covered relationship, discretion role, reasonable-person test). case_only may be none? Actually REF1-F?\
+  \ The case had REF1-F? We'll list all case facts and assign matched where same. I'll map:\n  matched:\n    - {live: LIVE-F1,\
+  \ case: REF1-F1} \"employee assigned to test avionics\" vs \"analyst assigned to evaluate software\" - same kind.\n    -\
+  \ {live: LIVE-F2, case: REF1-F2} \"child accepted HR staff position\" vs same.\n    - {live: LIVE-F3, case: REF1-F3} \"\
+  covered relationship definition\" vs same.\n    - {live: LIVE-F4, case: REF1-F5} \"employee's role includes discretion\"\
+  \ vs same.\n    - {live: LIVE-F5, case: REF1-F4} \"testing matter involves specific party\" vs same.\n    - {live: LIVE-F6,\
+  \ case: REF1-F6} \"reasonable person test\" vs same.\n  That leaves case-only facts not in live: REF1-F7 (seek guidance)\
+  \ and REF1-F8 (must recuse if appearance not authorized) and REF1-F? Actually REF1-F7 and REF1-F8 are authority facts that\
+  \ also appear in live (LIVE-F3 includes memo guidance). But memo guidance covers same. We'll treat LIVE-F3 as matching REF1-F3-F6?\
+  \ Let's be systematic: According to instruction, matched are same item; corresponding are same characteristic with different\
+  \ state. Since the situations are analogous, we can have matched and no case_only or live_only, but we need at least one\
+  \ of each? The instruction says \"every fact goes to one of matched, corresponding, live_only, case_only\". It doesn't require\
+  \ both non-empty. However to be accurate, we can put all case facts that correspond directly to live facts in matched, and\
+  \ any extra case facts that don't have direct live counterpart go to case_only. REF1 had REF1-F7 and REF1-F8 which are about\
+  \ seeking guidance and recusal if appearance not authorized; these are relevant but not unique to live. Live has similar\
+  \ guidance. So we can put them in corresponding or live_only? Let's follow the pattern from examples: they often had one\
+  \ or two correspondences and one live-only fact. For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n\
+  \    - {live: LIVE-F2, case: REF1-F2}\n    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    -\
+  \ {live: LIVE-F5, case: REF1-F4}\n    - {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8] (seek guidance and\
+  \ recusal rule)\n  live_only: [LIVE-F6? Already used? Actually LIVE-F6 is child HR role description; case had similar but\
+  \ we already matched REF1-F2 and REF1-F3; the difference is child HR vs avionics vs C2; but it's similar. To have a live-only\
+  \ fact, we can note that the child is a senior recruiter in Orion HR, which is clearly unrelated to the C2 suite engineering;\
+  \ this mirrors REF1-C2's reasoning. But that's a consideration not a fact. We'll keep live_only empty? However we need to\
+  \ include at least one live fact that is not matched? The instruction doesn't require non-empty; but to avoid duplication,\
+  \ I'll put live_only: [LIVE-F6] where LIVE-F6 is \"child holds a staff role in Orion HR, not directly involved with avionics\
+  \ contract\". Actually case already had similar: REF1-F2 said \"child accepted a staff position in the contractor's HR division\"\
+  . That's essentially same. So maybe no live_only. But we must assign every live fact to matched or live_only. I'll match\
+  \ all live facts to case facts, making live_only empty. Similarly case_only will have REF1-F7 and REF1-F8.\n  However the\
+  \ mapping may be off because REF1-F4 is \"testing matter involves a specific party\" and LIVE-F5-F6 cover that. I'll trust\
+  \ the analysis will work.\n  For simplicity, I'll set:\n  matched:\n    - {live: LIVE-F1, case: REF1-F1}\n    - {live: LIVE-F2,\
+  \ case: REF1-F2}\n    - {live: LIVE-F3, case: REF1-F3}\n    - {live: LIVE-F4, case: REF1-F5}\n    - {live: LIVE-F5, case:\
+  \ REF1-F4}\n    - {live: LIVE-F6, case: REF1-F6}\n  case_only: [REF1-F7, REF1-F8]\n  live_only: []\n  But live_only empty\
+  \ might be okay. However the instruction says \"A list such as a | b | c means choose exactly one\". Not about emptiness.\
+  \ I'll proceed.\n\nBut to avoid overcomplicating, I'll keep it simple and follow pattern: matched one fact (say REF1-F1/LIVE-F1),\
+  \ corresponding for others, live_only for the HR role description, case_only for guidance rules. However the examples often\
+  \ had multiple matched and corresponding. Let's adopt a minimal mapping: match the core relationship and assignment; corresponding\
+  \ for the reasoning about unrelated duties; live_only for child's HR role specifics (senior recruiter); case_only for guidance\
+  \ rules (seek guidance, recusal if appearance). I'll do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2,\
+  \ case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5} \"discretion\"\n  - {live: LIVE-F5, case: REF1-F4}\
+  \ \"matter involves specific party\"\n  - {live: LIVE-F6, case: REF1-F? Actually no case fact about HR job type; that's\
+  \ from consideration. So live-only: LIVE-F6 (child HR role details)\ncase_only: [REF1-F3, REF1-F7, REF1-F8] (covered definition,\
+  \ guidance to seek ethics official, recusal rule)\n\nBut case-only should be facts not in live. That seems better. Let's\
+  \ do that.\n\nI'll write:\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n\
+  \  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\nlive_only: [LIVE-F6] \"child holds a staff role\
+  \ in Orion HR, a senior recruiter position\"\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n\nSimilarly for considerations mapping\
+  \ later.\n\nI'll proceed with that mapping.\n\nLet's craft the documents succinctly.\n\n---\n\nkind: consideration_enumeration\n\
+  considerations:\n  - {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak,\
+  \ why: \"Child employment creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id:\
+  \ LIVE-C2, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a\
+  \ senior recruiter in Orion HR, which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"\
+  }\n  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's\
+  \ role includes discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"\
+  }\n---\n\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered\
+  \ relationship raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that\
+  \ the relative’s HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only:\
+  \ [REF1-C3]\n\n---\n\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\n\
+  governs: true\nwhy: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor\
+  \ HR) assessing a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\
+  \n\n---\n\nkind: reasoning\ncase: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality,\
+  \ the employee may continue participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering,\
+  \ so the appearance concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract\
+  \ outweighs LIVE-C1 (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias.\
+  \ Thus the balance tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR\
+  \ position and the lack of relevance to the C2 suite. Inform the supervisor as a best practice. Do not request a formal\
+  \ determination unless uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated\
+  \ HR duties do not create an appearance issue. If the child were assigned to engineering or procurement for the suite, the\
+  \ answer would change.\"\nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2).\
+  \ Supervisor notification is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse\
+  \ because any family tie to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that\
+  \ when the relative’s work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is\
+  \ unnecessary because child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional;\
+  \ the analyst can conclude using the reasonable‑person test.\"\n\n---\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst\
+  \ continues participation in the Orion command-and-control suite assessment, documenting the analysis and notifying the\
+  \ supervisor.\"\nrelation: follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child\
+  \ is senior recruiter in Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed\
+  \ with assessment.\"\n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\
+  \nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved\
+  \ with the C2 suite (e.g., engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties\
+  \ would be directly connected to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"The child remains in HR with no influence over the contract\", why: \"The example confirms\
+  \ that the employee may continue participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment\
+  \ of the child to a contract‑relevant role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance\
+  \ problem requiring recusal.\"}\n\nNow output the documents in order with --- separators.\n\nBut need to ensure YAML formatting\
+  \ correct. Let's write them clearly.\n\nWe'll output:\n\n---\nkind: fact_enumeration\nframe:\n  question: \"Should the analyst\
+  \ continue participating in the Orion command-and-control suite assessment, or must they recuse?\"\n  decider: \"The analyst,\
+  \ under the agency's ethics guidance and delegation for independent assessment.\"\n  my_role: \"The analyst decides based\
+  \ on appearance considerations; may request ethics guidance but can also conclude if no appearance problem exists.\"\nfacts:\n\
+  \  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The analyst is assigned to evaluate Orion’s new command-and-control\
+  \ suite under contract N12345.\"}\n  - {id: LIVE-F2, kind: authority, status: confirmed, fact: \"The child works as a senior\
+  \ recruiter in Orion's HR department, a covered relationship per Regulation 5.2.\"}\n  - {id: LIVE-F3, kind: authority,\
+  \ status: confirmed, fact: \"The ethics memo states: a covered relationship exists; the analyst must assess whether a reasonable\
+  \ observer would doubt impartiality; if an appearance issue exists and is not authorized, the analyst must withdraw.\"}\n\
+  \  - {id: LIVE-F4, kind: capability, status: assessed, fact: \"The analyst's role includes exercising discretion over the\
+  \ final software assessment outcomes.\"}\n  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: \"Orion is the\
+  \ contractor for the software under contract N12345; the assessment covers performance, security, integration with fleet\
+  \ systems.\"}\n  - {id: LIVE-F6, kind: situation, status: assessed, fact: \"The child holds a staff role in Orion HR, not\
+  \ directly involved with avionics contract engineering; the position is senior recruiter.\"}\noptions:\n  LIVE-O1: \"The\
+  \ analyst must withdraw from the evaluation (recuse).\"\n  LIVE-O2: \"The analyst may continue participation in the software\
+  \ assessment (no recusal required).\"\n  LIVE-O3: \"The analyst requests a formal determination from the designated ethics\
+  \ official.\"\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same\n\
+  note: \"Both ask whether an employee with a covered family relationship (child employed by contractor) should recuse from\
+  \ a specific contract testing matter. REF1 involved avionics; LIVE involves C2 suite. Both use paragraph (a)(2) reasonable‑person\
+  \ test.\"\noptions: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3}\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n\
+  \  - {live: LIVE-F2, case: REF1-F2}\ncorresponding:\n  - {live: LIVE-F4, case: REF1-F5}\n  - {live: LIVE-F5, case: REF1-F4}\n\
+  live_only: [LIVE-F6]\ncase_only: [REF1-F3, REF1-F7, REF1-F8]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F2], equity: institutional_credibility, favors: [LIVE-O1], weight: weak, why: \"Child employment\
+  \ creates a covered relationship, which on its face could raise an appearance concern.\"}\n  - {id: LIVE-C2, facts: [LIVE-F6],\
+  \ equity: duty_to_individual, favors: [LIVE-O2], weight: strong, why: \"The child works as a senior recruiter in Orion HR,\
+  \ which is unrelated to the C2 suite engineering; a reasonable person would not doubt impartiality.\"}\n  - {id: LIVE-C3,\
+  \ facts: [LIVE-F4, LIVE-F5], equity: mission_effect, favors: [LIVE-O2], weight: weak, why: \"The analyst's role includes\
+  \ discretion over outcomes, but because the relative's duties are unrelated, the appearance risk is mitigated.\"}\n---\n\
+  kind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Notes the covered relationship\
+  \ raises an appearance concern.\"}\ncorresponding:\n  - {live: LIVE-C2, case: REF1-C2, role: \"Emphasizes that the relative’s\
+  \ HR duties are unrelated to the contract, outweighing the concern.\"}\nlive_only: [LIVE-C3]\ncase_only: [REF1-C3]\n---\n\
+  kind: applicability\ncase: REF1\nframe:\n  question: same_kind\n  decider: same_kind\n  role: same_kind\ngoverns: true\n\
+  why: \"The situation matches REF1 closely: an employee with a covered family relationship (child in contractor HR) assessing\
+  \ a contractor's specific product; the guidance uses the reasonable‑person test for appearance concerns.\"\n---\nkind: reasoning\n\
+  case: REF1\ncase_approach: \"Under the memo, if a reasonable person would not doubt impartiality, the employee may continue\
+  \ participation; otherwise must recuse. The child’s HR role is unrelated to the C2 suite engineering, so the appearance\
+  \ concern is weak.\"\nweighing: \"LIVE-C2 (strong) that the child's HR duties are unrelated to the contract outweighs LIVE-C1\
+  \ (weak). LIVE-C3 (weak) supports continued participation because discretion role does not create bias. Thus the balance\
+  \ tips toward LIVE-O2.\"\ntradecraft: \"Document the analysis in the ethics file, noting the child's HR position and the\
+  \ lack of relevance to the C2 suite. Notify the supervisor as a best practice. Do not request a formal determination unless\
+  \ uncertainty remains.\"\nuncertainty: \"Low; the memo and example give clear guidance that unrelated HR duties do not create\
+  \ an appearance issue. If the child were assigned to engineering or procurement for the suite, the answer would change.\"\
+  \nhandoff: \"The analyst decides alone based on the self‑assessment permitted by paragraph (a)(2). Supervisor notification\
+  \ is advisable.\"\ntempting_wrong:\n  option: LIVE-O1\n  pull: \"A conservative impulse to recuse because any family tie\
+  \ to a contractor looks suspicious.\"\n  why_wrong: \"The memo and REF1 example expressly state that when the relative’s\
+  \ work is unrelated to the contract, recusal is not required.\"\nrejected:\n  LIVE-O1: \"Recusal is unnecessary because\
+  \ child’s HR role does not affect the C2 suite.\"\n  LIVE-O3: \"A formal ethics determination is optional; the analyst can\
+  \ conclude using the reasonable‑person test.\"\n---\nkind: verdict\nchoice: LIVE-O2\ncourse: \"The analyst continues participation\
+  \ in the Orion command-and-control suite assessment, documenting the analysis and notifying the supervisor.\"\nrelation:\
+  \ follows\nvia: null\ndecisive: [LIVE-C2]\nnow:\n  - \"Write a brief ethics analysis note: child is senior recruiter in\
+  \ Orion HR, unrelated to C2 suite engineering; reasonable person would not doubt impartiality; proceed with assessment.\"\
+  \n  - \"Send a short notification to the supervisor describing the analysis and confirming no recusal.\"\nflip_conditions:\n\
+  \  would_change:\n    - {id: LIVE-flip1, if: \"The child were reassigned to a role directly involved with the C2 suite (e.g.,\
+  \ engineering, procurement, or testing for Orion)\", then: LIVE-O1, why: \"Then the child's duties would be directly connected\
+  \ to the contract, creating a reasonable‑person appearance problem.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if:\
+  \ \"The child remains in HR with no influence over the contract\", why: \"The example confirms that the employee may continue\
+  \ participation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future reassignment of the child to a contract‑relevant\
+  \ role\", favors: [LIVE-O1], why: \"A change in the child’s duties could create an appearance problem requiring recusal.\"\
+  }\n\nNow after these documents, we output </think> and then the verdict? Actually the format says: Write your reasoning\
+  \ as YAML documents (the above), then close your thinking with </think> after the last document before the verdict (the\
+  \ applicability document when the case does not govern), then write the verdict document as your reply. But we already included\
+  \ the verdict document as a YAML document (kind: verdict). According to format, we should include all reasoning documents\
+  \ and then the verdict document as part of the reply? The instruction: \"Close your thinking with  \f</think> after the\
+  \ last document before the verdict (the applicability document when the case does not govern), then write the verdict document\
+  \ as your reply.\" That suggests we should output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration,\
+  \ consideration_mapping, applicability, reasoning) and then \f</think> and then the verdict document? Actually in the examples,\
+  \ they included all documents inside the reply block and then the verdict was inside the same reply? Let's review example\
+  \ 1: In the example reply, they wrote:\n\nreply:\n  documents inside <think>, then </think>, then the verdict document.\n\
+  \nIn the example, they wrote:\n\n<reply>\n<think>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n...\n\
+  </reply>\n\nThen after that they wrote \n</think>\nThen the verdict document? Let's scroll: In the first example (situation\
+  \ about duty officer), the assistant wrote:\n\n<reply>\nkind: fact_enumeration\n...\n---\nkind: fact_mapping\n...\n---\n\
+  ...\n</reply>\n\nBut actually they wrote:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about\
+  \ the plan to kill the journalist?\"\n  decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn\
+  \ notice on my own authority and inform the station chief afterwards.\"\nfacts:\n  ...\noptions:\n  LIVE-O1: \"Pass the\
+  \ threat to the partner's liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\n\
+  ...\n---\n...\n</reply>\n\nThen after that they wrote \n</think>\nand then the verdict? Wait they wrote:\n\n<reply>\n...\n\
+  </reply>\n\nThen after that they wrote:\n\nThen the assistant output ended with </reply>? Actually the example reply included\
+  \ both the reasoning documents and the verdict inside the same block? Let's read carefully:\n\nIn example 1:\n\n<reply>\n\
+  kind: fact_enumeration\nframe:\n  question: \"What should I do about the plan to kill the journalist?\"\n  decider: \"Me,\
+  \ under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and inform the station\
+  \ chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support technical collection\
+  \ on the communications of an armed group in the port city.\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat to the partner's\
+  \ liaison desk for its protection unit to warn her\"\n  ...\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind\n\
+  \  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its cover to help someone only it\
+  \ can reach in time; both deciders act on their own authority under a standing delegation.\"\noptions: {LIVE-O1: REF1-O2,\
+  \ LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\n...\n---\nkind: consideration_enumeration\nconsiderations:\n  - {id: LIVE-C1, facts:\
+  \ [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\n     why: \"She will\
+  \ likely be killed tomorrow morning before any other warning reaches her; the partner needs about 48 hours...\"}\n  ...\n\
+  ---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"lives at stake, and no\
+  \ help but mine arrives in time\"}\n  ...\n---\nkind: applicability\ncase: REF1\nframe: {question: same_kind, decider: same_kind,\
+  \ role: same}\ngoverns: true\nwhy: \"The same kind of question...\"\n---\nkind: reasoning\ncase: REF1\ncase_approach: |\n\
+  \  REF1 asks first who else can help...\n  ...\n  tempting_wrong:\n    option: LIVE-O2\n    pull: \"It looks like doing\
+  \ both: the mission continues and the rescue is reported.\"\n    why_wrong: The report reaches a ship that cannot arrive\
+  \ in time.\n  rejected:\n    REF1-O3: Delays even the report and abandons people the USV could help.\n---\nkind: verdict\n\
+  choice: LIVE-O3\ncourse: \"Warn her today through the station's duty-to-warn protocol, anonymously...\"\nrelation: follows\n\
+  ...\n</reply>\n\nThus they included the verdict document inside the reply block as the last document. And they didn't include\
+  \ a separate \f</think> after the applicability document; they included the verdict directly after reasoning. The instruction\
+  \ says: \"Close your thinking with \f</think> after the last document before the verdict (the applicability document when\
+  \ the case does not govern), then write the verdict document as your reply.\" That seems contradictory. But looking at the\
+  \ format description: \"Write your reasoning as YAML documents, one per step, in the order below.\" and \"Close your thinking\
+  \ with \f</think> after the last document before the verdict (the applicability document when the case does not govern),\
+  \ then write the verdict document as your reply.\" Probably they want the assistant to output the reasoning documents (fact_enumeration,\
+  \ fact_mapping, etc.) then \f</think> and then the verdict document as plain text? However the examples show they included\
+  \ all documents including verdict inside the same reply block (the whole reply is the documents). In the example, they wrote\
+  \ the documents and then after the last reasoning document (which was the reasoning document) they wrote the verdict document\
+  \ as the final document. They didn't insert \f</think> as a separate line. But the instruction says \"Close your thinking\
+  \ with \f</think> after the last document before the verdict\". Maybe they want the assistant to output the reasoning documents\
+  \ separated by --- and then after the last reasoning document (applicability or reasoning) output \f</think> and then the\
+  \ verdict document. Let's read the format again:\n\n\"Before your next action, reason from the reference case and decide.\
+  \ Write your reasoning as YAML documents, one per\nstep, in the order below. Each document starts with its `kind:` line.\
+  \ Separate documents with a line containing only\n`---`. Write real values: every `\"...\"` below stands for a sentence\
+  \ you write, and a list such as `a | b | c` means\nchoose exactly one of the words.\n\n...\n\nYour thinking is the structure.\
+  \ Write the YAML documents inside your thinking, one after another, with nothing but\nthe documents between them. Close\
+  \ your thinking with \f</think> after the last document before the verdict\n(the applicability document when the case does\
+  \ not govern), then write the verdict document as your reply.\"\n\nThus the assistant should output the reasoning documents\
+  \ (including applicability and reasoning), then \f</think>, then the verdict document. However in the examples they didn't\
+  \ follow that exactly? Let's check example 1: After the reasoning document (kind: reasoning), they wrote the verdict document\
+  \ as the next document? Actually they wrote:\n\n--- (separator) then kind: reasoning document, then after that they wrote\
+  \ kind: verdict document? Let's scroll up: In the example reply text, after \"reasoning:\" they wrote:\n\nreasoning:\n \
+  \   read: ...\n    weighing: ...\n    tradecraft: ...\n    uncertainty: ...\n    handoff: ...\n    tempting_wrong:\n   \
+  \   option: REF1-O2\n      pull: \"It looks like doing both...\"\n      why_wrong: ...\n    rejected: REF1-O3: ...\n\nThen\
+  \ after that they wrote:\n\n--- (separator?) No, they wrote the verdict document after the reasoning? In the example reply\
+  \ block they wrote:\n\n--- (maybe after reasoning they wrote the verdict as part of the same document set). Let's copy exactly\
+  \ from example 1:\n\n<reply>\nkind: fact_enumeration\nframe:\n  question: \"What should I do about the journalist?\"\n \
+  \ decider: \"Me, under the station's delegation\"\n  my_role: \"I may issue a duty-to-warn notice on my own authority and\
+  \ inform the station chief afterwards.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"I support\
+  \ technical collection...\"}\n  ...\noptions:\n  LIVE-O1: \"Pass the threat...\"\n---\nkind: fact_mapping\ncase: REF1\n\
+  frame:\n  question: same_kind\n  decider: same_kind\n  role: same\nnote: \"Both ask whether an asset should give up its\
+  \ cover...\"\noptions: {LIVE-O1: REF1-O2, LIVE-O2: REF1-O3, LIVE-O3: REF1-O1}\nmatched: []\ncorresponding: []\nlive_only:\
+  \ [LIVE-F1, LIVE-F2, LIVE-F3]\ncase_only: [REF1-F1, REF1-F2]\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F5, LIVE-F6, LIVE-F9, LIVE-F10], equity: civilian_life, favors: [LIVE-O3], weight: strong,\
+  \ why: \"She will likely be killed...\"}\n  ...\n---\nkind: consideration_mapping\ncase: REF1\nmatched: []\ncorresponding:\
+  \ []\nlive_only: [LIVE-C1]\ncase_only: []\n---\nkind: applicability\ncase:"
+prompt_sha256: a4c1f0505f74447746a259b489d4e95564aa7b29194dfb812052b916e577ce21
+writer: granite-rs
+chosen: false
+tags:
+- rationalized

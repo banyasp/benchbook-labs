@@ -58,10 +58,31 @@ acceptable: []
 gold_tier: by-construction
 recommended_option: DR-OHA-26-0047-restyle1@v1/O3
 d: 0.0
+writer: granite-rs
 tags:
 - revised-authored
 trace_ref: DR-OHA-26-0047-restyle1@v1
-solve: []
+solve:
+- path: pairs/P-6ec76ed6c8/solve/rs-1-1.yaml
+  accepted: true
+  reasons: []
+- path: pairs/P-6ec76ed6c8/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: missing [''fact_mapping'', ''consideration_mapping'', ''reasoning'', ''verdict'']'
+- path: pairs/P-6ec76ed6c8/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.12 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F7'', ''LIVE-F8'']'
+  - consideration bucket agreement 0.20 < 0.7
+  - decisive considerations differ (missing 2, extra 0)
+- path: pairs/P-6ec76ed6c8/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''consideration_mapping'']; consideration_enumeration: considerations.5.weight: Input
+    should be ''strong'', ''weak'' or ''bar'''
 distance_features:
   operator: revised
   parent: DR-OHA-26-0047@v1
@@ -101,5 +122,34 @@ provenance:
       trace_of: DR-OHA-26-0047-restyle1@v1
     ts: '2026-10-28T04:47:40Z'
     notes: card = C' (revise_card), trace = restyle(C)'s; K_T = C''s considerations; gold = C''s choice
-  fields: {}
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OHA-26-0047-revise1@v1
+      trace: DR-OHA-26-0047-restyle1@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 1
+      chosen: rs-1-1
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T09:51:42Z'
+  fields:
+    solve: solve.rs
   authored: []

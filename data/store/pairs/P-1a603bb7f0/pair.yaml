@@ -56,10 +56,82 @@ choice: DR-OHA-26-0100-addfact2@v1/O3
 acceptable: []
 gold_tier: model-solved
 d: 0.05
+writer: granite-rs
 tags:
 - composed-with-C
+- rationalized
 trace_ref: DR-OHA-26-0100-addfact2@v1
-solve: []
+solve:
+- path: pairs/P-1a603bb7f0/solve/rs-1-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli'
+- path: pairs/P-1a603bb7f0/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; fact_mapping:
+    corresponding: Field required; live_only: Field required; case_only: Field requi; consideration_enumeration: considerations.4.weight:
+    Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping: corresponding: Field required; live_only: Field
+    required; case_only: Field requi; repairs'
+- path: pairs/P-1a603bb7f0/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: fact_enumeration: facts.5.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; consideration_enumeration:
+    considerations.4.weight: Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping: corresponding.0.but REF1
+    had uncertainty about future conduct; LIVE-C5 captures ; applicability: case: Field required; frame: Field required; governs:
+    Field required; why: Field; reasoning: weighing: Field required; tradecraft: Field required; uncertainty: Field require'
+- path: pairs/P-1a603bb7f0/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+- path: pairs/P-1a603bb7f0/solve/rs-2-1.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: consideration_mapping: matched.0.live: Input should be a valid string; matched.0.case: Field required; ; applicability:
+    case: Field required; frame: Field required; governs: Field required; why: Field; reasoning: weighing: Field required;
+    tradecraft: Field required; uncertainty: Field require; verdict: choice: Field required; course: Field required; decisive:
+    Field required; now: F; repairs'
+- path: pairs/P-1a603bb7f0/solve/rs-2-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''consideration_mapping'']; consideration_enumeration: considerations.5.weight: Input
+    should be ''strong'', ''weak'' or ''bar'''
+- path: pairs/P-1a603bb7f0/solve/rs-2-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; consideration_enumeration:
+    considerations.5.weight: Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping: corresponding.1.case:
+    Input should be a valid string; corresponding.2.case: Inpu'
+- path: pairs/P-1a603bb7f0/solve/rs-2-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''consideration_mapping'']; fact_enumeration: facts.5.kind: Input should be ''situation'',
+    ''capability'', ''authority'' or ''intelli; consideration_enumeration: considerations.3.weight: Input should be ''strong'',
+    ''weak'' or ''bar''; consideratio'
+- path: pairs/P-1a603bb7f0/solve/rs-r-1.yaml
+  accepted: true
+  reasons: []
+- path: pairs/P-1a603bb7f0/solve/rs-r-2.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.00 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F3'', ''LIVE-F4'', ''LIVE-F6'', ''LIVE-F7'']'
+- path: pairs/P-1a603bb7f0/solve/rs-r-3.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.56 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F6'', ''LIVE-F7'']'
+- path: pairs/P-1a603bb7f0/solve/rs-r-4.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: fact_enumeration: facts.6.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; consideration_enumeration:
+    considerations: Field required; consideration_mapping: case: Field required; matched: Field required; corresponding: Field
+    required; li; applicability: case: Field required; frame: Field required; governs: Field required; why: Field; reasoning:
+    weighing: Field required; tradecraft: Field required; uncertainty: Field require; verdict: course: Field required; decisive:
+    Field required; now: Field required; flip_cond'
 distance_features:
   operator: add_fact
   facts_touched_by_kind:
@@ -147,10 +219,39 @@ provenance:
     params: {}
     ts: '2026-10-28T04:14:15Z'
     notes: ids, options, verdict and gold maps built in code (add_fact)
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OHA-26-0100-2@v1
+      trace: DR-OHA-26-0100-addfact2@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 1
+      chosen: rs-r-1
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T08:54:57Z'
   fields:
     case.considerations: add_fact.compose
     case.reasoning: add_fact.compose
     case.verdict: perturb.construct
     case.facts: add_fact.facts
     case.options: perturb.construct
+    solve: solve.rs
   authored: []

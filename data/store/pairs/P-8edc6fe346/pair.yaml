@@ -62,7 +62,77 @@ d: 0.2778
 tags:
 - composed-with-C
 trace_ref: DR-OHA-26-0108-flip1@v1
-solve: []
+solve:
+- path: pairs/P-8edc6fe346/solve/rs-1-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_mapping: corresponding.0.case: Input should be a valid string; consideration_mapping: matched.3.case: Input
+    should be a valid string; corresponding.0.case: Input shou'
+- path: pairs/P-8edc6fe346/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.67 < 0.7
+  - consideration bucket agreement 0.25 < 0.7
+  - decisive considerations differ (missing 1, extra 1)
+- path: pairs/P-8edc6fe346/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.status: Input should be ''confirmed'' or ''assessed'''
+- path: pairs/P-8edc6fe346/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.00 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F3'', ''LIVE-F5'', ''LIVE-F6'']'
+  - consideration bucket agreement 0.00 < 0.7
+- path: pairs/P-8edc6fe346/solve/rs-2-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_mapping: corresponding.1.case: Input should be a valid string; consideration_mapping: corresponding.0.case:
+    Input should be a valid string; corresponding.1.case: Inpu; verdict: flip_conditions.would_change.0.then: Field required;
+    flip_conditions.would_chang'
+- path: pairs/P-8edc6fe346/solve/rs-2-2.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: fact_enumeration: facts.0.kind: Field required; facts.0.status: Field required; facts.0.fact: Fiel'
+- path: pairs/P-8edc6fe346/solve/rs-2-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: consideration_enumeration: considerations.2.weight: Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping:
+    corresponding.0.case: Input should be a valid string; corresponding.1.case: Inpu'
+- path: pairs/P-8edc6fe346/solve/rs-2-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.status: Input should be ''confirmed'' or ''assessed''; consideration_enumeration: considerations.4.weight:
+    Input should be ''strong'', ''weak'' or ''bar'''
+- path: pairs/P-8edc6fe346/solve/rs-r-1.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: missing [''verdict'']; fact_enumeration: frame: Field required; facts: Field required; options: Field required;
+    fact_mapping: case: Field required; frame: Field required; options: Field required; matched: F; consideration_enumeration:
+    considerations: Field required; consideration_mapping: case: Field required; matched: Field required; corresponding: Field
+    required; li; applicability: case: Field required; frame: Field required; governs: Field required; why: Field; reasoning:
+    weighing: Field required; tradecraft: Field required; uncertainty: Field require'
+- path: pairs/P-8edc6fe346/solve/rs-r-2.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.50 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F5'', ''LIVE-F6'']'
+  - consideration bucket agreement 0.25 < 0.7
+  - decisive considerations differ (missing 1, extra 1)
+- path: pairs/P-8edc6fe346/solve/rs-r-3.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.67 < 0.7
+  - fact recall 0.56 < 0.6
+  - 'decisive facts in the wrong bucket: [''LIVE-F5'', ''LIVE-F6'']'
+  - consideration bucket agreement 0.25 < 0.7
+- path: pairs/P-8edc6fe346/solve/rs-r-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_mapping: corresponding.1.case: Input should be a valid string; consideration_enumeration: considerations.1.weight:
+    Input should be ''strong'', ''weak'' or ''bar''; consideratio'
 distance_features:
   operator: flip
   facts_touched_by_kind:
@@ -138,6 +208,34 @@ provenance:
     params: {}
     ts: '2026-10-28T04:14:53Z'
     notes: ids, options, verdict and gold maps built in code (flip)
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OHA-26-0108@v1
+      trace: DR-OHA-26-0108-flip1@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 0
+      chosen: null
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T12:19:55Z'
   fields:
     case.considerations: flip.compose
     case.reasoning: flip.compose
@@ -145,4 +243,5 @@ provenance:
     case.facts: flip.facts
     case.verdict: perturb.construct
     case.options: perturb.construct
+    solve: solve.rs
   authored: []

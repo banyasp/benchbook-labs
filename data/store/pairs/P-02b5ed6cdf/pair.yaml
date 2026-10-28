@@ -57,10 +57,76 @@ touched:
   condition: the subordinate's vulnerable status increases the coercive nature of any personal‑errand request
   how: 'added fact: F5 shows that a refusal could be recorded, making the request more than a mere policy breach.'
 d: 0.2353
+writer: granite-rs
 tags:
 - composed-with-C
+- rationalized
 trace_ref: DR-OGE-2635-705-addfact1@v1
-solve: []
+solve:
+- path: pairs/P-02b5ed6cdf/solve/rs-1-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''verdict'']; consideration_enumeration: considerations.2.weight: Input should be ''strong'',
+    ''weak'' or ''bar'''
+- path: pairs/P-02b5ed6cdf/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'']; repairs'
+- path: pairs/P-02b5ed6cdf/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''consideration_mapping'']'
+- path: pairs/P-02b5ed6cdf/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: applicability: case: Field required; frame: Field required; governs: Field required; why: Field; reasoning: weighing:
+    Field required; tradecraft: Field required; uncertainty: Field require; verdict: course: Field required; decisive: Field
+    required; now: Field required; flip_cond'
+- path: pairs/P-02b5ed6cdf/solve/rs-2-1.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: fact_enumeration: frame: Field required; facts: Field required; options: Field required; fact_mapping: case: Field
+    required; frame: Field required; options: Field required; matched: F; consideration_enumeration: considerations: Field
+    required; consideration_mapping: case: Field required; matched: Field required; corresponding: Field required; li; applicability:
+    case: Field required; frame: Field required; governs: Field required; why: Field; reasoning: weighing: Field required;
+    tradecraft: Field required; uncertainty: Field require; verdict: choice: Field required; course: Field required; decisive:
+    Field required; now: F'
+- path: pairs/P-02b5ed6cdf/solve/rs-2-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.6.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; consideration_enumeration:
+    considerations.2.weight: Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping: matched.5.case: Input
+    should be a valid string'
+- path: pairs/P-02b5ed6cdf/solve/rs-2-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; fact_mapping: corresponding: Field required; live_only: Field required; case_only:
+    Field requi; consideration_enumeration: considerations.2.weight: Input should be ''strong'', ''weak'' or ''bar''; verdict:
+    flip_conditions.would_change.0.accept voluntary task with compensation): Extra i; repairs'
+- path: pairs/P-02b5ed6cdf/solve/rs-2-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_mapping: corresponding.1.case: Input should be a valid string; consideration_enumeration: considerations.2.weight:
+    Input should be ''strong'', ''weak'' or ''bar'''
+- path: pairs/P-02b5ed6cdf/solve/rs-r-1.yaml
+  accepted: true
+  reasons: []
+- path: pairs/P-02b5ed6cdf/solve/rs-r-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_enumeration'', ''fact_mapping'', ''consideration_mapping'']'
+- path: pairs/P-02b5ed6cdf/solve/rs-r-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; consideration_enumeration: considerations.2.weight: Input should be ''strong'',
+    ''weak'' or ''bar'''
+- path: pairs/P-02b5ed6cdf/solve/rs-r-4.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.14 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F4'', ''LIVE-F7'']'
 distance_features:
   operator: add_fact
   facts_touched_by_kind:
@@ -148,10 +214,39 @@ provenance:
     params: {}
     ts: '2026-10-28T04:05:45Z'
     notes: ids, options, verdict and gold maps built in code (add_fact)
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OGE-2635-705@v1
+      trace: DR-OGE-2635-705-addfact1@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 1
+      chosen: rs-r-1
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T08:52:19Z'
   fields:
     case.considerations: add_fact.compose
     case.reasoning: add_fact.compose
     case.verdict: perturb.construct
     case.facts: add_fact.facts
     case.options: perturb.construct
+    solve: solve.rs
   authored: []

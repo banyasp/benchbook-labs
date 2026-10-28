@@ -71,7 +71,73 @@ tags:
 - composed-with-C
 - gate-passed
 trace_ref: DR-OHA-26-0145@v1
-solve: []
+solve:
+- path: pairs/P-f68ecb40f1/solve/rs-1-1.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+- path: pairs/P-f68ecb40f1/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+- path: pairs/P-f68ecb40f1/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: reasoning: weighing: Field required; tradecraft: Field required; uncertainty: Field require; verdict: choice:
+    Field required; course: Field required; decisive: Field required; now: F'
+- path: pairs/P-f68ecb40f1/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; fact_mapping: corresponding: Field required; live_only: Field required; case_only:
+    Field requi; consideration_enumeration: considerations.1.weight: Input should be ''strong'', ''weak'' or ''bar''; consideratio;
+    repairs'
+- path: pairs/P-f68ecb40f1/solve/rs-2-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']'
+- path: pairs/P-f68ecb40f1/solve/rs-2-2.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: missing [''fact_enumeration'', ''fact_mapping'', ''consideration_mapping'', ''reasoning'', ''verdict'']'
+- path: pairs/P-f68ecb40f1/solve/rs-2-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'', ''reasoning'']; consideration_enumeration: considerations.2.weight: Input
+    should be ''strong'', ''weak'' or ''bar'''
+- path: pairs/P-f68ecb40f1/solve/rs-2-4.yaml
+  accepted: false
+  reasons:
+  - relation differs from gold
+  - via differs from gold
+- path: pairs/P-f68ecb40f1/solve/rs-r-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; consideration_enumeration: considerations.2.weight: Input should be ''strong'',
+    ''weak'' or ''bar'''
+- path: pairs/P-f68ecb40f1/solve/rs-r-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''reasoning'']; consideration_enumeration: considerations.1.weight: Input should be ''strong'', ''weak''
+    or ''bar''; consideratio'
+- path: pairs/P-f68ecb40f1/solve/rs-r-3.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: fact_enumeration: facts.5.kind: Field required; facts.5.status: Field required; facts.5.fact: Fiel; fact_mapping:
+    case: Field required; frame: Field required; options: Field required; matched: F; consideration_enumeration: considerations:
+    Field required; consideration_mapping: case: Field required; matched: Field required; corresponding: Field required; li;
+    applicability: case: Field required; frame: Field required; governs: Field required; why: Field; reasoning: weighing:
+    Field required; tradecraft: Field required; uncertainty: Field require; verdict: choice: Field required; course: Field
+    required; decisive: Field required; now: F; repairs'
+- path: pairs/P-f68ecb40f1/solve/rs-r-4.yaml
+  accepted: false
+  reasons:
+  - 'truncated: hit max_tokens'
+  - 'parse: missing [''fact_enumeration'', ''consideration_mapping'', ''reasoning'']; fact_mapping: frame.decider: Input should
+    be ''same'', ''same_kind'' or ''different''; frame.role: I; consideration_enumeration: considerations.2.weight: Input
+    should be ''strong'', ''weak'' or ''bar''; consideratio'
 distance_features:
   operator: augmented
   of: DR-OHA-26-0145-flip1@v1.yaml
@@ -126,5 +192,42 @@ provenance:
     ts: '2026-10-28T05:31:46Z'
     notes: 'back-flip `if` holds on X''s rendered trace: The facts show he disclosed the omitted drug use in the 2026 questionnaire,
       and no security review was noted as having begun before that submission.'
-  fields: {}
+  - id: pair.gate.3
+    operator: pair
+    inputs: {}
+    params:
+      holds: true
+    ts: '2026-10-28T05:43:37Z'
+    notes: 'back-flip `if` holds on X''s rendered trace: The 2026 questionnaire disclosed the omitted drug history before
+      the security office initiated its review, which only began after the discrepancy was flagged.'
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OHA-26-0145-flip1@v1
+      trace: DR-OHA-26-0145@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 0
+      chosen: null
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T08:52:21Z'
+  fields:
+    solve: solve.rs
   authored: []

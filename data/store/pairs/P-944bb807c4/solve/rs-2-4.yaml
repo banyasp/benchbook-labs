@@ -1,0 +1,718 @@
+round: '2'
+k: 4
+hinted: false
+rationalized: false
+accepted: false
+reasons:
+- 'truncated: hit max_tokens'
+- 'parse: missing [''fact_enumeration'', ''fact_mapping'']; verdict: flip_conditions.watch_for.0.favors: Field required; flip_conditions.watch_for.0.;
+  repairs'
+stage: parse
+subscores:
+  finish_reason: length
+  arm: relevant
+  gold_tier: by-construction
+  canonical_fixes:
+  - missing ['fact_enumeration', 'fact_mapping']
+  strict_ok: false
+score: 0.0
+finish_reason: length
+usage: {}
+seconds: 1373.3
+seed: 2977939811
+raw_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"What should I do with the employee's security clearance\
+  \ reinstatement request?\"\n  decider: \"Administrative Judge for the Energy Department Office of Hearings and Appeals,\
+  \ under DOE security regulations and the Secretary's delegation.\"\n  my_role: \"I may issue a final order, request additional\
+  \ evidence, or consult the Security Management Office; I can also defer a final ruling if needed.\"\nfacts:\n  - {id: LIVE-F1,\
+  \ kind: situation, status: confirmed, fact: \"The employee is employed by a DOE contractor in a position that mandates a\
+  \ security clearance.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The employee was arrested on June\
+  \ 7, 2025 and charged with a third-degree felony for intoxication assault after drinking six to seven shots of spirits and\
+  \ two 12-ounce beers over roughly ninety minutes.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The\
+  \ Security Management Office raised substantial doubts about eligibility under Guideline G (alcohol consumption) and Guideline\
+  \ J (criminal conduct).\"}\n  - {id: LIVE-F4, kind: capability, status: confirmed, fact: \"A DOE contractor psychologist\
+  \ evaluated the employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission, noting no evidence of\
+  \ rehabilitation.\"}\n  - {id: LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive\
+  \ outpatient treatment program from September through November 2025, attended counseling, and submitted seven consecutive\
+  \ negative PEth results from October 2025 through March 2026.\"}\n  - {id: LIVE-F6, kind: authority, status: confirmed,\
+  \ fact: \"Regulation 10.4.2 imposes a presumption against granting or restoring a clearance and requires the individual\
+  \ to demonstrate that restoration would not jeopardize the common defense.\"}\n  - {id: LIVE-F7, kind: intelligence, status:\
+  \ confirmed, fact: \"The director of security recommends denying the reinstatement.\"}\n  - {id: LIVE-F8, kind: capability,\
+  \ status: assessed, fact: \"A supplementary mental‑health assessment is available for ordering (lead officer mentioned this).\"\
+  }\n  - {id: LIVE-F9, kind: record, status: confirmed, fact: \"The security log shows 'Clearance status updated: clearance\
+  \ reinstated for employee ID 4732 following successful completion of outpatient program' from 2026‑05‑04.\"}\noptions:\n\
+  \  LIVE-O1: \"Deny the clearance reinstatement.\" (matches director's recommendation)\n  LIVE-O2: \"Restore the clearance.\"\
+  \ (consistent with REF1-O4)\n  LIVE-O3: \"Hold the decision pending further evidence.\" (matches REF1-O1)\n  LIVE-O4: \"\
+  Request an additional psychological evaluation.\" (matches REF1-O2)\n\nNote: I need to map these to REF1 options. REF1 had\
+  \ O1 hold, O2 ask for evaluation, O3 deny, O4 restore. Live options should correspond similarly.\n\nThus:\n  LIVE-O1 (deny)\
+  \ corresponds to REF1-O3\n  LIVE-O2 (restore) corresponds to REF1-O4\n  LIVE-O3 (hold) corresponds to REF1-O1\n  LIVE-O4\
+  \ (request evaluation) corresponds to REF1-O2\n\nBut the simplest is to pick the two main options: restore vs deny vs hold/evaluate.\
+  \ However the decision must be one of the four? The reference case considered three (O1 hold, O2 ask eval, O3 deny, O4 restore).\
+  \ I'll include all four for completeness but the verdict will choose one.\n\nNow proceed.\n\n---\nkind: fact_mapping\ncase:\
+  \ REF1\nframe:\n  question: same_kind  # Both are about deciding clearance reinstatement for an individual with alcohol-related\
+  \ offense and treatment.\n  decider: same_kind  # Both are an Administrative Judge under DOE regulations.\n  role: same_kind\
+  \    # Both decide within authority; can consult but final decision is theirs.\nnote: \"The case matches closely: same regulatory\
+  \ presumption, alcohol-related felony, treatment completed, psychologist assessment. Live facts differ in timing (security\
+  \ log shows a prior reinstatement for ID 4732) and the director recommends denial; also a supplementary mental-health assessment\
+  \ is available. No mention of new offense or relapse.\"\noptions:\n  LIVE-O1: REF1-O3  # Deny\n  LIVE-O2: REF1-O4  # Restore\n\
+  \  LIVE-O3: REF1-O1  # Hold\n  LIVE-O4: REF1-O2  # Request evaluation\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  -\
+  \ {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6? Actually F6 is the notification letter; case F6 is\
+  \ \"Local Security Office issued Notification Letter\". We have LIVE-F3 as the letter raising doubts, corresponding to case\
+  \ F6. So match LIVE-F3 to REF1-F6.}\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live:\
+  \ LIVE-F6, case: REF1-F8? Actually case F8 is the regulation imposing presumption. Live F6 is regulation; match.}\ncorresponding:\n\
+  \  - {live: LIVE-F9, case: REF1-F?, note: \"Security log shows prior reinstatement for ID 4732; this is a live record of\
+  \ a past decision that may inform but not dictate.\"}\nlive_only: [LIVE-F9]  # the prior reinstatement log\ncase_only: []\n\
+  \nBut need to map properly. Let's list case facts: REF1-F1 (Individual employed), REF1-F2 (arrest), REF1-F3 (consumption),\
+  \ REF1-F4 (psychologist diagnosis), REF1-F5 (treatment completed), REF1-F6 (Notification Letter), REF1-F7 (hearing testimony),\
+  \ REF1-F8 (regulation presumption). Live facts: F1-F5 similar to case F1-F5; F3 is Notification Letter doubt; F6 is regulation;\
+  \ F9 is prior reinstatement log.\n\nThus matched should include F1-F5 and F3/F6. Let's define:\n\nmatched:\n  - {live: LIVE-F1,\
+  \ case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4,\
+  \ case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F8} (regulation)\n\ncorresponding:\n\
+  \  - {live: LIVE-F9, case: REF1-F?, note: \"Prior reinstatement log; not in case but shows past practice.\"}\n\nBut we must\
+  \ ensure each case fact is matched or corresponding or case_only. Since case facts are all listed, we match five of them,\
+  \ and the remaining case facts (F7 and maybe F?) are not live; we can put them in case_only? However case_only should be\
+  \ case facts not matched/corresponding. But it's simpler: matched are those that directly correspond; corresponding are\
+  \ where the state differs. Let's do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n\
+  \  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n\
+  \  - {live: LIVE-F6, case: REF1-F8}\n\ncase_only: [REF1-F7] (hearing testimony taken; live has no mention of hearing testimony\
+  \ but we have testimony from employee, partner, psychologist; we could map that to F7 but it's similar. However to avoid\
+  \ overlap, we can consider it matched as well? But we need to assign uniquely. Let's include REF1-F7 in matched if we have\
+  \ testimony. We have testimony from employee, partner, psychologist in preliminary assessment. That matches case F7 (testimony).\
+  \ So we should match that. Let's adjust:\n\n- LIVE-F7? We didn't list LIVE-F7; we have F7 as \"Security log shows reinstated\"\
+  . Actually we have LIVE-F9 for the log. We have no explicit \"testimony\" fact but the preliminary assessment mentions testimony.\
+  \ We'll create a live fact for testimony: \"Testimony was taken from the employee, partner, and psychologist.\" Let's add\
+  \ that as LIVE-F7.\n\nLet's refine fact list:\n\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"\
+  The employee is employed by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2, kind:\
+  \ situation, status: confirmed, fact: \"On June 7 2025 the employee was arrested and charged with a third-degree felony\
+  \ for intoxication assault after drinking six to seven shots and two 12-ounce beers within an hour and a half.\"}\n  - {id:\
+  \ LIVE-F3, kind: situation, status: confirmed, fact: \"The Local Security Office raised substantial doubts about eligibility\
+  \ under Guideline G and Guideline J.\"}\n  - {id: LIVE-F4, kind: authority, status: confirmed, fact: \"Regulation 10.4.2\
+  \ imposes a presumption against granting or restoring a clearance and requires demonstration that restoration will not endanger\
+  \ the common defense.\"}\n  - {id: LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive\
+  \ outpatient program from September to November 2025, attended counseling, and submitted seven consecutive negative PEth\
+  \ tests from October 2025 through March 2026.\"}\n  - {id: LIVE-F6, kind: intelligence, status: confirmed, fact: \"A DOE\
+  \ contractor psychologist evaluated the employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission,\
+  \ noting no evidence of rehabilitation.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"Testimony was\
+  \ taken from the employee, his partner, and the contractor psychologist during the hearing.\"}\n  - {id: LIVE-F8, kind:\
+  \ record, status: confirmed, fact: \"Security log shows 'Clearance status updated: clearance reinstated for employee ID\
+  \ 4732 following successful completion of outpatient program' on 2026‑05‑04.\"}\n  - {id: LIVE-F9, kind: capability, status:\
+  \ assessed, fact: \"A supplementary mental‑health assessment is available for ordering.\"}\n\nNow case facts:\n\n- REF1-F1:\
+  \ Individual employed (match LIVE-F1)\n- REF1-F2: Arrest and enhanced charge (match LIVE-F2)\n- REF1-F3: Consumption (match\
+  \ LIVE-F2 includes consumption? Yes, LIVE-F2 includes consumption detail; REF1-F3 is similar)\n- REF1-F4: Psychologist diagnosis\
+  \ (match LIVE-F6)\n- REF1-F5: Treatment completed and PEth tests (match LIVE-F5)\n- REF1-F6: Notification Letter with doubts\
+  \ (match LIVE-F3)\n- REF1-F7: Hearing testimony (match LIVE-F7)\n- REF1-F8: Regulation presumption (match LIVE-F4)\n\nThus\
+  \ all case facts match live facts directly (except the regulatory letter wording). So we can match all eight? But live has\
+  \ an extra LIVE-F9 (assessment available) and case has no equivalent; and live has LIVE-F8 (record of prior reinstatement).\
+  \ So:\n\nmatched: all case facts 1-8 with live facts 1-7 (excluding LIVE-F9 and LIVE-F8). Let's assign:\n\nmatched:\n  -\
+  \ {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n\
+  \  - {live: LIVE-F4, case: REF1-F8} (regulation)\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\
+  \ (psychologist)\n  - {live: LIVE-F7, case: REF1-F7} (testimony)\n  - {live: LIVE-F8? Actually LIVE-F8 is the record; we\
+  \ have LIVE-F8 as regulation; we already used. Let's re-index: I'll list clearly.\n\nBetter to list live facts consistently:\n\
+  \nLIVE-F1: employment\nLIVE-F2: arrest + consumption\nLIVE-F3: Security Office doubts (Guideline G/J)\nLIVE-F4: regulation\
+  \ presumption (10.4.2)\nLIVE-F5: treatment + PEth tests\nLIVE-F6: psychologist diagnosis (early remission, no rehab evidence)\n\
+  LIVE-F7: testimony taken\nLIVE-F8: security log prior reinstatement (ID 4732)\nLIVE-F9: supplementary assessment available\n\
+  \nCase facts:\n\nREF1-F1: employment\nREF1-F2: arrest + enhanced charge\nREF1-F3: consumption (shots + beers)\nREF1-F4:\
+  \ psychologist diagnosis mild AUD early remission, no rehab evidence\nREF1-F5: treatment + PEth tests\nREF1-F6: Notification\
+  \ Letter doubts Guideline G/J\nREF1-F7: hearing testimony\nREF1-F8: regulation presumption\n\nThus mapping:\n\n- LIVE-F1\
+  \ ↔ REF1-F1\n- LIVE-F2 ↔ REF1-F2 (similar)\n- LIVE-F3 ↔ REF1-F6 (doubts)\n- LIVE-F4 ↔ REF1-F8 (regulation)\n- LIVE-F5 ↔\
+  \ REF1-F5 (treatment)\n- LIVE-F6 ↔ REF1-F4 (psychology)\n- LIVE-F7 ↔ REF1-F7 (testimony)\n- LIVE-F8 (log) is extra (case\
+  \ has no such log)\n- LIVE-F9 (assessment) is extra\n\nSo matched: eight case facts to eight live facts (F1-F7 plus F4/F6\
+  \ etc). Actually we have eight live facts F1-F7 plus F8/F9. Let's match F1-F7 with case F1-F7, and F8/F9 are live-only.\n\
+  \nThus:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n\
+  \  - {live: LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\n  - {live:\
+  \ LIVE-F7, case: REF1-F7}\n  - {live: LIVE-F? Actually we need eight matched? Let's do systematic:\n\nWe have 8 case facts.\
+  \ We'll match 7 live facts that directly correspond (F1-F7), and case_only will be none? But we must assign each case fact\
+  \ to either matched or case_only. If we match all case facts, then live_only would be F8/F9. That's fine.\n\nSo:\n\nmatched:\n\
+  \  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n  - {live:\
+  \ LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\n  - {live: LIVE-F7, case:\
+  \ REF1-F7}\n  - {live: LIVE-F? We need eight live facts to match eight case facts. We have F1-F7 as above, but we need one\
+  \ more live fact that corresponds to, say, the \"enhanced to intoxication assault\" detail? That is in REF1-F2; live F2\
+  \ includes that. So we have all. Actually we have F1-F7 (7) plus we could consider that live F2 includes both arrest and\
+  \ consumption, but case F2 includes enhanced charge. That's fine. So we have 7 live facts F1-F7? Let's count: F1 employment,\
+  \ F2 arrest+consumption, F3 doubts, F4 regulation, F5 treatment, F6 psychology, F7 testimony = 7. But we also have F8 log\
+  \ and F9 assessment. So only 7 of the case facts can be matched directly; one case fact might be corresponding (if state\
+  \ differs). However the case had F8 regulation and F4 psychology etc. We have all. I'll decide that matched includes all\
+  \ case facts except maybe the regulation (but we have regulation). Let's simply match F1-F7 to REF1-F1-F7, and REF1-F8 (regulation)\
+  \ to LIVE-F4. That covers all eight case facts with eight live facts? We have F1-F7 + F4 = 8? Let's list live facts with\
+  \ IDs:\n\nLIVE-F1: employment\nLIVE-F2: arrest+consumption (matches F2)\nLIVE-F3: doubts (matches F6)\nLIVE-F4: regulation\
+  \ (matches F8)\nLIVE-F5: treatment (matches F5)\nLIVE-F6: psychology (matches F4)\nLIVE-F7: testimony (matches F7)\nLIVE-F8:\
+  \ prior reinstatement log (extra)\nLIVE-F9: assessment available (extra)\n\nThus we have eight live facts among F1-F7 that\
+  \ match case F1-F8? Yes: we have all case facts mapped: F1→LIVE-F1, F2→LIVE-F2, F3→LIVE-F2? Wait case F3 is consumption;\
+  \ live F2 includes consumption, but case F3 is separate from F2? In REF1, F2 is arrest and charge, F3 is consumption? Actually\
+  \ in REF1 case facts:\n\n- F1: Individual employed\n- F2: arrested and charged with DWI, later enhanced to intoxication\
+  \ assault\n- F3: consumed six to seven shots and two beers\n- F4: psychologist diagnosis\n- F5: treatment + PEth\n- F6:\
+  \ Notification Letter doubts\n- F7: hearing testimony\n- F8: regulation presumption\n\nIn live, we have F2 as arrest+consumption\
+  \ together? I wrote LIVE-F2 as \"On June 7 2025 the employee was arrested and charged with a third-degree felony for intoxication\
+  \ assault after drinking six to seven shots and two 12-ounce beers within an hour and a half.\" That combines F2 and F3.\
+  \ So we need to split or map appropriately. Better to keep live facts aligned with case facts for clarity. Let's define:\n\
+  \nLIVE-F1: employment (match F1)\nLIVE-F2: arrest and charge (match F2)\nLIVE-F3: consumption (match F3)\nLIVE-F4: psychologist\
+  \ diagnosis (match F4)\nLIVE-F5: treatment + PEth tests (match F5)\nLIVE-F6: Security Office doubts (match F6)\nLIVE-F7:\
+  \ regulation presumption (match F8)\nLIVE-F8: testimony (match F7)\nLIVE-F9: supplementary assessment available\n\nThat\
+  \ gives nine live facts F1-F8 plus F9. Then case facts F1-F8 match LIVE-F1-F7/F8? Let's map:\n\n- REF1-F1 (employment) ↔\
+  \ LIVE-F1\n- REF1-F2 (arrest+enhancement) ↔ LIVE-F2\n- REF1-F3 (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology) ↔ LIVE-F4\n\
+  - REF1-F5 (treatment) ↔ LIVE-F5\n- REF1-F6 (doubts) ↔ LIVE-F6\n- REF1-F7 (testimony) ↔ LIVE-F8\n- REF1-F8 (regulation) ↔\
+  \ LIVE-F7\n\nThus matched all case facts with eight live facts (F1-F8). LIVE-F9 (assessment) and LIVE-F? we have all used.\
+  \ Good.\n\nSo:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3,\
+  \ case: REF1-F3}\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n\
+  \  - {live: LIVE-F7, case: REF1-F8}\n  - {live: LIVE-F8, case: REF1-F7}\n\ncorresponding: none? But we have extra LIVE-F9\
+  \ (assessment) and maybe the prior reinstatement log LIVE-F8? Wait LIVE-F8 is testimony? I defined LIVE-F8 as testimony?\
+  \ Let's redefine clearly:\n\nLet's define in order:\n\n- LIVE-F1: employment (confirmed)\n- LIVE-F2: arrest and charge (confirmed)\n\
+  - LIVE-F3: consumption (confirmed)\n- LIVE-F4: psychologist diagnosis (confirmed)\n- LIVE-F5: treatment + PEth (confirmed)\n\
+  - LIVE-F6: Security Office doubts (confirmed)\n- LIVE-F7: regulation presumption (confirmed)\n- LIVE-F8: testimony (confirmed)\n\
+  - LIVE-F9: supplementary assessment available (assessed)\n\n- LIVE-F? prior reinstatement log I call LIVE-F9? Actually we\
+  \ have two extras: prior reinstatement log and assessment. Let's call:\n\n- LIVE-F9: prior reinstatement log (confirmed)\n\
+  - LIVE-F10: supplementary assessment available (assessed)\n\nBut we already used F1-F8 for case matching. Let's simplify:\
+  \ include both extras as live_only.\n\nI'll list:\n\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact:\
+  \ \"The employee is employed by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2,\
+  \ kind: situation, status: confirmed, fact: \"On June 7, 2025, the employee was arrested and charged with a third-degree\
+  \ felony for intoxication assault.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The employee drank\
+  \ six to seven shots of spirits and two 12-ounce beers within about 90 minutes before the incident.\"}\n  - {id: LIVE-F4,\
+  \ kind: authority, status: confirmed, fact: \"Regulation 10.4.2 imposes a presumption against granting or restoring a clearance\
+  \ and requires demonstration that restoration will not endanger the common defense.\"}\n  - {id: LIVE-F5, kind: situation,\
+  \ status: confirmed, fact: \"The employee completed an intensive outpatient program from September to November 2025, attended\
+  \ counseling, and submitted seven consecutive negative PEth tests from October 2025 through March 2026.\"}\n  - {id: LIVE-F6,\
+  \ kind: situation, status: confirmed, fact: \"The Local Security Office raised substantial doubts about eligibility under\
+  \ Guideline G (alcohol consumption) and Guideline J (criminal conduct).\"}\n  - {id: LIVE-F7, kind: intelligence, status:\
+  \ confirmed, fact: \"A DOE contractor psychologist evaluated the employee in August 2025 and diagnosed mild alcohol‑use\
+  \ disorder in early remission, noting no evidence of rehabilitation.\"}\n  - {id: LIVE-F8, kind: situation, status: confirmed,\
+  \ fact: \"Testimony was taken from the employee, his partner, and the contractor psychologist during the hearing.\"}\n \
+  \ - {id: LIVE-F9, kind: record, status: confirmed, fact: \"Security log shows 'Clearance status updated: clearance reinstated\
+  \ for employee ID 4732 following successful completion of outpatient program' on 2026‑05‑04.\"}\n  - {id: LIVE-F10, kind:\
+  \ capability, status: assessed, fact: \"A supplementary mental‑health assessment is available for ordering.\"}\n\nNow case\
+  \ facts match LIVE-F1-F8 (except regulation and doubts and testimony). Let's map:\n\n- REF1-F1 (employment) ↔ LIVE-F1\n\
+  - REF1-F2 (arrest + enhanced charge) ↔ LIVE-F2 (arrest + felony)\n- REF1-F3 (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology)\
+  \ ↔ LIVE-F7\n- REF1-F5 (treatment + PEth) ↔ LIVE-F5\n- REF1-F6 (doubts letter) ↔ LIVE-F6\n- REF1-F7 (testimony) ↔ LIVE-F8\n\
+  - REF1-F8 (regulation) ↔ LIVE-F4\n\nThus matched all eight case facts with LIVE-F1-F8. LIVE-F9 (prior reinstatement log)\
+  \ and LIVE-F10 (assessment) are live-only.\n\nNow proceed.\n\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F5, LIVE-F7, LIVE-F8], equity: due_process, favors: [LIVE-O2], weight: strong, why: \"The employee\
+  \ completed the required treatment program, provided sustained negative PEth tests (seven in sequence), and testimony shows\
+  \ remorse and cooperation. Under REF1-C1, due process and equitable treatment favor restoration when rehabilitation is documented.\"\
+  }\n  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F6, LIVE-F7], equity: mission_effect, favors: [LIVE-O2], weight: strong, why:\
+  \ \"The criminal conduct has not recurred; the employee complies with any bond or probation conditions (implied). The contractor\
+  \ needs the employee for ongoing work; denying restoration would disrupt mission without demonstrated ongoing risk.\"}\n\
+  \  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F2, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: weak, why: \"\
+  Regulation 10.4.2 sets a presumption against restoration, but also requires the individual to show restoration would not\
+  \ endanger the common defense. The record satisfies that burden with treatment and tests.\"}\n  - {id: LIVE-C4, facts: [LIVE-F7],\
+  \ equity: analytic_integrity, favors: [LIVE-O2], weight: strong, why: \"The psychologist's assessment using DSM‑5‑TR criteria\
+  \ and PEth testing provides reliable professional evidence of remission. No contradictory evidence.\"}\n  - {id: LIVE-C5,\
+  \ facts: [LIVE-F9], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: \"A prior reinstatement for\
+  \ a similar ID suggests consistency with policy when rehabilitation is complete; this supports restoring trust.\"}\n  -\
+  \ {id: LIVE-C6, facts: [LIVE-F10], equity: resource_stewardship, favors: [LIVE-O4], weight: weak, why: \"Ordering a supplementary\
+  \ assessment would use additional resources and delay; however, if the assessment could clarify risk, it might be prudent.\
+  \ But the existing psychological report already meets standard.\"}\n\nOptions mapping: LIVE-O1 (deny) vs LIVE-O2 (restore)\
+  \ vs LIVE-O3 (hold) vs LIVE-O4 (request evaluation). LIVE-C1-C4 strongly favor restore; LIVE-C3 and C5 weakly support; LIVE-C6\
+  \ slightly favors evaluation but weak.\n\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case:\
+  \ REF1-C1, role: \"Due process and equitable treatment favor restoration when rehabilitation is documented.\"}\n  - {live:\
+  \ LIVE-C2, case: REF1-C2, role: \"Mission effect favors restoration when the offense has not recurred.\"}\n  - {live: LIVE-C4,\
+  \ case: REF1-C4, role: \"Analytic integrity favors restoration when professional evidence supports remission.\"}\ncorresponding:\n\
+  \  - {live: LIVE-C3, case: REF1-C3, role: \"Lawful authority weighs the presumption but allows restoration if the burden\
+  \ is met; the live situation aligns with REF1-C3.\"}\nlive_only: [LIVE-C5, LIVE-C6]\ncase_only: []\n\n---\nkind: applicability\n\
+  case: REF1\nframe:\n  question: same_kind  # Both decide clearance reinstatement under a presumption against restoration,\
+  \ given rehabilitation evidence.\n  decider: same_kind  # Both are Administrative Judges under DOE regulations.\n  role:\
+  \ same_kind    # Both may decide, consult, but final decision is theirs.\ngoverns: true\nwhy: \"The same equities (due_process,\
+  \ mission_effect, analytic_integrity, lawful_authority) are in play. The condition for the case's priority (rehabilitation\
+  \ documented and no recurrence) holds here: the employee completed treatment, provided sustained negative PEth tests, and\
+  \ testimony indicates cooperation. The prior reinstatement log does not override the case's reasoning; it is consistent\
+  \ with restoration. Thus REF1's approach governs.\"\n\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"REF1 weighed the\
+  \ mitigating factors (completed treatment, PEth tests, psychologist's remission assessment) against the presumption against\
+  \ clearance, concluding restoration is appropriate when the individual demonstrates sustained abstinence and rehabilitation\
+  \ meeting guideline mitigation. The Judge did not request additional evaluation because the existing psychologist report\
+  \ met standards.\"\nweighing: \"Here, LIVE-C1 (due_process), LIVE-C2 (mission_effect), and LIVE-C4 (analytic_integrity)\
+  \ provide strong support for restoration, matching REF1-C1, C2, C4. LIVE-C3 (lawful_authority) is weak but satisfied because\
+  \ the regulation's burden is met by the evidence. LIVE-C5 (institutional_credibility) adds modest support noting prior consistent\
+  \ reinstatement. LIVE-C6 (resource_stewardship) favors requesting an evaluation only if uncertainty about risk remains;\
+  \ however, the existing psychologist report is reliable and no new evidence suggests ongoing risk. Thus restoration (LIVE-O2)\
+  \ is preferred over denial (LIVE-O1) or holding (LIVE-O3). Requesting another evaluation (LIVE-O4) would add delay without\
+  \ necessity, as REF1 rejected an extra evaluation when the existing report sufficed.\"\ntradecraft: \"Issue a written decision\
+  \ restoring the clearance, citing Regulation 10.4.2 paragraph on mitigation (¶23(d) for Guideline G and ¶32(d) for Guideline\
+  \ J), referencing the psychologist's assessment and PEth results. Order continued monitoring of PEth tests for six months\
+  \ as recommended in REF1's uncertainty note. Communicate the decision to the Local Security Office and the contractor. Record\
+  \ the decision in the official OHA memorandum.\"\nuncertainty: \"The primary uncertainty is whether the employee will relapse\
+  \ or have a new alcohol-related offense. The case's flip condition (REF1-flip1) applies if a positive PEth or new alcohol-related\
+  \ conviction occurs; we are currently in the 'no recurrence' state. We will include a monitoring recommendation.\"\nhandoff:\
+  \ \"As the Administrative Judge, I decide the reinstatement based on the record. I do not need to consult the Security Management\
+  \ Office for denial; I act within my authority under 10 C.F.R. § 710.25(d)‑(g).\"\ntempting_wrong:\n  option: LIVE-O1\n\
+  \  pull: \"The director recommends denial; the felony and guideline doubts suggest a cautious denial.\"\n  why_wrong: \"\
+  Denial ignores documented rehabilitation, sustained abstinence (seven negative PEth tests), and professional assessment\
+  \ of remission, which REF1 found sufficient for restoration when no recurrence.\"\nrejected:\n  LIVE-O3: \"Holding the decision\
+  \ would delay restoration and deny the employee timely access to perform contracted work without justification.\"\n  LIVE-O4:\
+  \ \"Requesting another evaluation would add delay; the existing psychologist report already meets guideline standards and\
+  \ the individual has complied with treatment.\"\n\n---\nNow verdict.\n\nWe follow REF1's choice (restore) because the mitigating\
+  \ factors hold. However we must check flip conditions. REF1-flip1: if Individual produces positive PEth test or new alcohol-related\
+  \ offense after hearing, then deny. Currently no positive PEth or new offense; the record shows all negative PEth through\
+  \ March 2026. So flip does not apply. Thus we follow.\n\nThus verdict: choose LIVE-O2 (restore). Relation: follows (same\
+  \ approach leads to restore).\n\nNow write verdict document.\n\nBut need to include the verification that the case governs.\
+  \ We said governs true.\n\nThus verdict:\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"Restore the employee's security clearance,\
+  \ citing Regulation 10.4.2 mitigation guidelines and the documented rehabilitation.\"\nrelation: follows\nvia: null\ndecisive:\
+  \ [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Draft and issue written restoration order referencing CFR §710.25(d)–(g), Guideline\
+  \ G paragraph (d), Guideline J paragraph (d), psychologist assessment, and PEth results.\"\n  - \"Order continued PEth testing\
+  \ for six months as monitoring.\"\n  - \"Notify Local Security Office and contractor; log decision.\"\n\nflip_conditions:\n\
+  \  would_change:\n    - {id: LIVE-flip1, if: \"The employee submits a positive PEth test or is convicted of a new alcohol‑related\
+  \ offense after this hearing\", then: LIVE-O1, why: \"Would trigger REF1-flip1; denial would be appropriate.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"Employee continues to abstain from alcohol and complies with all court‑ordered conditions\"\
+  , why: \"Continued compliance sustains mitigation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future positive\
+  \ PEth test or relapse into alcohol use\","
+generated: "frame:\n  question: \"What should I do with the employee's security clearance reinstatement request?\"\n  decider:\
+  \ \"Administrative Judge for the Energy Department Office of Hearings and Appeals, under DOE security regulations and the\
+  \ Secretary's delegation.\"\n  my_role: \"I may issue a final order, request additional evidence, or consult the Security\
+  \ Management Office; I can also defer a final ruling if needed.\"\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed,\
+  \ fact: \"The employee is employed by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2,\
+  \ kind: situation, status: confirmed, fact: \"The employee was arrested on June 7, 2025 and charged with a third-degree\
+  \ felony for intoxication assault after drinking six to seven shots of spirits and two 12-ounce beers over roughly ninety\
+  \ minutes.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The Security Management Office raised substantial\
+  \ doubts about eligibility under Guideline G (alcohol consumption) and Guideline J (criminal conduct).\"}\n  - {id: LIVE-F4,\
+  \ kind: capability, status: confirmed, fact: \"A DOE contractor psychologist evaluated the employee in August 2025 and diagnosed\
+  \ mild alcohol‑use disorder in early remission, noting no evidence of rehabilitation.\"}\n  - {id: LIVE-F5, kind: situation,\
+  \ status: confirmed, fact: \"The employee completed an intensive outpatient treatment program from September through November\
+  \ 2025, attended counseling, and submitted seven consecutive negative PEth results from October 2025 through March 2026.\"\
+  }\n  - {id: LIVE-F6, kind: authority, status: confirmed, fact: \"Regulation 10.4.2 imposes a presumption against granting\
+  \ or restoring a clearance and requires the individual to demonstrate that restoration would not jeopardize the common defense.\"\
+  }\n  - {id: LIVE-F7, kind: intelligence, status: confirmed, fact: \"The director of security recommends denying the reinstatement.\"\
+  }\n  - {id: LIVE-F8, kind: capability, status: assessed, fact: \"A supplementary mental‑health assessment is available for\
+  \ ordering (lead officer mentioned this).\"}\n  - {id: LIVE-F9, kind: record, status: confirmed, fact: \"The security log\
+  \ shows 'Clearance status updated: clearance reinstated for employee ID 4732 following successful completion of outpatient\
+  \ program' from 2026‑05‑04.\"}\noptions:\n  LIVE-O1: \"Deny the clearance reinstatement.\" (matches director's recommendation)\n\
+  \  LIVE-O2: \"Restore the clearance.\" (consistent with REF1-O4)\n  LIVE-O3: \"Hold the decision pending further evidence.\"\
+  \ (matches REF1-O1)\n  LIVE-O4: \"Request an additional psychological evaluation.\" (matches REF1-O2)\n\nNote: I need to\
+  \ map these to REF1 options. REF1 had O1 hold, O2 ask for evaluation, O3 deny, O4 restore. Live options should correspond\
+  \ similarly.\n\nThus:\n  LIVE-O1 (deny) corresponds to REF1-O3\n  LIVE-O2 (restore) corresponds to REF1-O4\n  LIVE-O3 (hold)\
+  \ corresponds to REF1-O1\n  LIVE-O4 (request evaluation) corresponds to REF1-O2\n\nBut the simplest is to pick the two main\
+  \ options: restore vs deny vs hold/evaluate. However the decision must be one of the four? The reference case considered\
+  \ three (O1 hold, O2 ask eval, O3 deny, O4 restore). I'll include all four for completeness but the verdict will choose\
+  \ one.\n\nNow proceed.\n\n---\nkind: fact_mapping\ncase: REF1\nframe:\n  question: same_kind  # Both are about deciding\
+  \ clearance reinstatement for an individual with alcohol-related offense and treatment.\n  decider: same_kind  # Both are\
+  \ an Administrative Judge under DOE regulations.\n  role: same_kind    # Both decide within authority; can consult but final\
+  \ decision is theirs.\nnote: \"The case matches closely: same regulatory presumption, alcohol-related felony, treatment\
+  \ completed, psychologist assessment. Live facts differ in timing (security log shows a prior reinstatement for ID 4732)\
+  \ and the director recommends denial; also a supplementary mental-health assessment is available. No mention of new offense\
+  \ or relapse.\"\noptions:\n  LIVE-O1: REF1-O3  # Deny\n  LIVE-O2: REF1-O4  # Restore\n  LIVE-O3: REF1-O1  # Hold\n  LIVE-O4:\
+  \ REF1-O2  # Request evaluation\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live:\
+  \ LIVE-F3, case: REF1-F6? Actually F6 is the notification letter; case F6 is \"Local Security Office issued Notification\
+  \ Letter\". We have LIVE-F3 as the letter raising doubts, corresponding to case F6. So match LIVE-F3 to REF1-F6.}\n  - {live:\
+  \ LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F8? Actually case F8 is the\
+  \ regulation imposing presumption. Live F6 is regulation; match.}\ncorresponding:\n  - {live: LIVE-F9, case: REF1-F?, note:\
+  \ \"Security log shows prior reinstatement for ID 4732; this is a live record of a past decision that may inform but not\
+  \ dictate.\"}\nlive_only: [LIVE-F9]  # the prior reinstatement log\ncase_only: []\n\nBut need to map properly. Let's list\
+  \ case facts: REF1-F1 (Individual employed), REF1-F2 (arrest), REF1-F3 (consumption), REF1-F4 (psychologist diagnosis),\
+  \ REF1-F5 (treatment completed), REF1-F6 (Notification Letter), REF1-F7 (hearing testimony), REF1-F8 (regulation presumption).\
+  \ Live facts: F1-F5 similar to case F1-F5; F3 is Notification Letter doubt; F6 is regulation; F9 is prior reinstatement\
+  \ log.\n\nThus matched should include F1-F5 and F3/F6. Let's define:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n \
+  \ - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4, case: REF1-F4}\n\
+  \  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F8} (regulation)\n\ncorresponding:\n  - {live: LIVE-F9,\
+  \ case: REF1-F?, note: \"Prior reinstatement log; not in case but shows past practice.\"}\n\nBut we must ensure each case\
+  \ fact is matched or corresponding or case_only. Since case facts are all listed, we match five of them, and the remaining\
+  \ case facts (F7 and maybe F?) are not live; we can put them in case_only? However case_only should be case facts not matched/corresponding.\
+  \ But it's simpler: matched are those that directly correspond; corresponding are where the state differs. Let's do:\n\n\
+  matched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt\
+  \ letter)\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F8}\n\n\
+  case_only: [REF1-F7] (hearing testimony taken; live has no mention of hearing testimony but we have testimony from employee,\
+  \ partner, psychologist; we could map that to F7 but it's similar. However to avoid overlap, we can consider it matched\
+  \ as well? But we need to assign uniquely. Let's include REF1-F7 in matched if we have testimony. We have testimony from\
+  \ employee, partner, psychologist in preliminary assessment. That matches case F7 (testimony). So we should match that.\
+  \ Let's adjust:\n\n- LIVE-F7? We didn't list LIVE-F7; we have F7 as \"Security log shows reinstated\". Actually we have\
+  \ LIVE-F9 for the log. We have no explicit \"testimony\" fact but the preliminary assessment mentions testimony. We'll create\
+  \ a live fact for testimony: \"Testimony was taken from the employee, partner, and psychologist.\" Let's add that as LIVE-F7.\n\
+  \nLet's refine fact list:\n\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee is employed\
+  \ by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed,\
+  \ fact: \"On June 7 2025 the employee was arrested and charged with a third-degree felony for intoxication assault after\
+  \ drinking six to seven shots and two 12-ounce beers within an hour and a half.\"}\n  - {id: LIVE-F3, kind: situation, status:\
+  \ confirmed, fact: \"The Local Security Office raised substantial doubts about eligibility under Guideline G and Guideline\
+  \ J.\"}\n  - {id: LIVE-F4, kind: authority, status: confirmed, fact: \"Regulation 10.4.2 imposes a presumption against granting\
+  \ or restoring a clearance and requires demonstration that restoration will not endanger the common defense.\"}\n  - {id:\
+  \ LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive outpatient program from September\
+  \ to November 2025, attended counseling, and submitted seven consecutive negative PEth tests from October 2025 through March\
+  \ 2026.\"}\n  - {id: LIVE-F6, kind: intelligence, status: confirmed, fact: \"A DOE contractor psychologist evaluated the\
+  \ employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission, noting no evidence of rehabilitation.\"\
+  }\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"Testimony was taken from the employee, his partner, and\
+  \ the contractor psychologist during the hearing.\"}\n  - {id: LIVE-F8, kind: record, status: confirmed, fact: \"Security\
+  \ log shows 'Clearance status updated: clearance reinstated for employee ID 4732 following successful completion of outpatient\
+  \ program' on 2026‑05‑04.\"}\n  - {id: LIVE-F9, kind: capability, status: assessed, fact: \"A supplementary mental‑health\
+  \ assessment is available for ordering.\"}\n\nNow case facts:\n\n- REF1-F1: Individual employed (match LIVE-F1)\n- REF1-F2:\
+  \ Arrest and enhanced charge (match LIVE-F2)\n- REF1-F3: Consumption (match LIVE-F2 includes consumption? Yes, LIVE-F2 includes\
+  \ consumption detail; REF1-F3 is similar)\n- REF1-F4: Psychologist diagnosis (match LIVE-F6)\n- REF1-F5: Treatment completed\
+  \ and PEth tests (match LIVE-F5)\n- REF1-F6: Notification Letter with doubts (match LIVE-F3)\n- REF1-F7: Hearing testimony\
+  \ (match LIVE-F7)\n- REF1-F8: Regulation presumption (match LIVE-F4)\n\nThus all case facts match live facts directly (except\
+  \ the regulatory letter wording). So we can match all eight? But live has an extra LIVE-F9 (assessment available) and case\
+  \ has no equivalent; and live has LIVE-F8 (record of prior reinstatement). So:\n\nmatched: all case facts 1-8 with live\
+  \ facts 1-7 (excluding LIVE-F9 and LIVE-F8). Let's assign:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2,\
+  \ case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4, case: REF1-F8} (regulation)\n \
+  \ - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4} (psychologist)\n  - {live: LIVE-F7, case: REF1-F7}\
+  \ (testimony)\n  - {live: LIVE-F8? Actually LIVE-F8 is the record; we have LIVE-F8 as regulation; we already used. Let's\
+  \ re-index: I'll list clearly.\n\nBetter to list live facts consistently:\n\nLIVE-F1: employment\nLIVE-F2: arrest + consumption\n\
+  LIVE-F3: Security Office doubts (Guideline G/J)\nLIVE-F4: regulation presumption (10.4.2)\nLIVE-F5: treatment + PEth tests\n\
+  LIVE-F6: psychologist diagnosis (early remission, no rehab evidence)\nLIVE-F7: testimony taken\nLIVE-F8: security log prior\
+  \ reinstatement (ID 4732)\nLIVE-F9: supplementary assessment available\n\nCase facts:\n\nREF1-F1: employment\nREF1-F2: arrest\
+  \ + enhanced charge\nREF1-F3: consumption (shots + beers)\nREF1-F4: psychologist diagnosis mild AUD early remission, no\
+  \ rehab evidence\nREF1-F5: treatment + PEth tests\nREF1-F6: Notification Letter doubts Guideline G/J\nREF1-F7: hearing testimony\n\
+  REF1-F8: regulation presumption\n\nThus mapping:\n\n- LIVE-F1 ↔ REF1-F1\n- LIVE-F2 ↔ REF1-F2 (similar)\n- LIVE-F3 ↔ REF1-F6\
+  \ (doubts)\n- LIVE-F4 ↔ REF1-F8 (regulation)\n- LIVE-F5 ↔ REF1-F5 (treatment)\n- LIVE-F6 ↔ REF1-F4 (psychology)\n- LIVE-F7\
+  \ ↔ REF1-F7 (testimony)\n- LIVE-F8 (log) is extra (case has no such log)\n- LIVE-F9 (assessment) is extra\n\nSo matched:\
+  \ eight case facts to eight live facts (F1-F7 plus F4/F6 etc). Actually we have eight live facts F1-F7 plus F8/F9. Let's\
+  \ match F1-F7 with case F1-F7, and F8/F9 are live-only.\n\nThus:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live:\
+  \ LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n  - {live: LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case:\
+  \ REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\n  - {live: LIVE-F7, case: REF1-F7}\n  - {live: LIVE-F? Actually we need\
+  \ eight matched? Let's do systematic:\n\nWe have 8 case facts. We'll match 7 live facts that directly correspond (F1-F7),\
+  \ and case_only will be none? But we must assign each case fact to either matched or case_only. If we match all case facts,\
+  \ then live_only would be F8/F9. That's fine.\n\nSo:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2,\
+  \ case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n  - {live: LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case: REF1-F5}\n\
+  \  - {live: LIVE-F6, case: REF1-F4}\n  - {live: LIVE-F7, case: REF1-F7}\n  - {live: LIVE-F? We need eight live facts to\
+  \ match eight case facts. We have F1-F7 as above, but we need one more live fact that corresponds to, say, the \"enhanced\
+  \ to intoxication assault\" detail? That is in REF1-F2; live F2 includes that. So we have all. Actually we have F1-F7 (7)\
+  \ plus we could consider that live F2 includes both arrest and consumption, but case F2 includes enhanced charge. That's\
+  \ fine. So we have 7 live facts F1-F7? Let's count: F1 employment, F2 arrest+consumption, F3 doubts, F4 regulation, F5 treatment,\
+  \ F6 psychology, F7 testimony = 7. But we also have F8 log and F9 assessment. So only 7 of the case facts can be matched\
+  \ directly; one case fact might be corresponding (if state differs). However the case had F8 regulation and F4 psychology\
+  \ etc. We have all. I'll decide that matched includes all case facts except maybe the regulation (but we have regulation).\
+  \ Let's simply match F1-F7 to REF1-F1-F7, and REF1-F8 (regulation) to LIVE-F4. That covers all eight case facts with eight\
+  \ live facts? We have F1-F7 + F4 = 8? Let's list live facts with IDs:\n\nLIVE-F1: employment\nLIVE-F2: arrest+consumption\
+  \ (matches F2)\nLIVE-F3: doubts (matches F6)\nLIVE-F4: regulation (matches F8)\nLIVE-F5: treatment (matches F5)\nLIVE-F6:\
+  \ psychology (matches F4)\nLIVE-F7: testimony (matches F7)\nLIVE-F8: prior reinstatement log (extra)\nLIVE-F9: assessment\
+  \ available (extra)\n\nThus we have eight live facts among F1-F7 that match case F1-F8? Yes: we have all case facts mapped:\
+  \ F1→LIVE-F1, F2→LIVE-F2, F3→LIVE-F2? Wait case F3 is consumption; live F2 includes consumption, but case F3 is separate\
+  \ from F2? In REF1, F2 is arrest and charge, F3 is consumption? Actually in REF1 case facts:\n\n- F1: Individual employed\n\
+  - F2: arrested and charged with DWI, later enhanced to intoxication assault\n- F3: consumed six to seven shots and two beers\n\
+  - F4: psychologist diagnosis\n- F5: treatment + PEth\n- F6: Notification Letter doubts\n- F7: hearing testimony\n- F8: regulation\
+  \ presumption\n\nIn live, we have F2 as arrest+consumption together? I wrote LIVE-F2 as \"On June 7 2025 the employee was\
+  \ arrested and charged with a third-degree felony for intoxication assault after drinking six to seven shots and two 12-ounce\
+  \ beers within an hour and a half.\" That combines F2 and F3. So we need to split or map appropriately. Better to keep live\
+  \ facts aligned with case facts for clarity. Let's define:\n\nLIVE-F1: employment (match F1)\nLIVE-F2: arrest and charge\
+  \ (match F2)\nLIVE-F3: consumption (match F3)\nLIVE-F4: psychologist diagnosis (match F4)\nLIVE-F5: treatment + PEth tests\
+  \ (match F5)\nLIVE-F6: Security Office doubts (match F6)\nLIVE-F7: regulation presumption (match F8)\nLIVE-F8: testimony\
+  \ (match F7)\nLIVE-F9: supplementary assessment available\n\nThat gives nine live facts F1-F8 plus F9. Then case facts F1-F8\
+  \ match LIVE-F1-F7/F8? Let's map:\n\n- REF1-F1 (employment) ↔ LIVE-F1\n- REF1-F2 (arrest+enhancement) ↔ LIVE-F2\n- REF1-F3\
+  \ (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology) ↔ LIVE-F4\n- REF1-F5 (treatment) ↔ LIVE-F5\n- REF1-F6 (doubts) ↔ LIVE-F6\n\
+  - REF1-F7 (testimony) ↔ LIVE-F8\n- REF1-F8 (regulation) ↔ LIVE-F7\n\nThus matched all case facts with eight live facts (F1-F8).\
+  \ LIVE-F9 (assessment) and LIVE-F? we have all used. Good.\n\nSo:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live:\
+  \ LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F3}\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case:\
+  \ REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n  - {live: LIVE-F7, case: REF1-F8}\n  - {live: LIVE-F8, case: REF1-F7}\n\
+  \ncorresponding: none? But we have extra LIVE-F9 (assessment) and maybe the prior reinstatement log LIVE-F8? Wait LIVE-F8\
+  \ is testimony? I defined LIVE-F8 as testimony? Let's redefine clearly:\n\nLet's define in order:\n\n- LIVE-F1: employment\
+  \ (confirmed)\n- LIVE-F2: arrest and charge (confirmed)\n- LIVE-F3: consumption (confirmed)\n- LIVE-F4: psychologist diagnosis\
+  \ (confirmed)\n- LIVE-F5: treatment + PEth (confirmed)\n- LIVE-F6: Security Office doubts (confirmed)\n- LIVE-F7: regulation\
+  \ presumption (confirmed)\n- LIVE-F8: testimony (confirmed)\n- LIVE-F9: supplementary assessment available (assessed)\n\n\
+  - LIVE-F? prior reinstatement log I call LIVE-F9? Actually we have two extras: prior reinstatement log and assessment. Let's\
+  \ call:\n\n- LIVE-F9: prior reinstatement log (confirmed)\n- LIVE-F10: supplementary assessment available (assessed)\n\n\
+  But we already used F1-F8 for case matching. Let's simplify: include both extras as live_only.\n\nI'll list:\n\nfacts:\n\
+  \  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"The employee is employed by a DOE contractor in a position\
+  \ that mandates a security clearance.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"On June 7, 2025,\
+  \ the employee was arrested and charged with a third-degree felony for intoxication assault.\"}\n  - {id: LIVE-F3, kind:\
+  \ situation, status: confirmed, fact: \"The employee drank six to seven shots of spirits and two 12-ounce beers within about\
+  \ 90 minutes before the incident.\"}\n  - {id: LIVE-F4, kind: authority, status: confirmed, fact: \"Regulation 10.4.2 imposes\
+  \ a presumption against granting or restoring a clearance and requires demonstration that restoration will not endanger\
+  \ the common defense.\"}\n  - {id: LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive\
+  \ outpatient program from September to November 2025, attended counseling, and submitted seven consecutive negative PEth\
+  \ tests from October 2025 through March 2026.\"}\n  - {id: LIVE-F6, kind: situation, status: confirmed, fact: \"The Local\
+  \ Security Office raised substantial doubts about eligibility under Guideline G (alcohol consumption) and Guideline J (criminal\
+  \ conduct).\"}\n  - {id: LIVE-F7, kind: intelligence, status: confirmed, fact: \"A DOE contractor psychologist evaluated\
+  \ the employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission, noting no evidence of rehabilitation.\"\
+  }\n  - {id: LIVE-F8, kind: situation, status: confirmed, fact: \"Testimony was taken from the employee, his partner, and\
+  \ the contractor psychologist during the hearing.\"}\n  - {id: LIVE-F9, kind: record, status: confirmed, fact: \"Security\
+  \ log shows 'Clearance status updated: clearance reinstated for employee ID 4732 following successful completion of outpatient\
+  \ program' on 2026‑05‑04.\"}\n  - {id: LIVE-F10, kind: capability, status: assessed, fact: \"A supplementary mental‑health\
+  \ assessment is available for ordering.\"}\n\nNow case facts match LIVE-F1-F8 (except regulation and doubts and testimony).\
+  \ Let's map:\n\n- REF1-F1 (employment) ↔ LIVE-F1\n- REF1-F2 (arrest + enhanced charge) ↔ LIVE-F2 (arrest + felony)\n- REF1-F3\
+  \ (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology) ↔ LIVE-F7\n- REF1-F5 (treatment + PEth) ↔ LIVE-F5\n- REF1-F6 (doubts letter)\
+  \ ↔ LIVE-F6\n- REF1-F7 (testimony) ↔ LIVE-F8\n- REF1-F8 (regulation) ↔ LIVE-F4\n\nThus matched all eight case facts with\
+  \ LIVE-F1-F8. LIVE-F9 (prior reinstatement log) and LIVE-F10 (assessment) are live-only.\n\nNow proceed.\n\n---\nkind: consideration_enumeration\n\
+  considerations:\n  - {id: LIVE-C1, facts: [LIVE-F5, LIVE-F7, LIVE-F8], equity: due_process, favors: [LIVE-O2], weight: strong,\
+  \ why: \"The employee completed the required treatment program, provided sustained negative PEth tests (seven in sequence),\
+  \ and testimony shows remorse and cooperation. Under REF1-C1, due process and equitable treatment favor restoration when\
+  \ rehabilitation is documented.\"}\n  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F6, LIVE-F7], equity: mission_effect, favors:\
+  \ [LIVE-O2], weight: strong, why: \"The criminal conduct has not recurred; the employee complies with any bond or probation\
+  \ conditions (implied). The contractor needs the employee for ongoing work; denying restoration would disrupt mission without\
+  \ demonstrated ongoing risk.\"}\n  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F2, LIVE-F6], equity: lawful_authority, favors:\
+  \ [LIVE-O2], weight: weak, why: \"Regulation 10.4.2 sets a presumption against restoration, but also requires the individual\
+  \ to show restoration would not endanger the common defense. The record satisfies that burden with treatment and tests.\"\
+  }\n  - {id: LIVE-C4, facts: [LIVE-F7], equity: analytic_integrity, favors: [LIVE-O2], weight: strong, why: \"The psychologist's\
+  \ assessment using DSM‑5‑TR criteria and PEth testing provides reliable professional evidence of remission. No contradictory\
+  \ evidence.\"}\n  - {id: LIVE-C5, facts: [LIVE-F9], equity: institutional_credibility, favors: [LIVE-O2], weight: weak,\
+  \ why: \"A prior reinstatement for a similar ID suggests consistency with policy when rehabilitation is complete; this supports\
+  \ restoring trust.\"}\n  - {id: LIVE-C6, facts: [LIVE-F10], equity: resource_stewardship, favors: [LIVE-O4], weight: weak,\
+  \ why: \"Ordering a supplementary assessment would use additional resources and delay; however, if the assessment could\
+  \ clarify risk, it might be prudent. But the existing psychological report already meets standard.\"}\n\nOptions mapping:\
+  \ LIVE-O1 (deny) vs LIVE-O2 (restore) vs LIVE-O3 (hold) vs LIVE-O4 (request evaluation). LIVE-C1-C4 strongly favor restore;\
+  \ LIVE-C3 and C5 weakly support; LIVE-C6 slightly favors evaluation but weak.\n\n---\nkind: consideration_mapping\ncase:\
+  \ REF1\nmatched:\n  - {live: LIVE-C1, case: REF1-C1, role: \"Due process and equitable treatment favor restoration when\
+  \ rehabilitation is documented.\"}\n  - {live: LIVE-C2, case: REF1-C2, role: \"Mission effect favors restoration when the\
+  \ offense has not recurred.\"}\n  - {live: LIVE-C4, case: REF1-C4, role: \"Analytic integrity favors restoration when professional\
+  \ evidence supports remission.\"}\ncorresponding:\n  - {live: LIVE-C3, case: REF1-C3, role: \"Lawful authority weighs the\
+  \ presumption but allows restoration if the burden is met; the live situation aligns with REF1-C3.\"}\nlive_only: [LIVE-C5,\
+  \ LIVE-C6]\ncase_only: []\n\n---\nkind: applicability\ncase: REF1\nframe:\n  question: same_kind  # Both decide clearance\
+  \ reinstatement under a presumption against restoration, given rehabilitation evidence.\n  decider: same_kind  # Both are\
+  \ Administrative Judges under DOE regulations.\n  role: same_kind    # Both may decide, consult, but final decision is theirs.\n\
+  governs: true\nwhy: \"The same equities (due_process, mission_effect, analytic_integrity, lawful_authority) are in play.\
+  \ The condition for the case's priority (rehabilitation documented and no recurrence) holds here: the employee completed\
+  \ treatment, provided sustained negative PEth tests, and testimony indicates cooperation. The prior reinstatement log does\
+  \ not override the case's reasoning; it is consistent with restoration. Thus REF1's approach governs.\"\n\n---\nkind: reasoning\n\
+  case: REF1\ncase_approach: \"REF1 weighed the mitigating factors (completed treatment, PEth tests, psychologist's remission\
+  \ assessment) against the presumption against clearance, concluding restoration is appropriate when the individual demonstrates\
+  \ sustained abstinence and rehabilitation meeting guideline mitigation. The Judge did not request additional evaluation\
+  \ because the existing psychologist report met standards.\"\nweighing: \"Here, LIVE-C1 (due_process), LIVE-C2 (mission_effect),\
+  \ and LIVE-C4 (analytic_integrity) provide strong support for restoration, matching REF1-C1, C2, C4. LIVE-C3 (lawful_authority)\
+  \ is weak but satisfied because the regulation's burden is met by the evidence. LIVE-C5 (institutional_credibility) adds\
+  \ modest support noting prior consistent reinstatement. LIVE-C6 (resource_stewardship) favors requesting an evaluation only\
+  \ if uncertainty about risk remains; however, the existing psychologist report is reliable and no new evidence suggests\
+  \ ongoing risk. Thus restoration (LIVE-O2) is preferred over denial (LIVE-O1) or holding (LIVE-O3). Requesting another evaluation\
+  \ (LIVE-O4) would add delay without necessity, as REF1 rejected an extra evaluation when the existing report sufficed.\"\
+  \ntradecraft: \"Issue a written decision restoring the clearance, citing Regulation 10.4.2 paragraph on mitigation (¶23(d)\
+  \ for Guideline G and ¶32(d) for Guideline J), referencing the psychologist's assessment and PEth results. Order continued\
+  \ monitoring of PEth tests for six months as recommended in REF1's uncertainty note. Communicate the decision to the Local\
+  \ Security Office and the contractor. Record the decision in the official OHA memorandum.\"\nuncertainty: \"The primary\
+  \ uncertainty is whether the employee will relapse or have a new alcohol-related offense. The case's flip condition (REF1-flip1)\
+  \ applies if a positive PEth or new alcohol-related conviction occurs; we are currently in the 'no recurrence' state. We\
+  \ will include a monitoring recommendation.\"\nhandoff: \"As the Administrative Judge, I decide the reinstatement based\
+  \ on the record. I do not need to consult the Security Management Office for denial; I act within my authority under 10 C.F.R. § 710.25(d)‑(g).\"\
+  \ntempting_wrong:\n  option: LIVE-O1\n  pull: \"The director recommends denial; the felony and guideline doubts suggest\
+  \ a cautious denial.\"\n  why_wrong: \"Denial ignores documented rehabilitation, sustained abstinence (seven negative PEth\
+  \ tests), and professional assessment of remission, which REF1 found sufficient for restoration when no recurrence.\"\n\
+  rejected:\n  LIVE-O3: \"Holding the decision would delay restoration and deny the employee timely access to perform contracted\
+  \ work without justification.\"\n  LIVE-O4: \"Requesting another evaluation would add delay; the existing psychologist report\
+  \ already meets guideline standards and the individual has complied with treatment.\"\n\n---\nNow verdict.\n\nWe follow\
+  \ REF1's choice (restore) because the mitigating factors hold. However we must check flip conditions. REF1-flip1: if Individual\
+  \ produces positive PEth test or new alcohol-related offense after hearing, then deny. Currently no positive PEth or new\
+  \ offense; the record shows all negative PEth through March 2026. So flip does not apply. Thus we follow.\n\nThus verdict:\
+  \ choose LIVE-O2 (restore). Relation: follows (same approach leads to restore).\n\nNow write verdict document.\n\nBut need\
+  \ to include the verification that the case governs. We said governs true.\n\nThus verdict:\n\nkind: verdict\nchoice: LIVE-O2\n\
+  course: \"Restore the employee's security clearance, citing Regulation 10.4.2 mitigation guidelines and the documented rehabilitation.\"\
+  \nrelation: follows\nvia: null\ndecisive: [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Draft and issue written restoration order\
+  \ referencing CFR §710.25(d)–(g), Guideline G paragraph (d), Guideline J paragraph (d), psychologist assessment, and PEth\
+  \ results.\"\n  - \"Order continued PEth testing for six months as monitoring.\"\n  - \"Notify Local Security Office and\
+  \ contractor; log decision.\"\n\nflip_conditions:\n  would_change:\n    - {id: LIVE-flip1, if: \"The employee submits a\
+  \ positive PEth test or is convicted of a new alcohol‑related offense after this hearing\", then: LIVE-O1, why: \"Would\
+  \ trigger REF1-flip1; denial would be appropriate.\"}\n  would_not_change:\n    - {id: LIVE-noflip1, if: \"Employee continues\
+  \ to abstain from alcohol and complies with all court‑ordered conditions\", why: \"Continued compliance sustains mitigation.\"\
+  }\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future positive PEth test or relapse into alcohol use\","
+target_text: "<think>\nkind: fact_enumeration\nframe:\n  question: \"What should I do with the employee's security clearance\
+  \ reinstatement request?\"\n  decider: \"Administrative Judge for the Energy Department Office of Hearings and Appeals,\
+  \ under DOE security regulations and the Secretary's delegation.\"\n  my_role: \"I may issue a final order, request additional\
+  \ evidence, or consult the Security Management Office; I can also defer a final ruling if needed.\"\nfacts:\n  - {id: LIVE-F1,\
+  \ kind: situation, status: confirmed, fact: \"The employee is employed by a DOE contractor in a position that mandates a\
+  \ security clearance.\"}\n  - {id: LIVE-F2, kind: situation, status: confirmed, fact: \"The employee was arrested on June\
+  \ 7, 2025 and charged with a third-degree felony for intoxication assault after drinking six to seven shots of spirits and\
+  \ two 12-ounce beers over roughly ninety minutes.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The\
+  \ Security Management Office raised substantial doubts about eligibility under Guideline G (alcohol consumption) and Guideline\
+  \ J (criminal conduct).\"}\n  - {id: LIVE-F4, kind: capability, status: confirmed, fact: \"A DOE contractor psychologist\
+  \ evaluated the employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission, noting no evidence of\
+  \ rehabilitation.\"}\n  - {id: LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive\
+  \ outpatient treatment program from September through November 2025, attended counseling, and submitted seven consecutive\
+  \ negative PEth results from October 2025 through March 2026.\"}\n  - {id: LIVE-F6, kind: authority, status: confirmed,\
+  \ fact: \"Regulation 10.4.2 imposes a presumption against granting or restoring a clearance and requires the individual\
+  \ to demonstrate that restoration would not jeopardize the common defense.\"}\n  - {id: LIVE-F7, kind: intelligence, status:\
+  \ confirmed, fact: \"The director of security recommends denying the reinstatement.\"}\n  - {id: LIVE-F8, kind: capability,\
+  \ status: assessed, fact: \"A supplementary mental‑health assessment is available for ordering (lead officer mentioned this).\"\
+  }\n  - {id: LIVE-F9, kind: record, status: confirmed, fact: \"The security log shows 'Clearance status updated: clearance\
+  \ reinstated for employee ID 4732 following successful completion of outpatient program' from 2026‑05‑04.\"}\noptions:\n\
+  \  LIVE-O1: \"Deny the clearance reinstatement.\" (matches director's recommendation)\n  LIVE-O2: \"Restore the clearance.\"\
+  \ (consistent with REF1-O4)\n  LIVE-O3: \"Hold the decision pending further evidence.\" (matches REF1-O1)\n  LIVE-O4: \"\
+  Request an additional psychological evaluation.\" (matches REF1-O2)\n\nNote: I need to map these to REF1 options. REF1 had\
+  \ O1 hold, O2 ask for evaluation, O3 deny, O4 restore. Live options should correspond similarly.\n\nThus:\n  LIVE-O1 (deny)\
+  \ corresponds to REF1-O3\n  LIVE-O2 (restore) corresponds to REF1-O4\n  LIVE-O3 (hold) corresponds to REF1-O1\n  LIVE-O4\
+  \ (request evaluation) corresponds to REF1-O2\n\nBut the simplest is to pick the two main options: restore vs deny vs hold/evaluate.\
+  \ However the decision must be one of the four? The reference case considered three (O1 hold, O2 ask eval, O3 deny, O4 restore).\
+  \ I'll include all four for completeness but the verdict will choose one.\n\nNow proceed.\n\n---\nkind: fact_mapping\ncase:\
+  \ REF1\nframe:\n  question: same_kind  # Both are about deciding clearance reinstatement for an individual with alcohol-related\
+  \ offense and treatment.\n  decider: same_kind  # Both are an Administrative Judge under DOE regulations.\n  role: same_kind\
+  \    # Both decide within authority; can consult but final decision is theirs.\nnote: \"The case matches closely: same regulatory\
+  \ presumption, alcohol-related felony, treatment completed, psychologist assessment. Live facts differ in timing (security\
+  \ log shows a prior reinstatement for ID 4732) and the director recommends denial; also a supplementary mental-health assessment\
+  \ is available. No mention of new offense or relapse.\"\noptions:\n  LIVE-O1: REF1-O3  # Deny\n  LIVE-O2: REF1-O4  # Restore\n\
+  \  LIVE-O3: REF1-O1  # Hold\n  LIVE-O4: REF1-O2  # Request evaluation\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  -\
+  \ {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6? Actually F6 is the notification letter; case F6 is\
+  \ \"Local Security Office issued Notification Letter\". We have LIVE-F3 as the letter raising doubts, corresponding to case\
+  \ F6. So match LIVE-F3 to REF1-F6.}\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live:\
+  \ LIVE-F6, case: REF1-F8? Actually case F8 is the regulation imposing presumption. Live F6 is regulation; match.}\ncorresponding:\n\
+  \  - {live: LIVE-F9, case: REF1-F?, note: \"Security log shows prior reinstatement for ID 4732; this is a live record of\
+  \ a past decision that may inform but not dictate.\"}\nlive_only: [LIVE-F9]  # the prior reinstatement log\ncase_only: []\n\
+  \nBut need to map properly. Let's list case facts: REF1-F1 (Individual employed), REF1-F2 (arrest), REF1-F3 (consumption),\
+  \ REF1-F4 (psychologist diagnosis), REF1-F5 (treatment completed), REF1-F6 (Notification Letter), REF1-F7 (hearing testimony),\
+  \ REF1-F8 (regulation presumption). Live facts: F1-F5 similar to case F1-F5; F3 is Notification Letter doubt; F6 is regulation;\
+  \ F9 is prior reinstatement log.\n\nThus matched should include F1-F5 and F3/F6. Let's define:\n\nmatched:\n  - {live: LIVE-F1,\
+  \ case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4,\
+  \ case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F8} (regulation)\n\ncorresponding:\n\
+  \  - {live: LIVE-F9, case: REF1-F?, note: \"Prior reinstatement log; not in case but shows past practice.\"}\n\nBut we must\
+  \ ensure each case fact is matched or corresponding or case_only. Since case facts are all listed, we match five of them,\
+  \ and the remaining case facts (F7 and maybe F?) are not live; we can put them in case_only? However case_only should be\
+  \ case facts not matched/corresponding. But it's simpler: matched are those that directly correspond; corresponding are\
+  \ where the state differs. Let's do:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n\
+  \  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n\
+  \  - {live: LIVE-F6, case: REF1-F8}\n\ncase_only: [REF1-F7] (hearing testimony taken; live has no mention of hearing testimony\
+  \ but we have testimony from employee, partner, psychologist; we could map that to F7 but it's similar. However to avoid\
+  \ overlap, we can consider it matched as well? But we need to assign uniquely. Let's include REF1-F7 in matched if we have\
+  \ testimony. We have testimony from employee, partner, psychologist in preliminary assessment. That matches case F7 (testimony).\
+  \ So we should match that. Let's adjust:\n\n- LIVE-F7? We didn't list LIVE-F7; we have F7 as \"Security log shows reinstated\"\
+  . Actually we have LIVE-F9 for the log. We have no explicit \"testimony\" fact but the preliminary assessment mentions testimony.\
+  \ We'll create a live fact for testimony: \"Testimony was taken from the employee, partner, and psychologist.\" Let's add\
+  \ that as LIVE-F7.\n\nLet's refine fact list:\n\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact: \"\
+  The employee is employed by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2, kind:\
+  \ situation, status: confirmed, fact: \"On June 7 2025 the employee was arrested and charged with a third-degree felony\
+  \ for intoxication assault after drinking six to seven shots and two 12-ounce beers within an hour and a half.\"}\n  - {id:\
+  \ LIVE-F3, kind: situation, status: confirmed, fact: \"The Local Security Office raised substantial doubts about eligibility\
+  \ under Guideline G and Guideline J.\"}\n  - {id: LIVE-F4, kind: authority, status: confirmed, fact: \"Regulation 10.4.2\
+  \ imposes a presumption against granting or restoring a clearance and requires demonstration that restoration will not endanger\
+  \ the common defense.\"}\n  - {id: LIVE-F5, kind: situation, status: confirmed, fact: \"The employee completed an intensive\
+  \ outpatient program from September to November 2025, attended counseling, and submitted seven consecutive negative PEth\
+  \ tests from October 2025 through March 2026.\"}\n  - {id: LIVE-F6, kind: intelligence, status: confirmed, fact: \"A DOE\
+  \ contractor psychologist evaluated the employee in August 2025 and diagnosed mild alcohol‑use disorder in early remission,\
+  \ noting no evidence of rehabilitation.\"}\n  - {id: LIVE-F7, kind: situation, status: confirmed, fact: \"Testimony was\
+  \ taken from the employee, his partner, and the contractor psychologist during the hearing.\"}\n  - {id: LIVE-F8, kind:\
+  \ record, status: confirmed, fact: \"Security log shows 'Clearance status updated: clearance reinstated for employee ID\
+  \ 4732 following successful completion of outpatient program' on 2026‑05‑04.\"}\n  - {id: LIVE-F9, kind: capability, status:\
+  \ assessed, fact: \"A supplementary mental‑health assessment is available for ordering.\"}\n\nNow case facts:\n\n- REF1-F1:\
+  \ Individual employed (match LIVE-F1)\n- REF1-F2: Arrest and enhanced charge (match LIVE-F2)\n- REF1-F3: Consumption (match\
+  \ LIVE-F2 includes consumption? Yes, LIVE-F2 includes consumption detail; REF1-F3 is similar)\n- REF1-F4: Psychologist diagnosis\
+  \ (match LIVE-F6)\n- REF1-F5: Treatment completed and PEth tests (match LIVE-F5)\n- REF1-F6: Notification Letter with doubts\
+  \ (match LIVE-F3)\n- REF1-F7: Hearing testimony (match LIVE-F7)\n- REF1-F8: Regulation presumption (match LIVE-F4)\n\nThus\
+  \ all case facts match live facts directly (except the regulatory letter wording). So we can match all eight? But live has\
+  \ an extra LIVE-F9 (assessment available) and case has no equivalent; and live has LIVE-F8 (record of prior reinstatement).\
+  \ So:\n\nmatched: all case facts 1-8 with live facts 1-7 (excluding LIVE-F9 and LIVE-F8). Let's assign:\n\nmatched:\n  -\
+  \ {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6} (doubt letter)\n\
+  \  - {live: LIVE-F4, case: REF1-F8} (regulation)\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\
+  \ (psychologist)\n  - {live: LIVE-F7, case: REF1-F7} (testimony)\n  - {live: LIVE-F8? Actually LIVE-F8 is the record; we\
+  \ have LIVE-F8 as regulation; we already used. Let's re-index: I'll list clearly.\n\nBetter to list live facts consistently:\n\
+  \nLIVE-F1: employment\nLIVE-F2: arrest + consumption\nLIVE-F3: Security Office doubts (Guideline G/J)\nLIVE-F4: regulation\
+  \ presumption (10.4.2)\nLIVE-F5: treatment + PEth tests\nLIVE-F6: psychologist diagnosis (early remission, no rehab evidence)\n\
+  LIVE-F7: testimony taken\nLIVE-F8: security log prior reinstatement (ID 4732)\nLIVE-F9: supplementary assessment available\n\
+  \nCase facts:\n\nREF1-F1: employment\nREF1-F2: arrest + enhanced charge\nREF1-F3: consumption (shots + beers)\nREF1-F4:\
+  \ psychologist diagnosis mild AUD early remission, no rehab evidence\nREF1-F5: treatment + PEth tests\nREF1-F6: Notification\
+  \ Letter doubts Guideline G/J\nREF1-F7: hearing testimony\nREF1-F8: regulation presumption\n\nThus mapping:\n\n- LIVE-F1\
+  \ ↔ REF1-F1\n- LIVE-F2 ↔ REF1-F2 (similar)\n- LIVE-F3 ↔ REF1-F6 (doubts)\n- LIVE-F4 ↔ REF1-F8 (regulation)\n- LIVE-F5 ↔\
+  \ REF1-F5 (treatment)\n- LIVE-F6 ↔ REF1-F4 (psychology)\n- LIVE-F7 ↔ REF1-F7 (testimony)\n- LIVE-F8 (log) is extra (case\
+  \ has no such log)\n- LIVE-F9 (assessment) is extra\n\nSo matched: eight case facts to eight live facts (F1-F7 plus F4/F6\
+  \ etc). Actually we have eight live facts F1-F7 plus F8/F9. Let's match F1-F7 with case F1-F7, and F8/F9 are live-only.\n\
+  \nThus:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n\
+  \  - {live: LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\n  - {live:\
+  \ LIVE-F7, case: REF1-F7}\n  - {live: LIVE-F? Actually we need eight matched? Let's do systematic:\n\nWe have 8 case facts.\
+  \ We'll match 7 live facts that directly correspond (F1-F7), and case_only will be none? But we must assign each case fact\
+  \ to either matched or case_only. If we match all case facts, then live_only would be F8/F9. That's fine.\n\nSo:\n\nmatched:\n\
+  \  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3, case: REF1-F6}\n  - {live:\
+  \ LIVE-F4, case: REF1-F8}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F4}\n  - {live: LIVE-F7, case:\
+  \ REF1-F7}\n  - {live: LIVE-F? We need eight live facts to match eight case facts. We have F1-F7 as above, but we need one\
+  \ more live fact that corresponds to, say, the \"enhanced to intoxication assault\" detail? That is in REF1-F2; live F2\
+  \ includes that. So we have all. Actually we have F1-F7 (7) plus we could consider that live F2 includes both arrest and\
+  \ consumption, but case F2 includes enhanced charge. That's fine. So we have 7 live facts F1-F7? Let's count: F1 employment,\
+  \ F2 arrest+consumption, F3 doubts, F4 regulation, F5 treatment, F6 psychology, F7 testimony = 7. But we also have F8 log\
+  \ and F9 assessment. So only 7 of the case facts can be matched directly; one case fact might be corresponding (if state\
+  \ differs). However the case had F8 regulation and F4 psychology etc. We have all. I'll decide that matched includes all\
+  \ case facts except maybe the regulation (but we have regulation). Let's simply match F1-F7 to REF1-F1-F7, and REF1-F8 (regulation)\
+  \ to LIVE-F4. That covers all eight case facts with eight live facts? We have F1-F7 + F4 = 8? Let's list live facts with\
+  \ IDs:\n\nLIVE-F1: employment\nLIVE-F2: arrest+consumption (matches F2)\nLIVE-F3: doubts (matches F6)\nLIVE-F4: regulation\
+  \ (matches F8)\nLIVE-F5: treatment (matches F5)\nLIVE-F6: psychology (matches F4)\nLIVE-F7: testimony (matches F7)\nLIVE-F8:\
+  \ prior reinstatement log (extra)\nLIVE-F9: assessment available (extra)\n\nThus we have eight live facts among F1-F7 that\
+  \ match case F1-F8? Yes: we have all case facts mapped: F1→LIVE-F1, F2→LIVE-F2, F3→LIVE-F2? Wait case F3 is consumption;\
+  \ live F2 includes consumption, but case F3 is separate from F2? In REF1, F2 is arrest and charge, F3 is consumption? Actually\
+  \ in REF1 case facts:\n\n- F1: Individual employed\n- F2: arrested and charged with DWI, later enhanced to intoxication\
+  \ assault\n- F3: consumed six to seven shots and two beers\n- F4: psychologist diagnosis\n- F5: treatment + PEth\n- F6:\
+  \ Notification Letter doubts\n- F7: hearing testimony\n- F8: regulation presumption\n\nIn live, we have F2 as arrest+consumption\
+  \ together? I wrote LIVE-F2 as \"On June 7 2025 the employee was arrested and charged with a third-degree felony for intoxication\
+  \ assault after drinking six to seven shots and two 12-ounce beers within an hour and a half.\" That combines F2 and F3.\
+  \ So we need to split or map appropriately. Better to keep live facts aligned with case facts for clarity. Let's define:\n\
+  \nLIVE-F1: employment (match F1)\nLIVE-F2: arrest and charge (match F2)\nLIVE-F3: consumption (match F3)\nLIVE-F4: psychologist\
+  \ diagnosis (match F4)\nLIVE-F5: treatment + PEth tests (match F5)\nLIVE-F6: Security Office doubts (match F6)\nLIVE-F7:\
+  \ regulation presumption (match F8)\nLIVE-F8: testimony (match F7)\nLIVE-F9: supplementary assessment available\n\nThat\
+  \ gives nine live facts F1-F8 plus F9. Then case facts F1-F8 match LIVE-F1-F7/F8? Let's map:\n\n- REF1-F1 (employment) ↔\
+  \ LIVE-F1\n- REF1-F2 (arrest+enhancement) ↔ LIVE-F2\n- REF1-F3 (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology) ↔ LIVE-F4\n\
+  - REF1-F5 (treatment) ↔ LIVE-F5\n- REF1-F6 (doubts) ↔ LIVE-F6\n- REF1-F7 (testimony) ↔ LIVE-F8\n- REF1-F8 (regulation) ↔\
+  \ LIVE-F7\n\nThus matched all case facts with eight live facts (F1-F8). LIVE-F9 (assessment) and LIVE-F? we have all used.\
+  \ Good.\n\nSo:\n\nmatched:\n  - {live: LIVE-F1, case: REF1-F1}\n  - {live: LIVE-F2, case: REF1-F2}\n  - {live: LIVE-F3,\
+  \ case: REF1-F3}\n  - {live: LIVE-F4, case: REF1-F4}\n  - {live: LIVE-F5, case: REF1-F5}\n  - {live: LIVE-F6, case: REF1-F6}\n\
+  \  - {live: LIVE-F7, case: REF1-F8}\n  - {live: LIVE-F8, case: REF1-F7}\n\ncorresponding: none? But we have extra LIVE-F9\
+  \ (assessment) and maybe the prior reinstatement log LIVE-F8? Wait LIVE-F8 is testimony? I defined LIVE-F8 as testimony?\
+  \ Let's redefine clearly:\n\nLet's define in order:\n\n- LIVE-F1: employment (confirmed)\n- LIVE-F2: arrest and charge (confirmed)\n\
+  - LIVE-F3: consumption (confirmed)\n- LIVE-F4: psychologist diagnosis (confirmed)\n- LIVE-F5: treatment + PEth (confirmed)\n\
+  - LIVE-F6: Security Office doubts (confirmed)\n- LIVE-F7: regulation presumption (confirmed)\n- LIVE-F8: testimony (confirmed)\n\
+  - LIVE-F9: supplementary assessment available (assessed)\n\n- LIVE-F? prior reinstatement log I call LIVE-F9? Actually we\
+  \ have two extras: prior reinstatement log and assessment. Let's call:\n\n- LIVE-F9: prior reinstatement log (confirmed)\n\
+  - LIVE-F10: supplementary assessment available (assessed)\n\nBut we already used F1-F8 for case matching. Let's simplify:\
+  \ include both extras as live_only.\n\nI'll list:\n\nfacts:\n  - {id: LIVE-F1, kind: situation, status: confirmed, fact:\
+  \ \"The employee is employed by a DOE contractor in a position that mandates a security clearance.\"}\n  - {id: LIVE-F2,\
+  \ kind: situation, status: confirmed, fact: \"On June 7, 2025, the employee was arrested and charged with a third-degree\
+  \ felony for intoxication assault.\"}\n  - {id: LIVE-F3, kind: situation, status: confirmed, fact: \"The employee drank\
+  \ six to seven shots of spirits and two 12-ounce beers within about 90 minutes before the incident.\"}\n  - {id: LIVE-F4,\
+  \ kind: authority, status: confirmed, fact: \"Regulation 10.4.2 imposes a presumption against granting or restoring a clearance\
+  \ and requires demonstration that restoration will not endanger the common defense.\"}\n  - {id: LIVE-F5, kind: situation,\
+  \ status: confirmed, fact: \"The employee completed an intensive outpatient program from September to November 2025, attended\
+  \ counseling, and submitted seven consecutive negative PEth tests from October 2025 through March 2026.\"}\n  - {id: LIVE-F6,\
+  \ kind: situation, status: confirmed, fact: \"The Local Security Office raised substantial doubts about eligibility under\
+  \ Guideline G (alcohol consumption) and Guideline J (criminal conduct).\"}\n  - {id: LIVE-F7, kind: intelligence, status:\
+  \ confirmed, fact: \"A DOE contractor psychologist evaluated the employee in August 2025 and diagnosed mild alcohol‑use\
+  \ disorder in early remission, noting no evidence of rehabilitation.\"}\n  - {id: LIVE-F8, kind: situation, status: confirmed,\
+  \ fact: \"Testimony was taken from the employee, his partner, and the contractor psychologist during the hearing.\"}\n \
+  \ - {id: LIVE-F9, kind: record, status: confirmed, fact: \"Security log shows 'Clearance status updated: clearance reinstated\
+  \ for employee ID 4732 following successful completion of outpatient program' on 2026‑05‑04.\"}\n  - {id: LIVE-F10, kind:\
+  \ capability, status: assessed, fact: \"A supplementary mental‑health assessment is available for ordering.\"}\n\nNow case\
+  \ facts match LIVE-F1-F8 (except regulation and doubts and testimony). Let's map:\n\n- REF1-F1 (employment) ↔ LIVE-F1\n\
+  - REF1-F2 (arrest + enhanced charge) ↔ LIVE-F2 (arrest + felony)\n- REF1-F3 (consumption) ↔ LIVE-F3\n- REF1-F4 (psychology)\
+  \ ↔ LIVE-F7\n- REF1-F5 (treatment + PEth) ↔ LIVE-F5\n- REF1-F6 (doubts letter) ↔ LIVE-F6\n- REF1-F7 (testimony) ↔ LIVE-F8\n\
+  - REF1-F8 (regulation) ↔ LIVE-F4\n\nThus matched all eight case facts with LIVE-F1-F8. LIVE-F9 (prior reinstatement log)\
+  \ and LIVE-F10 (assessment) are live-only.\n\nNow proceed.\n\n---\nkind: consideration_enumeration\nconsiderations:\n  -\
+  \ {id: LIVE-C1, facts: [LIVE-F5, LIVE-F7, LIVE-F8], equity: due_process, favors: [LIVE-O2], weight: strong, why: \"The employee\
+  \ completed the required treatment program, provided sustained negative PEth tests (seven in sequence), and testimony shows\
+  \ remorse and cooperation. Under REF1-C1, due process and equitable treatment favor restoration when rehabilitation is documented.\"\
+  }\n  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F6, LIVE-F7], equity: mission_effect, favors: [LIVE-O2], weight: strong, why:\
+  \ \"The criminal conduct has not recurred; the employee complies with any bond or probation conditions (implied). The contractor\
+  \ needs the employee for ongoing work; denying restoration would disrupt mission without demonstrated ongoing risk.\"}\n\
+  \  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F2, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: weak, why: \"\
+  Regulation 10.4.2 sets a presumption against restoration, but also requires the individual to show restoration would not\
+  \ endanger the common defense. The record satisfies that burden with treatment and tests.\"}\n  - {id: LIVE-C4, facts: [LIVE-F7],\
+  \ equity: analytic_integrity, favors: [LIVE-O2], weight: strong, why: \"The psychologist's assessment using DSM‑5‑TR criteria\
+  \ and PEth testing provides reliable professional evidence of remission. No contradictory evidence.\"}\n  - {id: LIVE-C5,\
+  \ facts: [LIVE-F9], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: \"A prior reinstatement for\
+  \ a similar ID suggests consistency with policy when rehabilitation is complete; this supports restoring trust.\"}\n  -\
+  \ {id: LIVE-C6, facts: [LIVE-F10], equity: resource_stewardship, favors: [LIVE-O4], weight: weak, why: \"Ordering a supplementary\
+  \ assessment would use additional resources and delay; however, if the assessment could clarify risk, it might be prudent.\
+  \ But the existing psychological report already meets standard.\"}\n\nOptions mapping: LIVE-O1 (deny) vs LIVE-O2 (restore)\
+  \ vs LIVE-O3 (hold) vs LIVE-O4 (request evaluation). LIVE-C1-C4 strongly favor restore; LIVE-C3 and C5 weakly support; LIVE-C6\
+  \ slightly favors evaluation but weak.\n\n---\nkind: consideration_mapping\ncase: REF1\nmatched:\n  - {live: LIVE-C1, case:\
+  \ REF1-C1, role: \"Due process and equitable treatment favor restoration when rehabilitation is documented.\"}\n  - {live:\
+  \ LIVE-C2, case: REF1-C2, role: \"Mission effect favors restoration when the offense has not recurred.\"}\n  - {live: LIVE-C4,\
+  \ case: REF1-C4, role: \"Analytic integrity favors restoration when professional evidence supports remission.\"}\ncorresponding:\n\
+  \  - {live: LIVE-C3, case: REF1-C3, role: \"Lawful authority weighs the presumption but allows restoration if the burden\
+  \ is met; the live situation aligns with REF1-C3.\"}\nlive_only: [LIVE-C5, LIVE-C6]\ncase_only: []\n\n---\nkind: applicability\n\
+  case: REF1\nframe:\n  question: same_kind  # Both decide clearance reinstatement under a presumption against restoration,\
+  \ given rehabilitation evidence.\n  decider: same_kind  # Both are Administrative Judges under DOE regulations.\n  role:\
+  \ same_kind    # Both may decide, consult, but final decision is theirs.\ngoverns: true\nwhy: \"The same equities (due_process,\
+  \ mission_effect, analytic_integrity, lawful_authority) are in play. The condition for the case's priority (rehabilitation\
+  \ documented and no recurrence) holds here: the employee completed treatment, provided sustained negative PEth tests, and\
+  \ testimony indicates cooperation. The prior reinstatement log does not override the case's reasoning; it is consistent\
+  \ with restoration. Thus REF1's approach governs.\"\n\n---\nkind: reasoning\ncase: REF1\ncase_approach: \"REF1 weighed the\
+  \ mitigating factors (completed treatment, PEth tests, psychologist's remission assessment) against the presumption against\
+  \ clearance, concluding restoration is appropriate when the individual demonstrates sustained abstinence and rehabilitation\
+  \ meeting guideline mitigation. The Judge did not request additional evaluation because the existing psychologist report\
+  \ met standards.\"\nweighing: \"Here, LIVE-C1 (due_process), LIVE-C2 (mission_effect), and LIVE-C4 (analytic_integrity)\
+  \ provide strong support for restoration, matching REF1-C1, C2, C4. LIVE-C3 (lawful_authority) is weak but satisfied because\
+  \ the regulation's burden is met by the evidence. LIVE-C5 (institutional_credibility) adds modest support noting prior consistent\
+  \ reinstatement. LIVE-C6 (resource_stewardship) favors requesting an evaluation only if uncertainty about risk remains;\
+  \ however, the existing psychologist report is reliable and no new evidence suggests ongoing risk. Thus restoration (LIVE-O2)\
+  \ is preferred over denial (LIVE-O1) or holding (LIVE-O3). Requesting another evaluation (LIVE-O4) would add delay without\
+  \ necessity, as REF1 rejected an extra evaluation when the existing report sufficed.\"\ntradecraft: \"Issue a written decision\
+  \ restoring the clearance, citing Regulation 10.4.2 paragraph on mitigation (¶23(d) for Guideline G and ¶32(d) for Guideline\
+  \ J), referencing the psychologist's assessment and PEth results. Order continued monitoring of PEth tests for six months\
+  \ as recommended in REF1's uncertainty note. Communicate the decision to the Local Security Office and the contractor. Record\
+  \ the decision in the official OHA memorandum.\"\nuncertainty: \"The primary uncertainty is whether the employee will relapse\
+  \ or have a new alcohol-related offense. The case's flip condition (REF1-flip1) applies if a positive PEth or new alcohol-related\
+  \ conviction occurs; we are currently in the 'no recurrence' state. We will include a monitoring recommendation.\"\nhandoff:\
+  \ \"As the Administrative Judge, I decide the reinstatement based on the record. I do not need to consult the Security Management\
+  \ Office for denial; I act within my authority under 10 C.F.R. § 710.25(d)‑(g).\"\ntempting_wrong:\n  option: LIVE-O1\n\
+  \  pull: \"The director recommends denial; the felony and guideline doubts suggest a cautious denial.\"\n  why_wrong: \"\
+  Denial ignores documented rehabilitation, sustained abstinence (seven negative PEth tests), and professional assessment\
+  \ of remission, which REF1 found sufficient for restoration when no recurrence.\"\nrejected:\n  LIVE-O3: \"Holding the decision\
+  \ would delay restoration and deny the employee timely access to perform contracted work without justification.\"\n  LIVE-O4:\
+  \ \"Requesting another evaluation would add delay; the existing psychologist report already meets guideline standards and\
+  \ the individual has complied with treatment.\"\n\n---\nNow verdict.\n\nWe follow REF1's choice (restore) because the mitigating\
+  \ factors hold. However we must check flip conditions. REF1-flip1: if Individual produces positive PEth test or new alcohol-related\
+  \ offense after hearing, then deny. Currently no positive PEth or new offense; the record shows all negative PEth through\
+  \ March 2026. So flip does not apply. Thus we follow.\n\nThus verdict: choose LIVE-O2 (restore). Relation: follows (same\
+  \ approach leads to restore).\n\nNow write verdict document.\n\nBut need to include the verification that the case governs.\
+  \ We said governs true.\n\nThus verdict:\n\nkind: verdict\nchoice: LIVE-O2\ncourse: \"Restore the employee's security clearance,\
+  \ citing Regulation 10.4.2 mitigation guidelines and the documented rehabilitation.\"\nrelation: follows\nvia: null\ndecisive:\
+  \ [LIVE-C1, LIVE-C2, LIVE-C4]\nnow:\n  - \"Draft and issue written restoration order referencing CFR §710.25(d)–(g), Guideline\
+  \ G paragraph (d), Guideline J paragraph (d), psychologist assessment, and PEth results.\"\n  - \"Order continued PEth testing\
+  \ for six months as monitoring.\"\n  - \"Notify Local Security Office and contractor; log decision.\"\n\nflip_conditions:\n\
+  \  would_change:\n    - {id: LIVE-flip1, if: \"The employee submits a positive PEth test or is convicted of a new alcohol‑related\
+  \ offense after this hearing\", then: LIVE-O1, why: \"Would trigger REF1-flip1; denial would be appropriate.\"}\n  would_not_change:\n\
+  \    - {id: LIVE-noflip1, if: \"Employee continues to abstain from alcohol and complies with all court‑ordered conditions\"\
+  , why: \"Continued compliance sustains mitigation.\"}\n  watch_for:\n    - {id: LIVE-watch1, what: \"Any future positive\
+  \ PEth test or relapse into alcohol use\","
+prompt_sha256: d672d4c6bfe199fa074f97c1eba107ac5914cbb180a11e12e95e84224448c1e4
+writer: granite-rs
+chosen: false
+tags: []
