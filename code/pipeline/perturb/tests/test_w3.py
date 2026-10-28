@@ -171,7 +171,7 @@ class ReviseFake:
                     changed.append(cid)
         dec = [cid for cid, c in case["considerations"].items() if tgt in c["favors"]]
         if self.add:
-            new = {"facts": ["F1"], "equity": "deployer_priority", "favors": [tgt], "weight": "strong", "why": "A new reading of {F1} favors the other option."}
+            new = {"facts": ["F1"], "equity": "mission_effect", "favors": [tgt], "weight": "strong", "why": "A new reading of {F1} favors the other option."}
             dec = ["C%d" % (len(case["considerations"]) + 1)]
         r = case["reasoning"]
         other = [o for o in case["options"] if o != tgt][0]
@@ -228,6 +228,8 @@ def test_revise_card_add_consideration_cites_fact(tmp_path):
 @pytest.mark.parametrize("mut,err", [
     (lambda o: o.__setitem__("changed", ["C1"]), "you claimed"),
     (lambda o: o.__setitem__("new_consideration", {"facts": [], "equity": "x", "favors": ["O2"], "weight": "strong", "why": "w"}), "at least one"),
+    (lambda o: o.__setitem__("new_consideration", {"facts": ["F1"], "equity": "civilian_protection", "favors": ["O2"],
+                                                   "weight": "strong", "why": "w"}), "not in the equity list"),   # R81
     (lambda o: o["reasoning"].__setitem__("weighing", "The source emphasizes the cost."), "source narration"),
     (lambda o: o["reasoning"].__setitem__("read", "Then Sergeant Hollis decided to stay."), "personal name"),
     (lambda o: o.__setitem__("decisive", ["C1"]), "decisive"),
@@ -273,3 +275,4 @@ def test_check_text_rules():
         check_text({"a": "According to the source, hold."}, "")
     with pytest.raises(ValueError):
         check_text({"a": "Dr. Alvarez agreed."}, "")
+

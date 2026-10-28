@@ -40,6 +40,12 @@ class RefusalError(OperatorError):
 REFUSAL = re.compile(r"I can'?t help|I cannot assist|I can'?t assist|I'm sorry, but|I am sorry, but|I cannot help", re.I)
 
 
+def registry_equities() -> set[str]:
+    """Equity ids of the registry (data/registry/equities/pilot.yaml), as extraction validates them."""
+    from pipeline.ingest.extract import equities
+    return set(equities())
+
+
 def is_refusal(text) -> bool:
     """Simple detection until W4's datagen/llm.py refusal recording exists: empty output, or refusal wording."""
     if text is None or not str(text).strip():
@@ -360,6 +366,10 @@ def apply_structure(d: dict, out: dict, choice: str, orig_con_ids: list[str]):
         if not (isinstance(item["facts"], list) and item["facts"] and isinstance(item["equity"], str) and item["favors"] is not None
                 and item["why"]):
             raise ValueError("new_considerations entries need facts, equity, favors, weight, why")
+        allowed = registry_equities()
+        if item["equity"] not in allowed:                   # R81: the same check as extraction (extract.py)
+            raise ValueError(f"new consideration equity `{item['equity']}` is not in the equity list; use one of: "
+                             + ", ".join(sorted(allowed)))
         d["considerations"].append(item)
         new_ids.append(item["id"])
     ids = {c["id"] for c in d["considerations"]}
