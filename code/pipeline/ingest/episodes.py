@@ -50,6 +50,8 @@ def validate_candidates(o: dict, ids: list[str]) -> list[str]:
         if errs:
             continue
         for k in ("span_start", "span_end"):
+            if isinstance(c[k], str):       # GPT-6-Luna copies the prompt's `[span id]` brackets
+                c[k] = c[k].strip().strip("[]").strip()
             if c[k] not in ids:
                 errs.append(f"candidate {i}: unknown span id {c[k]}")
         if c["span_start"] in ids and c["span_end"] in ids and ids.index(c["span_start"]) > ids.index(c["span_end"]):

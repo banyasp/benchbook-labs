@@ -250,13 +250,22 @@ def _bedrock(bare, messages, temperature, max_tokens, ctx):
         else:
             convo.append({"role": m["role"], "content": [{"text": m["content"]}]})
     kwargs = {"system": system} if system else {}
-    if ctx.get("extra"):    # e.g. gpt-oss {"reasoning_effort": "high"}
-        kwargs["additionalModelRequestFields"] = ctx["extra"]
-    resp = session.client("bedrock-runtime").converse(
-        modelId=bare, messages=convo, inferenceConfig={"temperature": temperature, "maxTokens": max_tokens}, **kwargs)
+    extra = dict(ctx.get("extra") or {})
+    if NO_TEMPERATURE.search(bare) and "reasoning_effort" in extra:   # GPT-6 takes {"reasoning": {"effort": ...}}
+        extra["reasoning"] = {"effort": extra.pop("reasoning_effort")}
+    if extra:               # e.g. gpt-oss {"reasoning_effort": "high"}
+        kwargs["additionalModelRequestFields"] = extra
+    inference = {"temperature": temperature, "maxTokens": max_tokens}
+    if NO_TEMPERATURE.search(bare):  # Bedrock rejects the field for these models; record that it was not applied
+        inference.pop("temperature")
+        ctx["temperature_dropped"] = temperature
+    resp = session.client("bedrock-runtime").converse(modelId=bare, messages=convo, inferenceConfig=inference, **kwargs)
     ctx["stop_reason"] = resp.get("stopReason")
     text = "".join(b.get("text", "") for b in (resp.get("output", {}).get("message", {}).get("content") or []))
     return text, resp.get("usage") or {}
+
+
+NO_TEMPERATURE = re.compile(r"(^|\.)openai\.gpt-6")   # GPT-6 family (Luna, Sol, Astra) on Bedrock, 2026-10-28
 
 
 def _dry(bare, messages, temperature, max_tokens, ctx):
@@ -296,6 +305,9 @@ def complete(model, messages, temperature=0.7, max_tokens=4000, *, stage=None, o
         rec["usage"] = usage
         if ctx.get("stop_reason"):
             rec["stop_reason"] = ctx["stop_reason"]
+        if "temperature_dropped" in ctx:
+            rec["temperature"] = None
+            rec["temperature_requested"] = ctx["temperature_dropped"]
         reason = detect_refusal(text, ctx.get("stop_reason")) if refusal_check and backend != "dry" else None
         if reason:
             rec["refusal"] = True
