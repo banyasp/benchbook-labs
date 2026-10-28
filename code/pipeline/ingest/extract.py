@@ -42,6 +42,22 @@ FQ_PROMPT = "extract_fq.v2"          # v1 stays on disk; set to extract_fq.v1 to
 SPAN_RE = re.compile(r"^src:[0-9a-f]{12}#p\d+\.\d+$")
 
 
+class TechniqueSkip(Exception):
+    """The extractor returned {"skip": "technique", ...}: the decision can't be stated without technique (criterion 4)."""
+
+    def __init__(self, reason: str, step: str):
+        super().__init__(f"skip (technique) at {step}: {reason}")
+        self.reason, self.step = reason, step
+
+
+def _skip_check(step: str, validate):
+    def v(o):
+        if isinstance(o, dict) and o.get("skip"):
+            raise TechniqueSkip(str(o.get("reason") or o.get("skip")), step)
+        return validate(o)
+    return v
+
+
 class ExtractionError(RuntimeError):
     pass
 
@@ -287,7 +303,7 @@ WEIGHTS = {"strong", "weak", "bar"}
 def build_case_dict(sid: str, fq: dict, a: dict, domain: str, family: str, url: str, focus: str, cues: dict) -> dict:
     fc = a.get("flip_conditions") or {}
 
-    def strip(items, drop=("origin", "spans")):
+    def strip(items, drop=("origin", "spans", "repairs")):
         return [{k: v for k, v in i.items() if k not in drop} for i in items or []]
 
     opts = {}
@@ -333,11 +349,15 @@ def validate_a(a: dict, sid: str, fq: dict, eq: dict[str, str], allowed_spans: s
         for it in fc.get(grp) or []:
             if it.get("origin") not in ("stated", "authored"):
                 errs.append(f"{it.get('id')}: origin must be stated|authored")
+            bad = [s for s in it.get("spans") or [] if s not in allowed_spans]
+            if bad:                     # repair, don't reject: flip conditions are often authored anyway (batch 2026-10-28)
+                it["spans"] = [s for s in it["spans"] if s in allowed_spans]
+                it.setdefault("repairs", []).append(f"dropped spans outside the episode window: {bad}")
+                if it.get("origin") == "stated" and not it["spans"]:
+                    it["origin"] = "authored"
+                    it["repairs"].append("origin stated -> authored (no span left)")
             if it.get("origin") == "stated" and not it.get("spans"):
                 errs.append(f"{it.get('id')}: a `stated` flip condition must cite spans")
-            for s in it.get("spans") or []:
-                if s not in allowed_spans:
-                    errs.append(f"{it.get('id')}: unknown span {s}")
     prose = {}
     for k in ("lesson", "limits"):
         prose[k] = str(a.get(k) or "")
@@ -363,14 +383,16 @@ def validate_a(a: dict, sid: str, fq: dict, eq: dict[str, str], allowed_spans: s
 
 # ------------------------------------------------------------------ one episode
 def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, split: str, complete_fn: Callable | None = None,
-                    data: Path = DATA) -> Scenario:
+                    data: Path = DATA, addendum: str = "", sid: str | None = None) -> Scenario:
+    """addendum: extra prompt text appended to both extraction prompts (e.g. prompts/natsec_scope.v1.md); a reply
+    {"skip": "technique", ...} then raises TechniqueSkip. sid: explicit scenario id (else derived from family/episodes)."""
     if complete_fn is None:
         from bench.models import complete as complete_fn
     family = R.family_of(source, ep)
     n = ep["n"]
     sibs = [e for e in source["episodes"] if R.family_of(source, e) == family]
     k = next((i for i, e in enumerate(sibs, 1) if e is ep), n)       # unique within the document family
-    sid = f"DR-{family}-{k}@v1" if len(sibs) > 1 else f"DR-{family}@v1"
+    sid = sid or (f"DR-{family}-{k}@v1" if len(sibs) > 1 else f"DR-{family}@v1")
     sel = select_episode_spans(spans, ep)
     allowed = {s["span"] for s in sel}
     log_dir = data / "store" / "scenarios" / family / "extract-logs"
@@ -386,9 +408,11 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
     partial = {"id": sid, "family": family, "split": split, "source_id": source.get("id"), "episode": ep.get("focus"), **dom}
 
     # (a) F, Q
-    user = t_fq.replace("{{SPANS}}", spans_text(sel)).replace("{{FOCUS}}", ep["focus"])
-    fq, att_fq, use_fq = call_json("FQ", "extractor", sys_msg, user, lambda o: validate_fq(o, allowed, rules=True, source_text=src_text),
-                                complete_fn, log_dir, tag)
+    add = f"\n\n{addendum.strip()}\n" if addendum else ""
+    user = t_fq.replace("{{SPANS}}", spans_text(sel)).replace("{{FOCUS}}", ep["focus"]) + add
+    fq, att_fq, use_fq = call_json("FQ", "extractor", sys_msg, user,
+                                   _skip_check("FQ", lambda o: validate_fq(o, allowed, rules=True, source_text=src_text)),
+                                   complete_fn, log_dir, tag)
     fq = relabel_options(fq, sid)
     cues = option_cues(fq)
 
@@ -397,11 +421,11 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
     fq_view["facts"] = [{k: f[k] for k in ("id", "kind", "status", "fact")} for f in fq["facts"]]
     user = (t_a.replace("{{SPANS}}", spans_text(sel)).replace("{{FOCUS}}", ep["focus"])
             .replace("{{FQ}}", json.dumps(fq_view, indent=1, ensure_ascii=False)).replace("{{REAL}}", fq["real_option"])
-            .replace("{{EQUITIES}}", "\n".join(f"- {k}: {v}" for k, v in eq.items())))
+            .replace("{{EQUITIES}}", "\n".join(f"- {k}: {v}" for k, v in eq.items()))) + add
     mk = lambda a: build_case_dict(sid, fq, a, source["domain"], family, source["url"], ep["focus"], cues)  # noqa: E731
     partial["fq"] = fq
     try:
-        a, att_a, use_a = call_json("A", "extractor", sys_msg, user, lambda o: validate_a(o, sid, fq, eq, allowed, mk),
+        a, att_a, use_a = call_json("A", "extractor", sys_msg, user, _skip_check("A", lambda o: validate_a(o, sid, fq, eq, allowed, mk)),
                                     complete_fn, log_dir, tag)
     except IncompleteExtraction as e:
         e.partial = {**partial, "fq_usage": use_fq}
@@ -422,7 +446,11 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
     if OR.no_opposite(fq):
         tags.append("no-opposite")
     elif fq.get("opposite_pair"):
-        tags.append("opposite:" + "|".join(sorted(fq["options"][p].get("disposition", "?") for p in fq["opposite_pair"])))
+        def _disp(p):
+            p = p.get("option") or p.get("id") if isinstance(p, dict) else p
+            d = (fq["options"].get(p) or {}).get("disposition", "?") if isinstance(p, str) else "?"
+            return d if isinstance(d, str) else str(d.get("word") or d.get("disposition") or "?") if isinstance(d, dict) else str(d)
+        tags.append("opposite:" + "|".join(sorted(_disp(p) for p in fq["opposite_pair"])))
     if fq.get("agent_recast"):
         tags.append("agent-recast")
     if flip_auth:

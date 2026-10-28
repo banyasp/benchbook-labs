@@ -120,6 +120,8 @@ TITLES = (r"Mr|Mrs|Ms|Miss|Mx|Dr|Prof|Judge|Justice|Sen|Senator|Rep|Representati
           r"Commissioner|Officer|Agent|Inspector|Chairman|Chairwoman|Minister|Ambassador|Attorney|Counsel|Supervisor|Manager|Mister")
 # title + Capitalized surname, where the surname is not itself an office/organization word
 TITLE_NAME_RE = re.compile(rf"\b(?:{TITLES})\.?\s+(?:[A-Z]\.\s*)*([A-Z][a-zA-Z'\-]+)\b")
+COMMON_AFTER_INITIAL = {"the", "this", "that", "these", "those", "there", "then", "when", "while", "his", "her", "their",
+                        "its", "under", "after", "before", "since", "although", "however", "because", "for", "and"}
 INITIALS_RE = re.compile(r"\b[A-Z]\.\s?(?:[A-Z]\.\s?)*[A-Z][a-z]{2,}\b")
 # words that follow a title but are offices, organizations or common sentence words, not surnames
 OFFICE_WORDS = {w.lower() for w in """
@@ -185,7 +187,8 @@ def name_errors(texts: dict[str, str], source_text: str = "", allow: set[str] | 
             if w.lower() not in OFFICE_WORDS and w.lower() not in ORG_WORDS and w.lower() not in allow:
                 found.add(m.group(0).strip())
         for m in INITIALS_RE.finditer(t):
-            found.add(m.group(0).strip())
+            if m.group(0).split()[-1].lower() not in COMMON_AFTER_INITIAL:     # "Guideline J. The Individual..." is no name
+                found.add(m.group(0).strip())
         for m in CAP_SEQ_RE.finditer(t):
             first, rest = m.group(1), m.group(2).split()
             if first.lower() in FIRST_NAMES and first.lower() not in allow and rest[0].lower() not in ORG_WORDS:
