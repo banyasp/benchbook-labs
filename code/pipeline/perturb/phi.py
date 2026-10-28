@@ -24,8 +24,16 @@ def check_touched_weight(d: dict, tc: str, c_weight: str) -> None:
         raise ValueError(f"{tc} weight `{t['weight']}` must be one the untouched considerations carry ({sorted(others)}) or its original `{c_weight}`")
 
 
-def check_count(d: dict, n_x: int, choice: str) -> None:
-    n = len(d["flip_conditions"]["would_change"])
+def check_count(d: dict, n_x: int, choice: str, keep_then: str | None = None) -> None:
+    """Exactly n_x would_change items. Too many is repaired in code: surplus items are dropped from the end (new items
+    are appended last), never the back-flip item (then == keep_then). Too few needs the model (feedback)."""
+    wc = d["flip_conditions"]["would_change"]
+    while len(wc) > n_x and keep_then is not None:
+        i = next((k for k in range(len(wc) - 1, -1, -1) if wc[k]["then"] != keep_then), None)
+        if i is None:
+            break
+        wc.pop(i)
+    n = len(wc)
     if n < n_x:
         raise ValueError(f"the flip conditions must keep {n_x} would_change items; {n} remain after dropping the ones that now point at "
                          f"the verdict {choice}. Add {n_x - n} entr{'y' if n_x - n == 1 else 'ies'} to new_would_change (an independent, "

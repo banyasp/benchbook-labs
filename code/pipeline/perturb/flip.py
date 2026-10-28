@@ -131,7 +131,7 @@ def flip(X, store, rng, *, item: str | None = None, realization: str | None = No
         d["reasoning"]["rejected"].pop(then, None)
         check_touched_weight(d, tc, c_weight)
         finish_flip_conditions(d, out, then, C.verdict.choice, fired=w.id)
-        check_count(d, n_wc, then)
+        check_count(d, n_wc, then, keep_then=C.verdict.choice)
         assert_back_flip(d, C.verdict.choice, then)
         new_wc = [x["id"] for x in d["flip_conditions"]["would_change"] if x["id"] not in orig_wc]
         mp = shuffle_and_renumber(d, shuffle_seed)

@@ -135,7 +135,9 @@ class Ctx:
                                prompt_version=pv, inputs={"parent": sha256_obj(self.X.dump()), "user": sha256_text(user)},
                                params={"attempts": attempt + 1}, ts=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
                 return res, text
-            except ValueError as e:
+            except (ValueError, AttributeError, TypeError, KeyError) as e:   # wrong JSON shape -> feedback, not a crash
+                if not isinstance(e, ValueError):
+                    e = ValueError(f"malformed structure ({type(e).__name__}: {e}); follow the JSON shape exactly")
                 last = e
                 msgs += [{"role": "assistant", "content": text},
                          {"role": "user", "content": f"Rejected: {e}\nFix this and resend the complete JSON object."}]

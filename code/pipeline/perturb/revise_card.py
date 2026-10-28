@@ -232,7 +232,7 @@ def revise_card(X, store, rng, *, tally=None, target: str | None = None):
             if "why" in u:
                 w["why"] = _s(u["why"], f"flip.{wid}.why")
         finish_flip_conditions(d, out, tgt, C.verdict.choice, fired=None, need_back=True)
-        check_count(d, n_wc, tgt)
+        check_count(d, n_wc, tgt, keep_then=C.verdict.choice)
         new_wc = [w["id"] for w in d["flip_conditions"]["would_change"] if w["id"] not in orig_ids]
         d["lesson"] = _s(out.get("lesson"), "lesson")
         d["limits"] = _s(out.get("limits"), "limits")
