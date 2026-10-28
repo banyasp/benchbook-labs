@@ -31,6 +31,7 @@ from typing import Callable
 
 import yaml
 
+from .canon import canonicalize
 from bench.schema import Case, EquitySet, parse_reply
 from bench.schema.pipeline import TRAIN_ARMS, PairRecord, SolveSample, sha256_text
 from harness import client
@@ -281,6 +282,12 @@ def check_rs(raw_text: str, g: GoldStructure, judge, cfg: RSConfig | None = None
     th, pair = cfg.thresholds, g.pair
     sub: dict = {"finish_reason": finish_reason, "arm": pair.arm, "gold_tier": pair.gold_tier}
     parsed = parse_reply(raw_text)
+    if not parsed.strict_ok:                       # batch 2026-10-28: repair format slips (solve/canon.py), then re-check
+        canon, fixes = canonicalize(raw_text)
+        sub["canonical_fixes"] = fixes
+        if canon is not None:
+            parsed = parse_reply(canon)
+            sub["canonical_text"] = canon
     reasons: list[str] = []
     # ---- stage parse (no judge)
     if cfg.require_stop and finish_reason == "length":
@@ -439,6 +446,7 @@ async def process_item(pair: PairRecord, store: Store, judge, cfg: RSConfig, sem
                             "accepted": ck.accepted, "reasons": ck.reasons, "stage": ck.stage, "subscores": ck.sub,
                             "score": ck.score, "finish_reason": c.finish_reason, "usage": c.usage, "seconds": c.seconds,
                             "seed": _seed(cfg, pair.id, rnd), "raw_text": c.raw_text, "generated": c.generated,
+                            "target_text": ck.sub.pop("canonical_text", None) or c.raw_text,
                             "prompt_sha256": sha256_text(ep.prompt_text)})
 
     rounds = rounds_override or ROUNDS

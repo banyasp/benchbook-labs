@@ -53,7 +53,8 @@ def accepted_reply(pair: PairRecord, store: Store, k: int | None = None) -> tupl
         if s.accepted and (k is None or k == i):
             f = _sample_file(store, s)
             # W1 (granite-rs) writes raw_text (= prefill + generated) and marks its pick `chosen: true`
-            cands.append((f.get("k", i), f.get("reply") or f.get("text") or f.get("raw_text"), f))
+            # target_text = canonicalized reply (solve/canon.py) when the raw sample needed format repairs
+            cands.append((f.get("k", i), f.get("reply") or f.get("text") or f.get("target_text") or f.get("raw_text"), f))
     if not cands:
         return None
     sel = [c for c in cands if c[2].get("selected") or c[2].get("chosen") is True]

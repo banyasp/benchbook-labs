@@ -6,6 +6,8 @@ import re
 from bench.schema import Case
 
 VERBATIM_WORDS = 8
+OPTION_LABEL_WORDS = 12     # batch 2026-10-28: options must be mentioned in the trace; only long verbatim copies of the
+                            # option wording count as a label leak (8 rejected ~30% of traces). A-part runs stay at 8.
 
 _TOK = re.compile(r"[a-z0-9']+")
 STOP = set("a an the of to and or in on at for with by from as is are was were be been it its this that these those "
@@ -115,12 +117,22 @@ def menu_problems(messages: list[dict], opt_spans: list[tuple[str, int, int, int
 
 
 # ------------------------------------------------------------------ person names
-TITLES = (r"(?:Mr|Mrs|Ms|Mx|Dr|Prof|Capt|Cpt|Col|Lt|Maj|Sgt|Cpl|Gen|Cmdr|Adm|Det|Sen|Pvt|Rev|Doctor|Professor|"
-          r"Captain|Colonel|Lieutenant|Sergeant|Detective|Judge|Senator|Admiral)")
-TITLE_NAME = re.compile(rf"\b{TITLES}\.?\s+([A-Z][a-z]{{2,}})")
+ABBR_TITLES = r"(?:Mr|Mrs|Ms|Mx|Dr|Prof|Capt|Cpt|Col|Lt|Maj|Sgt|Cpl|Gen|Cmdr|Adm|Det|Sen|Pvt|Rev)"
+FULL_TITLES = r"(?:Doctor|Professor|Captain|Colonel|Lieutenant|Sergeant|Detective|Judge|Senator|Admiral)"
+TITLES = rf"(?:{ABBR_TITLES}|{FULL_TITLES})"
+# batch 2026-10-28: the period is allowed only after an abbreviated title ("Judge. You" is a sentence break, not a name)
+TITLE_NAME = re.compile(rf"\b(?:{ABBR_TITLES}\.?|{FULL_TITLES}) ([A-Z][a-z]{{2,}})")
 ROLE_WORDS = {"advocate", "general", "operations", "officer", "commander", "staff", "supervisor", "desk", "office",
               "department", "division", "team", "section", "command", "center", "centre", "unit", "review", "board"}
-INITIAL_NAME = re.compile(r"\b[A-Z]\.\s?(?!(?:The|This|That|These|Those|There|They|Then|When|Where|While|With|Its|For|And|But|After|Before|Our|Your|Under|Upon|Such|Each|Any|All)\b)[A-Z][a-z]{2,}\b")
+# batch 2026-10-28: not after "Guideline"/"Section"/... or another letter-dot ("U.S."), not across a newline, and not
+# before a common sentence-initial word (the false positives were "Guideline G. You", "U.S. Department", "C.\nEnd")
+_COMMON_CAP = ("The|This|That|These|Those|There|They|Then|When|Where|While|With|Its|For|And|But|After|Before|Our|Your|Under|"
+               "Upon|Such|Each|Any|All|You|Given|Let|Please|Accordingly|Additional|Follow|Air|End|Department|Standing|"
+               "Delegated|Agency|Army|Navy|Office|Army|State|States|Government|Federal|Next|Now|Note|If|In|On|At|As|An|"
+               "It|We|He|She|His|Her|No|Not|Only|Also|However|Therefore|Because|Since|Although|Both|Either|Every")
+INITIAL_NAME = re.compile(r"(?<![A-Za-z]\.)(?<!Guideline )(?<!Guidelines )(?<!Section )(?<!Part )(?<!Annex )(?<!Appendix )"
+                          r"(?<!Tab )(?<!Exhibit )(?<!Paragraph )(?<!Item )(?<!Phase )\b[A-Z]\. ?"
+                          rf"(?!(?:{_COMMON_CAP})\b)[A-Z][a-z]{{2,}}\b")
 FIRST_NAMES = set("""james john robert michael william david richard joseph thomas charles christopher daniel matthew anthony
 donald steven paul andrew joshua kenneth kevin brian george timothy ronald edward jason jeffrey ryan jacob gary nicholas eric
 jonathan stephen larry justin scott brandon benjamin samuel gregory alexander patrick raymond jack dennis jerry tyler aaron
@@ -177,7 +189,7 @@ def option_text_leaks(messages: list[dict], case: Case) -> list[dict]:
     out = []
     for oid, o in case.options.items():
         n = longest_run(o.do, body)
-        if n >= VERBATIM_WORDS:
+        if n >= OPTION_LABEL_WORDS:
             out.append({"option": oid, "run_words": n, "gold": oid == case.verdict.choice})
     return out
 
