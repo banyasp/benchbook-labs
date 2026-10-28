@@ -238,9 +238,11 @@ def validate_fq(o: dict, allowed_spans: set[str], rules: bool = False, source_te
             errs.append(f"F{i} status must be confirmed or assessed")
         if not f.get("fact"):
             errs.append(f"F{i} has no text")
-        for s in f.get("spans") or []:
-            if s not in allowed_spans:
-                errs.append(f"F{i} cites unknown span id {s}")
+        bad = [s for s in f.get("spans") or [] if s not in allowed_spans]
+        if bad and len(bad) < len(f.get("spans") or []):     # repair: keep the valid refs, drop the hallucinated ones
+            f["spans"] = [s for s in f["spans"] if s in allowed_spans]
+        elif bad:
+            errs.append(f"F{i} cites unknown span id {bad[0]}")
     n_auth = sum(1 for f in o["facts"] if not f.get("spans"))
     if n_auth > max(1, len(o["facts"]) // 3):
         errs.append("too many facts without span refs; ground the facts in the document")
@@ -383,9 +385,12 @@ def validate_a(a: dict, sid: str, fq: dict, eq: dict[str, str], allowed_spans: s
 
 # ------------------------------------------------------------------ one episode
 def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, split: str, complete_fn: Callable | None = None,
-                    data: Path = DATA, addendum: str = "", sid: str | None = None) -> Scenario:
+                    data: Path = DATA, addendum: str = "", sid: str | None = None,
+                    endorse_fn: Callable[[dict], tuple[str, str]] | None = None) -> Scenario:
     """addendum: extra prompt text appended to both extraction prompts (e.g. prompts/natsec_scope.v1.md); a reply
-    {"skip": "technique", ...} then raises TechniqueSkip. sid: explicit scenario id (else derived from family/episodes)."""
+    {"skip": "technique", ...} then raises TechniqueSkip. sid: explicit scenario id (else derived from family/episodes).
+    endorse_fn(fq) -> (option id, why): picks the endorsed option after F/Q (R61: when the authority's finding endorses a
+    course other than the one taken); A is then written for that option."""
     if complete_fn is None:
         from bench.models import complete as complete_fn
     family = R.family_of(source, ep)
@@ -414,6 +419,16 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
                                    _skip_check("FQ", lambda o: validate_fq(o, allowed, rules=True, source_text=src_text)),
                                    complete_fn, log_dir, tag)
     fq = relabel_options(fq, sid)
+    endorsed = None
+    if endorse_fn is not None:
+        opt, why = endorse_fn(fq)
+        if opt not in fq["options"]:
+            raise IncompleteExtraction(f"{sid}: endorsed option {opt!r} is not an option", reason="endorse failed",
+                                       missing=["case.verdict"])
+        endorsed = {"taken": fq["real_option"], "endorsed": opt, "why": why}
+        if opt != fq["real_option"]:
+            fq["real_option"] = opt
+            fq["authored_options"] = [k for k in fq["options"] if k != opt]
     cues = option_cues(fq)
 
     # (b) A, given F, Q, spans
@@ -457,6 +472,8 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
         tags.append("flip-conditions-authored")
     if cues["real_is_longest"] or not 0.8 <= cues["real_to_mean_other_length"] <= 1.25:
         tags.append("cue:option-length")
+    if endorsed:
+        tags.append("gold-endorsed-alternative" if endorsed["taken"] != endorsed["endorsed"] else "gold-endorsed-taken")
     if cues["real_move"] in ("ask", "hold", "refuse"):
         tags.append(f"gold-move:{cues['real_move']}")
     ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -470,6 +487,9 @@ def extract_episode(source: dict, ep: dict, spans: list[dict], sha256: str, spli
                  inputs={"doc": sha256, "prompt": h_a, "fq": sha256_text(json.dumps(fq_view, sort_keys=True))},
                  params={**prm, "attempts": att_a, "usage": use_a}, ts=ts,
                  notes=("; ".join(a.get("equity_gaps") or []) or None)),
+        *([ProvStep(id="extract.endorse", operator="extract", model=cfg.model, role="extractor", ts=ts,
+                    notes=f"option taken by the decider (per source): {endorsed['taken']}; option the authority's finding "
+                          f"endorses (verdict): {endorsed['endorsed']}; {endorsed['why']}")] if endorsed else []),
         ProvStep(id="extract.assign", operator="extract", notes=f"family {family}; split {split} by rule: {R.SPLIT_RULE}; "
                  "option order shuffled by code (seed = scenario id)", ts=ts),
     ], fields={**{f"case.{k}": "extract.FQ" for k in ("title", "setting", "decider", "agent", "agent_role", "situation", "question",

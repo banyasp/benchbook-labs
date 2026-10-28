@@ -69,6 +69,67 @@ def source_meta(sid: str) -> dict:
     return acq[sid]
 
 
+def gold_block(ep: dict) -> str:
+    """R61 (batch 2026-10-28): the first run took the course the decider actually took as the verdict in 8/17 episodes.
+    The gold is the convening/final authority's finding (W8b `gold`), so the extractor is told it explicitly."""
+    g = ep.get("gold") or {}
+    if not g.get("finding"):
+        return ""
+    return ("\n\n### The endorsed answer (gold) for this episode\n"
+            f"Convening / final authority: {' '.join(str(g.get('authority', '')).split())}\n"
+            f"Its finding: {' '.join(str(g['finding']).split())}\n"
+            "`verdict.choice` (and `real_option`) must be the course of action this finding endorses as what the decider "
+            "SHOULD have done, which may differ from what the decider actually did. When the finding criticises the "
+            "decision taken, the endorsed option is the alternative course the finding implies (e.g. not striking, "
+            "warning first, verifying first). State what was actually done, if needed, as a fact or in the reasoning, "
+            "never as the verdict. `basis_statement` must be in English and name offices, not persons.")
+
+
+ENDORSE_SYS = "You map an official finding onto a set of options. Reply with one JSON object only."
+ENDORSE = """An investigation reviewed a decision. Below are the decision's options (complete courses of action) and the
+convening / final authority's finding about it.
+
+Question: {question}
+Options:
+{options}
+
+The source's narrative says the decider took option {taken}.
+
+Convening / final authority: {authority}
+Its finding: {finding}
+
+Which ONE option does the finding endorse as what the decider SHOULD have done? This may differ from what was done:
+if the finding criticises the decision taken (calls it inappropriate, a violation, a misidentification, a procedural
+error that should have been avoided), pick the alternative course the finding implies (e.g. not striking, warning
+first, verifying first, confirming identification first). If the finding upholds the decision, pick the option taken.
+Reply: {{"option": "O<n>", "why": "<one sentence, decision level, no technique, no personal names>"}}"""
+
+
+def endorse_fn_for(ep: dict, complete_fn=None):
+    """R61: the gold is the authority's finding, mapped onto the options by a separate step (the extractor anchors on
+    the course actually taken: 8/17 wrong in run 1, 7/17 when told the finding in its prompt)."""
+    g = ep.get("gold") or {}
+    if not g.get("finding"):
+        return None
+    if complete_fn is None:
+        from bench.models import complete as complete_fn
+
+    def fn(fq: dict) -> tuple[str, str]:
+        from .extract import parse_json
+        opts = "\n".join(f"- {k}: {v['do']}" for k, v in fq["options"].items())
+        user = ENDORSE.format(question=fq.get("question", ""), options=opts, taken=fq["real_option"],
+                              authority=" ".join(str(g.get("authority", "")).split()), finding=" ".join(str(g["finding"]).split()))
+        last = None
+        for _ in range(3):
+            o = parse_json(complete_fn("extractor", [{"role": "system", "content": ENDORSE_SYS},
+                                                     {"role": "user", "content": user}], stage="extract.endorse"))
+            if o.get("option") in fq["options"]:
+                return o["option"], str(o.get("why", ""))
+            last = o
+        raise ExtractionError(f"endorse: no valid option in {last}")
+    return fn
+
+
 def _flags(s) -> list[str]:
     return sorted({f"{p}: {f.match}" for p, f in TC.scan_scenario(s.case.dump()) if f.severity == "strip"})
 
@@ -84,12 +145,13 @@ def extract_one(ep: dict, store: Store, data: Path = DATA, complete_fn=None) -> 
     spans = episode_spans(ep, data)
     sha = raw_sha(ep["doc"], data)
     sid = f"DR-{ep['id']}@v1"
-    scope = SCOPE.read_text()
+    scope = SCOPE.read_text() + gold_block(ep)
     rec = {"episode": ep["id"], "scenario": sid, "family": ep["family"], "n_spans": len(spans)}
     addendum, flags = scope, []
-    for attempt in (1, 2):
+    for attempt in (1, 2, 3):
         try:
-            s = extract_episode(source, e2, spans, sha, "test", complete_fn, data, addendum=addendum, sid=sid)
+            s = extract_episode(source, e2, spans, sha, "test", complete_fn, data, addendum=addendum, sid=sid,
+                                endorse_fn=endorse_fn_for(ep, complete_fn))
         except TechniqueSkip as e:
             return {**rec, "outcome": "rejected", "criterion": 4, "reason": f"extractor skip: {e.reason}", "step": e.step}
         except IncompleteExtraction as e:
@@ -104,7 +166,7 @@ def extract_one(ep: dict, store: Store, data: Path = DATA, complete_fn=None) -> 
         addendum = (scope + "\n\n### Your previous extraction of this episode contained operational technique. Remove every "
                     "one of these details (replace by its decision-level consequence or omit it):\n- " + "\n- ".join(flags[:30]))
     if flags:
-        return {**rec, "outcome": "rejected", "criterion": 4, "reason": "technique remains after one re-extraction",
+        return {**rec, "outcome": "rejected", "criterion": 4, "reason": "technique remains after two re-extractions",
                 "flags": flags[:30]}
     s.held_out, s.split = True, "test"
     s.tags += ["natsec", "held-out-domain", f"tier-{ep.get('tier', 1)}"] + (["translated-de"] if ep.get("language") == "de" else []) \
