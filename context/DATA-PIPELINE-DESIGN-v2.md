@@ -571,6 +571,10 @@ for sampling only. Check that prompt + Y fits `max_length`, because `sft_lora` d
    - Report agreement with O(T), with and without C, by a coarse distance band (same issue and guideline vs
      different).
 5. **Splits** (assigned before any perturbation; the box's current rule puts ~1 family in test and must change).
+   **Natsec split (Peter, 2026-10-28):** single strike, engagement and targeting decisions are held out (test only),
+   including the 17 already-extracted held-out episodes. Command decisions, intelligence decisions and use-of-force
+   *policy* (e.g. the PPG/PSP approval rules, ROE policy) take the usual per-document train/dev/test split.
+   Earlier wording, kept for the record:
    The held-out domain for v1 is **military operational and tactical decisions, targeting above all**. Sources:
    `docs/natsec-decision-sources-v1.md`; use them per brief W8b.
 
