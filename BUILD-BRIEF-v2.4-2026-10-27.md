@@ -275,6 +275,12 @@ Acquire now. Run extraction after W4a and the option rules land.
 
 ### W8b — National-security decision sources (added 2026-10-27)
 
+**Corpus (2026-10-27/28).** Peter's Claude session is fetching the whole catalog plus the collections it points to
+(CIA CSI, NSA CCH, JSOU, NWC, NDU, MWI, MCU, CALL, USAF accident boards, ICRC casebook, the multi-part investigations)
+and a doctrine set, into **`data/corpus/natsec/`**: `text/<id>.txt` (one file per document, with a header naming the
+source), `meta/<id>.json`, `index.csv` and a README. Raw PDFs stay on Peter's Mac. Use it as the source pool for
+W8b episodes and future domains; the episode finder (W4) runs over these text files. Don't re-fetch what's there.
+
 Peter added `docs/natsec-decision-sources-v1.md`, a catalog of public natsec decision sources compiled by another
 agent and reviewed by Peter. **Use it as source material.** He finds the **tactical and operational
 decisions, especially targeting and strike decisions**, the most interesting.
@@ -327,9 +333,13 @@ precautions.
   - anything that reads as how to employ a weapon or find a target.
 
   An episode that can't be stated without technique fails criterion 4.
-- **Doctrine (Part D3: CJCSI 3160.01, JP 3-60, AFDP 3-60, AJP-3.9, FM 3-60) is not an episode source and not render
-  texture.** Don't ingest it. At most, a short summary of the *legal standards* (distinction, proportionality,
-  precautions) can inform equity glosses.
+- **Doctrine is source material** (Peter, 2026-10-27, superseding "don't ingest it"). Use doctrine where it is
+  detailed enough to ground a decision scenario: who holds which approval authority, what legal standard applies
+  (distinction, proportionality, precautions, ROE), when a decision must go up the chain, what a commander must
+  weigh, and how analytic standards bear on a call. Scenarios built from doctrine stay at that decision level, under
+  the same scope rule: no collateral-damage-estimation computations, weaponeering, sensor or attack procedures in
+  cards or traces. Doctrine-derived scenarios have no real outcome, so their gold comes from an independent solve
+  (`model-solved`) unless the doctrine itself states the answer; tag them `doctrine-derived`.
 - The catalog's line "do not filter on content" refers to choosing sources. Extraction still follows the rule
   "tag, don't drop; strip technique".
 

@@ -40,8 +40,33 @@ def alt_urls(url):
     return alts
 
 
+def get_curl(url):
+    """Fallback when Python's TLS stack fails (e.g. a host's certificate chain): system curl, same honest UA."""
+    out = subprocess.run(["curl", "-sS", "-L", "--max-time", "300", "-A", UA, "-D", "-", "-o", "/dev/stdout", url],
+                         capture_output=True, timeout=320)
+    raw = out.stdout
+    # split the last header block from the body
+    parts = raw.split(b"\r\n\r\n")
+    body_start, status, ctype = 0, 0, ""
+    i = 0
+    while raw[i:i + 5] == b"HTTP/":
+        end = raw.find(b"\r\n\r\n", i)
+        if end < 0:
+            break
+        head = raw[i:end].decode("latin-1")
+        m = re.match(r"HTTP/\S+\s+(\d+)", head)
+        status = int(m.group(1)) if m else 0
+        m = re.search(r"(?im)^content-type:\s*(.+)$", head)
+        ctype = m.group(1).strip() if m else ""
+        i = end + 4
+    return status, url, ctype, raw[i:]
+
+
 def get(url):
-    r = requests.get(url, headers={"User-Agent": UA}, timeout=(20, 240), stream=True, allow_redirects=True)
+    try:
+        r = requests.get(url, headers={"User-Agent": UA}, timeout=(20, 240), stream=True, allow_redirects=True)
+    except requests.exceptions.SSLError:
+        return get_curl(url)
     buf = bytearray()
     for chunk in r.iter_content(1 << 16):
         buf += chunk
@@ -101,7 +126,8 @@ def process(item, out, retry_failed):
             attempts.append({"via": via, "url": u, "error": type(e).__name__ + ": " + str(e)[:160]})
             continue
         k = kind_of(ctype, data, u)
-        bot = k == "html" and len(data) < 200_000 and bool(BOT.search(data[:200_000].decode("utf-8", "replace")))
+        # Challenge pages are small and say so near the top; long real pages can mention "captcha" etc. in passing.
+        bot = k == "html" and len(data) < 40_000 and bool(BOT.search(data[:40_000].decode("utf-8", "replace")))
         attempts.append({"via": via, "url": u, "status": st, "bytes": len(data), "kind": k, "bot_page": bot})
         if st == 200 and data and not bot:
             chosen = (via, u, final, ctype, data, k)
