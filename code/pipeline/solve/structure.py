@@ -34,6 +34,22 @@ def _num(s: str) -> int:
     return int(re.sub(r"\D", "", s) or 0)
 
 
+def effective_trace(pair: PairRecord, C: Scenario, T: Scenario) -> Scenario:
+    """Arm `revised` (design §7.3): the trace is restyle(C), but K_T, the verdict and Phi are C'-s (the served card's A)
+    carried onto T's facts. F and Q are unchanged by revise_card and restyle keeps ids 1:1, so the A part is copied
+    as is; any other id layout is an error (pair build checks it). Other arms: T unchanged."""
+    if pair.arm != "revised":
+        return T
+    d = T.case.dump()
+    a = C.case.dump()
+    for k in ("considerations", "reasoning", "verdict", "flip_conditions", "lesson", "limits"):
+        d[k] = a[k]
+    if set(d["options"]) != set(a["options"]) or [f["id"] for f in d["facts"]] != [f["id"] for f in a["facts"]]:
+        raise ValueError(f"{pair.id}: revised pair needs the trace's fact and option ids to equal the card's")
+    from bench.schema import Case
+    return T.model_copy(update={"case": Case.model_validate(d)})
+
+
 @dataclass
 class GoldStructure:
     pair: PairRecord
@@ -54,21 +70,38 @@ class GoldStructure:
 
     # ------------------------------------------------------------ build
     @classmethod
-    def build(cls, pair: PairRecord, C: Scenario, T: Scenario, prefix: str = "REF1") -> "GoldStructure":
-        served = C.case.serve(prefix)
-        case2served = {g: s for s, g in served.table.items()}
+    def from_store(cls, store, pair: PairRecord, prefix: str = "REF1") -> "GoldStructure":
+        """v2.4: G for a stored pair. C and T come from the scenario store, the span map from the trace store
+        (pairs reference traces by `trace_ref`; the legacy `pair.span_map` is the fallback)."""
+        C = store.scenario(pair.case_scenario) if pair.case_scenario else None
+        T = store.scenario(pair.trace_scenario)
+        sm = None
+        ref = pair.trace_ref or pair.trace_scenario
+        if store.has_trace(ref):
+            sm = store.trace(ref).span_map
+        return cls.build(pair, C, T, prefix, span_map=sm)
+
+    @classmethod
+    def build(cls, pair: PairRecord, C: Scenario, T: Scenario, prefix: str = "REF1", span_map=None) -> "GoldStructure":
+        """`span_map` (a SpanMap, e.g. from the trace store) overrides `pair.span_map`. For arm `revised` the
+        trace scenario is restyle(C), whose A is C's; the gold K_T / verdict is C'-s, so T is replaced by
+        `effective_trace` (T's F and Q, the served card's A)."""
+        T = effective_trace(pair, C, T)
+        sm = span_map if span_map is not None else pair.span_map
+        served = C.case.serve(prefix, pair.card_view) if C is not None else None      # arm none: no card
+        case2served = {g: s for s, g in served.table.items()} if served else {}
         tc = T.case
         warn: list[str] = []
 
         # facts in trace order
         pos: dict[str, tuple[int, int]] = {}
-        if pair.span_map:
-            for e in pair.span_map.entries:
+        if sm:
+            for e in sm.entries:
                 k = (e.message, e.start)
                 if e.fact not in pos or k < pos[e.fact]:
                     pos[e.fact] = k
         all_f = [tc.global_id(f.id) for f in tc.facts]
-        if pair.span_map:
+        if sm:
             kept = sorted([g for g in all_f if g in pos], key=lambda g: pos[g])
             dropped = [g for g in all_f if g not in pos]
             if dropped:
@@ -103,9 +136,9 @@ class GoldStructure:
                    fact_order=fact_order, option_ids=option_ids, cons_ids=cons_ids, dropped_facts=dropped,
                    warnings=warn)
         self.fact_map = self._map(pair.fact_map, [g for g in all_f if g not in dropped],
-                                  [C.case.global_id(f.id) for f in C.case.facts], "fact")
+                                  [C.case.global_id(f.id) for f in C.case.facts] if C else [], "fact")
         self.cons_map = self._map(pair.consideration_map, [tc.global_id(c.id) for c in tc.considerations],
-                                  [C.case.global_id(c.id) for c in C.case.considerations], "consideration")
+                                  [C.case.global_id(c.id) for c in C.case.considerations] if C else [], "consideration")
         for o in option_ids:
             tgt = pair.options_map.get(live[o])
             self.options_map[o] = case2served.get(tgt) if tgt else None
@@ -219,7 +252,7 @@ class GoldStructure:
                           for w in fc.watch_for]}
 
     # ------------------------------------------------------------ the 2a answer key
-    def answer_key(self, arm: str = "relevant") -> AnswerKey:
+    def answer_key(self, arm: str | None = None) -> AnswerKey:
         tc, p = self.T.case, self.pair
         w = self.weights()
         facts = []
@@ -230,7 +263,7 @@ class GoldStructure:
         for o in self.option_ids:
             co = tc.options[local(self.live[o])]
             options[o] = GoldOption(do=co.do, move=co.move, irreversible=co.irreversible, to=co.to)
-        tb = self.served.table
+        tb = self.served.table if self.served else {}
 
         def gm(m):
             return GoldMapping(
@@ -241,16 +274,17 @@ class GoldStructure:
         flips = [GoldFlip(id=f"{LIVE}{x.id}", **{"if": self.live_text(x.if_)}, then=self.lid(x.then),
                           why=self.live_text(x.why)) for x in tc.flip_conditions.would_change]
         return AnswerKey(
-            scenario=self.T.id, arm=arm, served=self.C.id, options=options, choice=self.choice,
-            acceptable=self.acceptable, relation=p.relation, via=list(p.via) if p.via else None,
+            scenario=self.T.id, arm=arm or self.pair.arm, served=self.C.id if self.C else None, options=options, choice=self.choice,
+            acceptable=self.acceptable, relation=None if (arm or p.arm) == 'none' else p.relation, via=list(p.via) if p.via else None,
             frame=GoldFrame(question=tc.question, decider=tc.decider, my_role=tc.agent),
             facts=facts, frame_map=GoldFrameMap(**p.frame.model_dump()),
             option_map={o: (tb[s] if s else None) for o, s in self.options_map.items()},
             fact_mapping=gm(self.fact_map),
             considerations=[GoldConsideration(**c) for c in self.considerations_live()],
             consideration_mapping=gm(self.cons_map), governs=p.governs, decisive=self.decisive, flip_conditions=flips,
-            provenance={"pair": p.id, "gold_tier": p.gold_tier, "operator": "project",
+            provenance={"pair": p.id, "arm": p.arm, "card_view": p.card_view, "gold_tier": p.gold_tier, "operator": "project",
+                        "d": p.d, "recommended_option": p.recommended_option, "tags": list(p.tags),
                         "course": "absent: the teacher's course is not gold", "dropped_facts": self.dropped_facts})
 
     def tables(self) -> dict:
-        return {"live": self.live, "served": self.served.table}
+        return {"live": self.live, "served": self.served.table if self.served else {}}
