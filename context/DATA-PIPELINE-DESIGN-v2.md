@@ -72,7 +72,7 @@ later pluralism experiment.
 
 | Symbol | Meaning |
 |---|---|
-| R | the raw corpus (immutable sources, addressed by span ids) |
+| R | the raw corpus: all source text, i.e. the fetched text (`data/corpus/natsec/text`, `data/raw`) **and** its cleaned, span-tagged paragraphs (`data/docs/<sha12>.jsonl`). Downstream, R means the `data/docs` paragraphs: cleaned (layout, characters, hyphenation) but never summarized or rewritten by a model (Peter, 2026-10-28) |
 | X = (F, Q, A) | a **scenario**, role-agnostic. F = atomic facts; Q = question frame (question, decider, agent role and authority, options); A = answer (considerations K, reasoning W, verdict V, flip conditions Φ, lesson, limits) |
 | C, T | **roles**, not kinds: a scenario served as a case (card), or rendered as a trace. Any scenario can play either role |
 | E, E_d | the equity registry (ids and glosses) and one deployment's injected subset |

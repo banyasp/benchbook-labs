@@ -7,16 +7,17 @@ config:
 ---
 %% Benchbook data pipeline, design v2.4.1 + rulings of 2026-10-28, with data passed on every edge.
 %% v6 (2026-10-28, EC2 session): ingest as raw corpus R -> span-tagged documents -> episode store, with 1b clean+normalize and 1d select batch.
-%%    New stores carry names, not letters (E is the equity registry; the design's R includes the span-tagged documents).
+%%    R covers both the fetched text and the span-tagged documents; downstream R means data/docs (Peter, 2026-10-28).
+%%    The episode store has a name, not a letter (E is the equity registry).
 %% Render: mmdc -i flow4.mmd -o flow4.svg -c mcfg.json -b white
 flowchart TD
   subgraph S1["1 · Ingest"]
     direction TB
     CAT["sources<br/>OHA · 5 CFR 2635<br/>natsec corpus (3,011 docs)<br/>doctrine"]:::code
     FETCH["1a fetch<br/>honest UA · archive fallback<br/>PDF → text · OCR for scans"]:::code
-    R[("Raw corpus R<br/>data/corpus/natsec/text<br/>data/raw (bytes by hash)")]:::store
+    R[("R · raw corpus: fetched text<br/>data/corpus/natsec/text<br/>data/raw (bytes by hash)")]:::store
     NORM["1b clean + normalize<br/>two-column repair · ligatures<br/>hyphenation · paragraphs"]:::code
-    DOCS[("Span-tagged documents<br/>data/docs/‹sha›.jsonl<br/>paragraphs with span ids")]:::store
+    DOCS[("R · span-tagged documents<br/>data/docs/‹sha›.jsonl<br/>cleaned, never model-rewritten<br/>(what R means downstream)")]:::store
     EPI["1c find episodes<br/>4 pass/fail criteria<br/>one concrete decision<br/>rejects kept with reason"]:::bedrock
     EPS[("Episode store<br/>data/store/episodes/corpus<br/>8,617 episodes · rejects")]:::store
     SEL["1d select batch<br/>stratified quotas · leak guard<br/>incident families (one Luna call)<br/>split per family"]:::code
