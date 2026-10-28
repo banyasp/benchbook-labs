@@ -23,17 +23,17 @@ case:
   question: What should the division commander do about the squadron commander's request to advance to Heilbronn?
   options:
     O1:
-      do: The division commander permits the squadron to advance to Heilbronn.
-      move: act
-      irreversible: true
-    O2:
       do: The division commander prohibits the squadron from advancing to Heilbronn.
       move: act
       irreversible: false
-    O3:
+    O2:
       do: The division commander holds the request pending a fuller assessment of the area.
       move: hold
       irreversible: false
+    O3:
+      do: The division commander permits the squadron to advance to Heilbronn.
+      move: act
+      irreversible: true
   facts:
   - id: F1
     kind: situation
@@ -67,7 +67,7 @@ case:
     - F5
     equity: mission_effect
     favors:
-    - O1
+    - O3
     weight: strong
     why: The squadron commander assessed that the enemy was not expecting the advance or postured for it, and regarded the
       imperfect picture as a valid opportunity. The division commander accepted the chance to exploit that advantage.
@@ -77,8 +77,8 @@ case:
     - F4
     equity: own_force_life
     favors:
-    - O3
     - O2
+    - O1
     weight: weak
     why: The far side remained unknown and the area was defended in strength; the scale of that defense surprised the squadron
       commander. Those facts made an advance risky, even though the commander considered the available picture sufficient.
@@ -89,7 +89,7 @@ case:
     - F5
     equity: tempo
     favors:
-    - O1
+    - O3
     weight: strong
     why: The request concerned an opportunity the squadron commander believed existed at that moment, while the enemy was
       not expecting the advance. Recognizing and acting on such an opportunity was important to the decision.
@@ -99,7 +99,7 @@ case:
     - F6
     equity: chain_of_command
     favors:
-    - O1
+    - O3
     weight: weak
     why: The squadron commander sought permission and the division commander became involved and made the decision, keeping
       the authorization with the responsible command level.
@@ -123,17 +123,17 @@ case:
     handoff: The division commander made the authorization decision after the squadron commander requested permission. The
       account records the division commander's involvement and approval, not a referral to another authority.
     tempting_wrong:
-      option: O3
+      option: O2
       pull: Waiting for a fuller assessment could seem prudent when the far side is unknown and the defense's scale is uncertain.
       why_wrong: 'The squadron commander''s judgment was that a perfect picture was not available or necessary: the local
         picture was sufficient to recognize a valid opportunity, and the division commander authorized acting on it.'
     rejected:
-      O2: The division commander did not prohibit the advance because the squadron commander assessed that the enemy was unprepared
+      O1: The division commander did not prohibit the advance because the squadron commander assessed that the enemy was unprepared
         and that the incomplete picture still showed a valid opportunity.
-      O3: The division commander did not hold the request for a fuller assessment because the decision was to act on the opportunity
+      O2: The division commander did not hold the request for a fuller assessment because the decision was to act on the opportunity
         despite an imperfect picture.
   verdict:
-    choice: O1
+    choice: O3
     basis: recommended
     decisive:
     - C1
@@ -143,7 +143,7 @@ case:
     - id: flip1
       if: Credible new information removed the basis for judging that the enemy was unprepared or that an actionable opportunity
         remained.
-      then: O3
+      then: O2
       why: Without the stated opportunity, the reason for accepting the uncertainty would be substantially weakened.
     would_not_change:
     - id: noflip1
@@ -156,7 +156,7 @@ case:
       what: Whether new information changes the assessment of the enemy's readiness, the extent of the defense, or the opportunity
         to act.
       favors:
-      - O3
+      - O2
       why: A change in those assessments could undermine the basis on which the division commander accepted the risk.
   lesson: An incomplete picture need not rule out action when the available local information supports a credible, time-sensitive
     opportunity. Make the uncertainty explicit and weigh it against the consequences of letting that opportunity pass.
@@ -173,21 +173,21 @@ case:
       weapons, and strike details.
     cues:
       option_words:
+        O3: 10
         O1: 10
-        O2: 10
-        O3: 13
-      real_option: O1
+        O2: 13
+      real_option: O3
       real_to_mean_other_length: 0.87
       real_is_longest: false
       moves:
+        O3: act
         O1: act
-        O2: act
-        O3: hold
+        O2: hold
       real_move: act
       irreversible_flags:
-        O1: true
+        O3: true
+        O1: false
         O2: false
-        O3: false
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The division commander approved the squadron commander's request, and the squadron commander later described the opportunity
@@ -291,6 +291,14 @@ provenance:
     ts: '2026-10-28T16:12:15Z'
     notes: 'corpus-batch2 episode CORPUS-NS-ca1e4a5d-E14 (B1 Best finds: decision, reasoning and outcome stated, free PDFs);
       corpus_scope.v2; equities pilot2; technique screen clean after 1 extraction(s)'
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 3
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O2": "O1", "O3": "O2", "O1": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -318,6 +326,6 @@ provenance:
   - case.flip_conditions.would_not_change
   - case.lesson
   - case.limits
+  - case.options.O1
   - case.options.O2
-  - case.options.O3
   - case.reasoning.tradecraft

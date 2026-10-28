@@ -21,14 +21,14 @@ case:
   question: What should the human decision-maker responsible for the engagement do about the three vehicles?
   options:
     O1:
+      do: The decision-maker authorizes engagement against the vehicles.
+      move: act
+      irreversible: true
+    O2:
       do: The decision-maker requests clarification from the reporting personnel.
       move: ask
       irreversible: false
       to: the reporting personnel
-    O2:
-      do: The decision-maker authorizes engagement against the vehicles.
-      move: act
-      irreversible: true
     O3:
       do: The decision-maker declines engagement against the vehicles.
       move: act
@@ -65,7 +65,7 @@ case:
     - F4
     equity: own_force_life
     favors:
-    - O2
+    - O1
     weight: strong
     why: The indicated imminent attack on the ground force commander by a Taliban commander and insurgents was the recorded
       reason for engaging, directly implicating the safety of the force.
@@ -76,7 +76,7 @@ case:
     - F4
     equity: mission_effect
     favors:
-    - O2
+    - O1
     weight: weak
     why: The assessment that the vehicles held insurgents, together with the reported imminent attack, supports acting to
       prevent the attack; the record does not separately state a mission-effect analysis.
@@ -85,7 +85,7 @@ case:
     - F3
     equity: tempo
     favors:
-    - O2
+    - O1
     weight: weak
     why: Because the reported threat was imminent, delay for clarification could matter; this is an implication of the threat
       assessment, not a separately stated rationale.
@@ -108,17 +108,17 @@ case:
       or chain of command if the decision-maker's authority or the applicable threshold is uncertain; the source does not
       establish what that authority was.
     tempting_wrong:
-      option: O1
+      option: O2
       pull: Requesting clarification could reduce uncertainty before an irreversible choice.
       why_wrong: On the source's stated rationale, delay was less suitable because the reported attack was imminent; the record
         does not establish that clarification was unavailable or that it would have been too slow.
     rejected:
-      O1: Clarification was not chosen because the recorded basis for acting was an indicated imminent attack on the ground
+      O2: Clarification was not chosen because the recorded basis for acting was an indicated imminent attack on the ground
         force commander.
       O3: Declining engagement was not chosen because the recorded assessment indicated an imminent attack by the reported
         adversaries.
   verdict:
-    choice: O2
+    choice: O1
     basis: recommended
     decisive:
     - C1
@@ -127,13 +127,13 @@ case:
     would_change:
     - id: flip1
       if: The imminent-threat assessment were materially undermined before the decision.
-      then: O1
+      then: O2
       why: Without the recorded basis for urgency, seeking clarification would be a reasonable alternative before an irreversible
         engagement.
     - id: flip2
       if: The decision-maker learned that required approval had not been obtained or that the decision-maker lacked authority
         to authorize engagement.
-      then: O1
+      then: O2
       why: The record does not identify the authority; a known approval or authority gap would require pausing or referring
         the decision rather than proceeding.
     would_not_change:
@@ -146,7 +146,7 @@ case:
     - id: watch1
       what: Any updated information that changes whether an attack on the ground force commander is imminent.
       favors:
-      - O1
+      - O2
       - O3
       why: The source's stated basis for acting is the assessment of an imminent attack; a change to that assessment could
         alter the balance.
@@ -165,20 +165,20 @@ case:
       movements.
     cues:
       option_words:
-        O1: 8
-        O2: 7
+        O2: 8
+        O1: 7
         O3: 7
-      real_option: O2
+      real_option: O1
       real_to_mean_other_length: 0.93
       real_is_longest: false
       moves:
-        O1: ask
-        O2: act
+        O2: ask
+        O1: act
         O3: act
       real_move: act
       irreversible_flags:
-        O1: false
-        O2: true
+        O2: false
+        O1: true
         O3: false
     equities: pilot2
 verdict_tier: source-endorsed
@@ -283,6 +283,14 @@ provenance:
     ts: '2026-10-28T16:20:11Z'
     notes: corpus-batch2 episode CORPUS-INC-URUZGAN-CONVOY-STRIKE-21-FEBRUARY-2010-NX-55e3aba8-E1 (uruzgan); corpus_scope.v2;
       equities pilot2; technique screen clean after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 1
+    ts: '2026-10-28T16:27:59Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O2": "O1", "O1": "O2", "O3": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -309,7 +317,7 @@ provenance:
   - case.flip_conditions.watch1
   - case.lesson
   - case.limits
-  - case.options.O1
+  - case.options.O2
   - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.read

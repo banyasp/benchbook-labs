@@ -23,15 +23,15 @@ case:
   question: What should the CIA unit chief do about filling the staffing gap?
   options:
     O1:
+      do: The CIA unit chief should authorize the two available CIA personnel to fill the staffing gap.
+      move: act
+      irreversible: true
+    O2:
       do: The CIA unit chief should hold the staffing decision pending review of the clearance issue.
       move: hold
       irreversible: false
-    O2:
-      do: The CIA unit chief should prohibit assignment of the two available CIA personnel and defer the assignment.
-      move: act
-      irreversible: true
     O3:
-      do: The CIA unit chief should authorize the two available CIA personnel to fill the staffing gap.
+      do: The CIA unit chief should prohibit assignment of the two available CIA personnel and defer the assignment.
       move: act
       irreversible: true
   facts:
@@ -67,7 +67,7 @@ case:
     - F3
     equity: policy_compliance
     favors:
-    - O1
+    - O2
     weight: weak
     why: The two identified CAT personnel were withdrawn because they lacked required site clearances. That makes clearance
       compliance a real constraint, although the source does not say that the clearance problem applied to the available CIA
@@ -78,8 +78,8 @@ case:
     - F5
     equity: mission_effect
     favors:
-    - O1
     - O2
+    - O3
     weight: strong
     why: The unit chief judged there was too little time to fully train the intended personnel, and the substitutes received
       only hurried preparation. That is a substantial readiness concern for assigning them.
@@ -89,7 +89,7 @@ case:
     - F5
     equity: mission_effect
     favors:
-    - O3
+    - O1
     weight: weak
     why: Two CIA personnel were available as substitutes, and the unit chief directed them to fill the staffing breach after
       hurried preparation. The source records this staffing choice but gives little explicit explanation of why it outweighed
@@ -99,7 +99,7 @@ case:
     - F6
     equity: tempo
     favors:
-    - O3
+    - O1
     weight: weak
     why: The assignment was scheduled for late November, and the unit chief filled the gap rather than deferring it. The source
       establishes the timing but does not expressly describe the cost of delay.
@@ -123,17 +123,17 @@ case:
       authority. Whether the decision could be made alone depends on the applicable delegation and clearance rules; unresolved
       questions about either would warrant review by the proper authority.
     tempting_wrong:
-      option: O2
+      option: O3
       pull: The preparation concern may make prohibiting the substitutes and deferring the assignment seem like the safest
         response.
       why_wrong: The source records the unit chief filling the gap with the available CIA personnel despite limited preparation;
         it does not establish that the shortfall made assignment impermissible or that no permissible substitute was available.
     rejected:
-      O1: The unit chief did not hold the decision for review, but directed the available CIA personnel to fill the staffing
+      O2: The unit chief did not hold the decision for review, but directed the available CIA personnel to fill the staffing
         gap.
-      O2: The unit chief did not prohibit assignment and defer; the recorded outcome was to use the available CIA personnel.
+      O3: The unit chief did not prohibit assignment and defer; the recorded outcome was to use the available CIA personnel.
   verdict:
-    choice: O3
+    choice: O1
     basis: recommended
     decisive:
     - C3
@@ -142,25 +142,25 @@ case:
     would_change:
     - id: flip1
       if: Review showed that either CIA substitute lacked a required clearance or otherwise could not lawfully be assigned.
-      then: O1
+      then: O2
       why: The clearance problem that led to withdrawing the CAT personnel would then bear directly on the proposed substitutes,
         supporting a hold for review rather than proceeding.
     - id: flip2
       if: The applicable authority required deferral where personnel could not receive adequate preparation, and no authorized
         exception was available.
-      then: O2
+      then: O3
       why: A binding requirement would make proceeding with the hurriedly prepared substitutes impermissible.
     would_not_change:
     - id: noflip1
       if: The only established clearance problem remained that the two CAT personnel lacked required site clearances, with
         no evidence that the CIA substitutes shared that problem.
       why: The CAT personnel's ineligibility alone does not establish that the available CIA substitutes could not be assigned;
-        the recorded outcome remains O3 absent further disqualifying information.
+        the recorded outcome remains O1 absent further disqualifying information.
     watch_for:
     - id: watch1
       what: Confirmation of the CIA substitutes' clearance and assignment eligibility.
       favors:
-      - O1
+      - O2
       why: A clearance or authority issue applying to the substitutes themselves would call for holding the decision pending
         review.
   lesson: A clearance defect affecting one set of personnel does not automatically disqualify different substitutes, but it
@@ -178,21 +178,21 @@ case:
       mechanics of the mission.
     cues:
       option_words:
-        O1: 15
-        O2: 17
-        O3: 16
-      real_option: O3
+        O2: 15
+        O3: 17
+        O1: 16
+      real_option: O1
       real_to_mean_other_length: 1.0
       real_is_longest: false
       moves:
-        O1: hold
-        O2: act
+        O2: hold
         O3: act
+        O1: act
       real_move: act
       irreversible_flags:
-        O1: false
-        O2: true
+        O2: false
         O3: true
+        O1: true
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The CIA unit chief decided that the available CIA personnel would fill the breach, directing them to do so after hurried
@@ -295,6 +295,14 @@ provenance:
     ts: '2026-10-28T16:12:56Z'
     notes: corpus-batch2 episode CORPUS-NX-2ba79e85-E1 (cia-publications); corpus_scope.v2; equities pilot2; technique screen
       clean after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 1
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O3": "O1", "O1": "O2", "O2": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -323,8 +331,8 @@ provenance:
   - case.flip_conditions.would_not_change
   - case.lesson
   - case.limits
-  - case.options.O1
   - case.options.O2
+  - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.read
   - case.reasoning.rejected

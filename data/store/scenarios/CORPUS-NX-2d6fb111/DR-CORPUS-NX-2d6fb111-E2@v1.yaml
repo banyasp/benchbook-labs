@@ -22,12 +22,12 @@ case:
   question: What should the deployed flight surgeon do about the engineer's flight status?
   options:
     O1:
-      do: The deployed flight surgeon permits the engineer to return to flight status.
-      move: act
-      irreversible: false
-    O2:
       do: The deployed flight surgeon defers the status decision pending further medical evaluation.
       move: hold
+      irreversible: false
+    O2:
+      do: The deployed flight surgeon permits the engineer to return to flight status.
+      move: act
       irreversible: false
     O3:
       do: The deployed flight surgeon prohibits the engineer from returning to flight status.
@@ -71,7 +71,7 @@ case:
     - F7
     equity: policy_compliance
     favors:
-    - O1
+    - O2
     weight: strong
     why: The approved-medications guidance allows return when the medication has been discontinued and its effects have dissipated;
       those conditions were assessed as met.
@@ -81,7 +81,7 @@ case:
     - F7
     equity: mitigation
     favors:
-    - O1
+    - O2
     weight: strong
     why: The medication had been processed by the body, and its effects were no longer assessed as affecting duty performance.
   - id: C3
@@ -90,7 +90,7 @@ case:
     - F4
     equity: analytic_integrity
     favors:
-    - O1
+    - O2
     weight: weak
     why: The sole toxicology exception was traces of an inactive metabolite, consistent with the assessment that the medication's
       effects had dissipated rather than evidence of an ongoing effect.
@@ -113,12 +113,12 @@ case:
       why_wrong: The detected material was an inactive metabolite, while the medication's effects had dissipated and were
         no longer affecting duty performance.
     rejected:
-      O2: Deferring was not chosen because the surgeon assessed that the medication had been processed and its effects had
+      O1: Deferring was not chosen because the surgeon assessed that the medication had been processed and its effects had
         dissipated, satisfying the guidance for return.
       O3: Prohibiting return was not chosen because the only toxicology exception was an inactive metabolite and the medication
         was no longer affecting duty performance.
   verdict:
-    choice: O1
+    choice: O2
     basis: recommended
     decisive:
     - C1
@@ -127,12 +127,12 @@ case:
     would_change:
     - id: flip1
       if: The medication's effects had not dissipated or were still affecting duty performance.
-      then: O2
+      then: O1
       why: The guidance's stated condition for return would not be established, so further medical evaluation would be a prudent
         alternative.
     - id: flip2
       if: The medication had not been discontinued.
-      then: O2
+      then: O1
       why: The stated basis for return includes discontinuation; without it, the guidance's return condition would not be
         met.
     would_not_change:
@@ -144,7 +144,7 @@ case:
     - id: watch1
       what: A changed medical assessment that the medication's effects are still affecting duty performance.
       favors:
-      - O2
+      - O1
       - O3
       why: That would undermine a condition relied on for return to flight status.
   lesson: Apply the status rule to whether the medication has been discontinued and its effects have dissipated, not to the
@@ -161,20 +161,20 @@ case:
       allowed return to flight status. Exclude the mishap’s operational causes and any flight procedures.
     cues:
       option_words:
-        O1: 12
         O2: 12
+        O1: 12
         O3: 12
-      real_option: O1
+      real_option: O2
       real_to_mean_other_length: 1.0
       real_is_longest: true
       moves:
-        O1: act
-        O2: hold
+        O2: act
+        O1: hold
         O3: act
       real_move: act
       irreversible_flags:
-        O1: false
         O2: false
+        O1: false
         O3: false
     equities: pilot2
 verdict_tier: source-endorsed
@@ -279,6 +279,14 @@ provenance:
     ts: '2026-10-28T16:16:02Z'
     notes: corpus-batch2 episode CORPUS-NX-2d6fb111-E2 (usaf-aib); corpus_scope.v2; equities pilot2; technique screen clean
       after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 2
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O2": "O1", "O1": "O2", "O3": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -307,7 +315,7 @@ provenance:
   - case.flip_conditions.would_not_change
   - case.lesson
   - case.limits
-  - case.options.O2
+  - case.options.O1
   - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.rejected

@@ -21,18 +21,18 @@ case:
   question: What should the Vice President do about the reported inbound aircraft?
   options:
     O1:
-      do: The Vice President authorizes engagement of the reported inbound aircraft.
-      move: act
-      irreversible: true
-    O2:
       do: The Vice President asks the air threat conference for an update.
       move: ask
       irreversible: false
       to: the air threat conference
-    O3:
+    O2:
       do: The Vice President declines authorization to engage the reported inbound aircraft.
       move: act
       irreversible: false
+    O3:
+      do: The Vice President authorizes engagement of the reported inbound aircraft.
+      move: act
+      irreversible: true
   facts:
   - id: F1
     kind: situation
@@ -66,7 +66,7 @@ case:
     - F4
     equity: mission_effect
     favors:
-    - O1
+    - O3
     weight: strong
     why: The aircraft was assessed to be inbound, low, and five miles away, supporting the perceived need to respond to an
       imminent threat.
@@ -75,7 +75,7 @@ case:
     - F5
     equity: tempo
     favors:
-    - O1
+    - O3
     weight: strong
     why: The Vice President believed there might be only a minute or two to act, which supported repeating the authorization
       rather than pausing.
@@ -84,7 +84,7 @@ case:
     - F6
     equity: chain_of_command
     favors:
-    - O1
+    - O3
     weight: weak
     why: Authorization had already been communicated, and the Vice President repeated that guidance; the account does not
       identify a new authorization basis or legal standard.
@@ -95,7 +95,7 @@ case:
     - F4
     equity: analytic_integrity
     favors:
-    - O2
+    - O1
     weight: weak
     why: The threat description was an assessment, not confirmation of the aircraft's identity; the later identification as
       a medevac helicopter underscores the danger of treating the assessment as certain, though that later information was
@@ -104,7 +104,7 @@ case:
     read: 'The decision was made against a compressed time estimate and reports describing an inbound aircraft close by. The
       trap is that an assessed threat can feel conclusive under time pressure: the aircraft was later identified as a medevac
       helicopter, but that was not known when the authorization was repeated.'
-    weighing: The stated basis for O1 was the perceived urgency and the reported inbound aircraft, with the prior authorization
+    weighing: The stated basis for O3 was the perceived urgency and the reported inbound aircraft, with the prior authorization
       already communicated. The account records no immediate information about the aircraft's fate and later identifies it
       as a medevac helicopter; that hindsight exposes the uncertainty but is not a reason the Vice President is shown to have
       weighed at the moment. The balance therefore depends on the credibility and urgency of the contemporaneous threat assessment,
@@ -119,17 +119,17 @@ case:
       a separate referral or consultation before the authorization was repeated; any additional handoff recommendation here
       is process synthesis.
     tempting_wrong:
-      option: O2
+      option: O1
       pull: Requesting an update avoids acting on an uncertain report.
       why_wrong: Given the Vice President's belief that only a minute or two remained, pausing for an update could have consumed
         the time he believed was available; the source records that he repeated the authorization instead.
     rejected:
-      O2: The Vice President did not seek an update before giving further guidance, acting instead on the perceived short
+      O1: The Vice President did not seek an update before giving further guidance, acting instead on the perceived short
         time window and the inbound-aircraft report.
-      O3: The Vice President did not decline authorization because the report was treated as an urgent inbound threat and
+      O2: The Vice President did not decline authorization because the report was treated as an urgent inbound threat and
         prior authorization had already been communicated.
   verdict:
-    choice: O1
+    choice: O3
     basis: recommended
     decisive:
     - C1
@@ -139,7 +139,7 @@ case:
     - id: flip1
       if: Before guidance was repeated, reliable information established that the aircraft was a medevac helicopter rather
         than a threat.
-      then: O3
+      then: O2
       why: That would remove the reported threat basis for engagement and make declining the authorization the appropriate
         course.
     would_not_change:
@@ -152,8 +152,8 @@ case:
     - id: watch1
       what: Any timely update that materially changes the assessment of whether the aircraft is a threat.
       favors:
+      - O1
       - O2
-      - O3
       why: The later identification as a medevac helicopter illustrates why a changed assessment could warrant pausing or
         declining rather than repeating the authorization.
   lesson: 'When a threat is assessed as imminent and time is believed to be extremely short, a decision-maker may act on the
@@ -172,21 +172,21 @@ case:
       the aircraft as a medevac helicopter, so preserve the mistaken-threat context and exclude operational details.
     cues:
       option_words:
-        O1: 10
+        O3: 10
+        O1: 11
         O2: 11
-        O3: 11
-      real_option: O1
+      real_option: O3
       real_to_mean_other_length: 0.91
       real_is_longest: false
       moves:
-        O1: act
-        O2: ask
         O3: act
+        O1: ask
+        O2: act
       real_move: act
       irreversible_flags:
-        O1: true
+        O3: true
+        O1: false
         O2: false
-        O3: false
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The Vice President's guidance was that “we need to take them out,” and he again communicated authorization to engage
@@ -290,6 +290,14 @@ provenance:
     ts: '2026-10-28T16:20:22Z'
     notes: corpus-batch2 episode CORPUS-INC-U-S-RESPONSE-TO-THE-SEPTEMBER-11-ATTACKS-NS-e5e4b57e-E10 (C4 Commission and inquiry
       reports); corpus_scope.v2; equities pilot2; technique screen clean after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 3
+    ts: '2026-10-28T16:27:59Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O2": "O1", "O3": "O2", "O1": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -316,8 +324,8 @@ provenance:
   - case.flip_conditions.would_change
   - case.lesson
   - case.limits
+  - case.options.O1
   - case.options.O2
-  - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.rejected
   - case.reasoning.tempting_wrong

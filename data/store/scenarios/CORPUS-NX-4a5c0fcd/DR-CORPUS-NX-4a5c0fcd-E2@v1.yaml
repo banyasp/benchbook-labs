@@ -23,16 +23,16 @@ case:
     are still a day or more away?
   options:
     O1:
+      do: The cavalry commander stays at Gettysburg and retains control of the high ground.
+      move: act
+      irreversible: false
+    O2:
       do: The cavalry commander requests updated information from subordinates before choosing whether to stay or leave.
       move: ask
       irreversible: false
       to: subordinate officers
-    O2:
-      do: The cavalry commander leaves Gettysburg and cedes control of the high ground.
-      move: act
-      irreversible: false
     O3:
-      do: The cavalry commander stays at Gettysburg and retains control of the high ground.
+      do: The cavalry commander leaves Gettysburg and cedes control of the high ground.
       move: act
       irreversible: false
   facts:
@@ -70,7 +70,7 @@ case:
     - F4
     equity: mission_effect
     favors:
-    - O3
+    - O1
     weight: weak
     why: The enemy’s location, size, and intent were unclear, but the commander assessed the encountered patrols as part of
       a larger force rather than an insignificant encounter.
@@ -79,7 +79,7 @@ case:
     - F6
     equity: mission_effect
     favors:
-    - O3
+    - O1
     weight: strong
     why: The commander judged that withdrawal would give the enemy the high ground and could expose the Union Army to a strategic
       blow.
@@ -89,7 +89,7 @@ case:
     - F5
     equity: tempo
     favors:
-    - O3
+    - O1
     weight: strong
     why: The force was small and reinforcements were still a day or more away; holding could delay the enemy and buy time
       for support to arrive.
@@ -108,17 +108,17 @@ case:
     handoff: The cavalry commander made the decision, informed by subordinate assessment. No higher approval authority or
       required referral is identified; involving a higher authority is not presented as a prerequisite.
     tempting_wrong:
-      option: O2
+      option: O3
       pull: Leaving could seem prudent when a small force faces an enemy whose size and intent are uncertain.
       why_wrong: The commander judged that withdrawal would give the enemy the high ground and risk a strategic blow, while
         staying could buy time for reinforcements.
     rejected:
-      O1: The commander did not make further subordinate reporting a precondition for action; despite uncertainty, the commander
+      O2: The commander did not make further subordinate reporting a precondition for action; despite uncertainty, the commander
         assessed the strategic consequences and stayed.
-      O2: The commander rejected withdrawal because it could give the enemy the high ground and risk a strategic blow to the
+      O3: The commander rejected withdrawal because it could give the enemy the high ground and risk a strategic blow to the
         Union Army.
   verdict:
-    choice: O3
+    choice: O1
     basis: recommended
     decisive:
     - C2
@@ -127,12 +127,12 @@ case:
     would_change:
     - id: flip1
       if: The assessment that withdrawal would give the enemy the high ground and risk a strategic blow no longer held.
-      then: O2
+      then: O3
       why: Without that assessed cost of withdrawal, the principal reason for remaining would be reduced.
     - id: flip2
       if: Reinforcements were no longer a day or more away and there were time to clarify the situation before committing
         to stay or leave.
-      then: O1
+      then: O2
       why: The urgency of holding to buy time would be diminished, making a request for updated information a more plausible
         course.
     would_not_change:
@@ -144,14 +144,14 @@ case:
     - id: watch1
       what: Changes in the assessment of enemy strength or intent.
       favors:
+      - O2
       - O1
-      - O3
       why: The commander’s assessment of the encountered patrols informed the judgment that a larger force was approaching.
     - id: watch2
       what: Changes in the expected time until reinforcements arrive.
       favors:
+      - O2
       - O1
-      - O3
       why: The case for staying rested in part on buying time for support to close.
   lesson: When intelligence is incomplete, uncertainty need not decide the matter by itself. Compare the strategic cost of
     yielding an advantage with the time that holding may buy, and make the choice on those assessed consequences.
@@ -167,21 +167,21 @@ case:
       holding could buy time; exclude the specific force positions and combat methods.
     cues:
       option_words:
-        O1: 15
-        O2: 12
-        O3: 13
-      real_option: O3
+        O2: 15
+        O3: 12
+        O1: 13
+      real_option: O1
       real_to_mean_other_length: 0.96
       real_is_longest: false
       moves:
-        O1: ask
-        O2: act
+        O2: ask
         O3: act
+        O1: act
       real_move: act
       irreversible_flags:
-        O1: false
         O2: false
         O3: false
+        O1: false
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The cavalry commander judged that holding the high ground could delay the enemy until reinforcements arrived, while
@@ -281,6 +281,14 @@ provenance:
     ts: '2026-10-28T16:13:12Z'
     notes: corpus-batch2 episode CORPUS-NX-4a5c0fcd-E2 (call); corpus_scope.v2; equities pilot2; technique screen clean after
       1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 1
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O3": "O1", "O1": "O2", "O2": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -310,8 +318,8 @@ provenance:
   - case.flip_conditions.would_not_change
   - case.lesson
   - case.limits
-  - case.options.O1
   - case.options.O2
+  - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.rejected
   - case.reasoning.tempting_wrong

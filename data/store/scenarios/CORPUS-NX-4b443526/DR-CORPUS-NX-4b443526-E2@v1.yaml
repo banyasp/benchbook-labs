@@ -20,18 +20,18 @@ case:
   question: What should the Commander in chief do about authorizing the plan and setting limits on harm?
   options:
     O1:
-      do: The Commander in chief rejects the plan and withholds authorization for the defector's return for public punishment.
+      do: The Commander in chief approves the plan with a ban on killing or injuring the defector, even if escape follows.
       move: act
       irreversible: true
     O2:
+      do: The Commander in chief rejects the plan and withholds authorization for the defector's return for public punishment.
+      move: act
+      irreversible: true
+    O3:
       do: The Commander in chief asks the presenting major to revise the plan with explicit limits on harm.
       move: ask
       irreversible: false
       to: the presenting major
-    O3:
-      do: The Commander in chief approves the plan with a ban on killing or injuring the defector, even if escape follows.
-      move: act
-      irreversible: true
   facts:
   - id: F1
     kind: situation
@@ -66,7 +66,7 @@ case:
     - F5
     equity: mission_effect
     favors:
-    - O3
+    - O1
     weight: strong
     why: The stated object was to return the defector for public punishment; the Commander in chief approved the plan for
       that purpose.
@@ -75,7 +75,7 @@ case:
     - F6
     equity: duty_to_individual
     favors:
-    - O3
+    - O1
     weight: strong
     why: The Commander in chief made the prohibition on killing or injuring the defector an express limit on authorization.
   - id: C3
@@ -84,7 +84,7 @@ case:
     - F6
     equity: mission_effect
     favors:
-    - O3
+    - O1
     weight: strong
     why: The limit was to hold even if it frustrated the mission by allowing the defector to escape; the public-punishment
       objective did not override it.
@@ -103,15 +103,15 @@ case:
     handoff: The Commander in chief made the authorization decision after the major presented the plan. The source identifies
       no required referral to another authority.
     tempting_wrong:
-      option: O1
+      option: O2
       pull: Rejecting the plan avoids any risk that the defector will be harmed.
       why_wrong: It abandons the stated public-punishment objective even though the Commander in chief approved pursuing that
         objective under an express no-harm limit.
     rejected:
-      O1: The Commander in chief approved the plan for public punishment rather than withholding authorization.
-      O2: The Commander in chief set the harm limit while approving the plan rather than deferring approval for a revision.
+      O2: The Commander in chief approved the plan for public punishment rather than withholding authorization.
+      O3: The Commander in chief set the harm limit while approving the plan rather than deferring approval for a revision.
   verdict:
-    choice: O3
+    choice: O1
     basis: recommended
     decisive:
     - C1
@@ -121,7 +121,7 @@ case:
     would_change:
     - id: flip1
       if: The plan could proceed only by killing or injuring the defector, with no revision capable of avoiding that harm.
-      then: O2
+      then: O3
       why: The source's absolute harm limit would preclude approving that plan as presented; seeking revision would preserve
         the objective without authorizing the prohibited harm.
     would_not_change:
@@ -143,21 +143,21 @@ case:
       about the permissible outcome; exclude the plan’s execution, methods, and capture tactics.
     cues:
       option_words:
-        O1: 17
         O2: 17
-        O3: 20
-      real_option: O3
+        O3: 17
+        O1: 20
+      real_option: O1
       real_to_mean_other_length: 1.18
       real_is_longest: true
       moves:
+        O2: act
+        O3: ask
         O1: act
-        O2: ask
-        O3: act
       real_move: act
       irreversible_flags:
+        O2: true
+        O3: false
         O1: true
-        O2: false
-        O3: true
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The Commander in chief approved the plan, insisting that the defector not be killed or injured even at the risk of
@@ -260,6 +260,14 @@ provenance:
     ts: '2026-10-28T16:13:08Z'
     notes: corpus-batch2 episode CORPUS-NX-4b443526-E2 (cia-publications); corpus_scope.v2; equities pilot2; technique screen
       clean after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 1
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O3": "O1", "O1": "O2", "O2": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -283,8 +291,8 @@ provenance:
   - case.flip_conditions.would_change
   - case.lesson
   - case.limits
-  - case.options.O1
   - case.options.O2
+  - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.read
   - case.reasoning.rejected

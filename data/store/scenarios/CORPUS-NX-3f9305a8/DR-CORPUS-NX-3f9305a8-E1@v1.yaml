@@ -23,16 +23,16 @@ case:
   question: What should the Okhrana officer do about the girl's spying and the mother's request to leave Warsaw?
   options:
     O1:
-      do: The Okhrana officer releases the mother and girl and sends them to safety.
-      move: act
-      irreversible: true
-    O2:
       do: The Okhrana officer asks the mother for further information before deciding their disposition.
       move: ask
       irreversible: false
       to: the mother
-    O3:
+    O2:
       do: The Okhrana officer imprisons the mother and girl in Warsaw.
+      move: act
+      irreversible: true
+    O3:
+      do: The Okhrana officer releases the mother and girl and sends them to safety.
       move: act
       irreversible: true
   facts:
@@ -77,7 +77,7 @@ case:
     - F8
     equity: duty_to_individual
     favors:
-    - O1
+    - O3
     weight: strong
     why: The girl was thirteen, and her mother said she could not shield her from revolutionary pressure but wanted to take
       her away and enroll her in school. The officer's choice to send them to safety addressed the child's welfare and the
@@ -89,7 +89,7 @@ case:
     - F5
     equity: security_risk
     favors:
-    - O2
+    - O1
     weight: weak
     why: The mother's account acknowledged that the girl had spied, while her claim that the girl had stopped was not confirmed
       by the girl's silence. This left uncertainty about the activity, but the account does not identify evidence of continuing
@@ -100,7 +100,7 @@ case:
     - F8
     equity: lawful_authority
     favors:
-    - O1
+    - O3
     weight: strong
     why: The stated disposition was to expel the mother because she was an Austrian subject and induce her to take the girl
       with her. The mother's wish to leave supplied a practical route consistent with that disposition.
@@ -110,7 +110,7 @@ case:
       while overlooking the mother's willingness to leave and remove the child from that influence.
     weighing: The stated course was to expel the Austrian-subject mother and induce her to take the girl. The mother's wish
       to leave Warsaw and enroll the girl in school, together with the officer's choice to send them to safety rather than
-      prison, supports {O1}. The counterweight is that the girl's stopping was only the mother's account and the girl did
+      prison, supports {O3}. The counterweight is that the girl's stopping was only the mother's account and the girl did
       not confirm it. On this record, that uncertainty does not outweigh the available protective departure; the balance would
       depend on credible evidence of continuing activity or the absence of a safe departure.
     tradecraft: Record the distinction between the mother's claims, the girl's nonconfirmation, and the disposition actually
@@ -122,17 +122,17 @@ case:
       The officer should act within the authority assigned for the expulsion and release; if that authority is unclear, refer
       the disposition to the responsible superior rather than assume it.
     tempting_wrong:
-      option: O3
+      option: O2
       pull: Imprisonment may seem the safest response to a reported instance of spying and the girl's failure to confirm that
         it stopped.
       why_wrong: It gives insufficient weight to her age, the mother's willingness to remove her from revolutionary influence,
         and the choice to send them to safety rather than prison.
     rejected:
-      O2: The mother had already offered a departure and schooling plan, and the officer proceeded with expulsion and safe
+      O1: The mother had already offered a departure and schooling plan, and the officer proceeded with expulsion and safe
         departure rather than making further questioning a prerequisite.
-      O3: The chosen response was to send the mother and girl to safety rather than imprison them.
+      O2: The chosen response was to send the mother and girl to safety rather than imprison them.
   verdict:
-    choice: O1
+    choice: O3
     basis: recommended
     decisive:
     - C1
@@ -142,7 +142,7 @@ case:
     - id: flip1
       if: Credible new evidence showed that the girl was still spying and that the proposed departure would not remove the
         risk.
-      then: O2
+      then: O1
       why: The mother's unconfirmed account would no longer be enough to support immediate release; the officer should obtain
         further information before choosing a disposition.
     would_not_change:
@@ -154,7 +154,7 @@ case:
     - id: watch1
       what: Whether the mother can in fact take the girl away from revolutionary influence and enroll her in school.
       favors:
-      - O2
+      - O1
       why: If the proposed protective departure is not practicable, the officer would need to reassess the disposition rather
         than assume the risk has been addressed.
   lesson: When a child is suspected of harmful activity under outside influence, weigh the allegation against the child's
@@ -173,21 +173,21 @@ case:
       surveillance that uncovered the activity.
     cues:
       option_words:
+        O3: 13
         O1: 13
-        O2: 13
-        O3: 10
-      real_option: O1
+        O2: 10
+      real_option: O3
       real_to_mean_other_length: 1.13
       real_is_longest: true
       moves:
-        O1: act
-        O2: ask
         O3: act
+        O1: ask
+        O2: act
       real_move: act
       irreversible_flags:
-        O1: true
-        O2: false
         O3: true
+        O1: false
+        O2: true
     equities: pilot2
 verdict_tier: source-endorsed
 basis: The Okhrana officer handling the case chose to expel the Austrian-subject mother and induce her to take the girl; La
@@ -297,6 +297,14 @@ provenance:
     ts: '2026-10-28T16:16:50Z'
     notes: corpus-batch2 episode CORPUS-NX-3f9305a8-E1 (cia-csi-books); corpus_scope.v2; equities pilot2; technique screen
       clean after 1 extraction(s)
+  - id: balance.options
+    operator: extract
+    inputs: {}
+    params:
+      seed: 0
+      target: 3
+    ts: '2026-10-28T16:27:58Z'
+    notes: 'options relabelled so the winning position is balanced across the batch: {"O2": "O1", "O3": "O2", "O1": "O3"}'
   fields:
     case.title: extract.FQ
     case.setting: extract.FQ
@@ -324,8 +332,8 @@ provenance:
   - case.flip_conditions.would_not_change
   - case.lesson
   - case.limits
+  - case.options.O1
   - case.options.O2
-  - case.options.O3
   - case.reasoning.handoff
   - case.reasoning.read
   - case.reasoning.rejected
