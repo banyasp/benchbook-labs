@@ -66,8 +66,8 @@ ROE and law of war, IC directives, released targeting-approval policy such as th
 
 ## Flags
 
-- `needs_ocr`: a scanned PDF with no text layer; the text file has only its header. OCR is running in batches
-  (`code/pipeline/ingest/corpus_ocr.py`); finished documents are re-committed with the flag `ocr`.
+- `needs_ocr`: a scanned PDF with no text layer (none left as of 2026-10-28; all 136 were OCR'd in batches
+  with `code/pipeline/ingest/corpus_ocr.py`).
 - `ocr`: text produced by tesseract (expect OCR noise). `alt_text`: text taken from an archive's OCR of the same
   document (e.g. archive.org's DTIC copy). `thin_page`: an HTML page with little text (often a landing page).
 
