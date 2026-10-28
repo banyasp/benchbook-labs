@@ -18,7 +18,17 @@ def revised_partial_path(store: Store, tid: str):
     return store.root / "partials" / "revised" / f"{tid}.yaml"
 
 
+INHERIT = ("held_out", "content_domain", "refusal_sensitivity")
+
+
 def save_result(store: Store, T, partial: dict):
+    if T.lineage.parent:                     # derived scenarios inherit the domain tags of their parent (held-out panel)
+        try:
+            P = store.scenario(T.lineage.parent)
+        except KeyError:
+            P = None
+        for k in INHERIT if P is not None else ():
+            setattr(T, k, getattr(P, k))
     sp = store.save_scenario(T)
     pp = revised_partial_path(store, T.id) if partial.get("intent") == "revised" else partial_path(store, T.id)
     write_yaml(pp, dump_partial(partial))

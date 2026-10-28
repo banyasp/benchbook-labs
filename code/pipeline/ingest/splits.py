@@ -66,13 +66,16 @@ def resplit(store: Store | None = None, reg: dict | None = None, write: bool = T
             "splits": Counter(s.split for s in scen.values())}
 
 
+INACTIVE = {"superseded", "legacy-2f", "rejected"}       # pairs no consumer uses (kept on disk, never deleted)
+
+
 def check_no_leak(store: Store | None = None) -> list[str]:
     """-> violations: an eval pair (test/eval-only) whose trace or card shares a lineage root with any train pair,
     or a pair whose card and trace come from different splits."""
     store = store or Store()
     scen = {s.id: s for s in store.scenarios()}
     root = lambda sid: root_of(scen[sid], scen).id if sid in scen else sid   # noqa: E731
-    pairs = store.pairs()
+    pairs = store.active_pairs()
     train_roots = {root(x) for p in pairs if p.split == "train" for x in (p.case_scenario, p.trace_scenario) if x}
     errs = []
     for p in pairs:

@@ -284,7 +284,7 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
     """Export data/exports/<version>/{sft,rl,eval}. `mode` is required (no default)."""
     if mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
-    pairs = pairs if pairs is not None else store.pairs()
+    pairs = pairs if pairs is not None else store.active_pairs()
     settings = (settings or HarnessSettings()).with_(mode=mode)
     out = store.exports / version
     idx = pair_index(pairs)

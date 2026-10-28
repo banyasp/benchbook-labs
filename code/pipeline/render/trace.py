@@ -295,7 +295,7 @@ def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: li
 def cards_for(store: Store, sid: str) -> list[Case]:
     """The cards served with this trace scenario: C of every pair that references it (pair decides)."""
     out, seen = [], set()
-    for p in store.pairs():
+    for p in store.active_pairs():
         if (p.trace_ref or p.trace_scenario) == sid and p.case_scenario and p.case_scenario not in seen:
             seen.add(p.case_scenario)
             try:
@@ -325,7 +325,7 @@ def render_one(store: Store, sid: str, *, cards: list[Case] | None = None, llm=N
 
 def needed(store: Store, skip_rejected: bool = False) -> list[str]:
     ids = []
-    for p in store.pairs():
+    for p in store.active_pairs():
         s = p.trace_ref or p.trace_scenario
         if s and not store.has_trace(s) and s not in ids:
             if skip_rejected and (store.root / "traces" / "_rejected" / s / "trace.yaml").exists():

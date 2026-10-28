@@ -58,7 +58,7 @@ def gate_augmented(store: Store, verifier=None, limit: int | None = None, regate
     res = {"passed": [], "failed": [], "pending_no_trace": [], "skipped": []}
     n = 0
     for p in store.pairs():
-        if p.arm != "augmented":
+        if p.arm != "augmented" or {"superseded", "legacy-2f"} & set(p.tags):
             continue
         tags = set(p.tags)
         if not regate and ({"gate-passed", "gate-failed"} & tags):

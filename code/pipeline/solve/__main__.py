@@ -96,7 +96,7 @@ def main(argv=None):
     elif a.pairs_file:
         pairs = [st.pair(l.strip()) for l in Path(a.pairs_file).read_text().split() if l.strip()]
     else:
-        pairs = st.pairs()
+        pairs = st.active_pairs()
     (_teacher if a.writer == "teacher" else _rs)(a, st, pairs)
     return 0
 

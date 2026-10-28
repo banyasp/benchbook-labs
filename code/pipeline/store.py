@@ -23,6 +23,7 @@ import yaml
 from bench.schema.pipeline import PairRecord, Scenario, TraceRecord
 
 ROOT = Path(__file__).resolve().parents[2]
+INACTIVE_TAGS = {"superseded", "legacy-2f", "rejected"}
 DATA = ROOT / "data"
 
 
@@ -90,7 +91,12 @@ class Store:
         return PairRecord.load(self.pair_dir(pid) / "pair.yaml")
 
     def pairs(self) -> list[PairRecord]:
+        """Every pair record on disk, including inactive ones (superseded / legacy-2f / rejected). Pair build only."""
         return [PairRecord.load(p) for p in sorted((self.root / "pairs").glob("*/pair.yaml"))]
+
+    def active_pairs(self) -> list[PairRecord]:
+        """Pairs a consumer may use: not tagged superseded, legacy-2f or rejected (those stay on disk, never deleted)."""
+        return [p for p in self.pairs() if not INACTIVE_TAGS & set(p.tags)]
 
     # traces (design §7.1: one per trace scenario; pairs reference, never copy)
     def trace_dir(self, trace_scenario: str) -> Path:

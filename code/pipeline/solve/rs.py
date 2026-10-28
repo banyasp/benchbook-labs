@@ -548,7 +548,7 @@ def acceptance(store: Store, cfg: RSConfig | None = None) -> dict:
     dims = ("arm", "intent", "family", "gold_tier", "card_view")
     agg: dict = {d: defaultdict(lambda: _blank()) for d in dims}
     agg["overall"] = {"all": _blank()}
-    for p in store.pairs():
+    for p in store.active_pairs():
         sp = store.pair_dir(p.id) / "solve" / "rs.summary.yaml"
         if not sp.exists():
             continue
