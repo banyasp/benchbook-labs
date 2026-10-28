@@ -5,6 +5,7 @@ Granite rejection sampling (default writer, design section 10):
   python -m pipeline.solve --pairs-file ids.txt --redo              # one pair id per line
   python -m pipeline.solve --pair P-abc --judge stub                # offline judge (no Jev calls), for a dry run
   python -m pipeline.solve --all --rationalize-only                 # only pairs with zero accepted samples: the hinted pass
+  python -m pipeline.solve --all --recheck                         # re-filter stored parse failures (after a canon change)
   python -m pipeline.solve --all --no-rationalize -n 4 --n-more 4 --config my.yaml
 The gold-informed teacher (alternative writer):
   python -m pipeline.solve --writer teacher --pair P-abc [-n 3] [--equities pilot] [--require-touched]
@@ -41,6 +42,18 @@ def _rs(a, st, pairs):
     cfg = rs.RSConfig.load(a.config, n_first=a.n, n_more=a.n_more, n_rationalize=a.n_rationalize, max_tokens=a.max_tokens,
                            concurrency=a.concurrency, seed=a.seed, rationalize=False if a.no_rationalize else None,
                            examples=False if a.no_examples else None)
+    if a.recheck:
+        judge = CachedJudge(JevJudge(), path=a.judge_cache or ROOT / "results" / "judge_cache.sqlite")
+        for p in pairs:
+            if not rs.is_done(p, st):
+                continue
+            r = rs.recheck(p, st, judge, cfg)
+            before = sum(x.accepted for x in p.solve if "/rs-" in x.path)
+            rs.persist(r, st, cfg)
+            print(f"{p.id} [{p.arm}]: {before} -> {sum(s['accepted'] for s in r.samples)}/{len(r.samples)} accepted"
+                  + (" (rationalized)" if r.chosen and r.chosen["rationalized"] else ""), file=sys.stderr)
+        print(json.dumps(rs.write_acceptance(st, cfg)["overall"], indent=1))
+        return
     todo = []
     for p in pairs:
         why = rs.eligible(p, None if a.split == "any" else a.split)
@@ -86,6 +99,7 @@ def main(argv=None):
     ap.add_argument("--split", default="train", help="split to sample (default train; `any` for all)")
     ap.add_argument("--no-rationalize", action="store_true")
     ap.add_argument("--rationalize-only", action="store_true")
+    ap.add_argument("--recheck", action="store_true", help="re-run the filter on stored parse failures; no sampling")
     ap.add_argument("--no-examples", action="store_true", help="debug: omit the worked examples")
     ap.add_argument("--judge", choices=["jev", "stub"], default="jev")
     ap.add_argument("--judge-cache")

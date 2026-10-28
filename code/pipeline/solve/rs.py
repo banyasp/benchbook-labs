@@ -419,6 +419,7 @@ def choose(samples: list[dict], seed: int, pair_id: str) -> dict | None:
     """One accepted sample, random (seeded) among those with the best score. Never mixes rationalized with plain:
     rationalized samples exist only when no plain sample was accepted."""
     acc = [s for s in samples if s["accepted"]]
+    acc = [s for s in acc if not s.get("rationalized")] or acc     # a recheck can leave both; plain wins
     if not acc:
         return None
     best = max(s["score"] for s in acc)
@@ -500,6 +501,23 @@ def persist(res: ItemResult, store: Store, cfg: RSConfig) -> PairRecord:
     pair.provenance.fields["solve"] = "solve.rs"
     store.save_pair(pair)
     return pair
+
+
+def recheck(pair: PairRecord, store: Store, judge, cfg: RSConfig, stages=("parse",)) -> ItemResult:
+    """Re-run the filter on a pair's stored samples (no sampling), for samples that failed at one of `stages`; used
+    after a canon.py change (batch 2026-10-28). Other samples keep their check. Then re-choose; persist() rewrites."""
+    g = GoldStructure.from_store(store, pair)
+    samples = []
+    for f in sorted((store.pair_dir(pair.id) / "solve").glob("rs-*-*.yaml")):
+        s = {**yaml.safe_load(f.read_text()), "name": f.stem}
+        if not s["accepted"] and s["stage"] in stages:
+            ck = check_rs(s["raw_text"], g, judge, cfg, s["finish_reason"], s["hinted"])
+            s.update(accepted=ck.accepted, reasons=ck.reasons, stage=ck.stage, subscores={**ck.sub, "rechecked": True},
+                     score=ck.score, target_text=ck.sub.pop("canonical_text", None) or s["raw_text"])
+        for k in ("writer", "chosen", "tags"):
+            s.pop(k, None)
+        samples.append(s)
+    return ItemResult(pair.id, samples, choose(samples, cfg.seed, pair.id))
 
 
 def is_done(pair: PairRecord, store: Store) -> bool:

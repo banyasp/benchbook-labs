@@ -13,11 +13,16 @@ def test_alias_and_lists():
     assert d["considerations"][0]["weight"] == "weak" and fx
 
 
-def test_unfixable_kind_left_alone():
+def test_unknown_fact_kind_falls_back_to_situation():
     d, fx = fix_step("fact_enumeration", {"kind": "fact_enumeration", "frame": {"question": "q", "decider": "d", "my_role": "r"},
                                           "facts": [{"id": "LIVE-F1", "kind": "zzz", "status": "confirmed", "fact": "f"}],
                                           "options": {"LIVE-O1": "a"}})
-    assert d["facts"][0]["kind"] == "zzz"
+    assert d["facts"][0]["kind"] == "situation" and any("zzz -> situation" in f for f in fx)
+
+
+def test_frame_compare_gloss_stripped_and_unknown_elsewhere_left_alone():
+    d, fx = fix_step("verdict", {"kind": "verdict", "relation": "zzz"})
+    assert d.get("relation") == "zzz"
 
 
 def test_strict_reply_roundtrips():

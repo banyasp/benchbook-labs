@@ -10,6 +10,7 @@ What it never touches: ids, mappings' content, choices, relations, `via`, prose.
 from __future__ import annotations
 
 import copy
+import re
 
 import yaml
 from pydantic import ValidationError
@@ -26,6 +27,11 @@ ALIASES = {
     "status": {"assumed": "assessed", "probable": "assessed", "likely": "assessed", "reported": "assessed",
                "unconfirmed": "assessed", "verified": "confirmed", "known": "confirmed"},
 }
+# Last resort for a value no alias covers (batch 2026-10-28, RS round 1: `kind: lab|document|ticket|record|...` was
+# ~80% of the remaining parse failures). These fields are never checked by the RS filter or scored for a fact; the
+# fallback is logged as a fix like any other.
+FALLBACK = {"kind": "situation", "status": "assessed"}
+FRAME_COMPARE = re.compile(r"^\s*(same_kind|same|different)\b")       # `same_kind (both are ...)` -> same_kind
 LIST_FIELDS = {"matched", "corresponding", "live_only", "case_only"}
 MAX_PASSES = 8
 
@@ -60,7 +66,9 @@ def fix_step(kind: str, data: dict) -> tuple[dict, list[str]]:
                     changed = True
                 elif typ == "literal_error" and isinstance(parent, dict) and isinstance(parent.get(key), str):
                     v = parent[key].strip().lower()
-                    alias = ALIASES.get(str(key), {}).get(v)
+                    m = FRAME_COMPARE.match(v) if key in ("question", "decider", "role") else None
+                    alias = (ALIASES.get(str(key), {}).get(v) or (m and m.group(1))
+                             or (kind == "fact_enumeration" and FALLBACK.get(str(key))))
                     if alias:
                         parent[key] = alias
                         fixes.append(f"{kind}.{'.'.join(map(str, loc))}: {v} -> {alias}")
