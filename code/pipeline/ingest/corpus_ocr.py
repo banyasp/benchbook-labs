@@ -43,8 +43,8 @@ def main():
         if f.endswith(".links.json"):
             continue
         m = json.load(open(f))
-        if m.get("ok") and m.get("kind") == "pdf" and ("needs_ocr" in m.get("flags", []) or
-                                                       (a.ids and m["id"] in a.ids.split(","))):
+        wanted = m["id"] in a.ids.split(",") if a.ids else "needs_ocr" in m.get("flags", [])
+        if m.get("ok") and m.get("kind") == "pdf" and wanted:
             metas[m["id"]] = (f, m)
     jobs = []
     for iid, (f, m) in sorted(metas.items()):
