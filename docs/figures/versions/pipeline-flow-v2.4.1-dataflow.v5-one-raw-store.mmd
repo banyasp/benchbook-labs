@@ -1,0 +1,112 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: BRANDES_KOEPF
+---
+%% Benchbook data pipeline, design v2.4.1 + rulings of 2026-10-28, with data passed on every edge.
+%% Render: mmdc -i flow4.mmd -o flow4.svg -c mcfg.json -b white
+flowchart TD
+  subgraph S1["1 · Ingest"]
+    direction TB
+    CAT["sources<br/>OHA · 5 CFR 2635<br/>natsec corpus (3,011 docs)<br/>doctrine"]:::code
+    ACQ["1a acquire + normalize<br/>raw bytes by hash<br/>paragraphs with span ids"]:::code
+    R[("Raw corpus R")]:::store
+    EPI["1b find episodes<br/>4 pass/fail criteria<br/>one concrete decision<br/>rejects kept with reason"]:::bedrock
+    FB["fallback router (T2)<br/>false-positive refusals<br/>of in-scope content only"]:::deferred
+    CAT -- "URLs" --> ACQ
+    ACQ -- "text + span ids" --> R
+    R -- "span-tagged doc" --> EPI
+    EPI -. "refusal" .-> FB
+  end
+  subgraph S2["2 · extract  R → X"]
+    direction TB
+    XFQ["2a extract F, Q<br/>facts cite spans<br/>options: complete courses<br/>of action, no justification"]:::bedrock
+    XA["2b extract A<br/>K · W · V · Φ<br/>lesson · limits · basis"]:::bedrock
+    DER["2c derive (T2)<br/>skeleton + world kit<br/>conditions: backend only"]:::deferred
+    INC[("Incomplete store<br/>never paired or trained")]:::store
+    XFQ -- "F, Q" --> XA
+    XA -. "X" .-> DER
+    XA -. "partial X + missing" .-> INC
+  end
+  subgraph S3["3 · perturb + pair"]
+    direction TB
+    STORE[("Scenario store<br/>X = (F, Q, A)<br/>tier · split · held-out flag<br/>natsec: strikes held out")]:::store
+    PERT["3a perturb<br/>changes F or Q only<br/>restyle · flip · add_fact"]:::bedrock
+    SOLVEI["3b set A′<br/>by construction, or<br/>independent solve (never sees C)"]:::bedrock
+    REVC["revise_card<br/>edits A only"]:::bedrock
+    DELTA[("Δ = gold mapping<br/>buckets · counterparts<br/>relation · via · realization")]:::store
+    PAIR["3c pair<br/>arms: relevant · augmented<br/>revised · decoy · none · self<br/>balance · distance d"]:::code
+    STORE -- "X" --> PERT
+    PERT -- "F′, Q′" --> SOLVEI
+    PERT -- "Δ" --> DELTA
+    STORE -- "C = X" --> REVC
+    DELTA -- "Δ" --> PAIR
+    REVC -- "C′ = (F, Q, A′), Δ_K" --> PAIR
+  end
+  subgraph S4["4 · render"]
+    direction TB
+    REND["render T<br/>options discoverable, never a menu<br/>recommendation sometimes wrong<br/>R49: every fact single-hop"]:::bedrock
+    RG["gates<br/>decisive facts + options located<br/>leak scan · no names"]:::code
+    TR[("trace store<br/>one trace, many cards")]:::store
+    REND -- "τ, σ, α" --> RG
+    RG -- "τ, σ, α" --> TR
+  end
+  subgraph S5["5 · gold + prompt (code)"]
+    direction TB
+    GOLD["5a assemble G<br/>(code only, a join)"]:::code
+    HARN["5b harness prompt P<br/>thin card: non-flip only<br/>± AR prompt"]:::code
+  end
+  subgraph S6["6 · SFT writer"]
+    direction TB
+    GEN["Granite 4.2 8B · mode C<br/>N = 4 + 4 · 2 worked examples<br/>no gold in prompt"]:::local
+    FILT["filter Y against G<br/>exact: choice · relation · via · governs<br/>then buckets ≥ 0.7 · recall ≥ 0.6"]:::judge
+    RAT["rationalize<br/>the only gap-filler<br/>tagged rationalized"]:::local
+    TEACH["teacher (sees G)<br/>R48 comparison only<br/>not used to fill gaps"]:::deferred
+    GEN -- "Y × N" --> FILT
+    FILT -- "none accepted" --> RAT
+    RAT -- "Y (hinted)" --> FILT
+  end
+  subgraph S7["7 · project (code)"]
+    direction LR
+    SFT[/"SFT record<br/>P (masked) + Y<br/>decoy: loss stops at applicability"/]:::code
+    RL[/"RLVR record<br/>P + G (no W, no why)"/]:::code
+    EV[/"Eval sample<br/>P per arm / view + G"/]:::code
+  end
+  E[("Equity registry E")]:::store
+  REV["Peter: sampled review<br/>model-solved golds first"]:::human
+  V2["v2: natural pairs · near-neighbor arm<br/>derived facts (R49) · multiple cases"]:::deferred
+
+  EPI -- "episode: span range,<br/>content_domain,<br/>refusal_sensitivity" --> XFQ
+  XA -- "X = (F, Q, A)<br/>A = K, W, V, Φ,<br/>lesson, limits" --> STORE
+  DER -.-> STORE
+  SOLVEI -- "X′ = (F′, Q′, A′)" --> STORE
+  STORE -- "C, T" --> PAIR
+  PAIR -- "F_T, Q_T, channels,<br/>recommended option" --> REND
+  PAIR -- "pair: C, T,<br/>intent, arm" --> GOLD
+  DELTA -- "M^F, M^K,<br/>relation, via" --> GOLD
+  TR -- "σ, α" --> GOLD
+  TR -- "τ" --> HARN
+  PAIR -- "card(C) for the arm" --> HARN
+  HARN -- "P = τ + E_d + card(C)" --> GEN
+  GOLD -- "G" --> FILT
+  GOLD -. "hint: V, relation, via" .-> RAT
+  HARN -.-> TEACH
+  FILT -- "P + accepted Y" --> SFT
+  TEACH -. "writer: teacher" .-> SFT
+  GOLD -- "G" --> RL
+  GOLD -- "G" --> EV
+  E -. "E" .-> XA
+  E -. "E" .-> SOLVEI
+  E -. "E_d" .-> HARN
+  REV -.-> SOLVEI
+  V2 -.-> PAIR
+
+  classDef bedrock fill:#FDF0D5,stroke:#B7791F,color:#3D2A06
+  classDef local fill:#DDF3EC,stroke:#1F7A5C,color:#0B3B2C
+  classDef judge fill:#ECE9FB,stroke:#5B4BC4,color:#231B5C
+  classDef code fill:#EEF0F3,stroke:#6B7280,color:#1F2937
+  classDef store fill:#E3EEFA,stroke:#2B6CB0,color:#0F2A4A
+  classDef human fill:#FBE7EF,stroke:#B83266,color:#4A1028
+  classDef deferred fill:#FFFFFF,stroke:#9CA3AF,stroke-dasharray:4 3,color:#6B7280

@@ -6,18 +6,27 @@ config:
     nodePlacementStrategy: BRANDES_KOEPF
 ---
 %% Benchbook data pipeline, design v2.4.1 + rulings of 2026-10-28, with data passed on every edge.
+%% v6 (2026-10-28, EC2 session): ingest split into R -> D -> E stores with 1b clean+normalize and 1d select batch.
 %% Render: mmdc -i flow4.mmd -o flow4.svg -c mcfg.json -b white
 flowchart TD
   subgraph S1["1 · Ingest"]
     direction TB
     CAT["sources<br/>OHA · 5 CFR 2635<br/>natsec corpus (3,011 docs)<br/>doctrine"]:::code
-    ACQ["1a acquire + normalize<br/>raw bytes by hash<br/>paragraphs with span ids"]:::code
-    R[("Raw corpus R")]:::store
-    EPI["1b find episodes<br/>4 pass/fail criteria<br/>one concrete decision<br/>rejects kept with reason"]:::bedrock
+    FETCH["1a fetch<br/>honest UA · archive fallback<br/>PDF → text · OCR for scans"]:::code
+    R[("Raw corpus R<br/>data/corpus/natsec/text<br/>data/raw (bytes by hash)")]:::store
+    NORM["1b clean + normalize<br/>two-column repair · ligatures<br/>hyphenation · paragraphs"]:::code
+    D[("Documents D<br/>data/docs/‹sha›.jsonl<br/>paragraphs with span ids")]:::store
+    EPI["1c find episodes<br/>4 pass/fail criteria<br/>one concrete decision<br/>rejects kept with reason"]:::bedrock
+    E[("Episode store E<br/>data/store/episodes/corpus<br/>8,617 episodes · rejects")]:::store
+    SEL["1d select batch<br/>stratified quotas · leak guard<br/>incident families (one Luna call)<br/>split per family"]:::code
     FB["fallback router (T2)<br/>false-positive refusals<br/>of in-scope content only"]:::deferred
-    CAT -- "URLs" --> ACQ
-    ACQ -- "text + span ids" --> R
-    R -- "span-tagged doc" --> EPI
+    CAT -- "URLs" --> FETCH
+    FETCH -- "text (layout kept)" --> R
+    R -- "text" --> NORM
+    NORM -- "paragraphs + span ids" --> D
+    D -- "span-tagged doc" --> EPI
+    EPI -- "episode: decision, focus,<br/>span range, content_domain" --> E
+    E -- "candidate episodes" --> SEL
     EPI -. "refusal" .-> FB
   end
   subgraph S2["2 · extract  R → X"]
@@ -78,7 +87,8 @@ flowchart TD
   REV["Peter: sampled review<br/>model-solved golds first"]:::human
   V2["v2: natural pairs · near-neighbor arm<br/>derived facts (R49) · multiple cases"]:::deferred
 
-  EPI -- "episode: span range,<br/>content_domain,<br/>refusal_sensitivity" --> XFQ
+  SEL -- "episode + family + split,<br/>held-out flag" --> XFQ
+  D -- "spans in the episode range" --> XFQ
   XA -- "X = (F, Q, A)<br/>A = K, W, V, Φ,<br/>lesson, limits" --> STORE
   DER -.-> STORE
   SOLVEI -- "X′ = (F′, Q′, A′)" --> STORE
