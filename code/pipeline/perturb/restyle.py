@@ -13,6 +13,7 @@ from bench.schema.common import PROSE_REF
 
 from .common import (Ctx, apply_text, assemble, build_skeleton, mean_surface_distance, next_id, option_spread, prose_fields,
                      seed_rng)
+from .numnorm import drift
 from .overlap import jaccard
 
 MIN_SURFACE = 0.3        # mean (1 - word Jaccard) over facts must reach this, else the rewrite is too timid
@@ -24,15 +25,20 @@ every consideration's why, every reasoning field (read, weighing, tradecraft, un
 .why_wrong, rejected), every flip item (flip/noflip: if and why; watch: what and why), lesson and limits. In the reply give
 considerations as {"C1": {"why": "..."}}, flip as {"flip1": {"if": "...", "why": "..."}, "watch1": {"what": "...", "why": "..."}},
 facts as {"F1": "..."}, options as {"O1": "..."}, and reasoning as in the bundle (tempting_wrong without its option).
-The situation must stay consistent with the facts. Choose one new register for the whole scenario."""
+The situation must stay consistent with the facts. Every number, date, time and amount in a fact must be kept with the same value
+(you may change formatting, e.g. "$1,200" as "1200 dollars", but not the value). Choose one new register for the whole scenario."""
 
 
-def _nums(s: str) -> set[str]:
-    return set(re.findall(r"\d[\d,.]*", s.replace(",", "")))
+def decisive_facts(case) -> list[str]:
+    """Fact ids cited by the decisive considerations (R43)."""
+    dec = set(case.verdict.decisive)
+    return sorted({f for c in case.considerations if c.id in dec for f in c.facts}, key=lambda i: int(i[1:]))
 
 
 def restyle(X, store, rng):
     ctx = Ctx("restyle", X, store, rng)
+    dec_facts = decisive_facts(X.case)
+    orig_text = {f.id: f.fact for f in X.case.facts}
     sk = build_skeleton(X, [], rng, remap_prose=False)
     sections = {"fq", "a"}
     from .common import bundle
@@ -46,6 +52,16 @@ def restyle(X, store, rng):
             if set(PROSE_REF.findall(v)) != orig_refs[k]:
                 raise ValueError(f"{k}: keep exactly the original references {sorted(orig_refs[k])}")
         Case.model_validate({**d, "id": X.id})
+        bad = []
+        for f in d["facts"]:
+            if f["id"] in dec_facts:
+                dr = drift(orig_text[f["id"]], f["fact"])
+                if not dr["ok"]:
+                    bad.append(f"{f['id']}: numbers/dates/amounts changed (missing {dr['missing']}, new {dr['added']}); original: "
+                               f"\"{orig_text[f['id']]}\"")
+        if bad:
+            raise ValueError("numeric drift in decisive facts (every number, date and amount in a fact that a decisive "
+                             "consideration cites must survive unchanged; only the formatting may change): " + "; ".join(bad))
         dist = sum(1 - jaccard(a["fact"], b["fact"]) for a, b in zip(sk.d["facts"], d["facts"])) / len(d["facts"])
         if dist < MIN_SURFACE:
             raise ValueError(f"facts are too close to the original (surface distance {dist:.2f} < {MIN_SURFACE}); rewrite more")
@@ -57,11 +73,9 @@ def restyle(X, store, rng):
     d, _ = ctx.ask("perturber", "rewrite", "rewrite", user, validate, step_id="restyle.rewrite")
     ctx.prov.fields.update({"case.situation": "restyle.rewrite", "case.reasoning": "restyle.rewrite", "case.considerations": "restyle.rewrite"})
     tid = next_id(store, X.family, "restyle")
-    dec = set(X.case.verdict.decisive)
-    drift = [c.id for c in X.case.considerations if c.id in dec
-             for f in c.facts if _nums(next(g.fact for g in X.case.facts if g.id == f)) - _nums(next(g["fact"] for g in d["facts"] if g["id"] == f))]
     detail = {"surface_distance": None, "option_len_spread": {"parent": option_spread(sk.d), "child": option_spread(d)},
-              "numeric_drift_in_decisive_facts": sorted(set(drift))}
+              "numeric_drift_in_decisive_facts": [],
+              "decisive_facts_checked": dec_facts}
     T, partial = assemble(ctx, X, "restyle", tid, d, sk, "by-construction", detail, [], set(), "follows", None,
                           X.case.verdict.choice, None, {}, "restyle")
     dist = mean_surface_distance(X, T)

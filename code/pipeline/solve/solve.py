@@ -23,7 +23,7 @@ from pipeline.render.util import make_step, prompt_ref
 from pipeline.store import Store, write_json, write_yaml
 
 from .check import check_reply
-from .episode import load_equities, student_episode
+from .episode import load_equities, student_episode, trace_file
 from .structure import GoldStructure
 
 PROMPT = Path(__file__).parent / "prompts" / "teacher.v4.md"
@@ -31,9 +31,10 @@ PROMPT = Path(__file__).parent / "prompts" / "teacher.v4.md"
 
 def trace_quotes(pair: PairRecord, store: Store, g: GoldStructure) -> dict[str, str]:
     """LIVE fact id -> the text in the trace that realizes it (computed from the span map and trace.json)."""
-    msgs = json.loads((store.pair_dir(pair.id) / pair.trace).read_text())["messages"]
+    msgs = json.loads(trace_file(pair, store).read_text())["messages"]
     out: dict[str, list[str]] = defaultdict(list)
-    for e in pair.span_map.entries if pair.span_map else []:
+    sm = pair.span_map or (store.trace(pair.trace_ref).span_map if pair.trace_ref else None)
+    for e in sm.entries if sm else []:
         lid = g.glob2live.get(e.fact)
         if lid:
             out[lid].append(msgs[e.message]["content"][e.start:e.end])
@@ -102,7 +103,7 @@ def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = No
     n = n or role("teacher").get("samples", 3)
     C, T = store.scenario(pair.case_scenario), store.scenario(pair.trace_scenario)
     eq = load_equities(equities, T) if not hasattr(equities, "equities") else equities
-    g = GoldStructure.build(pair, C, T)
+    g = GoldStructure.from_store(store, pair)
     ep = student_episode(pair, store, eq, settings, C=C)
     msgs = teacher_messages(g, ep, trace_quotes(pair, store, g))
     pdir = store.pair_dir(pair.id)
@@ -120,7 +121,7 @@ def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = No
 
     with ThreadPoolExecutor(max_workers=max(1, min(n, 4))) as ex:
         results = list(ex.map(one, range(1, n + 1)))
-    inputs = {"trace": sha256_obj(json.loads((pdir / pair.trace).read_text())["messages"]),
+    inputs = {"trace": sha256_obj(json.loads(trace_file(pair, store).read_text())["messages"]),
               "gold": sha256_obj(gold_brief(g)), "teacher_prompt": sha256_text(msgs[0]["content"]),
               "equities": sha256_obj(eq.model_dump()), "case": sha256_obj(C.case.dump())}
     samples = []
@@ -130,11 +131,12 @@ def solve_pair(pair: PairRecord, store: Store, equities=None, n: int | None = No
         write_yaml(pdir / rel, {"k": k, "accepted": res["accepted"], "reasons": res["reasons"], "flags": res["flags"],
                                 "seconds": secs, "reply": res["clean"], "raw": raw, "provenance": step})
         samples.append(SolveSample(path=f"pairs/{pair.id}/{rel}", accepted=res["accepted"], reasons=res["reasons"]))
-    pair.solve = samples
+    pair.solve = [x for x in pair.solve if "/rs-" in x.path] + samples     # keep Granite-RS entries
     pair.provenance.steps = [s for s in pair.provenance.steps if not s.id.startswith("solve")]
     pair.provenance.step(**make_step("solve", "solve", "teacher", ps, inputs, {"n": n, "accepted": sum(s.accepted for s in samples),
                                                                            "gold_warnings": len(g.warnings)}).model_dump())
     pair.provenance.fields["solve"] = "solve"
+    pair.writer = "teacher"
     store.save_pair(pair)
     return pair
 

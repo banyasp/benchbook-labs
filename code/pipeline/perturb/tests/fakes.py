@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from pipeline.perturb.common import pilot_scenario
+from pipeline.perturb.numnorm import WORDS as NUMWORDS
 
 ROOT = Path(__file__).resolve().parents[4]
 CASES = ROOT / "data" / "cases"
@@ -16,9 +17,12 @@ def pilot(case_id: str, split="eval-only"):
     return pilot_scenario(CASES / fam / f"{case_id}.case.yaml", split)
 
 
+KEEP = set(NUMWORDS) | {"hundred", "thousand", "million", "billion", "dozen"}
+
+
 def scr(t: str) -> str:
-    """Change every plain word (refs like {F3} and ids are left alone)."""
-    return re.sub(r"\b[A-Za-z]{3,}\b", lambda m: m.group(0) + "x", t)
+    """Change every plain word (refs like {F3}, ids and number words are left alone)."""
+    return re.sub(r"\b[A-Za-z]{3,}\b", lambda m: m.group(0) if m.group(0).lower() in KEEP else m.group(0) + "x", t)
 
 
 def block(user: str, marker: str) -> dict:
@@ -39,7 +43,7 @@ class Fake:
     def __call__(self, role, messages, **kw):
         self.calls.append((role, messages))
         sysm, user = messages[0]["content"], messages[1]["content"]
-        if "make ONE listed condition true" in sysm:
+        if "make ONE listed condition true" in sysm or "RESTATE ONE listed condition" in sysm:
             return json.dumps(self.realize.pop(0) if len(self.realize) > 1 else self.realize[0])
         if "You check a claim" in sysm:
             return json.dumps({"holds": self.verify, "why": "stub"})
@@ -95,7 +99,7 @@ class Fake:
         if then:
             tc = self.touched
             cons[tc] = {"why": scr(b["considerations"][tc]["why"]), "facts": b["considerations"][tc]["facts"],
-                        "favors": [then], "weight": "weak"}
+                        "favors": [then], "weight": b["considerations"][tc]["weight"]}
             # decisive: some consideration that favors `then`
             fav = [c for c, v in b["considerations"].items() if then in v["favors"]] or [tc]
             out["decisive"] = fav[:1]
@@ -103,6 +107,9 @@ class Fake:
             out["reasoning"]["tempting_wrong"]["option"] = other
             out["reasoning"]["rejected"] = {other: "stub rejected"}
             out["flip"][fired]["if"] = "stub reversal condition"
+            vacuous = [k for k, v in b["flip"].items() if v.get("then") == then and k != fired]
+            if vacuous:
+                out["new_would_change"] = [{"if": f"stub independent condition {i}", "then": other, "why": "stub"} for i, _ in enumerate(vacuous)]
         else:
             out["decisive"] = b["verdict"]["decisive"]
         return out

@@ -14,6 +14,9 @@ import random
 from bench.schema import Case
 from bench.schema.pipeline import Touched
 
+from . import pconfig
+from .condition import condition_holds, fact_lines
+from .phi import assert_back_flip, check_count, check_touched_weight, shuffle_and_renumber
 from .common import (Ctx, Edit, KINDS, OperatorError, STATUSES, apply_structure, apply_text, assemble, build_skeleton, bundle,
                      finish_flip_conditions, kind_counts, mean_surface_distance, next_id, option_spread)
 from .overlap import MAX_RECALL, MAX_RUN, overlap
@@ -32,18 +35,17 @@ Rewrite the whole bundle as a coherent, complete scenario and answer for these f
   "new_considerations" (facts, equity, favors, weight, why). "decisive": the ids that decide for {then}.
 - Reasoning: rewrite every field so it reaches {then}. "tempting_wrong": {"option": <an option id other than {then}>, "pull",
   "why_wrong"}; "rejected": {<option id other than {then}>: why rejected}.
-- Flip items: restyle each. Item {fired} must now read as the REVERSAL: its "if" states, in new words, the condition under
+- Weights: do not set the touched consideration to "weak" unless it already was; give it a weight like the untouched ones.
+- Flip items: the final list must keep exactly {n_wc} would_change items. The system drops every item whose "then" is
+  {then} (it would be vacuous), so add enough "new_would_change" entries (independent, non-vacuous conditions whose "then"
+  is an option other than {then}) to keep {n_wc}. Restyle each. Item {fired} must now read as the REVERSAL: its "if" states, in new words, the condition under
   which {c_choice} would be right again (the opposite of the change that was made). Their "then" values are handled by the
   system; do not give them. Other items keep their meaning; if one is now meaningless give it a neutral rewrite anyway.
   You may add "new_would_change": [{"if", "then", "why"}].
 - lesson and limits: rewrite so they fit the new outcome. Prose references use the T ids in the bundle ({F3}, {C2}, {O1})."""
 
 
-def _fact_lines(d_facts) -> str:
-    return "\n".join(f"{f['id']} [{f['kind']}, {f['status']}]: {f['fact']}" for f in d_facts)
-
-
-def flip(X, store, rng, *, item: str | None = None):
+def flip(X, store, rng, *, item: str | None = None, realization: str | None = None):
     C = X.case
     cands = [w for w in C.flip_conditions.would_change if w.then != C.verdict.choice]
     if item:
@@ -51,6 +53,12 @@ def flip(X, store, rng, *, item: str | None = None):
     if not cands:
         raise OperatorError(f"{X.id}: no usable would_change item" + (f" `{item}`" if item else ""))
     w = rng.choice(cands)
+    share = pconfig.get("indirect_share")
+    real = realization or ("indirect" if rng.random() < share else "paraphrase")     # seeded per item
+    if real not in ("indirect", "paraphrase"):
+        raise OperatorError(f"realization must be indirect or paraphrase, not {real!r}")
+    shuffle_seed = rng.getrandbits(32)
+    n_wc = len(C.flip_conditions.would_change)
     ctx = Ctx("flip", X, store, rng)
     scores = {}
 
@@ -86,30 +94,32 @@ def flip(X, store, rng, *, item: str | None = None):
         sc = overlap(new_text, w.if_)
         scores.clear()
         scores.update(sc)
-        if not sc["pass"]:
+        if real == "indirect" and not sc["pass"]:
             raise ValueError(f"the new fact text overlaps the condition's wording too much (content-word recall {sc['recall']} > "
                              f"{MAX_RECALL} or run {sc['run']} > {MAX_RUN}): it reads as a paraphrase. State it in different "
                              "terms, as a magnitude, or split over facts, without the condition's words.")
         tmp = build_skeleton(X, edits, random.Random(0), remap_prose=False)
-        vuser = "FACTS:\n" + _fact_lines(tmp.d["facts"]) + f"\n\nCONDITION: {w.if_}"
         try:
-            v, _ = ctx.ask("perturber", "verify", "verify_condition", vuser, lambda o: o, tries=2, step_id="flip.verify")
+            v = condition_holds(w.if_, fact_lines(tmp.d["facts"]), ctx=ctx)
         except OperatorError as e:
             raise ValueError(f"verification failed to run: {e}")
         if v.get("holds") is not True:
             raise ValueError(f"a strict reader could not conclude the condition from these facts ({v.get('why')}); make the change clearer")
         return edits, tc, out.get("technique"), out.get("how", ""), v
 
-    (edits, tc, technique, how, verdict_chk), _ = ctx.ask("perturber", "realize", "realize_flip", user, validate_a, step_id="flip.realize")
+    (edits, tc, technique, how, verdict_chk), _ = ctx.ask("perturber", "realize", "realize_flip" if real == "indirect" else "realize_paraphrase", user, validate_a, step_id="flip.realize")
     sk = build_skeleton(X, edits, rng)
 
     # ---- stage B: compose T's whole text and answer
     then = w.then
     fmt = dict(then=then, then_do=C.options[then].do, c_choice=C.verdict.choice, touched=tc, fired=w.id)
     user = (TASK.replace("{then}", then).replace("{then_do}", fmt["then_do"]).replace("{c_choice}", fmt["c_choice"])
-            .replace("{touched}", tc).replace("{fired}", w.id)
+            .replace("{touched}", tc).replace("{fired}", w.id).replace("{n_wc}", str(n_wc))
             + "\n\nBUNDLE:\n" + json.dumps(bundle(sk.d, {"fq", "a"}, sk.fixed), indent=1, ensure_ascii=False))
     orig_con = [c.id for c in C.considerations]
+    orig_wc = {x.id for x in C.flip_conditions.would_change}
+    c_weight = next(c.weight for c in C.considerations if c.id == tc)
+    meta = {}
 
     def validate_b(out):
         d = copy.deepcopy(sk.d)
@@ -119,8 +129,17 @@ def flip(X, store, rng, *, item: str | None = None):
         if d["reasoning"]["tempting_wrong"]["option"] == then:
             raise ValueError("tempting_wrong.option must differ from the verdict option")
         d["reasoning"]["rejected"].pop(then, None)
-        fo = out.get("flip") or {}
+        check_touched_weight(d, tc, c_weight)
         finish_flip_conditions(d, out, then, C.verdict.choice, fired=w.id)
+        check_count(d, n_wc, then)
+        assert_back_flip(d, C.verdict.choice, then)
+        new_wc = [x["id"] for x in d["flip_conditions"]["would_change"] if x["id"] not in orig_wc]
+        mp = shuffle_and_renumber(d, shuffle_seed)
+        assert_back_flip(d, C.verdict.choice, then)                    # the assertion, after reordering
+        back = mp[w.id]                                                # the fired item, re-pointed to X's choice, reads as the reversal
+        assert next(x for x in d["flip_conditions"]["would_change"] if x["id"] == back)["then"] == C.verdict.choice
+        meta.update(authored=[mp[i] for i in new_wc], fired_new_id=mp[w.id], mapping=mp, back=back,
+                    touched_weight={"parent": c_weight, "child": next((c["weight"] for c in d["considerations"] if c["id"] == tc), None)})
         Case.model_validate({**d, "id": X.id})
         dist = mean_surface_distance_d(sk, d)
         if dist < MIN_SURFACE:
@@ -132,17 +151,29 @@ def flip(X, store, rng, *, item: str | None = None):
 
     (d, new_con), _ = ctx.ask("perturber", "compose", "rewrite", user, validate_b, step_id="flip.compose")
     ctx.prov.fields.update({"case.considerations": "flip.compose", "case.reasoning": "flip.compose", "case.flip_conditions": "flip.compose"})
+    ctx.prov.authored += [f"case.flip_conditions.would_change.{i}" for i in meta["authored"]]
     tid = next_id(store, X.family, "flip")
-    detail = {"via": C.global_id(w.id), "technique": technique, "how": how,
-              "indirectness": {**scores, "max_recall": MAX_RECALL, "max_run": MAX_RUN, "if_text": w.if_},
+    back_w = next(x for x in d["flip_conditions"]["would_change"] if x["id"] == meta["back"])
+    T_id_global = lambda i: f"{tid}/{i}"
+    detail = {"via": C.global_id(w.id), "technique": technique, "how": how, "realization": real, "indirect_share": share,
+              "indirectness": ({**scores, "max_recall": MAX_RECALL, "max_run": MAX_RUN, "if_text": w.if_} if real == "indirect"
+                               else {**scores, "skipped": "paraphrase realization: overlap ceiling not applied", "if_text": w.if_}),
+              "phi": {"would_change_parent": n_wc, "would_change_child": len(d["flip_conditions"]["would_change"]),
+                      "authored_items": [T_id_global(i) for i in meta["authored"]],
+                      "touched_weight": meta["touched_weight"], "shuffled": True},
+              "back_flip": {"item": T_id_global(meta["back"]), "if": back_w["if"], "then": T_id_global(C.verdict.choice)},
               "verified_by_model": verdict_chk, "touched_consideration": C.global_id(tc),
               "option_len_spread": {"parent": option_spread(sk.d), "child": option_spread(d)}}
     touched = Touched(item=C.global_id(w.id), condition=w.if_,
-                      how=f"realized indirectly ({technique}): {how}; changes the basis of {C.global_id(tc)}")
+                      how=f"realized {'indirectly' if real == 'indirect' else 'as a paraphrase'} ({technique}): {how}; changes the basis of {C.global_id(tc)}")
     feats = {"operator": "flip", "facts_touched_by_kind": kind_counts(X, edits), "n_edits": len(edits),
-             "magnitude": scores.get("recall"), "technique": technique}
+             "magnitude": scores.get("recall"), "technique": technique, "realization": real}
     T, partial = assemble(ctx, X, "flip", tid, d, sk, "by-construction", detail, new_con, {tc}, "flips", [C.global_id(w.id)],
                           then, touched, feats, "flip")
+    partial["realization"] = real
+    if meta["authored"]:
+        T.tags = sorted(set(T.tags) | {"flip-conditions-authored"})
+    T.provenance.authored = ctx.prov.authored
     return T, partial
 
 

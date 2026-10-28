@@ -20,13 +20,32 @@ from bench.schema.pipeline import (FrameCmp, GoldMap, GPair, Lineage, ProvStep, 
                                    sha256_text)
 
 PROMPTS = Path(__file__).resolve().parent / "prompts"
-SHORT = {"restyle": "restyle", "flip": "flip", "add_fact": "addfact"}
+SHORT = {"restyle": "restyle", "flip": "flip", "add_fact": "addfact", "revise_card": "revise"}
 KINDS = ("situation", "capability", "authority", "intelligence")
 STATUSES = ("confirmed", "assessed")
 
 
 class OperatorError(RuntimeError):
     pass
+
+
+class RefusalError(OperatorError):
+    """The model refused (refusal-shaped reply). Not retried; `.step` is the recorded provenance step (refusal: true)."""
+
+    def __init__(self, msg, step=None):
+        super().__init__(msg)
+        self.step = step
+
+
+REFUSAL = re.compile(r"I can'?t help|I cannot assist|I can'?t assist|I'm sorry, but|I am sorry, but|I cannot help", re.I)
+
+
+def is_refusal(text) -> bool:
+    """Simple detection until W4's datagen/llm.py refusal recording exists: empty output, or refusal wording."""
+    if text is None or not str(text).strip():
+        return True
+    t = str(text).strip()
+    return bool(REFUSAL.match(t)) or (len(t) < 400 and "{" not in t and bool(REFUSAL.search(t)))
 
 
 # ------------------------------------------------------------------ model access (injectable for tests)
@@ -100,8 +119,15 @@ class Ctx:
         last = None
         for attempt in range(tries):
             self.calls += 1
-            text = complete(role, msgs, stage=f"perturb.{self.op}.{name}")
+            try:
+                text = complete(role, msgs, stage=f"perturb.{self.op}.{name}")
+            except Exception as e:                      # a refusal exposed by the model layer (W4): attribute `refusal`
+                if getattr(e, "refusal", False):
+                    self._refused(role, pv, user, attempt, str(e))
+                raise
             _transcript(self.op, name, role, attempt, msgs, text)
+            if is_refusal(text):
+                self._refused(role, pv, user, attempt, (text or "")[:200], step_id or f"{self.op}.{name}")
             try:
                 obj = parse_json(text)
                 res = validate(obj) if validate else obj
@@ -114,6 +140,13 @@ class Ctx:
                 msgs += [{"role": "assistant", "content": text},
                          {"role": "user", "content": f"Rejected: {e}\nFix this and resend the complete JSON object."}]
         raise OperatorError(f"{self.op}.{name}: no valid reply after {tries} attempts: {last}")
+
+    def _refused(self, role, pv, user, attempt, detail, step_id=None):
+        step = self.prov.step(id=(step_id or f"{self.op}.refused") + ".refused", operator="perturb", model=model_of(role), role=role,
+                              prompt_version=pv, inputs={"parent": sha256_obj(self.X.dump()), "user": sha256_text(user)},
+                              params={"attempts": attempt + 1, "refusal": True}, notes=f"refusal: {detail}"[:300],
+                              ts=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        raise RefusalError(f"{self.op}: model refused ({detail[:120]!r})", step)
 
     def code_step(self, id: str, notes: str, params: dict | None = None):
         self.prov.step(id=id, operator="perturb", notes=notes, params=params or {},
@@ -356,6 +389,8 @@ def finish_flip_conditions(d: dict, out: dict, choice: str, c_choice: str, fired
             raise ValueError("each new_would_change entry must be an object {if, then, why}, not a string")
         if nw.get("then") not in d["options"] or not nw.get("if") or not nw.get("why"):
             raise ValueError("new_would_change entries need if, then (an option id), why")
+        if nw["then"] == choice:
+            raise ValueError(f"new_would_change `then` must differ from the verdict {choice} (an item that points at the verdict is vacuous)")
         keep.append({"id": f"flip{nxt}", "if": nw["if"], "then": nw["then"], "why": nw["why"]})
     if need_back and not any(w["then"] == c_choice for w in keep):
         raise ValueError(f"add a new_would_change whose then is {c_choice} (what would restore the parent's verdict)")

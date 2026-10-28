@@ -32,10 +32,11 @@ def trace_text(tj: dict) -> str:
 def default_verifier(store: Store):
     """-> fn(text, condition, scenario) -> (holds: bool, why: str), W3's verifier."""
     try:
-        from pipeline.perturb.flip import condition_holds                  # preferred public hook (requested from W3)
+        from pipeline.perturb import condition_holds    # W3: (if_text, trace_text_or_scenario) -> {"holds", "why"}
 
         def v(text, cond, X):
-            return condition_holds(text, cond, store=store)
+            r = condition_holds(cond, text)
+            return r.get("holds") is True, str(r.get("why"))
         return v
     except ImportError:
         pass

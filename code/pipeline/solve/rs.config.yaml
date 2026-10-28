@@ -1,0 +1,25 @@
+# Rejection-sampling writer (design v2.4.1 section 10, defaults in section 15). Every value can be overridden with
+#   python -m pipeline.solve --writer granite-rs --config my.yaml   (only the keys you give), or single flags.
+# Copy this file to versions/ before changing a default.
+n_first: 4                # samples per item in the first round (one vLLM request with n=4)
+n_more: 4                 # a second round of this many, only for items with no accepted sample (N = 8 in all)
+n_rationalize: 4          # the one rationalize pass (items with no accepted sample after both rounds)
+rationalize: true
+max_tokens: 8000
+mode: C                   # reasoning mode; C = structure inside <think>, prefill `kind: fact_enumeration`
+role: policy              # bench.models role served by vLLM (raw /v1/completions)
+seed: 0                   # base seed: request seeds and the best-sample tie-break derive from it
+examples: true            # the two worked examples are prepended to the system message (prefix-cache friendly)
+concurrency: 16           # vLLM requests in flight
+items_in_flight: 64       # items prepared / being processed at once
+check_workers: 8          # threads for check_rs (Jev judge calls go through the cached judge)
+retries: 3                # transient HTTP errors per request
+require_strict: true      # parse_reply(...).strict_ok (every required step, valid, no repairs)
+require_stop: true        # a sample that hit max_tokens (finish_reason length) is rejected
+thresholds:
+  fact_bucket_agreement: 0.7        # agreeing gold items / ALL gold items (unaligned count as disagreements)
+  fact_recall: 0.6                  # weighted share of gold facts present in the reply
+  decisive_facts_exact: true        # every decisive fact (weight 2) in the right bucket
+  consideration_bucket_agreement: 0.7   # skipped for gold_tier model-solved pairs
+  decisive_considerations: true     # every gold decisive consideration named (skipped for model-solved)
+  decisive_allow_extra: true        # extra decisive considerations are tolerated (logged as agent_only)
