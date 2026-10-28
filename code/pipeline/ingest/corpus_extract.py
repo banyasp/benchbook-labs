@@ -5,6 +5,7 @@ from throughout the domains").
     PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract --batch corpus-batch2 incidents   # then select again
     BENCHBOOK_EQUITY_SET=pilot2 PYTHONPATH=code .venv/bin/python -m pipeline.ingest.corpus_extract --batch corpus-batch2 \
         --scope corpus_scope.v2 run [--workers 16]
+    PYTHONPATH=code .venv/bin/python -m pipeline.ingest.balance_options --batch corpus-batch2   # last: balance winners
 A later batch never reuses an earlier batch's episodes, inherits the family (and so the split) of any document or
 incident an earlier batch used, and drops a targeting episode whose family is already train/dev.
 
