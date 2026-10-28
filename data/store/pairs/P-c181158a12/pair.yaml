@@ -60,7 +60,65 @@ gold_tier: by-construction
 d: 0.0
 tags: []
 trace_ref: DR-OHA-26-0069-restyle1@v1
-solve: []
+solve:
+- path: pairs/P-c181158a12/solve/rs-1-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: fact_enumeration: facts.9.kind: Input should be ''situation'', ''capability'', ''authority'' or ''intelli; fact_mapping:
+    corresponding: Field required; live_only: Field required; case_only: Field requi; consideration_mapping: corresponding:
+    Field required; live_only: Field required; case_only: Field requi; repairs'
+- path: pairs/P-c181158a12/solve/rs-1-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'']'
+- path: pairs/P-c181158a12/solve/rs-1-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: consideration_enumeration: considerations.4.weight: Input should be ''strong'', ''weak'' or ''bar''; consideration_mapping:
+    corresponding.1.case: Input should be a valid string'
+- path: pairs/P-c181158a12/solve/rs-1-4.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; fact_enumeration: facts.9.kind: Input should be ''situation'', ''capability'',
+    ''authority'' or ''intelli'
+- path: pairs/P-c181158a12/solve/rs-2-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'', ''verdict'']; fact_enumeration: facts.5.status: Input should be ''confirmed''
+    or ''assessed''; fact_mapping: corresponding: Field required'
+- path: pairs/P-c181158a12/solve/rs-2-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''consideration_mapping'']; fact_enumeration: facts.10.kind: Input should be ''situation'', ''capability'',
+    ''authority'' or ''intell'
+- path: pairs/P-c181158a12/solve/rs-2-3.yaml
+  accepted: false
+  reasons:
+  - 'decisive facts in the wrong bucket: [''LIVE-F7'']'
+- path: pairs/P-c181158a12/solve/rs-2-4.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.00 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F1'', ''LIVE-F3'', ''LIVE-F4'', ''LIVE-F6'', ''LIVE-F7'']'
+- path: pairs/P-c181158a12/solve/rs-r-1.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_mapping'', ''consideration_enumeration'']; fact_enumeration: facts.8.kind: Input should be ''situation'',
+    ''capability'', ''authority'' or ''intelli'
+- path: pairs/P-c181158a12/solve/rs-r-2.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_enumeration'', ''fact_mapping'']'
+- path: pairs/P-c181158a12/solve/rs-r-3.yaml
+  accepted: false
+  reasons:
+  - 'parse: missing [''fact_enumeration'', ''fact_mapping'']'
+- path: pairs/P-c181158a12/solve/rs-r-4.yaml
+  accepted: false
+  reasons:
+  - fact bucket agreement 0.44 < 0.7
+  - 'decisive facts in the wrong bucket: [''LIVE-F1'', ''LIVE-F7'']'
+  - decisive considerations differ (missing 1, extra 0)
 distance_features:
   operator: restyle
   facts_touched_by_kind: {}
@@ -110,6 +168,34 @@ provenance:
     params: {}
     ts: '2026-10-28T04:10:25Z'
     notes: ids, options, verdict and gold maps built in code (restyle)
+  - id: solve.rs
+    operator: solve
+    model: vllm/granite-4.2-8b
+    role: policy
+    prompt_version: rs_example_flip.v1+29ad1a8c1e3e
+    inputs:
+      equities: pilot
+      case: DR-OHA-26-0069@v1
+      trace: DR-OHA-26-0069-restyle1@v1
+    params:
+      temperature: 1.0
+      max_tokens: 8000
+      writer: granite-rs
+      mode: C
+      n_first: 4
+      n_more: 4
+      n_rationalize: 4
+      seed: 0
+      accepted: 0
+      chosen: null
+      thresholds:
+        fact_bucket_agreement: 0.7
+        fact_recall: 0.6
+        decisive_facts_exact: true
+        consideration_bucket_agreement: 0.7
+        decisive_considerations: true
+        decisive_allow_extra: true
+    ts: '2026-10-28T14:52:29Z'
   fields:
     case.situation: restyle.rewrite
     case.reasoning: restyle.rewrite
@@ -117,4 +203,5 @@ provenance:
     case.facts: restyle.facts
     case.verdict: perturb.construct
     case.options: perturb.construct
+    solve: solve.rs
   authored: []
