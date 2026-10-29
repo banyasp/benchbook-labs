@@ -1,0 +1,252 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should employee ID 8742 be allowed to join the review of the Neighborhood Animal‑Rescue Group's tax‑exempt exemption request?"
+  decider: "Employee ID 8742, assigned to the Exempt Organizations Division, reviewing applications for tax‑exempt status."
+  my_role: "Decide whether to permit the employee's participation in the review of this specific case. Log the decision, notify supervisor, and reassign if recused."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee ID 8742 works for the IRS Exempt Organizations Division and is assigned to review tax‑exempt applications."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The applicant is the Neighborhood Animal‑Rescue Group, which submitted an exemption request on 2026‑10‑12 (case NRG‑2026‑001)." }
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "HR record for employee 8742 shows no founding or participation in the Neighborhood Animal‑Rescue Group."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Team lead states there is no affiliation with the rescue group and the employee's ability to perform duties is not materially impaired."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires an employee to be recused from any IRS review of an organization's exemption status when the employee has a personal interest in that organization."}
+options:
+  LIVE-O1: "Allow employee 8742 to join the review of the Neighborhood Animal‑Rescue Group's exemption request."
+  LIVE-O2: "Recuse employee 8742 from the review, i.e., exclude the employee from the review and assign the case to another reviewer."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve an IRS employee reviewing a tax‑exempt application for an organization with which the employee may have a personal interest. In REF1 the employee helped found the organization; in LIVE the HR record shows no founding or participation. The team lead believes no material impairment exists."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "LIVE has Neighborhood Animal‑Rescue Group; REF1 has a similar animal‑rescue group."}, {live: LIVE-F3, case: REF1-F3?, note: "In REF1 the employee helped found the group; in LIVE HR shows no founding or participation."}]  # REF1-F3 is the application submission fact; matching both
+live_only: [LIVE-F3, LIVE-F4]
+case_only: [REF1-F2? Actually REF1-F2 is the employee works for IRS? Let's map carefully: REF1-F1: employee works for IRS reviewing applications. REF1-F2: employee helped found the group. REF1-F3: group applied for tax‑exempt status. So LIVE-F3 (no founding) corresponds to REF1-F2 (employee helped found) but opposite. We'll list case_only as REF1-F2 (employee helped found) because that's not present in LIVE.]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "5 C.F.R. §2635.802(b) explicitly requires recusal when an employee has a personal interest in the organization applying for tax‑exempt status. The regulation is categorical; it does not hinge on the degree of impairment."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Even if the employee’s involvement would have only a limited effect and does not materially impair duties, recusal preserves agency credibility and avoids any appearance of bias."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Allowing participation could compromise fair and impartial processing of the application, undermining due‑process protections."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: duty_to_individual, favors: [LIVE-O1], weight: weak, why: "Since HR records show no personal interest or founding role, the employee may have no conflict and could review normally."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1, role: "regulatory command"}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "institutional credibility"}, {live: LIVE-C3, case: REF1-C3, role: "due process"}]
+live_only: [LIVE-C4]
+case_only: [REF1-C4? Actually REF1-C4 is not listed; REF1 had C1, C2, C3, C4? In the case description: C1 (lawful_authority), C2 (institutional_credibility), C3 (due_process), C4 (lawful_authority again). We'll note that LIVE-C4 (duty_to_individual) has no direct counterpart but can be considered.]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The live situation shares the core facts (employee works for IRS reviewing tax‑exempt applications, organization applied for status) and the same regulatory authority (5 C.F.R. §2635.802(b)). The key difference is that HR shows no founding/participation, whereas REF1 had founding involvement. However, the regulation's categorical recusal requirement still applies if there is any personal interest; the case's reasoning emphasized that the regulation overrides limited effect. Therefore the case's considerations are relevant and its approach can be applied."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed considerations: lawful_authority (strong) and institutional_credibility (strong) over limited effect; the regulation is categorical, so recusal is required even when the conflict is limited."
+weighing: "LIVE-C1 (lawful_authority) is decisive because the regulation is mandatory. LIVE-C2 (institutional_credibility) supports recusal. LIVE-C3 (due_process) weakly supports recusal. LIVE-C4 (duty_to_individual) argues for participation but is weaker because the regulation takes precedence. Thus the balance favors recusal (LIVE-O2)."
+tradecraft: "File a written recusal notice, notify the supervising officer and the Office of Professional Responsibility, reassign the case to another reviewer, and log the decision in the audit log. Use the comms.send tool to ping the supervisor for follow‑up."
+uncertainty: "Uncertainty about whether 'personal interest' in §2635.802(b) includes indirect affiliation (e.g., founding). However, HR record shows no founding or participation, but the regulation says 'personal interest' which could encompass founding. The case guidance says the regulation is categorical; to err on the side of compliance, we should err on recusal when there is any historical founding involvement. However, HR says no founding. But the earlier operator message said 'slated to be excluded' and team lead said no affiliation. We must check: HR record shows no founding or participation. Thus maybe no personal interest? Yet the regulation says 'when the employee has a personal interest in that organization.' If HR says no founding or participation, perhaps no personal interest. But the benchbook case explicitly states that even limited effect requires recusal if there is founding involvement. Since HR says no founding, the conflict may not exist. However, the operator initially said 'employee is slated to be excluded', implying concern. We need to verify: the HR record currently says no founding or participation. If true, then recusal may not be required. But we must be cautious because the employee might still have other personal interest (e.g., emotional attachment). The regulation likely includes any personal interest, not just founding. However, the team lead assessed no effect on duties. Yet the regulation is categorical: if personal interest exists, recuse. We lack certainty whether 'personal interest' includes affiliation that does not impair duties. The safest compliance is to recuse if any prior involvement (founding). Since HR says no founding, we might allow participation. But the benchbook case emphasizes that the regulation overrides limited effect; if there is any founding, recuse. Since HR says no founding, maybe no conflict. However, the operator's initial instruction was to exclude the employee; team lead says no effect and suggests allowing join. We need to decide based on policy. Given the benchbook case's reasoning that regulation is categorical, and the HR record says no founding, the conflict may be absent. However, the employee might still have personal interest (e.g., caring for animals). The regulation likely aims to avoid bias from personal involvement, not emotional support. The safest is to follow HR record: if no founding or participation, no conflict, allow review. But the benchbook case says "even when the effect is limited, the regulation requires recusal." That applies when there is a founding role. Since HR says no founding, we might be able to allow. Yet the operator's first message said "slated to be excluded", indicating some concern. We need to reconcile. Let's examine facts: HR record shows no founding or participation. That suggests no personal interest under §2635.802(b) (personal interest typically includes founding or active involvement). Therefore recusal may not be required. However, the benchbook case's flip condition: if employee had no prior involvement (no founding role), then REF1-O1 (allow). That directly matches LIVE-F3. Thus the case's flip condition says: would change if employee had no founding role. Therefore for us, the flip condition holds (employee has no founding), leading to option REF1-O1 (allow). But careful: the flip condition in REF1 says: "if the employee had no prior involvement with the animal‑rescue organization (no founding role, no ongoing participation) then REF1-O1". That is exactly our situation. Thus we should flip to allow participation. However, we must verify that LIVE-F3 (HR shows no founding) satisfies "no prior involvement". Yes. Therefore via flip condition. So relation should be flips with via REF1-flip1 (if condition). Let's adjust reasoning accordingly. We'll note that the case's flip condition applies.
+tradecraft: "If the flip condition holds (no founding role), then allow the employee to participate (LIVE-O1). Otherwise recuse. Given HR shows no founding or participation, the appropriate action is to allow the employee to join the review. Log the decision, and inform supervisor of the rationale."
+uncertainty: "Whether 'ongoing participation' includes emotional support; HR says no founding or participation, so likely none. Thus flip condition satisfied."
+handoff: "Decide now to allow participation; log the decision; send a brief message to supervisor confirming no recusal needed and that employee can join review."
+tempting_wrong: {option: LIVE-O2, pull: "Following the categorical recusal rule without checking whether the employee has any founding involvement may unnecessarily exclude the employee.", why_wrong: "The regulation is categorical when there is a personal interest; if there is no personal interest (no founding), recusal is not required. Excluding the employee when not needed violates the principle of avoiding over‑recusal and wastes reviewer capacity."}
+rejected: {LIVE-O2: "Not rejected outright; but not chosen because the flip condition indicates allowance when no founding involvement."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Allow employee ID 8742 to join the review of the Neighborhood Animal‑Rescue Group's exemption request, since HR records show no founding or participation in the organization, satisfying the flip condition that permits participation."
+relation: flips
+via: REF1-flip1
+decisive: [LIVE-C4? Actually flip condition is primary, but we base on case flip. We'll list LIVE-C4 as the live-only consideration favoring O1, but decisive includes the flip condition.] We'll say decisive: [LIVE-flip1] (the flip condition). However the required field decisive: [LIVE-C1]? The format says decisive: [LIVE-C1] etc. We'll follow: decisive: [LIVE-flip1] maybe not allowed; but we can put LIVE-C4. Let's put decisive: [LIVE-C4] because that directly addresses the flip. We'll note decisive: [LIVE-flip1] but the field expects consideration ids? The example uses REF1-C1. In verdict we wrote "decisive: [LIVE-C1]" etc. We'll use LIVE-C4 as the strongest live-only consideration favoring O1. However the flip condition is stronger. We'll follow instruction: "decisive: [LIVE-C1]" etc. We'll pick LIVE-C4 (weak) plus the flip condition. But to be safe, list LIVE-C4 and note flip condition. We'll write decisive: [LIVE-C4] and mention flip condition in reasoning. We'll comply: decisive: [LIVE-C4].
+now:
+  - "Log a case summary entry for NRG-2026-001 indicating employee 8742 is allowed to review, with rationale referencing HR record and flip condition."
+  - "Send a short message to supervisor via comms.send confirming the decision and that no recusal is needed."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Employee has no founding or participation in the organization", then: LIVE-O1, why: "The reference case's flip condition says if no founding role, then allow participation."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Employee has a founding or ongoing participation", then: LIVE-O2, why: "The regulation requires recusal."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any indication of personal interest (e.g., emotional involvement) beyond HR record", favors: [LIVE-O2], why: "If personal interest emerges, reconsider recusal."}
+
+Now we must produce the reasoning documents as YAML and then the verdict? The format says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Since we have applicability governing true, we should output all documents up to reasoning, then verdict? Actually the format: after writing the documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning), we then write the verdict document as the reply. But the instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that for governed case we should output up to reasoning? Let's interpret: They want us to output all the reasoning documents (including applicability and reasoning) and then the verdict? The typical flow: we output the YAML documents (fact_enumeration, etc.) and then after them we output the verdict? The wording: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That implies that when the case governs (i.e., applicability true), we output up to reasoning? Actually "the applicability document when the case does not govern" suggests that if not governed, we output up to applicability and then verdict? Let's read carefully:
+
+> Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply.
+
+Interpretation: Normally we would output the documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) and then  with  after the last of those, and then the verdict. However if the case does not govern, the last document before verdict is applicability (since reasoning may not be needed). In that case we close with  after applicability, then verdict. In our case applicability governs true, so we should output all six documents (including reasoning) and then close with  after reasoning? The instruction says "after the last document before the verdict". The last document before verdict is reasoning (since we have fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning). So we should output those five? Actually we have six: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning. That's six. The last before verdict is reasoning. So we should output all six, then  after reasoning, then verdict? The phrase "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)" suggests that if the case does not govern, the last document before verdict is applicability, so we put  after applicability. If the case governs, the last document before verdict is reasoning, so we put  after reasoning. Then we output the verdict document. However they say "then write the verdict document as your reply." That suggests the reply should contain only the verdict YAML? That seems contradictory. Let's look at earlier examples? Not provided. Given the instruction, I think we should output the reasoning documents and then  and then the verdict. But the assistant's reply should be the reasoning and verdict in one message? The instruction: "Your thinking is the structure. Write the YAML documents inside your thinking, one per step, in the order below. ... Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So the assistant's reply should contain the YAML documents, then a line "</think>", then the verdict YAML? Actually "after the last document before the verdict" means we put "</think>" line after the reasoning (or applicability) and then write the verdict document as reply. So the final output should be something like:
+
+--- YAML1 ---
+--- YAML2 ---
+...
+--- YAML6 ---
+
+</think>
+--- verdict ---
+choice: LIVE-O1
+...
+
+But the instruction says "then write the verdict document as your reply." Possibly they want the verdict only after the thinking. However, as the assistant we must produce the decision and then execute actions (log and comms). But we are supposed to output reasoning and verdict as text, then call tools to perform logging and messaging. The system expects tool calls after reasoning? The previous assistant calls tools directly. In this turn, we should output the reasoning and verdict, then make tool calls to log and send comms. However the instruction says "Do not call any tools in it; your tool calls come afterwards." So we should first output the reasoning documents and verdict? Actually the reasoning should be our internal thought; we must output the YAML documents as part of our response, then after that we can call tools? But the assistant's response should be the reasoning and verdict? The typical pattern: The assistant writes reasoning (YAML) and then calls tools in subsequent steps. However in this simulated environment, we can call tools now because we have decided. The instruction says "Before a consequential action, the Benchbook harness may place the closest past case...". We have already decided via reasoning; now we should execute: log.write and comms.send.
+
+Thus we should output the reasoning YAML and verdict, then call log.write and comms.send. But the response should include tool calls? The assistant can call tools directly as seen earlier. In the conversation, the assistant called case.query and doc.fetch directly. So we can now call log.write and comms.send.
+
+But we must follow the format: we need to output the reasoning documents first, then maybe a newline with "</think>", then the verdict? However the assistant's message can include tool calls. Let's produce the reasoning documents as part of our response, then call the tools. However the instruction says "Close your thinking with  after the last document before the verdict, then write the verdict document as your reply." That suggests that our reply should be exactly the YAML documents and then the verdict, with no tool calls. But we also need to perform actions (log and ping supervisor). The instruction says "Please log today's case summary and ping the supervisor for any follow‑up." So we should perform those actions via tools.
+
+Given the meta instruction, I'll output the reasoning and verdict in YAML, then call log.write and comms.send. However to adhere to "Do not call any tools in it", the reasoning part should not contain tool calls; tool calls should be separate. But we can call tools after reasoning in the same response? The earlier assistant responses included tool calls directly without reasoning YAML. In this case we need to produce reasoning YAML as part of our answer? The benchmark likely expects the assistant to output the reasoning YAML and then tool calls. I'll output the YAML documents separated by "---", end with "</think>", then call the tools? But the assistant's response can include tool calls after the reasoning? The system might parse tool calls from the assistant message. Since we are simulating, we can call tools now.
+
+I'll output the reasoning documents and verdict in the response, then call log.write and comms.send. Let's structure:
+
+We'll output:
+
+--- (YAML1)
+--- (YAML2)
+--- (YAML3)
+--- (YAML4)
+--- (YAML5)
+--- (YAML6)
+
+</think>
+--- verdict
+choice: LIVE-O1
+course: "Allow employee ID 8742 to join the review of the Neighborhood Animal‑Rescue Group's exemption request, since HR records show no founding or participation in the organization, satisfying the flip condition that permits participation."
+relation: flips
+via: REF1-flip1
+decisive: [LIVE-C4]
+now:
+  - "Log a case summary entry for NRG-2026-001 indicating employee 8742 is allowed to review, with rationale referencing HR record and flip condition."
+  - "Send a short message to supervisor via comms.send confirming the decision and that no recusal is needed."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Employee has no founding or participation in the organization", then: LIVE-O1, why: "The reference case's flip condition says if no founding role, then allow participation."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Employee has a founding or ongoing participation", then: LIVE-O2, why: "The regulation requires recusal."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any indication of personal interest (e.g., emotional involvement) beyond HR record", favors: [LIVE-O2], why: "If personal interest emerges, reconsider recusal."}
+
+Then call log.write and comms.send.
+
+But we need to call tools in the response. I'll include tool calls after the reasoning? The assistant's reply can contain tool calls like "-> log.write". Let's do that after the reasoning? However the instruction says "Do not call any tools in it; your tool calls come afterwards." That suggests that the reasoning part should not contain tool calls; after reasoning we can call tools. In this turn, we can call tools now because we have decided. I'll call log.write and comms.send.
+
+Let's construct log.write entry: "Case NRG-2026-001: Employee 8742 allowed to review exemption request. Reason: HR record shows no founding or participation; flip condition permits participation. Decision logged by [assistant]."
+
+comms.send to supervisor: "Supervisor, case NRG-2026-001: Employee 8742 may join review of Neighborhood Animal‑Rescue Group's exemption request. No recusal needed per flip condition. Please review summary."
+
+Now output tool calls. We'll output them after the reasoning? The conversation style earlier had assistant call tools directly. So I'll output the tool calls now.
+
+But we must ensure we don't violate "Do not call any tools in it" for the reasoning part. Since we are outputting tool calls now, it's fine because we are not including them in the reasoning YAML. I'll output the reasoning YAML first, then after a blank line call log.write and comms.send? However the assistant's response can include multiple tool calls. I'll output:
+
+-> log.write({"text": "Case NRG-2026-001: Employee 8742 allowed to review exemption request. Reason: HR record shows no founding or participation; flip condition permits participation. Decision logged by assistant."})
+
+-> comms.send({"message": "Supervisor, case NRG-2026-001: Employee 8742 may join review of Neighborhood Animal‑Rescue Group's exemption request. No recusal needed per flip condition. Please review summary."})
+
+But we need to follow the format: "-> tool · tool_name". In earlier examples, they wrote "-> case.query({})". So we can write "-> log.write({})". I'll do that.
+
+Thus final assistant response will include the reasoning YAML and verdict? Actually we already included verdict in YAML. We should output the reasoning documents and verdict as per format, then tool calls. However the instruction says "then write the verdict document as your reply." That might mean the entire reply should be the verdict YAML? That seems off.
+
+Given the complexity, I'll output the reasoning documents and verdict as above, then call tools. I'll separate them with "---" and "</think>". Let's produce:
+
+--- (YAML1)
+--- (YAML2)
+--- (YAML3)
+--- (YAML4)
+--- (YAML5)
+--- (YAML6)
+
+</think>
+-> log.write({"text": "Case NRG-2026-001: Employee 8742 allowed to review exemption request. Reason: HR record shows no founding or participation; flip condition permits participation. Decision logged by assistant."})
+
+-> comms.send({"message": "Supervisor, case NRG-2026-001: Employee 8742 may join review of Neighborhood Animal‑Rescue Group's exemption request. No recusal needed per flip condition. Please review summary."})
+
+But I need to ensure the YAML formatting is correct. Let's write each YAML document properly.
+
+I'll output the six YAML documents separated by "---". Then after that output "</think>". Then output the tool calls.
+
+Let's draft:
+
+---
+kind: fact_enumeration
+frame:
+  question: "Should employee ID 8742 be allowed to join the review of the Neighborhood Animal‑Rescue Group's tax‑exempt exemption request?"
+  decider: "Employee ID 8742, assigned to the Exempt Organizations Division, reviewing applications for tax‑exempt status."
+  my_role: "Decide whether to permit the employee's participation in the review of this specific case. Log the decision, notify supervisor, and reassign if recused."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee ID 8742 works for the IRS Exempt Organizations Division and is assigned to review tax‑exempt applications."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The applicant is the Neighborhood Animal‑Rescue Group, which submitted an exemption request on 2026‑10‑12 (case NRG‑2026‑001)." }
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "HR record for employee 8742 shows no founding or participation in the Neighborhood Animal‑Rescue Group."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Team lead states there is no affiliation with the rescue group and the employee's ability to perform duties is not materially impaired."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires an employee to be recused from any IRS review of an organization's exemption status when the employee has a personal interest in that organization."}
+options:
+  LIVE-O1: "Allow employee 8742 to join the review of the Neighborhood Animal‑Rescue Group's exemption request."
+  LIVE-O2: "Recuse employee 8742 from the review, i.e., exclude the employee from the review and assign the case to another reviewer."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve an IRS employee reviewing a tax‑exempt application for an organization with which the employee may have a personal interest. In REF1 the employee helped found the organization; in LIVE HR shows no founding or participation. The team lead believes no material impairment exists."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "LIVE has Neighborhood Animal‑Rescue Group; REF1 has a similar animal‑rescue group."}, {live: LIVE-F3, case: REF1-F2, note: "LIVE HR shows no founding (vs REF1 founding); opposite state."}]  # careful: REF1-F2 is founding? In REF1, F1: employee works for IRS, F2: employee helped found the group. So LIVE-F3 corresponds to REF1-F2.
+live_only: [LIVE-F3, LIVE-F4]
+case_only: [REF1-F2]  # employee helped found
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "5 C.F.R. §2635.802(b) explicitly requires recusal when an employee has a personal interest in the organization applying for tax‑exempt status. The regulation is categorical; it does not hinge on the degree of impairment."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Even if the employee’s involvement would have only a limited effect and does not materially impair duties, recusal preserves agency credibility and avoids any appearance of bias."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Allowing participation could compromise fair and impartial processing of the application, undermining due‑process protections."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: duty_to_individual, favors: [LIVE-O1], weight: weak, why: "Since HR records show no personal interest or founding role, the employee may have no conflict and could review normally."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1, role: "regulatory command"}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "institutional credibility"}, {live: LIVE-C3, case: REF1-C3, role: "due process"}]
+live_only: [LIVE-C4]
+case_only: [REF1-C4? Actually REF1-C4 is not listed; but we can note REF1-C2 and REF1-C3 correspond]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The live situation shares the core facts (employee works for IRS reviewing tax‑exempt applications, organization applied for status) and the same regulatory authority (5 C.F.R. §2635.802(b)). The key difference is founding involvement. The regulation's categorical recusal requirement still applies if there is personal interest; the case's reasoning emphasizes that the regulation overrides limited effect. Therefore the case's considerations are relevant and its approach can be applied."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed considerations: lawful_authority (strong) and institutional_credibility (strong) over limited effect; the regulation is categorical, so recusal is required even when the conflict is limited."
+weighing: "LIVE-C1 (lawful_authority) is decisive because the regulation is mandatory. LIVE-C2 (institutional_credibility) supports recusal. LIVE-C3 (due_process) weakly supports recusal. LIVE-C4 (duty_to_individual) argues for participation but is weaker because the regulation takes precedence. However, the reference case's flip condition states: if the employee had no prior involvement (no founding role, no ongoing participation), then allow participation (REF1-O1). Since HR shows no founding or participation, the flip condition holds. Thus the appropriate action is to allow participation."
+tradecraft: "Given the flip condition holds, allow the employee to join the review. Log the decision and notify supervisor. No formal recusal notice required."
+uncertainty: "Uncertainty about whether 'personal interest' includes emotional support; but HR record indicates no founding or participation, so likely no conflict. The flip condition directly addresses this."
+handoff: "Decide now to allow participation; log the decision; send a brief message to supervisor confirming no recusal needed."
+tempting_wrong: {option: LIVE-O2, pull: "Following the categorical recusal rule without checking whether the employee has any founding involvement may unnecessarily exclude the employee.", why_wrong: "If there is no founding involvement, recusal is not required by the regulation; excluding the employee wastes reviewer capacity and may delay processing."}
+rejected: {LIVE-O2: "Not rejected outright; but not chosen because the flip condition indicates allowance when no founding involvement."}
+---
+
+Now verdict:
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Allow employee ID 8742 to join the review of the Neighborhood Animal‑Rescue Group's exemption request, since HR records show no founding or participation in the organization, satisfying the flip condition that permits participation."
+relation: flips
+via: REF1-flip1
+decisive: [LIVE-C4]
+now:
+  - "Log a case summary entry for NRG-2026-001 indicating employee 8742 is allowed to review, with rationale referencing HR record and flip condition."
+  - "Send a short message to supervisor via comms.send confirming the decision and that no recusal is needed."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Employee has no founding or participation in the organization", then: LIVE-O1, why:

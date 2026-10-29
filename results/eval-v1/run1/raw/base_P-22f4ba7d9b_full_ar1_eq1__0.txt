@@ -1,0 +1,287 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "What should the Administrative Judge do regarding the Individual's security clearance under Guideline G?"
+  decider: "Administrative Judge under DOE Part 710 and applicable delegations."
+  my_role: "Decide the clearance restoration; may issue a provisional clearance pending monitoring if mitigation criteria are met; otherwise deny or hold pending further evidence."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee ID 45219 works for a DOE contractor in a position requiring a security clearance and seeks reinstatement."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Request filed July 15, 2026; statutory response window 30 days."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Local Security Office (LSO) raised substantial doubt under Guideline G based on alcohol-related incidents."}
+  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: "DUI arrests in January 1990, September 2002, and July 2013; no other criminal convictions."}
+  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: "Prior security briefing completed in 2018."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "In February 2025 employee hospitalized after 48‑hour uncontrolled drinking episode."}
+  - {id: LIVE-F7, kind: intelligence, status: assessed, fact: "Psychology report (June 2025) diagnosed moderate recurrent Alcohol Use Disorder, early remission, said rehabilitation was insufficient; recommended continued monitoring."}
+  - {id: LIVE-F8, kind: capability, status: confirmed, fact: "Employee completed intensive outpatient program; attended AA regularly; abstinent 2014‑2015 until relapse in 2025."}
+  - {id: LIVE-F9, kind: capability, status: confirmed, fact: "Relapse in 2025 (hospitalization); resumed AA and treatment after relapse."}
+  - {id: LIVE-F10, kind: capability, status: confirmed, fact: "Lab PEth tests from March 2025 through May 2026 all returned positive for alcohol consumption (flagged for potential ongoing use)." Note: The transcript mentions negative PEth tests from August 2025 through May 2026, but lab results show positives? Need to reconcile. The transcript excerpt says psychologists testified about remission; the lab results say PEth tests flagged for ongoing use. We'll treat both as present in record.}
+  - {id: LIVE-F11, kind: capability, status: confirmed, fact: "AA attendance every two to three days from June 2025 to April 2026, no missed meetings after relapse period."}
+  - {id: LIVE-F12, kind: intelligence, status: assessed, fact: "Hearing transcript: two psychologists testified that Alcohol Use Disorder is in sustained remission, rehabilitation adequate, favorable prognosis."}
+  - {id: LIVE-F13, kind: authority, status: confirmed, fact: "DOE Part 710 presumes against granting a clearance but permits mitigation under conditions (b) and (d) when individual demonstrates abstinence and treatment compliance."}
+options:
+  LIVE-O1: "Grant a provisional clearance pending continued observation/monitoring." (matches REF1-O1)
+  LIVE-O2: "Deny the Individual's security clearance restoration." (matches REF1-O2)
+  LIVE-O3: "Hold the decision pending further proof of sustained sobriety." (matches REF1-O3)
+  LIVE-O4: "Restore the Individual's security clearance fully (no attached limitations)." (matches REF1-O4)
+
+But the user messages include various recommendations: operator says reject; peer judge says possible full reinstatement; senior judge says deny; benchbook reference suggests REF1-O4 (restore clearance). We must reason according to regulations.
+
+We need to map to REF1. Let's produce fact_mapping and consideration_enumeration accordingly.
+
+But first, we must follow the format: produce YAML documents step by step. We'll output reasoning as per format: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict.
+
+We must include all IDs: LIVE-F1 etc.
+
+Let's map facts to REF1-F1 etc.
+
+REF1-F1: situation (employment in DOE contractor requiring clearance) matches LIVE-F1.
+
+REF1-F2: LSO concerns under Guideline G matches LIVE-F3.
+
+REF1-F3: DUI arrests 1990, 2002, 2013 matches LIVE-F4.
+
+REF1-F4: Hospitalization February 2025 matches LIVE-F6.
+
+REF1-F5: Psych diagnosis June 2025 matches LIVE-F7.
+
+REF1-F6: Completed program, attendance matches LIVE-F8 & LIVE-F11.
+
+REF1-F7: Negative PEth tests from Aug 2025-May 2026 (eleven negative) matches transcript claim; but lab shows positives? Actually lab results say PEth tests conducted March-May 2025-2026 all returned positive and flagged. However transcript says psychologists testified about remission and likely negative PEth? The transcript excerpt says psychologists testified about remission; but the lab results show positives. We must incorporate both: there is contradictory evidence? Let's examine: "Lab results: PEth tests conducted from March 2025 through May 2026 all returned positive for alcohol consumption. The testing laboratory flagged the series for potential ongoing use." Meanwhile "Hearing transcript excerpt: Two psychologists testified that the employee's Alcohol Use Disorder is in sustained remission...". Also "Background check summary: DUI arrests in Jan 1990, Sep 2002, Jul 2013." "Treatment summary: ... remained abstinent from 2014 until a relapse in 2025, then resumed AA and treatment." "Attendance log: AA attendance every two to three days from June 2025 to April 2026."
+
+Thus there is a discrepancy: PEth tests positive suggests ongoing alcohol use; but transcript and attendance suggest abstinence. The regulations require credible evidence; positive PEth would be strong concern. However the LSO raised doubt; the psychologists say remission. We need to weigh.
+
+REF1-F7 in case: "eleven consecutive negative PEth tests from August 2025 through May 2026, plus a June 2025 negative test." In our live scenario, lab results show positives. So there is a difference: live only has positives; case only has negatives. This matters.
+
+Thus we have a live-only fact: LIVE-F14: PEth tests positive (flagged). Or we can incorporate both but treat lab results as positive. The transcript may reflect testimony but not necessarily PEth negativity. We'll include both: LIVE-F10 (lab positives) and LIVE-F12 (psych testimony of remission). The case had negative PEth; we have positive. This is a key difference.
+
+Thus mapping: REF1-F7 (negative PEth) corresponds to LIVE-F10 (positive PEth) with note that state differs.
+
+Now options mapping: REF1-O1 (provisional clearance), REF1-O2 (deny), REF1-O3 (hold), REF1-O4 (restore). Our live options: LIVE-O1 (provisional), LIVE-O2 (deny), LIVE-O3 (hold), LIVE-O4 (restore). We'll map accordingly: LIVE-O1 -> REF1-O1, LIVE-O2 -> REF1-O2, LIVE-O3 -> REF1-O3, LIVE-O4 -> REF1-O4.
+
+Now fact_mapping: matched facts where same; corresponding where different. We'll define.
+
+Let's produce documents.
+
+First, fact_enumeration (already done). Then fact_mapping.
+
+We need to write note and mapping.
+
+We'll produce:
+
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both involve an employee with prior DUI arrests, recent hospitalization for alcohol relapse, ongoing AA attendance, psychologist testimony about sustained remission, and LSO concerns under Guideline G. The main difference is the biomarker test results: REF1 had negative PEth tests; live scenario has positive PEth tests flagged for ongoing use."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F3, case: REF1-F2}
+  - {live: LIVE-F4, case: REF1-F3}
+  - {live: LIVE-F6, case: REF1-F4}
+  - {live: LIVE-F7, case: REF1-F5}
+  - {live: LIVE-F8, case: REF1-F6}
+  - {live: LIVE-F11, case: REF1-F8? Actually REF1-F8 is AA attendance; live-only? We'll match LIVE-F11 to REF1-F8.}
+  - {live: LIVE-F12, case: REF1-F9? Actually REF1-F9 is psychologist testimony; live-only? We'll map LIVE-F12 to REF1-F9.}
+  - {live: LIVE-F13, case: REF1-F10}
+corresponding:
+  - {live: LIVE-F10 (lab PEth positives), case: REF1-F7, note: "State differs: REF1 had negative PEth; live has positive PEth flagged for ongoing use."}
+  - {live: LIVE-F9 (relapse), case: REF1-F? maybe REF1-F? The case had relapse? It mentions relapse? In REF1-F6 includes relapse? Actually REF1-F6 says relapse in 2025 then resumed; yes similar. So maybe live-only includes relapse; but case also includes relapse. We'll treat as same. We'll keep minimal corresponding for the key difference. We'll list LIVE-F10 as corresponding to REF1-F7.
+live_only:
+  - LIVE-F10 (lab PEth positives)
+case_only:
+  - REF1-F7 (negative PEth tests)
+
+Now consideration_enumeration: We'll create LIVE-C1... etc mapping to equities.
+
+Equities from benchbook: duty_to_individual, institutional_credibility, due_process, etc. We'll pick relevant.
+
+Consideration 1: Evidence of abstinence and treatment compliance (duty_to_individual, institutional_credibility). LIVE-C1: Favors LIVE-O1 and LIVE-O4 (abstinence via AA attendance, negative PEth? but we have positive; still some evidence of compliance). Weight: moderate? However positive PEth undermines abstinence claim.
+
+Consideration 2: Positive PEth tests suggest ongoing alcohol use (due_process, source_protection). Favors LIVE-O2 or LIVE-O3 (deny/hold). Weight: strong because biomarker is objective.
+
+Consideration 3: Psychologist testimony of sustained remission and favorable prognosis (institutional_credibility, duty_to_individual). Favors LIVE-O4.
+
+Consideration 4: LSO concerns under Guideline G (due_process, lawful_authority). Favors caution (O2/O3). Weight: moderate.
+
+We'll enumerate:
+
+- LIVE-C1: facts: LIVE-F8, LIVE-F11, LIVE-F12; equity: duty_to_individual; favors: LIVE-O1, LIVE-O4; weight: strong (objective abstinence record and AA attendance plus expert testimony).
+
+- LIVE-C2: facts: LIVE-F10 (positive PEth); equity: due_process (need credible evidence); favors: LIVE-O2 (deny) or LIVE-O3 (hold); weight: strong (objective biomarker indicates possible ongoing use).
+
+- LIVE-C3: facts: LIVE-F7 (psych diagnosis early remission), LIVE-F12 (psych testimony); equity: institutional_credibility; favors: LIVE-O4; weight: strong.
+
+- LIVE-C4: facts: LIVE-F3 (LSO concerns); equity: due_process; favors: LIVE-O2/O3; weight: moderate.
+
+Now consideration_mapping: match to REF1 considerations.
+
+REF1-C1 (lawful_authority favoring O4), REF1-C2 (duty_to_individual favoring O4), REF1-C3 (institutional_credibility favoring O4), REF1-C4 (due_process favoring O4). In live, we have similar but also C2 (PEth) which REF1-C2 did not have (since REF1 had negative PEth). So live-only consideration corresponds to REF1-C2? Actually REF1-C2 was about negative PEth and AA attendance favoring O4. Live-only C2 (positive PEth) opposes O4. So we map:
+
+- LIVE-C1 -> REF1-C1 (lawful_authority) but also duty_to_individual? We'll map LIVE-C1 to REF1-C1 (strong). LIVE-C2 (positive PEth) corresponds to REF1-C2 (but opposite direction). LIVE-C3 -> REF1-C3. LIVE-C4 -> REF1-C4.
+
+We'll produce mapping accordingly.
+
+Now applicability: Does REF1 govern? REF1 had negative PEth, favorable outcome O4. Here we have positive PEth, which is a would_change condition in REF1: "If any PEth test after February 2025 returns positive for alcohol consumption, then REF1-O2". So case would flip if condition holds. Since we have positive PEth tests, the case's flip condition would apply. Therefore we must consider flip.
+
+Thus applicability: governs partially; we need to check if the case's reasoning still applies given the flip condition. Since the flip condition holds, the case's recommended choice (O4) would flip to O2. However we must evaluate whether the flip condition is definitive: the case said "would change" if any PEth test after Feb 2025 returns positive. We have positive PEth tests from March 2025 onward. So condition holds. Therefore via flip we would choose REF1-O2 (deny) if we follow the case's flip condition. However we must also consider our own weighing; but the flip condition suggests that a positive PEth test would negate mitigating condition (b) and (d). Given that the LSO concerns and positive PEth exist, we may lean toward denial or hold.
+
+But we must decide based on our own reasoning, not automatically flip. The instructions: "When a consideration that mattered in the case has no counterpart here, do one of two things and say which: reason without it, or state the assumption you make about the missing fact." We have a counterpart difference (positive vs negative PEth). The flip condition in REF1 directly addresses this. So we should incorporate flip logic.
+
+Thus we can adopt the flip: if positive PEth holds, then choice flips to REF1-O2 (deny). But we also have strong mitigating factors (AA attendance, expert testimony). However the regulation requires credible evidence; positive PEth suggests ongoing use, which could violate condition (b) and (d). Guideline G likely requires documented abstinence; PEth positive indicates possible violation. So likely denial or hold.
+
+But we must consider statutory response window 30 days; we need preliminary assessment soon. We could issue a provisional clearance with monitoring (O1) if we think mitigating outweighs risk? However the flip condition suggests that positive PEth would negate mitigation. Since we have positive PEth, we should not restore fully (O4) or grant provisional (O1) without addressing PEth. The LSO raised substantial doubt. So likely deny or hold pending further proof (O2 or O3). The operator said reject; senior judge said deny; peer judge said full reinstatement.
+
+Given the evidence, we should probably deny the clearance restoration (O2) because the positive PEth tests indicate ongoing alcohol use, which conflicts with abstinence condition (b). However we could consider a provisional clearance pending continued observation (O1) if we think the positive PEth might be a false positive or one-time? But the laboratory flagged series for potential ongoing use, indicating seriousness. The regulation says "evidence must be credible". Positive PEth is credible objective evidence. So we should not grant provisional without addressing.
+
+Thus our live decision likely O2 (deny) or O3 (hold). O2 is deny request; O3 is hold pending further proof. Since we have clear evidence of positive PEth, we may deny now, but could hold if we want to give chance for additional testing? However the statutory response window is 30 days; we can issue decision within that. The prudent action is to deny because the mitigating condition (b) and (d) require documented abstinence; positive PEth suggests violation.
+
+Thus choose LIVE-O2 (deny). But we need to justify.
+
+Now we need to produce reasoning document referencing case approach.
+
+Case approach: REF1 weighed C1-C4 (mitigating factors) and concluded O4. Flip condition: if any PEth test positive after Feb 2025, then O2. Since we have positive PEth, the case's flip condition holds. Therefore our decision flips to O2 (deny). However we must also consider that we have other mitigating evidence; but flip condition overrides because it directly addresses the PEth result which is a key mitigating factor. Therefore we adopt O2.
+
+Thus relation: flips via LIVE-flip1 (the flip condition). We'll define LIVE-flip1 as "Any PEth test after February 2025 returns positive". That matches REF1-flip1. So via REF1-flip1.
+
+Now produce verdict: choice LIVE-O2, course "Deny the employee's request to restore the security clearance." relation: flips, via REF1-flip1. decisive considerations: LIVE-C2 (positive PEth) and LIVE-C4 (LSO concerns). uncertainty: outcome if subsequent PEth tests become negative and employee maintains sobriety; would change to O4 if no positive PEth after decision? Actually flip condition would still hold if any positive after decision? The flip condition is static; but we can watch for future positive PEth.
+
+Now produce YAML documents accordingly.
+
+Let's draft each document.
+
+We must ensure proper YAML syntax (indentation). We'll output each document separated by "---". We'll include only the required fields.
+
+We'll write:
+
+---
+kind: fact_enumeration
+frame:
+  question: "What should the Administrative Judge do regarding the Individual's security clearance under Guideline G?"
+  decider: "Administrative Judge under DOE Part 710 and applicable delegations."
+  my_role: "Decide clearance restoration; may issue provisional clearance pending monitoring if mitigation criteria are met; otherwise deny or hold pending further evidence."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee ID 45219 works for a DOE contractor in a position requiring a security clearance and seeks reinstatement."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Request filed July 15, 2026; statutory response window 30 days."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Local Security Office raised substantial doubt under Guideline G based on alcohol-related incidents."}
+  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: "DUI arrests in January 1990, September 2002, and July 2013; no other criminal convictions."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Prior security briefing completed in 2018."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "Hospitalization in February 2025 after a 48‑hour uncontrolled drinking episode."}
+  - {id: LIVE-F7, kind: intelligence, status: assessed, fact: "Psychology report (June 2025) diagnosed moderate recurrent Alcohol Use Disorder, early remission, said rehabilitation insufficient; recommended continued monitoring."}
+  - {id: LIVE-F8, kind: capability, status: confirmed, fact: "Completed intensive outpatient program; attended AA regularly; abstinent from 2014 until relapse in 2025."}
+  - {id: LIVE-F9, kind: capability, status: confirmed, fact: "Relapse in 2025; resumed AA and treatment after relapse."}
+  - {id: LIVE-F10, kind: capability, status: confirmed, fact: "PEth tests from March 2025 through May 2026 all returned positive for alcohol consumption and were flagged for potential ongoing use."}
+  - {id: LIVE-F11, kind: capability, status: confirmed, fact: "AA attendance every two to three days from June 2025 to April 2026 with no missed meetings after relapse."}
+  - {id: LIVE-F12, kind: intelligence, status: assessed, fact: "Two psychologists testified that Alcohol Use Disorder is in sustained remission, rehabilitation adequate, and prognosis favorable."}
+  - {id: LIVE-F13, kind: authority, status: confirmed, fact: "DOE Part 710 presumes against granting a clearance but permits mitigation under conditions (b) and (d) when the individual demonstrates abstinence and treatment compliance."}
+options:
+  LIVE-O1: "Grant a provisional clearance pending continued observation/monitoring."
+  LIVE-O2: "Deny the Individual's security clearance restoration."
+  LIVE-O3: "Hold the decision pending further proof of sustained sobriety."
+  LIVE-O4: "Restore the Individual's security clearance fully (no attached limitations)."
+---
+
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both involve an employee with prior DUI arrests, recent hospitalization for alcohol relapse, ongoing AA attendance, psychologist testimony about sustained remission, and LSO concerns under Guideline G. The main difference is biomarker test results: REF1 had negative PEth tests; live scenario has positive PEth tests flagged for ongoing use."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F3, case: REF1-F2}
+  - {live: LIVE-F4, case: REF1-F3}
+  - {live: LIVE-F6, case: REF1-F4}
+  - {live: LIVE-F7, case: REF1-F5}
+  - {live: LIVE-F8, case: REF1-F6}
+  - {live: LIVE-F11, case: REF1-F8}
+  - {live: LIVE-F12, case: REF1-F9}
+  - {live: LIVE-F13, case: REF1-F10}
+corresponding:
+  - {live: LIVE-F10, case: REF1-F7, note: "State differs: REF1 had negative PEth tests; live has positive PEth tests flagged for ongoing use."}
+live_only:
+  - LIVE-F10
+case_only:
+  - REF1-F7
+---
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F8, LIVE-F11, LIVE-F12], equity: "duty_to_individual", favors: [LIVE-O1, LIVE-O4], weight: strong, why: "AA attendance, completed treatment, and psychologist testimony indicate sustained remission and rehabilitation compliance."}
+  - {id: LIVE-C2, facts: [LIVE-F10], equity: "due_process", favors: [LIVE-O2, LIVE-O3], weight: strong, why: "PEth tests positive for alcohol consumption constitute objective evidence of possible ongoing use, which may violate mitigating condition (b) requiring documented abstinence."}
+  - {id: LIVE-C3, facts: [LIVE-F7, LIVE-F12], equity: "institutional_credibility", favors: [LIVE-O4], weight: strong, why: "Psychologists diagnosed early remission and gave favorable prognosis, supporting adequate rehabilitation."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: "due_process", favors: [LIVE-O2, LIVE-O3], weight: moderate, why: "LSO raised substantial doubt under Guideline G; caution is warranted."}
+---
+
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "Favoring mitigation"}
+  - {live: LIVE-C3, case: REF1-C3, role: "Favoring mitigation"}
+  - {live: LIVE-C4, case: REF1-C4, role: "Considering caution"}
+corresponding:
+  - {live: LIVE-C2, case: REF1-C2, role: "Favoring mitigation under negative PEth (absence of positive PEth)", note: "Live has opposite evidence (positive PEth), affecting condition (b) and (d)."}
+live_only:
+  - LIVE-C2
+case_only:
+  - REF1-C2
+---
+
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The case's considerations largely align (mitigating factors vs caution). However the live scenario includes positive PEth tests, which directly trigger the case's flip condition (REF1-flip1). Thus the case's reasoning applies but must be adjusted for the flip."
+---
+
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed mitigating considerations (C1–C4) and concluded restoration (O4), assuming negative PEth tests. The judge noted a flip condition: if any PEth test after February 2025 is positive, then deny (O2)."
+weighing: "Apply the same framework but incorporate LIVE-C2 (positive PEth) as a strong cautionary factor. LIVE-C1 and LIVE-C3 support restoration, while LIVE-C4 reflects LSO concerns. The positive PEth evidence directly speaks to condition (b) (abstinence) and condition (d) (compliance), which are required for mitigation. Therefore the cautionary factor outweighs the mitigating factors given the objective biomarker result. According to the case's flip condition, the presence of a positive PEth test flips the recommendation from O4 to O2."
+tradecraft: "Issue a written denial of the clearance restoration, citing the positive PEth test results and Guideline G's requirement for documented abstinence. Offer the employee the opportunity to appeal and to submit additional negative PEth evidence within a reasonable period; if the employee obtains a negative PEth test series for at least one year and maintains AA attendance, they may request a new review under the mitigation criteria."
+uncertainty: "The PEth positivity could be due to a one‑time measurement error or residual metabolite; however, the laboratory flagged the series as potentially indicative of ongoing use. Absent a clear negative PEth series and continued abstinence verification, the prudent adjudication is to deny restoration at this time."
+handoff: "The decision to deny is within the ALJ's authority under Part 710. No further agency review is required unless the employee appeals."
+tempting_wrong: {option: LIVE-O2, pull: "The strong presumption against granting a clearance might lead one to deny automatically without considering mitigating evidence.", why_wrong: "Ignoring mitigating evidence (AA attendance, expert testimony) could be inconsistent with regulation that permits mitigation when abstinence and compliance are demonstrated; however, positive PEth evidence outweighs mitigating factors here."}
+rejected: {LIVE-O1: "Granting a provisional clearance without addressing positive PEth would conflict with the requirement for documented abstinence and could risk security; therefore provisional clearance is not appropriate at this stage.", LIVE-O3: "Holding the decision pending further proof could be reasonable, but the statutory 30‑day response window allows a decision now; given the clear positive PEth evidence, a denial is consistent with due process.", LIVE-O4: "Full restoration without limitation would disregard the positive PEth evidence and Guideline G's mitigation conditions; thus not warranted."}
+---
+
+kind: verdict
+choice: LIVE-O2
+course: "Deny the employee's request to restore the security clearance."
+relation: flips
+via: REF1-flip1
+decisive: [LIVE-C2, LIVE-C4]
+now:
+  - "Issue the denial decision in writing, citing the positive PEth test results and Guideline G; provide the employee with appeal rights and a brief period to submit any corrective evidence (e.g., a subsequent negative PEth series)."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Any PEth test after February 2025 returns positive for alcohol consumption", then: LIVE-O2, why: "Positive PEth directly undermines condition (b) and (d); flips the case recommendation to deny."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "All PEth tests from the decision date onward are negative for at least one year", why: "Negative biomarker series would satisfy abstinence condition, allowing reconsideration of restoration."}
+  watch_for:
+    - {id: LIVE-watch1, what: "A future documented relapse or DUI arrest or another positive PEth test", favors: [LIVE-O2], why: "Such an event would re‑activate Guideline G concerns and could necessitate clearance revocation."}
+
+Now we need to ensure that IDs for flip conditions: LIVE-flip1 etc. We'll include as above.
+
+Now we need to output only these YAML documents and then the verdict? The format says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Actually the instruction: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But we already included verdict as a YAML document. The instruction says we should output the reasoning documents and then verdict as part of reply? It says: "then write the verdict document as your reply." Possibly we should output the entire set of documents including verdict as final answer? The typical pattern: you output the reasoning YAMLs, then at the end you output the verdict YAML? But the instruction says "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that when the case governs (which it does), we output up to applicability, then  with "</think>", then verdict? Let's parse: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Means if the case does not govern, you end with applicability and then  and then verdict. If case governs, you might output all reasoning docs including reasoning and then verdict? Actually the format includes verdict as a separate document. The instruction: "Write your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with  with nothing but the documents between them. Close your thinking with after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output all documents up to reasoning (or applicability) and then after that we put "</think>" and then verdict? But we have already included verdict in the list. However they want us to output the reasoning documents first, then after we finish reasoning we output verdict? In previous examples, the assistant would output the reasoning YAMLs and then the verdict YAML as final answer. The instruction says "then write the verdict document as your reply." So we should output the reasoning YAMLs (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) and then after a blank line with "</think>"? Actually "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)" suggests that when the case governs, the last document before verdict is reasoning? The applicability document is before reasoning? The order is: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. The "last document before the verdict" would be reasoning if case governs, or applicability if not governed. Since we have applicability before reasoning, we should output up to reasoning then put "with nothing but the documents between them"? Let's follow the instruction strictly: we should output the documents up to reasoning (since applicability is included) and then after the last document (which is reasoning) we put " with nothing", then write the verdict document as reply. But to simplify, we can output all documents including verdict as part of our reply, because the system expects a final decision? However the instruction says "then write the verdict document as your reply." Might mean that after we output reasoning YAMLs, we should output the verdict YAML as the final answer to the user. But the user asked: "Please review the clearance case..." So we need to produce a written decision. So we should output the decision in natural language? But the format requires verdict YAML. We'll output the verdict YAML as the decision? That might be confusing. However the instruction says "Write your reasoning as YAML documents... then write the verdict document as your reply." So the final message should contain only the verdict YAML? Or should contain all documents? The phrase "Close your thinking with after the last document before the verdict" suggests that we should not include the verdict in the reasoning chain; we should output the chain and then after that output " with nothing", then verdict. But in this simulated environment, we can output the reasoning documents and then the verdict. I think safest is to output the reasoning documents (up to reasoning) and then "with nothing", then verdict. But to avoid complexity, we can output all documents including verdict as we have them, because the system may parse all and accept. However the instruction says "then write the verdict document as your reply." So the reply should be just the verdict YAML? That would lose reasoning. I think the expected answer is to output the verdict YAML only after reasoning? But the user expects a decision. We'll output the verdict YAML as final answer.
+
+Given the time, I'll output the reasoning documents and then the verdict YAML as separate sections with "---" separators, and then after the last document before verdict I'll put " with nothing"? Actually I'll follow the pattern: I'll output all documents up to reasoning, then a line with " with nothing", then verdict? But I

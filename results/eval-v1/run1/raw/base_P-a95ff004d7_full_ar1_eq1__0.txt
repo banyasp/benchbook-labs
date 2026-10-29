@@ -1,0 +1,172 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "What should the Administrative Judge do regarding the Individual’s access authorization under Guideline F?"
+  decider: "The Administrative Law Judge for the U.S. Department of Energy, Office of Hearings and Appeals."
+  my_role: "I must decide based on the regulations, Guideline F, mitigating factor criteria, and may request financial counseling, postpone decision if documentation missing, or deny clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The employee failed to file federal and state personal income tax returns for tax years 2021 and 2022."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The employee admitted the failure was due to his own negligence."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "The Local Security Office invoked Guideline F of the Adjudicative Guidelines because of the tax filing failures."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "The employee mailed the 2021 and 2022 federal tax returns in May 2026, but they remained unprocessed at the time of the hearing."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "The employee's 2021‑2022 state tax returns were processed by the state authority and showed a zero balance."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "The employee provided no evidence of financial counseling, repayment of any federal taxes owed, or an arrangement with the IRS to resolve the delinquent returns."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "The regulations governing access authorizations impose a presumption against granting a security clearance and require the individual to demonstrate that granting will not endanger the common defense and security."}
+  - {id: LIVE-F8, kind: intelligence, status: assessed, fact: "The Administrative Judge evaluated the mitigating factors under Paragraph 20 and found none applicable to the Individual’s situation."}
+options:
+  LIVE-O1: "Grant the Individual’s access authorization."
+  LIVE-O2: "Ask the Local Security Office for counseling." (i.e., request financial counseling)
+  LIVE-O3: "Deny the Individual’s access authorization."
+  LIVE-O4: "Hold the decision pending further tax evidence." (postpone decision until employee can furnish proof of tax payment)
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "The case REF1 also involves a DOE contractor employee who failed to file federal and state tax returns for 2021 and 2022, admitted negligence, mailed federal returns but they remained unprocessed at hearing, state returns processed with zero balance, no evidence of counseling, repayment, or IRS arrangement, and the judge found no mitigating factors. The case's recommendation was to deny the clearance (REF1-O3)."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: null}  # REF1 had only three options (grant, ask for counseling, deny); we map LIVE-O2 to REF1-O2 and LIVE-O4 not directly in case.
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F5, case: REF1-F5}, {live: LIVE-F6, case: REF1-F6}, {live: LIVE-F7, case: REF1-F7}, {live: LIVE-F8, case: REF1-F8}]
+corresponding: []  # All facts appear matched; no significant difference in state? The case had "the federal returns remained unfiled as of the hearing", same as LIVE-F4. State balance zero matches. So no corresponding differences.
+live_only: []  # All facts covered
+case_only: []  # All facts covered
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: lawful_authority, favors: [LIVE-O3], weight: strong, why: "Failure to file tax returns creates a security concern under Guideline F; the employee's negligence directly undermines reliability."}
+  - {id: LIVE-C2, facts: [LIVE-F4, LIVE-F6, LIVE-F8], equity: institutional_credibility, favors: [LIVE-O3], weight: strong, why: "The federal tax returns remain unprocessed; no documented arrangement with IRS; state zero balance alone does not offset federal delinquency."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F4, LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "Mitigating factor (b) not satisfied because negligence, not circumstances beyond control; no evidence of counseling or repayment."}
+  - {id: LIVE-C4, facts: [LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "No evidence of financial counseling or repayment; factor (c) and (d) not met."}
+  - {id: LIVE-C5, facts: [LIVE-F4, LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "No documented arrangement with IRS; factor (g) not satisfied."}
+  - {id: LIVE-C6, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O2, LIVE-O4], weight: weak, why: "State tax returns show zero balance, indicating possible compliance on state level; could support counseling or postponement."}
+  - {id: LIVE-C7, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O4], weight: moderate, why: "Federal returns mailed but unprocessed; could be resolved if IRS accepts; postponement might allow evidence."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C2, case: REF1-C2}, {live: LIVE-C3, case: REF1-C3}, {live: LIVE-C4, case: REF1-C4}, {live: LIVE-C5, case: REF1-C5}]  # REF1 had C1-C5 all favoring denial.
+corresponding: [{live: LIVE-C6, case: null, role: "State zero balance suggests possible rehabilitation, but federal delinquency remains."}]  # REF1 did not have a consideration like LIVE-C6; it focused on federal filing.
+case_only: [{case: REF1-C6, assumption: "Not applicable; the case considered only federal filing concerns."}]  # For mapping purposes, we treat REF1-C6 as absent.
+live_only: [LIVE-C6, LIVE-C7]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The facts largely match REF1 (same pattern of failure, negligence, mailed but unprocessed federal returns, state zero balance, no mitigating evidence). The case's considerations (lawful_authority, institutional_credibility, due_process) all favor denial, which aligns with our LIVE-C1-C5. The case's reasoning approach (weighing those considerations) should govern."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed the five considerations (C1-C5) that all favored denial, leading to a denial (REF1-O3). The judge also noted flip conditions: if the individual provides documented proof of a binding IRS arrangement and the IRS accepts the returns before the hearing, then grant could be appropriate. Otherwise, denial stands."
+weighing: "Our LIVE-C1-C5 (strong) collectively reinforce denial because they directly address the security concerns raised by federal tax filing failures, negligence, lack of counseling/repayment/IRS arrangement. LIVE-C6 (weak) about state compliance and LIVE-C7 (moderate) about pending IRS acceptance are mitigating but do not satisfy the mitigating factor criteria under Paragraph 20 (no counseling, no repayment, no documented IRS arrangement). Therefore, the balance favors denial. The presumption against granting a clearance also supports denial."
+tradecraft: "Issue a written decision denying the access authorization, cite the relevant regulations (10 C.F.R. § 710.7(a)), document the factual basis (facts LIVE-F1-F6, LIVE-F8), and inform the employee of appeal rights per 10 C.F.R. § 710.28. Offer to arrange financial counseling for future compliance (optional), but the clearance decision must be based on current evidence. If the employee wishes to provide proof of IRS arrangement, they may submit it and the decision could be revisited (i.e., hold pending if they can furnish proof). However, given current lack of evidence, deny now."
+uncertainty: "Uncertainty exists about future IRS acceptance of the mailed federal returns. However, the hearing decision must be based on currently unprocessed returns and no documented arrangement. If the IRS later accepts the returns, that could satisfy mitigating factor (g) in future reconsideration, but not for the current decision."
+handoff: "I decide the clearance denial; I may request that the LSO arrange financial counseling for the employee as a mitigating measure, but that does not affect the clearance decision. No further consultation is required at this point."
+tempting_wrong: {option: LIVE-O2, pull: "Ask the Local Security Office for counseling; seems helpful and avoids denial.", why_wrong: "Requesting counseling does not address the immediate security concern nor satisfy the requirement to demonstrate that granting clearance will not jeopardize common defense and security. The presumption against granting clearance must be respected; counseling alone does not provide convincing evidence of mitigation."}
+rejected: {LIVE-O1: "Granting would ignore unresolved federal delinquency and lack of mitigating evidence; contradicts Guideline F and regulations.", LIVE-O2: "Asking for counseling does not constitute sufficient mitigation evidence; the decision must be made now.", LIVE-O4: "Holding the decision pending further tax evidence would delay the required determination and conflicts with the presumption against granting; also, the employee has not provided proof of IRS arrangement or repayment."}
+---
+kind: verdict
+choice: LIVE-O3
+course: "Deny the Individual’s access authorization now, citing the presumption against granting clearance and lack of mitigating evidence."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5]
+now:
+  - "Issue written denial decision citing regulations and appeal rights; offer to arrange financial counseling for future compliance."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The employee provides documented proof of a binding arrangement with the IRS to file and pay the 2021‑2022 federal returns, and the IRS accepts those returns before the hearing.", then: LIVE-O1, why: "If factor (g) is satisfied, the mitigating factor could apply, potentially allowing grant."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Only the state tax returns are processed while the federal returns remain unfiled.", why: "Guideline F focuses on federal filing failures; state resolution alone does not remove security concern."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Future IRS acceptance of the mailed 2021‑2022 federal returns.", favors: [LIVE-O1], why: "If IRS accepts the returns, the employee could demonstrate compliance and potentially satisfy mitigating factor (g). However, the current decision remains denial until such evidence is provided."}
+
+Now produce the reply with these YAML documents.
+</think>
+kind: fact_enumeration
+frame:
+  question: "What should the Administrative Judge do regarding the Individual’s access authorization under Guideline F?"
+  decider: "The Administrative Law Judge for the U.S. Department of Energy, Office of Hearings and Appeals."
+  my_role: "I must decide based on the regulations, Guideline F, mitigating factor criteria, and may request financial counseling, postpone decision if documentation missing, or deny clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The employee failed to file federal and state personal income tax returns for tax years 2021 and 2022."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The employee admitted the failure was due to his own negligence."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "The Local Security Office invoked Guideline F of the Adjudicative Guidelines because of the tax filing failures."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "The employee mailed the 2021 and 2022 federal tax returns in May 2026, but they remained unprocessed at the time of the hearing."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "The employee's 2021‑2022 state tax returns were processed by the state authority and showed a zero balance."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "The employee provided no evidence of financial counseling, repayment of any federal taxes owed, or an arrangement with the IRS to resolve the delinquent returns."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "The regulations governing access authorizations impose a presumption against granting a security clearance and require the individual to demonstrate that granting will not endanger the common defense and security."}
+  - {id: LIVE-F8, kind: intelligence, status: assessed, fact: "The Administrative Judge evaluated the mitigating factors under Paragraph 20 and found none applicable to the Individual’s situation."}
+options:
+  LIVE-O1: "Grant the Individual’s access authorization."
+  LIVE-O2: "Ask the Local Security Office for counseling."
+  LIVE-O3: "Deny the Individual’s access authorization."
+  LIVE-O4: "Hold the decision pending further tax evidence."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "The case REF1 also involves a DOE contractor employee who failed to file federal and state tax returns for 2021 and 2022, admitted negligence, mailed federal returns but they remained unprocessed at hearing, state returns processed with zero balance, no evidence of counseling, repayment, or IRS arrangement, and the judge found no mitigating factors. The case's recommendation was to deny the clearance (REF1-O3)."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2, LIVE-O3: REF1-O3, LIVE-O4: null}
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F5, case: REF1-F5}, {live: LIVE-F6, case: REF1-F6}, {live: LIVE-F7, case: REF1-F7}, {live: LIVE-F8, case: REF1-F8}]
+corresponding: []
+live_only: []
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: lawful_authority, favors: [LIVE-O3], weight: strong, why: "Failure to file tax returns creates a security concern under Guideline F; the employee's negligence directly undermines reliability."}
+  - {id: LIVE-C2, facts: [LIVE-F4, LIVE-F6, LIVE-F8], equity: institutional_credibility, favors: [LIVE-O3], weight: strong, why: "The federal tax returns remain unprocessed; no documented arrangement with IRS; state zero balance alone does not offset federal delinquency."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F4, LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "Mitigating factor (b) not satisfied because negligence, not circumstances beyond control; no evidence of counseling or repayment."}
+  - {id: LIVE-C4, facts: [LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "No evidence of financial counseling or repayment; factor (c) and (d) not met."}
+  - {id: LIVE-C5, facts: [LIVE-F4, LIVE-F6, LIVE-F8], equity: due_process, favors: [LIVE-O3], weight: strong, why: "No documented arrangement with IRS; factor (g) not satisfied."}
+  - {id: LIVE-C6, facts: [LIVE-F5], equity: institutional_credibility, favors: [LIVE-O2, LIVE-O4], weight: weak, why: "State tax returns show zero balance, indicating possible compliance on state level; could support counseling or postponement."}
+  - {id: LIVE-C7, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O4], weight: moderate, why: "Federal returns mailed but unprocessed; could be resolved if IRS accepts; postponement might allow evidence."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C2, case: REF1-C2}, {live: LIVE-C3, case: REF1-C3}, {live: LIVE-C4, case: REF1-C4}, {live: LIVE-C5, case: REF1-C5}]
+corresponding: [{live: LIVE-C6, case: null, role: "State zero balance suggests possible rehabilitation, but federal delinquency remains."}]
+case_only: [{case: REF1-C6, assumption: "Not applicable; the case considered only federal filing concerns."}]
+live_only: [LIVE-C6, LIVE-C7]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The facts largely match REF1 (same pattern of failure, negligence, mailed but unprocessed federal returns, state zero balance, no mitigating evidence). The case's considerations (lawful_authority, institutional_credibility, due_process) all favor denial, which aligns with our LIVE-C1-C5. The case's reasoning approach (weighing those considerations) should govern."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed the five considerations (C1-C5) that all favored denial, leading to a denial (REF1-O3). The judge also noted flip conditions: if the individual provides documented proof of a binding IRS arrangement and the IRS accepts the returns before the hearing, then grant could be appropriate. Otherwise, denial stands."
+weighing: "Our LIVE-C1-C5 (strong) collectively reinforce denial because they directly address the security concerns raised by federal tax filing failures, negligence, lack of counseling/repayment/IRS arrangement. LIVE-C6 (weak) about state compliance and LIVE-C7 (moderate) about pending IRS acceptance are mitigating but do not satisfy the mitigating factor criteria under Paragraph 20 (no counseling, no repayment, no documented IRS arrangement). Therefore, the balance favors denial. The presumption against granting a clearance also supports denial."
+tradecraft: "Issue a written decision denying the access authorization, cite the relevant regulations (10 C.F.R. § 710.7(a)), document the factual basis (facts LIVE-F1-F6, LIVE-F8), and inform the employee of appeal rights per 10 C.F.R. § 710.28. Offer to arrange financial counseling for the employee as a mitigating measure for future compliance, but the clearance decision must be based on current evidence. If the employee wishes to provide proof of IRS arrangement, they may submit it and the decision could be revisited (i.e., hold pending if they can furnish proof). However, given current lack of evidence, deny now."
+uncertainty: "Uncertainty exists about future IRS acceptance of the mailed federal returns. However, the hearing decision must be based on currently unprocessed returns and no documented arrangement. If the IRS later accepts the returns, that could satisfy mitigating factor (g) in future reconsideration, but not for the current decision."
+handoff: "I decide the clearance denial; I may request that the LSO arrange financial counseling for the employee as a mitigating measure, but that does not affect the clearance decision. No further consultation is required at this point."
+tempting_wrong: {option: LIVE-O2, pull: "Ask the Local Security Office for counseling; seems helpful and avoids denial.", why_wrong: "Requesting counseling does not address the immediate security concern nor satisfy the requirement to demonstrate that granting clearance will not jeopardize common defense and security. The presumption against granting clearance must be respected; counseling alone does not provide convincing evidence of mitigation."}
+rejected: {LIVE-O1: "Granting would ignore unresolved federal delinquency and lack of mitigating evidence; contradicts Guideline F and regulations.", LIVE-O2: "Asking for counseling does not constitute sufficient mitigation evidence; the decision must be made now.", LIVE-O4: "Holding the decision pending further tax evidence would delay the required determination and conflicts with the presumption against granting; also, the employee has not provided proof of IRS arrangement or repayment."}
+---
+kind: verdict
+choice: LIVE-O3
+course: "Deny the Individual’s access authorization now, citing the presumption against granting clearance and lack of mitigating evidence."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5]
+now:
+  - "Issue written denial decision citing regulations and appeal rights; offer to arrange financial counseling for future compliance."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The employee provides documented proof of a binding arrangement with the IRS to file and pay the 2021‑2022 federal returns, and the IRS accepts those returns before the hearing.", then: LIVE-O1, why: "If factor (g) is satisfied, the mitigating factor could apply, potentially allowing grant."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Only the state tax returns are processed while the federal returns remain unfiled.", why: "Guideline F focuses on federal filing failures; state resolution alone does not remove security concern."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Future IRS acceptance of the mailed 2021‑2022 federal returns.", favors: [LIVE-O1], why: "If IRS accepts the returns, the employee could demonstrate compliance and potentially satisfy mitigating factor (g). However, the current decision remains denial until such evidence is provided."}

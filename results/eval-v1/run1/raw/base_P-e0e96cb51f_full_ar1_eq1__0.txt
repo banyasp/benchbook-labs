@@ -1,0 +1,274 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Whether to issue a warning to the unknown aircraft and elevate defensive posture, given the situation and ROE constraints."
+  decider: "The Commanding Officer (CO) of USS STARK, exercising authority per ROE, policy, and operational requirements."
+  my_role: "Decide and order the warning transmission and defensive posture change; communicate via comms; ensure compliance with ROE and proportional self-defense."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "An unknown aircraft has been tracked by radar from 2101 until impact (or until current time), with a closest point of approach estimated at 4 NM."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "ROE requires ships to inform unknown aircraft of their identity and position to limit indiscriminate attack (ROE_brief)."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "CIWS remained in standby mode throughout; defensive systems can be placed on heightened alert."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "The TAO directed the detector-tracker to issue warnings, but the CO left the bridge at 2059 and was not present when the warning was to be transmitted."}
+  - {id: LIVE-F5, kind: policy, status: confirmed, fact: "Commander has right and responsibility to take all possible measures to protect his unit (policy – commander_authority)." "ROE allows force that is necessary and proportionate when defending the ship (policy – self_defense)." }
+  - {id: LIVE-F6, kind: operational, status: confirmed, fact: "USS STARK is operating in international waters, outside declared war zones."}
+  - {id: LIVE-F7, kind: recent_action, status: assessed, fact: "Senior advisor suggests continuing routine ops without warning or posture change, citing past low-level fly-by handling."}
+  - {id: LIVE-F8, kind: communication, status: confirmed, fact: "The warning transmitted at 2108 did not follow prescribed wording in CMEF ROE message (sensor query result)." }
+options:
+  LIVE-O1: "Issue the standard ROE-compliant warning to the unknown aircraft (including ship ID, position, intent to stand down if possible) and elevate defensive systems to heightened alert (e.g., CIWS ready, general alert)."
+  LIVE-O2: "Continue routine operations without issuing a warning or changing defensive posture, as suggested by senior advisor."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F8], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "ROE obligates informing unknown aircraft to prevent indiscriminate attack; failure to follow prescribed wording could increase risk of misinterpretation or escalation, endangering civilian or non-combatant risk."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Commander has responsibility to take all possible measures to protect the ship and crew; elevating defensive posture is proportionate self-defense given unknown aircraft proximity (4 NM CPA)."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F7], equity: duty_to_individual, favors: [LIVE-O2], weight: medium, why: "Senior advisor argues past low-level fly-by handling suggests no warning needed; continuity with previous benign encounters."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Operating outside declared war zones does not exempt ROE; issuing a clear, compliant warning reduces escalation risk and demonstrates restraint."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: bar, why: "ROE and policy require informing unknown aircraft; the CO must ensure compliance even if not on bridge."}
+---
+kind: reasoning
+weighing: "ROE's explicit obligation to inform unknown aircraft (LIVE-F2) and the need to follow prescribed wording (LIVE-F8) are mandatory and non-negotiable for minimizing indiscriminate attack and protecting civilians (LIVE-C1, LIVE-C5). While past low-level fly-bys (LIVE-C3) suggest caution against overreaction, the current radar track shows continuous tracking until impact, with a 4 NM CPA, indicating a genuine threat requiring proactive communication. Elevating defensive posture (CIWS ready) is proportionate self‑defense given the proximity and uncertainty (LIVE-C2, LIVE-C4). The senior advisor’s suggestion to skip warning conflicts with ROE wording and escalation control (LIVE-C4). Thus LIVE-O1 (issue warning + heighten alert) is required."
+tradecraft: "Transmit a concise, ROE‑compliant warning via primary radar/comms channel using prescribed wording (e.g., 'This is USS STARK, a U.S. Navy ship, position xxx, bearing yy° from you, operating in international waters. We have observed your aircraft. Identify yourself and purpose. If hostile, we will defend ourselves proportionately. Cease and yield if possible.' Simultaneously order CIWS to ready status and place ship on general alert (per standard defensive posture). Log the warning transmission and time. Inform bridge watch officer of action."
+uncertainty: "Uncertainty lies in aircraft intent (unknown); however, ROE requires precautionary communication regardless of intent. If aircraft responds cooperatively, defensive posture can be relaxed after verification."
+handoff: "The CO decides to issue warning and heighten alert; bridge watch officer executes comms and CIWS status change; ops lead records action."
+tempting_wrong: {option: LIVE-O2, pull: "Continuing routine ops avoids extra communication and preserves calm, seems consistent with past low‑level fly‑by handling.", why_wrong: "Violates ROE obligation to inform unknown aircraft and fails to follow prescribed wording; may increase risk of misinterpretation or escalation; does not fulfill commander's duty to take all possible protective measures."}
+rejected: {LIVE-O2: "Reject because ROE requires identity/position disclosure and warning must follow prescribed wording; also commander must take protective measures."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Issue a ROE‑compliant warning to the unknown aircraft and elevate defensive systems to heightened alert."
+decisive: [LIVE-C1]
+now:
+  - "Transmit the warning via primary radar/comms channel using prescribed wording; order CIWS to ready status and place ship on general alert; log the transmission."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The aircraft transmits an identifying signal or lands within 5 minutes and indicates non‑hostile intent.", then: LIVE-O2, why: "If intent clearly non‑hostile and aircraft cooperates, defensive posture could be relaxed after verification."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The aircraft continues tracking or maneuvers toward the ship despite warning.", why: "Continued threatening behavior justifies maintaining alert and readiness for proportional self‑defense."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Aircraft response (identification, change in trajectory, or landing attempt).", favors: [LIVE-O2], why: "A cooperative response allows reducing alert level; continued aggression requires maintaining alert."}
+
+Now produce the reasoning as YAML documents in order, then verdict as reply? The instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So we need to output the YAML documents (fact_enumeration, consideration_enumeration, reasoning) separated by ---, then  at the end? Actually "Close your thinking with  at the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So after the reasoning document (which is the third YAML), we should output  and then the verdict YAML? But the verdict is part of the same reply? The format says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict, then write the verdict document as your reply." That suggests we output the three YAML documents (fact_enumeration, consideration_enumeration, reasoning) with --- separators, then  line, then the verdict YAML? But the verdict YAML also has kind: verdict. However they say "then write the verdict document as your reply." Probably they want us to output the entire reasoning (the three documents) and then the verdict as part of the reply? But the instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So after the reasoning document, we put  and then the verdict YAML? Let's follow exactly: We'll output the three documents (fact_enumeration, consideration_enumeration, reasoning) separated by --- lines, then after the reasoning document we output  (i.e., a line containing only "</think>") and then the verdict YAML? However "Close your thinking with  after the last document before the verdict" suggests that the thinking includes the fact, consideration, reasoning; then we output  and then the verdict. So our reply should be:
+
+<fact_enumeration YAML>
+---
+<consideration_enumeration YAML>
+---
+<reasoning YAML>
+
+</think>
+<verdict YAML>
+
+But the verdict YAML also must be included? The instruction: "then write the verdict document as your reply." So the reply should contain the verdict document. I'll output the three YAML documents, then  and then the verdict YAML.
+
+Let's format properly.
+
+We need to ensure YAML syntax correct. We'll output each document as YAML with kind: etc.
+
+Let's write them.
+
+First document:
+
+kind: fact_enumeration
+frame:
+  question: "Whether to issue a warning to the unknown aircraft and elevate defensive posture, given the situation and ROE constraints."
+  decider: "The Commanding Officer (CO) of USS STARK, exercising authority per ROE, policy, and operational requirements."
+  my_role: "Decide and order the warning transmission and defensive posture change; communicate via comms; ensure compliance with ROE and proportional self-defense."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."}  # need precise fact: "An unknown aircraft has been tracked by radar from 2101 until current time, with a closest point of approach estimated at 4 NM."
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "ROE requires ships to inform unknown aircraft of their identity and position to limit indiscriminate attack (ROE_brief)."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "CIWS remained in standby mode throughout; defensive systems can be placed on heightened alert."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "The TAO directed the detector-tracker to issue warnings, but the CO left the bridge at 2059 and was not present when the warning was to be transmitted."}
+  - {id: LIVE-F5, kind: policy, status: confirmed, fact: "Commander has right and responsibility to take all possible measures to protect his unit (policy – commander_authority). ROE allows force that is necessary and proportionate when defending the ship (policy – self_defense)."}
+  - {id: LIVE-F6, kind: operational, status: confirmed, fact: "USS STARK is operating in international waters, outside declared war zones."}
+  - {id: LIVE-F7, kind: recent_action, status: assessed, fact: "Senior advisor suggests continuing routine ops without warning or posture change, citing past low-level fly-by handling."}
+  - {id: LIVE-F8, kind: communication, status: confirmed, fact: "The warning transmitted at 2108 did not follow the prescribed wording in the CMEF ROE message."}
+options:
+  LIVE-O1: "Issue the standard ROE-compliant warning to the unknown aircraft (including ship ID, position, intent to stand down if possible) and elevate defensive systems to heightened alert (e.g., CIWS ready, general alert)."
+  LIVE-O2: "Continue routine operations without issuing a warning or changing defensive posture, as suggested by senior advisor."
+
+Second document:
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F8], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "ROE obligates informing unknown aircraft to prevent indiscriminate attack; failure to follow prescribed wording could increase risk of misinterpretation or escalation, endangering civilian or non-combatant risk."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Commander has responsibility to take all possible measures to protect the ship and crew; elevating defensive posture is proportionate self‑defense given unknown aircraft proximity (4 NM CPA)."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F7], equity: duty_to_individual, favors: [LIVE-O2], weight: medium, why: "Senior advisor argues past low-level fly-bys suggest no warning needed; continuity with previous benign encounters."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Operating outside declared war zones does not exempt ROE; issuing a clear, compliant warning reduces escalation risk and demonstrates restraint."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: bar, why: "ROE and policy require informing unknown aircraft; the CO must ensure compliance even if not on bridge."}
+
+Third document:
+
+kind: reasoning
+weighing: "ROE's explicit obligation to inform unknown aircraft (LIVE-F2) and the need to follow prescribed wording (LIVE-F8) are mandatory and non-negotiable for minimizing indiscriminate attack and protecting civilians (LIVE-C1, LIVE-C5). While past low-level fly-bys (LIVE-C3) suggest caution against overreaction, the current radar track shows continuous tracking until impact, with a 4 NM CPA, indicating a genuine threat requiring proactive communication. Elevating defensive posture (CIWS ready) is proportionate self‑defense given the proximity and uncertainty (LIVE-C2, LIVE-C4). The senior advisor’s suggestion to skip warning conflicts with ROE wording and escalation control (LIVE-C4). Thus LIVE-O1 (issue warning + heighten alert) is required."
+tradecraft: "Transmit a concise, ROE‑compliant warning via primary radar/comms channel using prescribed wording (e.g., 'This is USS STARK, a U.S. Navy ship, position xxx, bearing yy° from you, operating in international waters. We have observed your aircraft. Identify yourself and purpose. If hostile, we will defend ourselves proportionately. Cease and yield if possible.' Simultaneously order CIWS to ready status and place ship on general alert (per standard defensive posture). Log the warning transmission and time. Inform bridge watch officer of action."
+uncertainty: "Uncertainty lies in aircraft intent (unknown); however, ROE requires precautionary communication regardless of intent. If aircraft responds cooperatively, defensive posture can be relaxed after verification."
+handoff: "The CO decides to issue warning and heighten alert; bridge watch officer executes comms and CIWS status change; ops lead records action."
+tempting_wrong: {option: LIVE-O2, pull: "Continuing routine ops avoids extra communication and preserves calm, seems consistent with past low‑level fly‑by handling.", why_wrong: "Violates ROE obligation to inform unknown aircraft and fails to follow prescribed wording; may increase risk of misinterpretation or escalation; does not fulfill commander's duty to take all possible protective measures."}
+rejected: {LIVE-O2: "Reject because ROE requires identity/position disclosure and warning must follow prescribed wording; also commander must take protective measures."}
+
+Now verdict:
+
+kind: verdict
+choice: LIVE-O1
+course: "Issue a ROE‑compliant warning to the unknown aircraft and elevate defensive systems to heightened alert."
+decisive: [LIVE-C1]
+now:
+  - "Transmit the warning via primary radar/comms channel using prescribed wording; order CIWS to ready status and place ship on general alert; log the transmission."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The aircraft transmits an identifying signal or lands within 5 minutes and indicates non‑hostile intent.", then: LIVE-O2, why: "If intent clearly non‑hostile and aircraft cooperates, defensive posture can be relaxed after verification."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The aircraft continues tracking or maneuvers toward the ship despite warning.", why: "Continued threatening behavior justifies maintaining alert and readiness for proportional self‑defense."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Aircraft response (identification, change in trajectory, or landing attempt).", favors: [LIVE-O2], why: "A cooperative response allows reducing alert level; continued aggression requires maintaining alert."}
+
+Now output with --- separators and then at the end a line with only "</think>" before verdict? The instruction: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So after reasoning document, we output  and then the verdict document. So we will output:
+
+<fact_enumeration YAML>
+---
+<consideration_enumeration YAML>
+---
+<reasoning YAML>
+
+</think>
+<verdict YAML>
+
+But we must include only the verdict after the thinking? The phrase "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." suggests that after the reasoning document we output  and then the verdict. So the reply should be:
+
+<fact_enumeration>
+---
+<consideration_enumeration>
+---
+<reasoning>
+
+.
+<verdict>
+
+But we need to separate with exactly "---" lines and no extra text. Let's produce that.
+
+I'll now output the three YAML blocks with --- separators, then a line with only "</think>", then the verdict YAML.
+
+Make sure each YAML block starts with "kind:" and ends appropriately. Let's write them concisely.
+
+Note: The fact description should be accurate. Let's phrase them succinctly.
+
+We'll output:
+
+kind: fact_enumeration
+frame:
+  question: "Whether to issue a warning to the unknown aircraft and elevate defensive posture, given the situation and ROE constraints."
+  decider: "The Commanding Officer (CO) of USS STARK, exercising authority per ROE, policy, and operational requirements."
+  my_role: "Decide and order the warning transmission and defensive posture change; communicate via comms; ensure compliance with ROE and proportional self-defense."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "An unknown aircraft has been radar‑tracked from 2101 onward with a closest point of approach estimated at 4 NM."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "ROE obligates ships to inform unknown aircraft of their identity and position to limit indiscriminate attack."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "CIWS is in standby; defensive systems can be placed on heightened alert."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "The TAO directed the detector‑tracker to issue warnings, but the CO left the bridge at 2059 and was not present when the warning was to be transmitted."}
+  - {id: LIVE-F5, kind: policy, status: confirmed, fact: "Commander must take all possible measures to protect the ship; ROE permits necessary and proportionate force in self‑defense."}
+  - {id: LIVE-F6, kind: operational, status: confirmed, fact: "USS STARK operates in international waters, outside declared war zones."}
+  - {id: LIVE-F7, kind: recent_action, status: assessed, fact: "Senior advisor recommends continuing routine ops without warning or posture change, citing past low‑level fly‑by handling."}
+  - {id: LIVE-F8, kind: communication, status: confirmed, fact: "The warning transmitted at 2108 did not follow the prescribed wording in the CMEF ROE message."}
+options:
+  LIVE-O1: "Issue a ROE‑compliant warning (ship ID, position, intent to stand down if possible) and elevate defensive systems to heightened alert (CIWS ready, general alert)."
+  LIVE-O2: "Continue routine operations without issuing a warning or changing defensive posture."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F8], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "ROE requires informing unknown aircraft; using prescribed wording prevents misinterpretation and protects civilians."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Commander must take all possible protective measures; 4 NM CPA warrants proportional self‑defense readiness."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F7], equity: duty_to_individual, favors: [LIVE-O2], weight: medium, why: "Past low‑level fly‑by handling suggests no warning needed; continuity with benign encounters."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Issuing a clear, compliant warning reduces escalation risk even outside war zones."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: bar, why: "ROE and policy mandate informing unknown aircraft; CO must comply regardless of absence from bridge."
+
+---
+kind: reasoning
+weighing: "ROE's mandatory obligation to inform unknown aircraft (LIVE-F2) and to follow prescribed wording (LIVE-F8) are non‑negotiable for minimizing indiscriminate attack and protecting civilians (LIVE-C1, LIVE-C5). The radar track shows continuous tracking with a 4 NM CPA, indicating a genuine threat; past low‑level fly‑by handling (LIVE-C3) does not override precaution. Elevating defensive posture (CIWS ready) is proportionate self‑defense (LIVE-C2, LIVE-C4). Therefore LIVE-O1 is required."
+tradecraft: "Transmit a concise ROE‑compliant warning via primary radar/comms (e.g., 'This is USS STARK, a U.S. Navy ship, position ___ bearing ___ from you, operating in international waters. We have observed your aircraft. Identify yourself and purpose. If hostile, we will defend ourselves proportionately. Cease and yield if possible.' Simultaneously order CIWS to ready status and place ship on general alert. Log the transmission and inform the bridge watch officer."
+uncertainty: "Uncertainty about aircraft intent remains; however ROE requires precautionary communication. If the aircraft cooperates (identifies, changes trajectory away), defensive posture can be relaxed after verification."
+handoff: "CO decides to issue warning and heighten alert; bridge watch officer executes comms and CIWS status change; ops lead records action."
+tempting_wrong: {option: LIVE-O2, pull: "Skipping warning preserves calm and matches past low‑level fly‑by handling.", why_wrong: "Violates ROE wording requirement, increases escalation risk, fails to fulfill commander’s duty to protect the ship."}
+rejected: {LIVE-O2: "Reject because ROE mandates identity/position disclosure and prescribed warning wording; also commander must take protective measures."}
+
+.
+
+Now verdict block after  and before? We'll output:
+
+.
+<verdict YAML>
+
+But we need to include the verdict as YAML. Let's produce it.
+
+We'll output:
+
+kind: verdict
+choice: LIVE-O1
+course: "Issue a ROE‑compliant warning to the unknown aircraft and elevate defensive systems to heightened alert."
+decisive: [LIVE-C1]
+now:
+  - "Transmit the warning via primary radar/comms using prescribed wording; order CIWS to ready status and place ship on general alert; log the transmission."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The aircraft transmits an identifying signal or lands within 5 minutes and indicates non‑hostile intent.", then: LIVE-O2, why: "If intent clearly non‑hostile and aircraft cooperates, defensive posture can be relaxed after verification."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The aircraft continues tracking or maneuvers toward the ship despite warning.", why: "Continued threatening behavior justifies maintaining alert and readiness for proportional self‑defense."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Aircraft response (identification, trajectory change, or landing attempt).", favors: [LIVE-O2], why: "Cooperative response allows reducing alert; continued aggression requires maintaining alert."}
+
+Now combine with "..." as per instructions: "Write real values: every `"..."` below stands for a sentence you write". We already wrote sentences without quotes. Good.
+
+Now output as a single reply containing the three YAML blocks separated by "---", then a line with only "</think>", then the verdict YAML. Let's produce.
+
+Note: Ensure no extra text like analysis. We'll output exactly the YAML blocks.
+
+Let's write them in the reply.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Whether to issue a warning to the unknown aircraft and elevate defensive posture, given the situation and ROE constraints."
+  decider: "The Commanding Officer (CO) of USS STARK, exercising authority per ROE, policy, and operational requirements."
+  my_role: "Decide and order the warning transmission and defensive posture change; communicate via comms; ensure compliance with ROE and proportional self-defense."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "An unknown aircraft has been radar-tracked from 2101 onward with a closest point of approach estimated at 4 NM."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "ROE obligates ships to inform unknown aircraft of their identity and position to limit indiscriminate attack."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "CIWS is in standby; defensive systems can be placed on heightened alert."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "The TAO directed the detector-tracker to issue warnings, but the CO left the bridge at 2059 and was not present when the warning was to be transmitted."}
+  - {id: LIVE-F5, kind: policy, status: confirmed, fact: "Commander must take all possible measures to protect the ship; ROE permits necessary and proportionate force in self-defense."}
+  - {id: LIVE-F6, kind: operational, status: confirmed, fact: "USS STARK operates in international waters, outside declared war zones."}
+  - {id: LIVE-F7, kind: recent_action, status: assessed, fact: "Senior advisor recommends continuing routine ops without warning or posture change, citing past low-level fly-by handling."}
+  - {id: LIVE-F8, kind: communication, status: confirmed, fact: "The warning transmitted at 2108 did not follow the prescribed wording in the CMEF ROE message."}
+options:
+  LIVE-O1: "Issue a ROE-compliant warning (ship ID, position, intent to stand down if possible) and elevate defensive systems to heightened alert (CIWS ready, general alert)."
+  LIVE-O2: "Continue routine operations without issuing a warning or changing defensive posture."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F8], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "ROE requires informing unknown aircraft; using prescribed wording prevents misinterpretation and protects civilians."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Commander must take all possible protective measures; 4 NM CPA warrants proportional self-defense readiness."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F7], equity: duty_to_individual, favors: [LIVE-O2], weight: medium, why: "Past low-level fly-by handling suggests no warning needed; continuity with benign encounters."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Issuing a clear, compliant warning reduces escalation risk even outside war zones."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: bar, why: "ROE and policy mandate informing unknown aircraft; CO must comply regardless of absence from bridge."
+---
+kind: reasoning
+weighing: "ROE's mandatory obligation to inform unknown aircraft (LIVE-F2) and to follow prescribed wording (LIVE-F8) are non‑negotiable for minimizing indiscriminate attack and protecting civilians (LIVE-C1, LIVE-C5). The radar track shows continuous tracking with a 4 NM CPA, indicating a genuine threat; past low‑level fly‑by handling (LIVE-C3) does not override precaution. Elevating defensive posture (CIWS ready) is proportionate self‑defense (LIVE-C2, LIVE-C4). Therefore LIVE-O1 is required."
+tradecraft: "Transmit a concise ROE-compliant warning via primary radar/comms (e.g., 'This is USS STARK, a U.S. Navy ship, position ___ bearing ___ from you, operating in international waters. We have observed your aircraft. Identify yourself and purpose. If hostile, we will defend ourselves proportionately. Cease and yield if possible.' Simultaneously order CIWS to ready status and place ship on general alert. Log the transmission and inform the bridge watch officer."
+uncertainty: "Uncertainty about aircraft intent remains; however ROE requires precautionary communication. If the aircraft cooperates (identifies, changes trajectory away), defensive posture can be relaxed after verification."
+handoff: "CO decides to issue warning and heighten alert; bridge watch officer executes comms and CIWS status change; ops lead records action."
+tempting_wrong: {option: LIVE-O2, pull: "Skipping warning preserves calm and matches past low-level fly-by handling.", why_wrong: "Violates ROE wording requirement, increases escalation risk, fails to fulfill commander’s duty to protect the ship."}
+rejected: {LIVE-O2: "Reject because ROE mandates identity/position disclosure and prescribed warning wording; also commander must take protective measures."}
+
+.
+
+kind: verdict
+choice: LIVE-O1
+course: "Issue a ROE‑compliant warning to the unknown aircraft and elevate defensive systems to heightened alert."
+decisive: [LIVE-C1]
+now:
+  - "Transmit the warning via primary radar/comms using prescribed wording; order CIWS to ready status and place ship on general alert; log the transmission."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The aircraft transmits an identifying signal or lands within 5 minutes and indicates non‑hostile intent.", then: LIVE-O2, why: "If intent clearly non‑hostile and aircraft cooperates, defensive posture can be relaxed after verification."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The aircraft continues tracking or maneuvers toward the ship despite warning.", why: "Continued threatening behavior justifies maintaining alert and readiness for proportional self‑defense."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Aircraft response (identification, trajectory change, or landing attempt).", favors: [LIVE-O2], why: "Cooperative response allows reducing alert; continued aggression requires maintaining alert."}

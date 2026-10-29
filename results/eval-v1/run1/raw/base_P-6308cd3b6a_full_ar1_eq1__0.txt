@@ -1,0 +1,56 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the vessel hold station to attempt recovery of Marine 1 or leave immediately to avoid capture?"
+  decider: "Commander (via agent) based on mission directives, safety of vessel/crew, protection of command-and-control module, and equity considerations."
+  my_role: "Analyze options, weigh equities, recommend course; execute first step; not override commander's final decision if communicated."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Marine 1 is wounded and pinned near beach exit; last transmission 20 minutes ago, no further contact."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Two hostile fast craft contacts (Contact A and B) are closing: currently ~1.7–2.0 NM away, speeds ~29–31 kt, hostile signatures."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "Extraction boat is in water; sea state moderate (3), wind 12–13 kt NE, deck lights flashing for night ops."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "Battery reserve at 62%; medical bay supplies limited; CO2 scrubbers nominal."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Command-and-control module is aboard in forward operations bay; cannot be wiped/destroyed; capture would expose tactical network for ~3 days."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Ops officer estimates low chance of reaching Marine 1; lingering > few minutes risks vessel capture."}
+  - {id: LIVE-F7, kind: directive, status: confirmed, fact: "Commander previously said 'remain on station until we either retrieve him or verify his status as missing'; watch officer estimates capture risk high if linger."}
+  - {id: LIVE-F8, kind: equity, status: confirmed, fact: "Humanitarian access (aid to Marine 1) vs own_force_life (avoid capture), duty_to_individual (Marine 1's welfare), mission_effect (follow commander’s intent)."}
+options:
+  LIVE-O1: "Hold station (remain on site) to attempt recovery or verification of Marine 1’s status, using extraction boat and medical support while avoiding aggressive engagement."
+  LIVE-O2: "Leave immediately (execute safe egress) to avoid capture, file last known coordinates for Marine 1, and prioritize protection of command-and-control module and crew safety."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F6, LIVE-F7], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Marine 1 is in distress; humanitarian access equity supports attempting recovery or verification."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Hostile fast craft are closing rapidly; lingering risks capture of vessel, endangering crew and the command-and-control module."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F2], equity: source_protection, favors: [LIVE-O2], weight: bar, why: "Capture of command-and-control module would expose entire tactical network for ~3 days; immediate departure minimizes exposure risk."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F8], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Respecting Marine 1’s welfare and attempting aid aligns with individual duty; however, safety of crew and module must be weighed."}
+  - {id: LIVE-C5, facts: [LIVE-F7, LIVE-O1, LIVE-O2], equity: mission_effect, favors: [LIVE-O1], weight: moderate, why: "Commander previously instructed to 'remain on station until retrieve or verify missing'; holding respects commander’s intent while allowing verification."}
+
+---
+kind: reasoning
+weighing: "Own_force_life (C2) and source_protection (C3) are bars because capture of the command-and-control module would cause severe network exposure and crew endangerment. Civilian_life (C1) and duty_to_individual (C4) favor holding, but the imminent threat of capture (fast craft closing) makes holding risky. Mission_effect (C5) supports holding per commander’s prior directive, but the directive also implicitly allows verification without prolonged stay. The safest course balances verification (attempt to confirm Marine 1 status) with rapid departure if conditions worsen. Therefore, the option that allows immediate verification attempt while preparing to leave if capture risk materializes is preferred over outright hold or immediate leave. LIVE-O1 (hold) with a conditional egress plan is chosen because it aligns with commander’s explicit 'remain on station' instruction and attempts humanitarian access, while avoiding unnecessary delay that could trigger capture. However, the plan must include a pre-set trigger (e.g., fast craft within 1 NM or no response from Marine 1 within 5 minutes) to depart immediately."
+tradecraft: "Initiate a brief, low-profile medical assessment of Marine 1’s status via radio (no open air call) while keeping vessel static but ready to execute safe egress. Use extraction boat under cover of night lights; maintain radar watch on fast craft. Log all attempts. If fast craft breach 1 NM or no radio response from Marine 1 within 5 minutes, execute egress per navigation team route. Avoid maneuvers that attract attention; keep command-and-control module secured and not exposed."
+uncertainty: "Uncertain whether Marine 1 can respond to radio; uncertain exact timing of fast craft arrival relative to extraction window. Would change choice if fast craft close to <1 NM or if extraction boat cannot reach shore before capture risk escalates."
+handoff: "Decide on conditional trigger (1 NM / 5-minute response) and execute first step (radio check + prep egress). Commander retains final go/no-go for departure if conditions worsen; agent reports status updates."
+tempting_wrong: {option: LIVE-O2, pull: "Leaving immediately seems safest and fastest; avoids risk of holding and protects module.", why_wrong: "Ignoring Marine 1’s distress violates humanitarian access and duty_to_individual; also contradicts commander’s explicit 'remain on station' instruction unless verification fails quickly."}
+rejected: {LIVE-O2: "Rejecting immediate departure because it would forego attempted recovery/verification and disregard commander’s stay instruction; module protection can be achieved via conditional departure after brief verification attempt."}
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Attempt to verify Marine 1’s status within the next five minutes via a single low-risk radio check, then prepare to execute safe egress if fast craft close to 1 NM or no response is received."
+decisive: [LIVE-C2, LIVE-C3]  # Own_force_life and source_protection are decisive bars; mission respects commander but safety paramount
+now:
+  - "Send a short, coded radio inquiry to Marine 1 on channel 4: 'Marine 1, VICTOR-3 medical bay, status? Over.' Log the transmission and timestamp."
+  - "Instruct extraction boat crew to position silently at shoreline edge, ready to launch if verbal response received or within 2 minutes of inquiry."
+  - "Update navigation team that egress route is on standby; trigger point = fast craft bearing < 30° off current bearing or distance < 1 NM."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Fast craft distance ≤ 1 NM or no radio response from Marine 1 within 5 minutes", then: LIVE-O2, why: "Capture risk becomes imminent; depart immediately per safety bar."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Fast craft distance remains > 2 NM for next 10 minutes and Marine 1 responds affirmatively or gives status", why: "Holding remains appropriate; no need to depart."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Fast craft bearing approaching 030°–060° (closing vector) or extraction boat visibility reduced due to sea state", favors: [LIVE-O2], why: "Indicates faster closure; trigger earlier departure."}
+
+Note: The agent will now perform the first step (radio inquiry) via comms, then continue monitoring.
+</think>

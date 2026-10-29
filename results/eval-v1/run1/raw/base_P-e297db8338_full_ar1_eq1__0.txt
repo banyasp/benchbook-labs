@@ -1,0 +1,231 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "The decision I must make regarding the subcontractor employee's security clearance under Guideline G."
+  decider: "I am the Administrative Judge for the DOE Office of Hearings and Appeals."
+  my_role: "I may issue a decision (grant, deny, conditional, or hold). I may order monitoring, request additional records, and rely on expert testimony. I cannot delegate the final determination."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The employee works for a DOE subcontractor in a position that requires a security clearance."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Local Security Office (LSO) has serious reservations about the employee's eligibility under Guideline G."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The employee has three DUI arrests: January 1990, September 2002, and July 2013."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "In February 2025 the employee was hospitalized after a 48‑hour uncontrolled drinking relapse."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "In June 2025 a psychologist diagnosed moderate, recurrent Alcohol Use Disorder, early remission, and said rehabilitation was insufficient."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "The employee completed an intensive outpatient program and resumed AA attendance after the 2025 relapse."}
+  - {id: LIVE-F7, kind: capability, status: confirmed, fact: "The employee provided eleven consecutive negative PEth tests from August 2025 through May 2026, plus a negative test from June 2025."}
+  - {id: LIVE-F8, kind: capability, status: confirmed, fact: "AA attendance logs show attendance every two to three days from June 2025 to April 2026."}
+  - {id: LIVE-F9, kind: intelligence, status: assessed, fact: "Two psychologists testified that the employee’s Alcohol Use Disorder is in sustained remission, that rehabilitation is adequate, and gave a favorable prognosis."}
+  - {id: LIVE-F10, kind: authority, status: confirmed, fact: "DOE Part 710 presumes against granting a clearance but allows mitigation under conditions (b) and (d) when the individual demonstrates abstinence and treatment compliance."}
+options:
+  LIVE-O1: "Grant a provisional (temporary) clearance conditioned on continuous oversight, monitoring, and periodic re-evaluation."
+  LIVE-O2: "Deny the clearance restoration."
+  LIVE-O3: "Hold the decision pending further corroborating documentation."
+  LIVE-O4: "Restore the full security clearance without conditional monitoring."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both involve a DOE contractor employee with DUI history, recent relapse hospitalization, alcohol use disorder diagnosis, treatment completion, negative PEth tests, AA attendance, and psychologist testimony. Differences: In the case, the judge postponed decision pending further evidence; here the LSO has raised serious reservations. The case includes a recommendation for provisional clearance (REF1-O1). My facts match most of the case's facts (F1-F9, F10), but the LSO's serious reservations may reflect similar concerns."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F3}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F5}
+  - {live: LIVE-F6, case: REF1-F6}
+  - {live: LIVE-F7, case: REF1-F7}
+  - {live: LIVE-F8, case: REF1-F8}
+  - {live: LIVE-F9, case: REF1-F9}
+  - {live: LIVE-F10, case: REF1-F10}
+corresponding: []  # no notable differences in state for matched facts; differences in LSO's seriousness may be reflected in consideration weight.
+live_only: [LIVE-F2_serious]  # The LSO has voiced "serious reservations" which may affect weighting; not explicitly a fact in REF1 but noted.
+case_only: [REF1-F3_??]  # REF1-F3 is DUI arrests; we have same pattern. Actually all match. We'll note that REF1 had "substantial doubt" similar to "serious reservations". So no case-only facts.
+---
+# Since all facts largely match, I'll consider the seriousness of LSO's reservations as a live-only consideration nuance.
+# We'll define LIVE-F2_serious as a nuanced fact: LSO has serious reservations.
+# But for mapping, we treat LIVE-F2 as confirmed fact "LSO raised substantial doubt". That matches REF1-F2 "LSO raised substantial doubt". So maybe no live_only? However, the case's consideration C5 (risk_mitigation) emphasized provisional clearance to monitor risk. That matches our reasoning.
+# I'll keep live_only as empty for facts, but we may have a live-only consideration reflecting LSO's seriousness. We'll handle in consideration mapping.
+
+# Let's enumerate considerations for my decision.
+# We'll base on equities from benchbook.
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F7, LIVE-F8], equity: duty_to_individual, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "Eleven consecutive negative PEth tests and documented AA attendance provide objective evidence of sustained abstinence and compliance with treatment."}
+  - {id: LIVE-C2, facts: [LIVE-F9], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "Two psychologists testified that the Alcohol Use Disorder is in sustained remission, rehabilitation adequate, and prognosis favorable."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F4, LIVE-F5], equity: due_process, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "While DUI arrests and 2025 relapse are concerning, the record shows long-term remission since 2014, and the recent relapse appears isolated; professional assessment finds rehabilitation sufficient."}
+  - {id: LIVE-C4, facts: [LIVE-F2_serious], equity: risk_mitigation, favors: [LIVE-O1], weight: strong, why: "The LSO has serious reservations; issuing a full restoration without monitoring could ignore residual risk. A provisional clearance with oversight balances security and rehabilitation."}
+  - {id: LIVE-C5, facts: [LIVE-F7, LIVE-F9], equity: lawful_authority, favors: [LIVE-O4], weight: moderate, why: "Part 710 permits mitigation when abstinence and treatment compliance are demonstrated, supporting full restoration if monitoring deemed unnecessary."}
+---
+# Map considerations to REF1 considerations.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "Objective biomarker and attendance evidence supporting abstinence."}
+  - {live: LIVE-C2, case: REF1-C2, role: "Psychologist testimony on remission and adequate rehabilitation."}
+  - {live: LIVE-C3, case: REF1-C3 or REF1-C4? REF1-C3 is institutional_credibility? Actually REF1-C3 is institutional_credibility; REF1-C4 is due_process. Let's check: REF1-C1: duty_to_individual (PEth and attendance); REF1-C2: duty_to_individual also; REF1-C3: institutional_credibility; REF1-C4: due_process; REF1-C5: risk_mitigation. So mapping:
+    LIVE-C1 -> REF1-C1
+    LIVE-C2 -> REF1-C3 (institutional_credibility) or REF1-C2? Wait REF1-C2 is duty_to_individual (facts: F7, F8). REF1-C1 is also duty_to_individual? Let's re-express: In REF1, they listed:
+      - REF1-C1: duty_to_individual (facts F7, F8) favors O4, strong
+      - REF1-C2: duty_to_individual? Actually they wrote: "- id: REF1-C2\n    facts: - REF1-F7 - REF1-F8\n    equity: duty_to_individual\n    favors: - REF1-O4\n    weight: strong". Yes REF1-C2 also duty_to_individual? Wait they listed two considerations both favoring O4? Let's read: 
+        - id: REF1-C1\n    facts: - REF1-F10\n    equity: lawful_authority\n    favors: - REF1-O4\n    weight: strong
+        - id: REF1-C2\n    facts: - REF1-F7 - REF1-F8\n    equity: duty_to_individual\n    favors: - REF1-O4\n    weight: strong
+        - id: REF1-C3\n    facts: - REF1-F9\n    equity: institutional_credibility\n    favors: - REF1-O4\n    weight: strong
+        - id: REF1-C4\n    facts: - REF1-F3 etc\n    equity: due_process\n    favors: - REF1-O4\n    weight: strong
+        - id: REF1-C5\n    facts: - REF1-F7 - REF1-F9\n    equity: risk_mitigation\n    favors: - REF1-O1\n    weight: strong
+    So four O4-favoring considerations and one O1-favoring (risk_mitigation). Good.
+    Thus mapping:
+      LIVE-C1 (duty_to_individual, F7,F8) -> REF1-C2 (duty_to_individual)
+      LIVE-C2 (institutional_credibility, F9) -> REF1-C3 (institutional_credibility)
+      LIVE-C3 (due_process, F3,F4,F5) -> REF1-C4 (due_process)
+      LIVE-C4 (risk_mitigation, LSO seriousness) -> REF1-C5 (risk_mitigation)
+      LIVE-C5 (lawful_authority, O4) -> REF1-C1 (lawful_authority)
+    We'll map accordingly.
+  - {live: LIVE-C4, case: REF1-C5, role: "Risk mitigation due to LSO reservations; favors provisional clearance."}
+  - {live: LIVE-C5, case: REF1-C1, role: "Lawful authority supports full restoration if mitigation sufficient."}
+corresponding: [] # no differences in manner/size
+live_only: [LIVE-C4]  # risk_mitigation consideration due to seriousness of LSO reservations; REF1 had risk_mitigation as well but based on biomarker and expert; similar but we emphasize seriousness.
+case_only: []  # all considerations present in case.
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The factual pattern (DUI arrests, relapse hospitalization, negative PEth tests, AA attendance, psychologist testimony) matches closely. The equities and considerations are similar. The case's reasoning about weighing risk mitigation against mitigation eligibility applies. Therefore the case governs, but I must map live considerations and possibly flip if a condition holds."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed the strong O4-favoring considerations (C1-C4) against the strong O1-favoring risk mitigation (C5). Because C5 emphasized that a provisional clearance with monitoring is appropriate given objective biomarker evidence and expert testimony, while O4 (full restoration) was tempered by residual risk, the judge chose REF1-O1 (provisional clearance). The decision considered flip conditions: a positive PEth test would flip to O4; shorter testing window would not change; watch for future relapse."
+weighing: "Here I have strong considerations for both full restoration (C1, C2, C3, C5) and for provisional clearance (C4). C4 directly addresses the LSO's serious reservations and recommends monitoring. The risk_mitigation consideration (C4) is strong because the LSO's concerns are legitimate and a full clearance without monitoring could increase risk. However, the objective evidence (negative PEth tests, AA attendance) and psychologist testimony (remission, adequate rehab) support granting clearance if monitored. Thus I prioritize C4 over C5 (lawful_authority) for the decision. I follow the case approach but keep the provisional nature because of LSO seriousness. Thus I choose LIVE-O1 (provisional clearance with monitoring) rather than full restoration."
+tradecraft: "Issue a provisional clearance conditional on continuous oversight, periodic re-evaluation (e.g., quarterly PEth testing and AA attendance verification), and a clear protocol for LSO to monitor compliance. Provide the LSO with the clearance conditions and schedule. Communicate the decision in writing, citing Part 710 and Guideline G. Set a review date (e.g., 6 months) for full restoration if monitoring successful."
+uncertainty: "The modest risk of future relapse remains; a positive PEth test or new DUI arrest after decision would require revocation or denial. I am uncertain about the exact monitoring schedule; will follow DOE standard practices."
+handoff: "I decide to grant provisional clearance. The LSO will conduct oversight per conditions; periodic reports required. No further action needed from other offices."
+tempting_wrong: {option: LIVE-O4, pull: "Full restoration seems justified because the employee has sustained abstinence and psychologists say rehab is adequate.", why_wrong: "Full restoration eliminates monitoring ability needed to address LSO concerns and residual risk of relapse."}
+rejected: {LIVE-O2: "Denial ignores strong mitigating evidence and would unfairly punish rehabilitation progress.", LIVE-O3: "Holding decision pending further evidence is unnecessary given robust objective and expert evidence."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Grant a provisional security clearance conditioned on continuous oversight, periodic PEth testing, AA attendance verification, and LSO monitoring for six months, after which full clearance may be restored if no adverse events occur."
+relation: follows
+via: null
+decisive: [LIVE-C4]
+now:
+  - "Issue written provisional clearance order with conditions; notify LSO and employee; schedule first monitoring report in 30 days."
+flip_conditions:
+  - {id: LIVE-flip1, if: "A PEth test after the decision returns positive for alcohol consumption.", then: LIVE-O2, why: "Positive biomarker breaches abstinence condition, negating mitigation and warrants denial or revocation."}
+  - {id: LIVE-noflip1, if: "The period of negative PEth tests continues for at least the recommended duration (e.g., 6 months).", why: "The shorter testing window does not affect the decision; decision stands."}
+  - {id: LIVE-watch1, what: "A documented relapse, new DUI arrest, or missed monitoring requirement.", favors: [LIVE-O2], why: "A new alcohol-related incident would re-activate Guideline G concerns and may require clearance revocation."}
+
+Now I will output the YAML documents in order. Note: The format requires each document start with kind: and separate with '---'. I'll output them sequentially.
+</think>
+kind: fact_enumeration
+frame:
+  question: "The decision I must make regarding the subcontractor employee's security clearance under Guideline G."
+  decider: "I am the Administrative Judge for the DOE Office of Hearings and Appeals."
+  my_role: "I may issue a decision (grant, deny, conditional, or hold). I may order monitoring, request additional records, and rely on expert testimony. I cannot delegate the final determination."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The employee works for a DOE subcontractor in a position that requires a security clearance."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Local Security Office (LSO) has serious reservations about the employee's eligibility under Guideline G."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The employee has three DUI arrests: January 1990, September 2002, and July 2013."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "In February 2025 the employee was hospitalized after a 48‑hour uncontrolled drinking relapse."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "In June 2025 a psychologist diagnosed moderate, recurrent Alcohol Use Disorder, early remission, and said rehabilitation was insufficient."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "The employee completed an intensive outpatient program and resumed AA attendance after the 2025 relapse."}
+  - {id: LIVE-F7, kind: capability, status: confirmed, fact: "The employee provided eleven consecutive negative PEth tests from August 2025 through May 2026, plus a negative test from June 2025."}
+  - {id: LIVE-F8, kind: capability, status: confirmed, fact: "AA attendance logs show attendance every two to three days from June 2025 to April 2026."}
+  - {id: LIVE-F9, kind: intelligence, status: assessed, fact: "Two psychologists testified that the employee’s Alcohol Use Disorder is in sustained remission, that rehabilitation is adequate, and gave a favorable prognosis."}
+  - {id: LIVE-F10, kind: authority, status: confirmed, fact: "DOE Part 710 presumes against granting a clearance but allows mitigation under conditions (b) and (d) when the individual demonstrates abstinence and treatment compliance."}
+options:
+  LIVE-O1: "Grant a provisional (temporary) clearance conditioned on continuous oversight, monitoring, and periodic re-evaluation."
+  LIVE-O2: "Deny the clearance restoration."
+  LIVE-O3: "Hold the decision pending further corroborating documentation."
+  LIVE-O4: "Restore the full security clearance without conditional monitoring."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both involve a DOE contractor employee with DUI history, recent relapse hospitalization, alcohol use disorder diagnosis, treatment completion, negative PEth tests, AA attendance, and psychologist testimony. Differences: In the case, the LSO raised 'substantial doubt'; here the LSO has 'serious reservations'—similar seriousness. The case judge postponed decision pending further evidence; here the judge must decide now."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F3}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F5}
+  - {live: LIVE-F6, case: REF1-F6}
+  - {live: LIVE-F7, case: REF1-F7}
+  - {live: LIVE-F8, case: REF1-F8}
+  - {live: LIVE-F9, case: REF1-F9}
+  - {live: LIVE-F10, case: REF1-F10}
+corresponding: []
+live_only: [LIVE-F2_serious]  # LSO seriousness noted explicitly
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F7, LIVE-F8], equity: duty_to_individual, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "Eleven consecutive negative PEth tests and documented AA attendance provide objective evidence of sustained abstinence and compliance with treatment."}
+  - {id: LIVE-C2, facts: [LIVE-F9], equity: institutional_credibility, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "Two psychologists testified that the Alcohol Use Disorder is in sustained remission, rehabilitation adequate, and prognosis favorable."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F4, LIVE-F5], equity: due_process, favors: [LIVE-O1, LIVE-O4], weight: strong, why: "While DUI arrests and 2025 relapse are concerning, the record shows long-term remission since 2014, and the recent relapse appears isolated; professional assessment finds rehabilitation sufficient."}
+  - {id: LIVE-C4, facts: [LIVE-F2_serious], equity: risk_mitigation, favors: [LIVE-O1], weight: strong, why: "The LSO has serious reservations; issuing a full restoration without monitoring could ignore residual risk. A provisional clearance with oversight balances security and rehabilitation."}
+  - {id: LIVE-C5, facts: [LIVE-F7, LIVE-F9], equity: lawful_authority, favors: [LIVE-O4], weight: moderate, why: "Part 710 permits mitigation when abstinence and treatment compliance are demonstrated, supporting full restoration if monitoring deemed unnecessary."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C2, role: "Objective biomarker and attendance evidence supporting abstinence."}
+  - {live: LIVE-C2, case: REF1-C3, role: "Psychologist testimony on remission and adequate rehabilitation."}
+  - {live: LIVE-C3, case: REF1-C4, role: "Due process consideration addressing historical DUI and relapse."}
+  - {live: LIVE-C4, case: REF1-C5, role: "Risk mitigation due to residual concern; favors provisional clearance."}
+  - {live: LIVE-C5, case: REF1-C1, role: "Lawful authority supporting full restoration when mitigation sufficient."}
+corresponding: []
+live_only: [LIVE-C4]  # risk_mitigation emphasis due to LSO seriousness
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Factual pattern matches closely; equities and considerations align. The case's reasoning about weighing risk mitigation against mitigation eligibility applies. Therefore the case governs."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed strong O4-favoring considerations (C1-C4) against strong O1-favoring risk mitigation (C5). Because C5 emphasized that a provisional clearance with monitoring is appropriate given objective biomarker evidence and expert testimony, while O4 (full restoration) was tempered by residual risk, the judge chose REF1-O1 (provisional clearance). Flip conditions: positive PEth test would flip to O4; shorter testing window would not change; watch for future relapse."
+weighing: "I have strong considerations for both full restoration (C1, C2, C3, C5) and for provisional clearance (C4). C4 directly addresses the LSO's serious reservations and recommends monitoring. The risk_mitigation consideration (C4) is strong because the LSO's concerns are legitimate and a full clearance without monitoring could increase risk. Thus I prioritize C4 over C5 for the decision and follow the case approach, choosing provisional clearance."
+tradecraft: "Issue a provisional clearance conditional on continuous oversight, periodic PEth testing (e.g., quarterly), AA attendance verification, and LSO monitoring. Set a review date (e.g., 6 months) for full clearance restoration if no adverse events. Communicate decision in writing citing Part 710 and Guideline G."
+uncertainty: "Modest risk of future relapse remains; a positive PEth test or new DUI after decision would require revocation/denial. Uncertainty about exact monitoring schedule; will follow DOE standard practices."
+handoff: "I decide to grant provisional clearance. The LSO will conduct oversight per conditions; periodic reports required. No further action needed from other offices."
+tempting_wrong: {option: LIVE-O4, pull: "Full restoration seems justified because employee has sustained abstinence and psychologists say rehab is adequate.", why_wrong: "Full restoration eliminates monitoring ability needed to address LSO concerns and residual risk of relapse."}
+rejected: {LIVE-O2: "Denial ignores strong mitigating evidence and would unfairly punish rehabilitation progress.", LIVE-O3: "Holding decision pending further evidence is unnecessary given robust objective and expert evidence."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Grant a provisional security clearance conditioned on continuous oversight, periodic PEth testing, AA attendance verification, and LSO monitoring for six months; full clearance may be restored upon successful compliance."
+relation: follows
+via: null
+decisive: [LIVE-C4]
+now:
+  - "Issue written provisional clearance order with conditions; notify LSO and employee; schedule first monitoring report in 30 days."
+flip_conditions:
+  - {id: LIVE-flip1, if: "A PEth test after the decision returns positive for alcohol consumption.", then: LIVE-O2, why: "Positive biomarker breaches abstinence condition, negating mitigation and warrants denial or revocation."}
+  - {id: LIVE-noflip1, if: "The period of negative PEth tests continues for at least the recommended duration (e.g., 6 months).", why: "Shorter testing window does not affect decision; decision stands."}
+  - {id: LIVE-watch1, what: "A documented relapse, new DUI arrest, or missed monitoring requirement.", favors: [LIVE-O2], why: "A new alcohol-related incident would re-activate Guideline G concerns and may require clearance revocation."}

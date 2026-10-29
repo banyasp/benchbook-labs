@@ -1,0 +1,322 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the USS Horizon fire on the inbound Iranian aircraft contact that appears hostile?"
+  decider: "Commanding Officer of USS Horizon"
+  my_role: "Decide whether to engage; coordinate with AAW coordinator; issue fire order if authorized by ROE; record decision in log; communicate actions to relevant parties."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Radar contact at 04:12 UTC, bearing 210°, 25 NM away, flying well below normal cruise altitude and outside airway corridor."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Contact not responding to hails; transponder sending Mode II‑1100 IFF code associated with Iranian F‑14 aircraft."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "ESM analysis shows no active radar or communication emissions from the contact."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "Aircraft now at 10 NM, closing at 250 kt as of 04:15:40 UTC."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "Approximately 3 minutes 40 seconds elapsed from detection (04:12:00) to decision point, with less than one minute remaining when aircraft entered 10 NM."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "Commanding Officer simultaneously engaged with IRGC skiffs on the surface; attention split between surface and air domains."}
+  - {id: LIVE-F7, kind: capability, status: assessed, fact: "CIC reports aircraft descending; command‑and‑decision system flags a climb — data conflict regarding vertical profile."}
+  - {id: LIVE-F8, kind: authority, status: confirmed, fact: "Rules of Engagement (ROE) excerpt allows firing on any hostile aircraft that poses an imminent threat."}
+  - {id: LIVE-F9, kind: authority, status: assessed, fact: "Anti‑Air Warfare (AAW) coordinator initially recommended holding fire (Course of Action 2) due to uncertainties and mixed data."}
+options:
+  LIVE-O1: "Authorize the ship's weapons to engage the approaching aircraft (fire on the contact) in accordance with ROE."
+  LIVE-O2: "Refrain from firing on the aircraft and allow it to continue its approach (hold fire), consistent with Course of Action 2."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a USS vessel detecting an aircraft at low altitude off-airway trajectory that does not respond to warnings, transmits an Iranian military IFF code, shows no ESM emissions, and the CO faces a short decision window while also dealing with surface combat. Differences: the live scenario includes explicit mention of IRGC skiffs (surface engagement) and a data conflict in vertical profile; the case mentions only the surface combat with IRGC boats but no explicit mention of skiffs. The AAW coordinator initially recommended hold fire in the live scenario, whereas in the case the CO relied on coordinator input but the case's reasoning did not mention a prior hold recommendation."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F5}  # case's F5 is no ESM emissions
+  - {live: LIVE-F4, case: REF1-F6}  # case's F6 is time compression (approx 3 min 40 sec)
+  - {live: LIVE-F8, case: REF1-F8}  # ROE authorization
+corresponding:
+  - {live: LIVE-F5, case: REF1-F6, note: "Same time compression metric."}
+  - {live: LIVE-F7, case: REF1-F9, note: "Case mentions command‑and‑decision system conflict vs CIC reports; live has CIC vs CO and vertical profile conflict."}
+live_only: [LIVE-F9]  # AAW coordinator explicitly recommended hold fire before CO's decision
+case_only: [REF1-F10]  # case mentions CO placed confidence in AAW coordinator; live also has reliance but coordinator initially said hold
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Time compression (~3 min 40 sec total, <1 min at 10 NM) creates extreme urgency; need an immediate response to assess imminent threat."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F8], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Aircraft flying low off airway, not responding to warnings, using Iranian military IFF code, no emissions — all indicate hostile intent toward the ship and USS Montgomery."}
+  - {id: LIVE-C3, facts: [LIVE-F8], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "ROE explicitly permits firing on any hostile aircraft that poses an imminent threat; this is the standing authority for self‑defense."}
+  - {id: LIVE-C4, facts: [LIVE-F6, LIVE-F9], equity: chain_of_command, favors: [LIVE-O1], weight: moderate, why: "CO relies on AAW coordinator input; coordinator initially recommended hold fire due to uncertainty, but CO must exercise delegated authority under ROE when threat is imminent."}
+  - {id: LIVE-C5, facts: [LIVE-F7], equity: record_integrity, favors: [LIVE-O1], weight: weak, why: "CIC reports descent vs command‑and‑decision system flags climb; CO judged verbal CIC reports more credible under combat stress; conflict does not override overall threat assessment."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}  # time compression favoring immediate response
+  - {live: LIVE-C2, case: REF1-C2}  # hostile indicators favoring engagement
+  - {live: LIVE-C3, case: REF1-C3}  # lawful authority favoring engagement
+  - {live: LIVE-C4, case: REF1-C4}  # chain of command/confidence in coordinator favoring engagement (in case, coordinator reinforced threat picture)
+corresponding:
+  - {live: LIVE-C5, case: REF1-C5, role: "Secondary consideration; case weighed it weakly; live also weak."}
+live_only: [LIVE-C5]  # explicit mention of AAW coordinator's prior recommendation to hold fire (LIVE-F9)
+case_only: [REF1-C? maybe no extra]  # case had no explicit prior hold recommendation from coordinator
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The core facts overlap (low‑altitude off‑airway aircraft, no response, Iranian IFF, no ESM, time compression, ROE authorization, surface combat distraction). The live scenario includes an additional detail that the AAW coordinator initially recommended hold fire, but this does not negate the presence of the same decisive considerations (tempo, own_force_life, lawful_authority, chain_of_command). The case's reasoning explicitly weighs these considerations strongly in favor of engagement under time compression and ROE. Thus the case's considerations are sufficiently close to govern the decision approach."
+
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed time compression (strong), hostile indicators (strong), lawful authority (strong), and confidence in coordinator (strong) against the weak record‑integrity consideration. It concluded that under extreme time pressure the CO should engage when the threat appears imminent, even with minor data conflict."
+weighing: "In the live scenario, LIVE-C1 (tempo) and LIVE-C2 (own_force_life) are strong because the aircraft is closing rapidly at 250 kt within 10 NM with less than one minute remaining. LIVE-C3 (lawful_authority) is strong because ROE explicitly permits firing on an imminent hostile threat. LIVE-C4 (chain_of_command) is moderate; the CO trusts the coordinator but must act under ROE when threat is imminent. LIVE-C5 (record_integrity) is weak; the vertical profile conflict does not negate the overall hostile picture, especially under combat stress. Therefore the strong considerations favor LIVE-O1 (engage), while the weak consideration does not override the ROE‑driven authority. The AAW coordinator's initial hold recommendation (LIVE-F9) is a consideration (LIVE-C4) but it is moderate because the CO has delegated authority to engage under imminent threat; the coordinator's assessment does not preclude the CO from deciding to engage if the threat appears imminent."
+tradecraft: "Issue a concise verbal warning (if not already done), then if no response within the remaining seconds, order AIM-9 or CIWS engagement on the first definitive track update. Log the decision citing ROE, time compression, hostile indicators, and reliance on AAW coordinator input. Communicate the engagement order to the AAW coordinator and relevant parties."
+uncertainty: "The vertical profile conflict (descent vs climb) creates some ambiguity; however, given the aircraft is already within 10 NM and closing fast, the immediate concern is kinetic threat rather than altitude trend. Would reconsider if definitive radar lock shows clear climb away from ship."
+handoff: "The CO decides whether to engage; no higher authority needed under ROE for imminent threat. Coordinate with AAW coordinator to confirm engagement plan and share intent."
+tempting_wrong:
+  option: LIVE-O2
+  pull: "Withholding fire might avoid civilian harm if the aircraft were misidentified; also respects uncertainty from CIC reports."
+  why_wrong: "ROE permits engagement of a hostile aircraft presenting an imminent threat. The aircraft is flying low off airway, not responding to warnings, using Iranian military IFF, and closing rapidly — all meet the imminent‑threat standard. Holding fire while the aircraft approaches within striking range would expose Horizon and USS Montgomery to potential attack, contrary to ROE and force protection."
+rejected:
+  LIVE-O2: "While uncertainty exists regarding vertical profile and the AAW coordinator initially suggested hold fire, the strong tempo and hostile‑indicator considerations, combined with explicit ROE authority, justify engaging under imminent threat. The weak record‑integrity consideration does not outweigh the need to protect the force under time pressure."
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Authorize weapons engagement on the inbound aircraft per ROE, after confirming target identification and issuing final warning if time permits."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3]
+now:
+  - "Transmit a final verbal warning via VHF to the aircraft (if time permits); if no response within ~10 seconds, order AIM-9 Sidewinder or CIWS engagement."
+  - "Log the decision with reference to ROE, time compression, hostile indicators, and AAW coordinator input."
+  - "Notify AAW coordinator and surface combat officer of the engagement decision and expected engagement window."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If definitive radar data clearly shows the aircraft climbing away from the ship and no closing trajectory within 5 NM", then: LIVE-O2, why: "A reliable indication that the aircraft is not presenting an imminent threat would warrant holding fire."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the aircraft continues to close at ≥200 kt within 10 NM after the warning", why: "Continued closing trajectory supports imminent‑threat assessment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sudden change in aircraft altitude trend away from ship or receipt of responsive transponder/IFF", favors: [LIVE-O2], why: "Such change could indicate non‑hostile intent; would trigger reassessment."}
+
+Now produce the final reply with the verdict document only? According to instructions: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+We have already written all reasoning documents. The final reply should be the verdict document? Actually the instruction says: "Write your reasoning as YAML documents, one per step, in the order below. ... Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we need to output the thinking (all documents up to applicability) then  with the verdict document as reply? But the user expects a single response? The instruction says "then write the verdict document as your reply." So after reasoning documents, we output the verdict document (kind: verdict). However the format expects that we output the reasoning documents and then verdict? The meta says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) separated by --- lines, then a line with "</think>", then the verdict document? But the instruction says "write the verdict document as your reply." That suggests that the final answer should be just the verdict? But earlier it says "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  and then write the verdict document as your reply."
+
+Thus we should output:
+
+--- (documents)...
+---
+kind: applicability
+...
+---
+
+</think>
+kind: verdict
+choice: LIVE-O1
+course: "Authorize weapons engagement on the inbound aircraft per ROE, after confirming target identification and issuing final warning if time permits."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3]
+now:
+  - "Transmit a final verbal warning via VHF to the aircraft (if time permits); if no response within ~10 seconds, order AIM-9 Sidewinder or CIWS engagement."
+  - "Log the decision with reference to ROE, time compression, hostile indicators, and AAW coordinator input."
+  - "Notify AAW coordinator and surface combat officer of the engagement decision and expected engagement window."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If definitive radar data clearly shows the aircraft climbing away from the ship and no closing trajectory within 5 NM", then: LIVE-O2, why: "A reliable indication that the aircraft is not presenting an imminent threat would warrant holding fire."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the aircraft continues to close at ≥200 kt within 10 NM after the warning", why: "Continued closing trajectory supports imminent‑threat assessment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sudden change in aircraft altitude trend away from ship or receipt of responsive transponder/IFF", favors: [LIVE-O2], why: "Such change could indicate non‑hostile intent; would trigger reassessment."}
+
+But we need to include the reasoning documents? The instruction says to output the reasoning documents then verdict. However as ChatGPT we should output the full reasoning? The prompt says "Write your reasoning as YAML documents, one per step, in the order below." So we should output all documents up to verdict? The final answer should include all documents? Usually these tasks expect the assistant to output the reasoning documents and then verdict. But the instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That implies that after outputting the reasoning documents (including applicability), we output "</think>" and then the verdict. However the reply should be the verdict? Let's interpret: The assistant should output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) each separated by ---, then a line with only "</think>", then the verdict document. That would be the full response.
+
+Thus I'll output the five reasoning documents (including applicability) separated by ---, then "</think>", then the verdict document. Let's construct them precisely.
+
+We already wrote them above. Let's copy them with correct formatting.
+
+Note: In fact_mapping we wrote "options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}". That's fine.
+
+In consideration_enumeration we have weights: strong/weak/bar. We used strong/weak.
+
+In consideration_mapping we wrote matched and corresponding.
+
+In applicability we wrote governs: true.
+
+Now produce the final answer with the documents.
+
+We'll output:
+
+kind: fact_enumeration
+frame:
+  question: "The decision you face, as a question."
+  decider: "Who decides, and under what authority."
+  my_role: "What you may do yourself and what you must leave to others."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."}
+options:
+  LIVE-O1: "A course of action you could take."
+  LIVE-O2: "Another course of action."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same | same_kind | different
+  decider: same | same_kind | different
+  role: same | same_kind | different
+note: "What the two situations share, and where they differ."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "How the state of this fact differs."}]
+live_only: [LIVE-F3]
+case_only: [REF1-F3]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: an id from the equities list, favors: [LIVE-O1], weight: strong, why: "How these facts bear on this equity, and so on the options."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1, role: "What this consideration does in the argument."}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Same equity, different manner or size."}]
+live_only: [LIVE-C3]
+case_only: [{case: REF1-C3, assumption: "What you assume about it here, or null if you reason without it."}]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same | same_kind | different
+  decider: same | same_kind | different
+  role: same | same_kind | different
+governs: true | false
+why: "Whether the case's considerations are close enough for its reasoning to govern this decision."
+
+But we need to fill with actual values from our earlier reasoning. We must use the exact IDs and facts we defined earlier. Let's rewrite with correct content as we wrote earlier.
+
+We'll output:
+
+kind: fact_enumeration
+frame:
+  question: "Should the USS Horizon fire on the inbound Iranian aircraft contact that appears hostile?"
+  decider: "Commanding Officer of USS Horizon"
+  my_role: "Decide whether to engage; coordinate with AAW coordinator; issue fire order if authorized by ROE; record decision in log; communicate actions to relevant parties."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Radar contact at 04:12 UTC, bearing 210°, 25 NM away, flying well below normal cruise altitude and outside airway corridor."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Contact not responding to hails; transponder sending Mode II‑1100 IFF code associated with Iranian F‑14 aircraft."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "ESM analysis shows no active radar or communication emissions from the contact."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "Aircraft now at 10 NM, closing at 250 kt as of 04:15:40 UTC."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "Approximately 3 minutes 40 seconds elapsed from detection (04:12:00) to decision point, with less than one minute remaining when aircraft entered 10 NM."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "Commanding Officer simultaneously engaged with IRGC skiffs on the surface; attention split between surface and air domains."}
+  - {id: LIVE-F7, kind: capability, status: assessed, fact: "CIC reports aircraft descending; command‑and‑decision system flags a climb — data conflict regarding vertical profile."}
+  - {id: LIVE-F8, kind: authority, status: confirmed, fact: "Rules of Engagement (ROE) excerpt allows firing on any hostile aircraft that poses an imminent threat."}
+  - {id: LIVE-F9, kind: authority, status: assessed, fact: "AAW coordinator initially recommended holding fire (Course of Action 2) due to uncertainties and mixed data."}
+options:
+  LIVE-O1: "Authorize the ship's weapons to engage the approaching aircraft (fire on the contact) in accordance with ROE."
+  LIVE-O2: "Refrain from firing on the aircraft and allow it to continue its approach (hold fire), consistent with Course of Action 2."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a USS vessel detecting an aircraft at low altitude off-airway trajectory that does not respond to warnings, transmits an Iranian military IFF code, shows no ESM emissions, and the CO faces a short decision window while also dealing with surface combat. Differences: the live scenario includes explicit mention of IRGC skiffs (surface engagement) and a data conflict in vertical profile; the case mentions only the surface combat with IRGC boats but no explicit mention of skiffs. The AAW coordinator initially recommended hold fire in the live scenario, whereas in the case the CO relied on coordinator input but the case's reasoning did not mention a prior hold recommendation."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F5}  # case's F5 is no ESM emissions
+  - {live: LIVE-F4, case: REF1-F6}  # case's F6 is time compression
+  - {live: LIVE-F8, case: REF1-F8}  # ROE authorization
+corresponding:
+  - {live: LIVE-F5, case: REF1-F6, note: "Same time compression metric."}
+  - {live: LIVE-F7, case: REF1-F9, note: "Case mentions command‑and‑decision system conflict vs CIC reports; live has CIC vs CO and vertical profile conflict."}
+live_only: [LIVE-F9]
+case_only: [REF1-F10]
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Time compression (~3 min 40 sec total, <1 min at 10 NM) creates extreme urgency; need an immediate response to assess imminent threat."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F8], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Aircraft flying low off airway, not responding to warnings, using Iranian military IFF code, no emissions — all indicate hostile intent toward the ship and USS Montgomery."}
+  - {id: LIVE-C3, facts: [LIVE-F8], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "ROE explicitly permits firing on any hostile aircraft that poses an imminent threat; this is the standing authority for self‑defense."}
+  - {id: LIVE-C4, facts: [LIVE-F6, LIVE-F9], equity: chain_of_command, favors: [LIVE-O1], weight: moderate, why: "CO relies on AAW coordinator input; coordinator initially recommended hold fire due to uncertainty, but CO must exercise delegated authority under ROE when threat is imminent."}
+  - {id: LIVE-C5, facts: [LIVE-F7], equity: record_integrity, favors: [LIVE-O1], weight: weak, why: "CIC reports descent vs command‑and‑decision system flags climb; CO judged verbal CIC reports more credible under combat stress; conflict does not override overall threat assessment."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C2, case: REF1-C2}
+  - {live: LIVE-C3, case: REF1-C3}
+  - {live: LIVE-C4, case: REF1-C4}
+corresponding:
+  - {live: LIVE-C5, case: REF1-C5, role: "Secondary consideration; case weighed it weakly; live also weak."}
+live_only: [LIVE-C5]
+case_only: [REF1-C5]  # Actually REF1-C5 exists; we'll keep as case_only maybe REF1-C5? But we already have case_only earlier; but for mapping we list case-only considerations that are only in case? The instruction: case_only: [REF1-F3] etc. We'll follow pattern: case_only: [REF1-C5]? However REF1-C5 is already matched? No, we matched REF1-C1-4, REF1-C5 is not matched; it's a weak consideration in case. So we can put REF1-C5 as case_only. But careful: we matched four case considerations; REF1-C5 is the weak one, which corresponds to LIVE-C5. That could be corresponding rather than case_only. However LIVE-C5 is weak and corresponds to REF1-C5 (same equity, different manner/size). So it should be corresponding, not case_only. The instruction says corresponding: same equity, different manner or size. So LIVE-C5 corresponds to REF1-C5. Thus case_only would be empty? But we have live_only LIVE-F9 etc. The mapping says: matched: same item in both; corresponding: same characteristic with different state; live_only: only in your scenario; case_only: only in the case. In our mapping we already have live_only for facts (LIVE-F9) and case_only for REF1-F10. For considerations, we have matched four, and corresponding one (LIVE-C5 corresponds to REF1-C5), so case_only would be empty. However the instruction says each case consideration must be in exactly one of matched, corresponding, case_only. Since we have five live considerations and four case considerations matched, plus one case-only? Actually REF1 has five considerations (C1-C5). We matched four (C1-C4) and corresponding for C5? That would mean REF1-C5 is not matched or case_only? Let's define: We have LIVE-C1-C5, REF1-C1-C5. We match LIVE-C1-C4 to REF1-C1-C4 (strong), and LIVE-C5 corresponds to REF1-C5 (weak). So REF1-C5 is not matched? It would be corresponding, not case_only. But the mapping format expects matched list and corresponding list; case_only list for case-only items (i.e., case considerations not represented in live). Since we have all five case considerations represented (either matched or corresponding), case_only would be empty. That's acceptable. We'll set case_only: [] and corresponding: [REF1-C5]? But the format says corresponding: [{live: LIVE-C2, case: REF1-C2, note: ...}] etc. So we need a list of corresponding pairs where live and case differ. So we can include REF1-C5 as corresponding with live LIVE-C5. Let's adjust: In consideration_mapping we should list corresponding pairs where same equity but different manner/size. We'll set matched for those that are same; corresponding for those that differ. We'll say:
+
+matched: [{live: LIVE-C1, case: REF1-C1}], [{live: LIVE-C2, case: REF1-C2}], [{live: LIVE-C3, case: REF1-C3}], [{live: LIVE-C4, case: REF1-C4}] — but these are same manner? Actually they favor same options and have same equity? In the case, C1-C4 all favor REF1-O1 strongly; in live, C1-C4 also favor LIVE-O1 strongly. So they could be considered matched (same). LIVE-C5 is weak and corresponds to REF1-C5 (also weak). So we can put matched for C1-C4 and corresponding for C5. Let's simplify: matched: [LIVE-C1->REF1-C1, LIVE-C2->REF1-C2, LIVE-C3->REF1-C3, LIVE-C4->REF1-C4]; corresponding: [LIVE-C5->REF1-C5]. That seems fine. We'll output accordingly.
+
+Thus:
+
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "What this consideration does in the argument."}
+  - {live: LIVE-C2, case: REF1-C2, role: "What this consideration does in the argument."}
+  - {live: LIVE-C3, case: REF1-C3, role: "What this consideration does in the argument."}
+  - {live: LIVE-C4, case: REF1-C4, role: "What this consideration does in the argument."}
+corresponding:
+  - {live: LIVE-C5, case: REF1-C5, role: "Secondary weak consideration; live also weak."}
+live_only: []
+case_only: []
+
+But we also have live_only for considerations? No, live_only for facts only? The instruction says live_only: [LIVE-F3] etc. So for considerations, live_only would be empty? Actually they said: "Account for every item: each of your facts is in exactly one of matched, corresponding, live_only, and each of the case's facts in exactly one of matched, corresponding, case_only." Same for considerations. So we need to partition. We'll follow that.
+
+Thus in consideration_mapping we set matched for four, corresponding for one, live_only empty, case_only empty. That works.
+
+We'll output accordingly.
+
+But due to time, I'll output the simplified mapping as earlier (matched: [{live: LIVE-C1, case: REF1-C1, ...}] etc). To avoid too much detail, I'll stick with the earlier concise mapping we wrote: "matched: [{live: LIVE-C1, case: REF1-C1, role: "What this consideration does in the argument."}] etc." But we need to list all four. Let's write:
+
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "primary time‑compression driver"}
+  - {live: LIVE-C2, case: REF1-C2, role: "hostile‑indicator driver"}
+  - {live: LIVE-C3, case: REF1-C3, role: "legal‑authority driver"}
+  - {live: LIVE-C4, case: REF1-C4, role: "command‑trust driver"}
+corresponding:
+  - {live: LIVE-C5, case: REF1-C5, role: "weak record‑integrity driver"}
+live_only: []
+case_only: []
+
+Now applicability:
+
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The core facts overlap (low‑altitude off‑airway aircraft, no response, Iranian IFF, no ESM, time compression, ROE authorization, surface combat distraction). The live scenario includes an additional detail that the AAW coordinator initially recommended hold fire, but this does not negate the presence of the same decisive considerations (tempo, own_force_life, lawful_authority, chain_of_command). The case's reasoning explicitly weighs these considerations strongly in favor of engagement under time compression and ROE. Thus the case's considerations are sufficiently close to govern the decision approach."
+
+Now reasoning:
+
+case: REF1
+case_approach: "The case weighed time compression (strong), hostile indicators (strong), lawful authority (strong), and confidence in coordinator (strong) against the weak record‑integrity consideration. It concluded that under extreme time pressure the CO should engage when the threat appears imminent, even with minor data conflict."
+weighing: "In the live scenario, LIVE-C1 (tempo) and LIVE-C2 (own_force_life) are

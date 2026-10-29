@@ -1,0 +1,161 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the employee participate in the IRS determination of the nonprofit's tax-exempt status?"
+  decider: "the civil service employee (employee ID 4729) who works for the IRS's Exempt Organizations Unit"
+  my_role: "The employee must decide whether to join the team evaluating the nonprofit's application; if recusal is required, the employee must be excluded and the backup reviewer should be assigned."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee 4729 helped found a neighborhood animal‑rescue group (the organization that has applied for tax‑exempt status)."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The animal‑rescue group has filed a tax‑exempt application (case A‑2023‑987)."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Ticket T‑4512 is pending for an unrelated 990 filing; queue Q‑07 is at 73% capacity. These are unrelated to the tax‑exempt determination."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Employee currently assigned to case A‑2023‑987 and case B‑2023‑112."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Under 5 C.F.R. §2635.802(b), an employee shall recuse themselves from any matter in which they have a personal interest, including determinations of tax‑exempt status for organizations with which they are affiliated."}
+options:
+  LIVE-O1: "Employee participates in the IRS determination of the nonprofit's tax‑exempt status."
+  LIVE-O2: "Employee is recused (excluded) from the IRS determination of the nonprofit's tax‑exempt status."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both cases involve an IRS employee reviewing a tax‑exempt application for an animal‑rescue nonprofit they helped found. The case REF1 assumed the employee had no current personal involvement; our live facts say the employee helped found the group, indicating a personal interest."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F5, case: REF1-F6}]  # both reference the regulation
+corresponding: [{live: LIVE-F1, case: REF1-F2, note: "Case REF1 said the employee had no involvement; here the employee helped found the group, which is a personal interest."}]
+live_only: [LIVE-F1, LIVE-F4]
+case_only: [REF1-F2, REF1-F3]  # case says no involvement
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "The regulation requires recusal only when the employee has a personal interest. Since the employee helped found the group, they have a personal interest, which triggers the recusal requirement."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F4], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Participating despite a personal interest could create an appearance of bias and undermine institutional credibility; recusal prevents even perceived conflicts."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Ensuring a fair process for the applicant includes removing any actual or apparent bias from reviewers with personal ties."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Using the employee efficiently could reduce workload; however, this is subordinate to conflict‑avoidance rules."}
+---
+kind: consideration_mapping
+case: REF1
+matched: []  # REF1's considerations C1 and C2 favored O1 because the employee had no personal interest; here we have personal interest, so the mapping may not directly match
+corresponding: []  # the equity concerns (institutional credibility, due process) are similar but the fact state differs
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4]
+case_only: [REF1-C1, REF1-C2, REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: different  # REF1 had no personal involvement; here we have personal involvement
+  decider: same
+  role: same
+governs: false
+why: "The key factual difference is that REF1 assumed the employee had no current personal involvement, while LIVE-F1 confirms the employee helped found the group, creating a personal interest. Because the regulation’s trigger (personal interest) is present here and absent in REF1, the case’s reasoning (which relied on absence of personal interest) does not directly govern. However, the equity considerations (institutional credibility, due process) are relevant and can be applied."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the employee had no personal interest, so the case reasoned that recusal was not required."
+weighing: "Given LIVE-F1 (personal founding interest) and LIVE-F5 (regulatory recusal rule), LIVE-C1 directly invokes the regulation’s trigger. Thus the strongest considerations for recusal are LIVE-C2 (institutional credibility) and LIVE-C3 (due process), both strong or weak, outweighing LIVE-C4 (efficiency). The clear statutory language requires recusal when a personal interest exists, regardless of the nature or extent of the interest (the regulation does not limit recusal to active participation; it says 'affiliated' and 'personal interest'). Therefore, the employee must be recused."
+tradecraft: "Record the recusal decision in the Ethics Registry, assign the backup reviewer to case A‑2023‑987, and inform the supervisor of the rationale. Follow up with the backup reviewer to ensure timely continuation."
+uncertainty: "Low – the regulation’s language ('personal interest') is met by founding the organization; no ambiguity about applicability."
+handoff: "The employee must recuse themselves; the backup reviewer (already identified) should take over the determination. The employee should document the recusal in the Ethics Registry and notify the supervisor."
+tempting_wrong: {option: LIVE-O2, pull: "The belief that only active involvement or significant ongoing participation triggers recusal; a founder’s interest might be considered remote.", why_wrong: "5 C.F.R. §2635.802(b) states 'including determinations of tax‑exempt status for organizations with which they are affiliated.' Founding the organization creates an affiliation and a personal interest, triggering recusal regardless of remote involvement."}
+rejected: {LIVE-O1: "Participating would violate the clear statutory recusal requirement for personal interest."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Employee 4729 must be recused from participating in the IRS determination of the animal‑rescue group’s tax‑exempt status and the backup reviewer should be assigned to case A‑2023‑987."
+relation: distinguished
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Record the recusal in the Ethics Registry (log recusal decision). Assign backup reviewer to case A‑2023‑987 and inform them of the pending application details."
+  - "Send a brief message to the supervisor confirming recusal and backup assignment."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the employee had no personal interest (e.g., only passive supporter with no founding role)", then: LIVE-O1, why: "Then the regulation’s trigger would not apply, and participation would be permissible per REF1 reasoning."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the employee continues to have a personal interest (including founding role)", why: "Recusal remains required."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Attempts to characterize the founding role as merely logistical or peripheral", favors: [LIVE-O2], why: "Even peripheral founding involvement constitutes affiliation and personal interest under the regulation."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the employee participate in the IRS determination of the nonprofit's tax-exempt status?"
+  decider: "the civil service employee (employee ID 4729) who works for the IRS's Exempt Organizations Unit"
+  my_role: "The employee must decide whether to join the team evaluating the nonprofit's application; if recusal is required, the employee must be excluded and the backup reviewer should be assigned."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee 4729 helped found a neighborhood animal‑rescue group (the organization that has applied for tax‑exempt status)."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The animal‑rescue group has filed a tax‑exempt application (case A‑2023‑987)." }
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Ticket T‑4512 is pending for an unrelated 990 filing; queue Q‑07 is at 73% capacity. These are unrelated to the tax‑exempt determination."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Employee currently assigned to case A‑2023‑987 and case B‑2023‑112."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Under 5 C.F.R. §2635.802(b), an employee shall recuse themselves from any matter in which they have a personal interest, including determinations of tax‑exempt status for organizations with which they are affiliated."}
+options:
+  LIVE-O1: "Employee participates in the IRS determination of the nonprofit's tax‑exempt status."
+  LIVE-O2: "Employee is recused (excluded) from the IRS determination of the nonprofit's tax‑exempt status."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both cases involve an IRS employee reviewing a tax‑exempt application for an animal‑rescue nonprofit; REF1 assumed no current personal involvement, while LIVE-F1 confirms the employee helped found the group, indicating a personal interest."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F5, case: REF1-F6}]  # both reference the regulation
+corresponding: [{live: LIVE-F1, case: REF1-F2, note: "Case REF1 said the employee had no involvement; here the employee helped found the group, which is a personal interest."}]
+live_only: [LIVE-F1, LIVE-F4]
+case_only: [REF1-F2, REF1-F3]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "The regulation requires recusal only when the employee has a personal interest. Since the employee helped found the group, they have a personal interest, which triggers the recusal requirement."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F4], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Participating despite a personal interest could create an appearance of bias and undermine institutional credibility; recusal prevents even perceived conflicts."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Ensuring a fair process for the applicant includes removing any actual or apparent bias from reviewers with personal ties."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Using the employee efficiently could reduce workload; however, this is subordinate to conflict‑avoidance rules."}
+---
+kind: consideration_mapping
+case: REF1
+matched: []  # REF1's considerations favored O1 because no personal interest; here personal interest exists
+corresponding: []
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4]
+case_only: [REF1-C1, REF1-C2, REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: different
+  decider: same
+  role: same
+governs: false
+why: "The key factual difference is that REF1 assumed no current personal involvement, while LIVE-F1 confirms the employee helped found the group, creating a personal interest. Because the regulation’s trigger (personal interest) is present here and absent in REF1, the case’s reasoning (which relied on absence of personal interest) does not directly govern. However, equity considerations (institutional credibility, due process) are relevant."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, with no personal involvement, the case reasoned that recusal was not required."
+weighing: "Given LIVE-F1 (personal founding interest) and LIVE-F5 (regulatory recusal rule), LIVE-C1 directly invokes the regulation’s trigger. Thus the strongest considerations for recusal are LIVE-C2 (institutional credibility) and LIVE-C3 (due process), both strong or weak, outweighing LIVE-C4 (efficiency). The clear statutory language requires recusal when a personal interest exists, regardless of the nature or extent; 'affiliated' includes founders. Therefore, the employee must be recused."
+tradecraft: "Record the recusal in the Ethics Registry, assign the backup reviewer to case A‑2023‑987, and inform the supervisor. Provide the backup reviewer with the application details and any relevant case notes."
+uncertainty: "Low – the regulation’s language ('personal interest') is met by founding the organization; no ambiguity."
+handoff: "Employee must recuse; backup reviewer takes over. Document recusal and notify supervisor."
+tempting_wrong: {option: LIVE-O2, pull: "The belief that only active ongoing participation triggers recusal; founding alone might be remote.", why_wrong: "5 C.F.R. §2635.802(b) says 'including determinations of tax‑exempt status for organizations with which they are affiliated.' Founding constitutes affiliation and a personal interest, triggering recusal."}
+rejected: {LIVE-O1: "Participating would violate the clear statutory recusal requirement for personal interest."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Employee 4729 must be recused from participating in the IRS determination of the animal‑rescue group’s tax‑exempt status; assign the backup reviewer to case A‑2023‑987."
+relation: distinguished
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Log the recusal decision in the Ethics Registry (including employee ID, case ID, and reason referencing 5 C.F.R. §2635.802(b))."
+  - "Assign backup reviewer to case A‑2023‑987 and send them a brief handoff note with application details."
+  - "Send a confirmation message to the supervisor that the employee has been recused and backup reviewer is assigned."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the employee had no personal interest (e.g., only passive supporter with no founding role)", then: LIVE-O1, why: "Then the regulation’s trigger would not apply, and participation would be permissible per REF1 reasoning."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the employee continues to have a personal interest (including founding role)", why: "Recusal remains required."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Attempts to characterize the founding role as merely logistical or peripheral", favors: [LIVE-O2], why: "Even peripheral founding involvement constitutes affiliation and personal interest under the regulation."}

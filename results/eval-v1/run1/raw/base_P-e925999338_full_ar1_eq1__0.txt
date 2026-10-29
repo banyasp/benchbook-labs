@@ -1,0 +1,186 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the staff member with prior involvement with the animal‑rescue nonprofit be recused from the IRS's assessment of its tax‑exempt status?"
+  decider: "The IRS staff member acting under 5 C.F.R. §2635.802(b) and conflict‑of‑interest policy."
+  my_role: "Identify whether recusal is required and ensure compliance; do not make the final determination but follow policy."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The staff member was a founding volunteer of the animal‑rescue nonprofit that filed a pending Form 1023 for tax‑exempt status."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires that the staff member must be recused from any IRS determination regarding the tax‑exempt status of this organization when a personal interest exists."}
+  - {id: LIVE-F3, kind: prior involvement, status: confirmed, fact: "The staff member's prior involvement (founding volunteer) constitutes a personal interest in the nonprofit's outcome."}
+  - {id: LIVE-F4, kind: recommendation, status: assessed, fact: "The ethics officer recommends excluding the staff member from the determination."}
+  - {id: LIVE-F5, kind: internal record, status: confirmed, fact: "Case NR-2024-067 is under review; no final decision has been logged yet."}
+options:
+  LIVE-O1: "Recuse the staff member from the IRS assessment of the nonprofit's exemption request per 5 C.F.R. §2635.802(b)."
+  LIVE-O2: "Allow the staff member to participate in the assessment, relying on the preliminary impact analysis that suggests limited effect."
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: "conflict_of_interest", favors: [LIVE-O1], weight: strong, why: "5 C.F.R. §2635.802(b) mandates recusal when a personal interest exists. The staff member's founding volunteer role is a personal interest, so participation would violate the regulation."}
+  - {id: LIVE-C2, facts: [LIVE-F4], equity: "institutional_credibility", favors: [LIVE-O1], weight: moderate, why: "The ethics officer's recommendation aligns with safest path; maintaining credibility requires following policy."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: "due_process", favors: [LIVE-O1], weight: moderate, why: "Recusal ensures no perceived bias; the case is still under review, so recusal can be applied without delaying the process."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: "mission_effect", favors: [LIVE-O2], weight: weak, why: "The preliminary impact analysis suggests limited effect, and the staff member could provide useful familiarity."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: "analytic_integrity", favors: [LIVE-O1], weight: moderate, why: "Ensuring unbiased analysis protects record integrity and avoids later challenges."}
+
+kind: reasoning
+weighing: "The regulatory requirement (5 C.F.R. §2635.802(b)) is mandatory and must be followed. While the preliminary impact analysis suggests limited effect, the policy explicitly says the staff member must be recused when a personal interest exists. The ethics officer's recommendation supports recusal. Considering institutional credibility, due process, and analytic integrity, recusal is the safest and compliant course. The weak consideration about limited effect does not override the strong regulatory bar."
+tradecraft: "Implement recusal by removing the staff member from any substantive review, decision‑making, or written assessment of the Form 1023 exemption request. Assign the review to another exempt‑status reviewer. Document the recusal action in the audit trail and notify the relevant team."
+uncertainty: "Uncertainty exists only about the extent of the staff member's involvement; however, the founding volunteer role qualifies as a personal interest under the regulation. No contradictory internal guidance was found."
+handoff: "The staff member will be recused; the tax desk will continue processing other submissions. The ethics officer and reviewer will assign another reviewer for the animal‑rescue nonprofit's case."
+tempting_wrong: {option: LIVE-O2, pull: "Allowing the staff member to participate might seem efficient and familiar, but it conflicts with mandatory recusal.", why_wrong: "Violates 5 C.F.R. §2635.802(b) and creates a conflict of interest."}
+rejected: {LIVE-O2: "Reject because it would place the staff member in a position where personal interest could influence the determination, contrary to policy."}
+
+kind: verdict
+choice: LIVE-O1
+course: "Recuse the staff member from the IRS assessment of the animal‑rescue nonprofit's tax‑exempt status request."
+decisive: [LIVE-C1]
+now:
+  - "Log the recusal decision in the audit trail using log.write and send a notification to the tax desk and ethics officer via comms.send to assign a different reviewer."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the staff member had no personal interest (e.g., no founding volunteer role)", then: LIVE-O2, why: "Then recusal would not be required by §2635.802(b)."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the staff member's involvement were purely professional without personal stake", why: "Recusal would still be required only when a personal interest exists; the founding volunteer role constitutes a personal interest."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any attempt to reassign the staff member back to the review", favors: [LIVE-O2], why: "Monitor for inadvertent reassignment; reinforce recusal policy."}
+
+Now write the reply with the YAML documents and then the verdict. The reply should contain the YAML documents (as described) and then the verdict? Actually the instruction says: "Close your thinking with </think> after the last document before the verdict, then write the verdict document as your reply." It says "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But the format expects the assistant's reply to be the reasoning step (the YAML documents) and then the verdict? Let's read carefully: "This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards."
+
+Wait: The instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Actually it says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that after the YAML documents (the fact enumeration, consideration enumeration, reasoning) we should output </think> and then the verdict? But the format includes a verdict document (kind: verdict). So we need to output all four kind documents (fact_enumeration, consideration_enumeration, reasoning, verdict) in order, separated by "---", and then end with </think>? Let's parse: "Write your reasoning as YAML documents, one per step, in the order below. Each document starts with its `kind:` line. Separate documents with a line containing only `---`. Write real values... Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+This is ambiguous. However, looking at typical usage in previous examples (not provided), likely we need to output the three reasoning documents (fact_enumeration, consideration_enumeration, reasoning) and then the verdict document? But they say "the last document before the verdict (the applicability document when the case does not govern)" — maybe they intend that we output the first three documents (fact_enumeration, consideration_enumeration, reasoning) as our thinking, then output </think>, and then output the verdict as the reply? But they say "then write the verdict document as your reply." That suggests that the final reply should be the verdict document only? No, they say "Your reply is your reasoning step: it contains only these documents." Actually earlier: "This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards." That seems to indicate that the assistant should output only the YAML documents (the reasoning) and not the verdict? But later they say "then write the verdict document as your reply." Let's read the exact instruction at the end:
+
+"- This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards.
+
+Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+I think the correct interpretation is: We should output the three reasoning documents (fact_enumeration, consideration_enumeration, reasoning) and then </think>? But they explicitly mention "verdict document as your reply". Let's look at the format they provided:
+
+kind: fact_enumeration
+...
+kind: consideration_enumeration
+...
+kind: reasoning
+...
+kind: verdict
+...
+
+They want all four documents in order. And they say "Separate documents with a line containing only `---`." So we should output:
+
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+
+Then after that, we should output </think>? The phrase "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern)" suggests that maybe they want the thinking (i.e., the first three documents) to be closed with </think>, and then the verdict separate. But that seems contradictory.
+
+Given typical instruction style in these simulated tasks, they often expect the assistant to output the YAML documents (the reasoning) and then the verdict as part of the same reply, following the structure. I'll output all four documents separated by "---" and then end with no extra text. However, they explicitly say "Close your thinking with  and then write the verdict document as your reply." That might mean that after outputting the first three documents and 	, you output the verdict. But that would duplicate the verdict? I'll output all four as per the format, which includes the verdict. That seems safest because they asked for "your reasoning step" but also want the verdict choice. Since we need to log the recusal and send comms, we might need to call tools after reasoning. But the instruction says "Do not call any tools in it; your tool calls come afterwards." So we should not call tools in this reply; we should just output the reasoning documents and verdict. Then we can later call tools (like log.write and comms.send). But the current reply should be the reasoning and verdict. However, the user is asking "Let me know if any additional guidance is needed." We need to respond with guidance: recuse the staff member. So we should output the verdict and reasoning.
+
+Thus I'll output the four YAML documents as described.
+
+Let's format correctly:
+
+kind: fact_enumeration
+frame:
+  question: "Should the staff member with prior involvement with the animal‑rescue nonprofit be recused from the IRS's assessment of its tax‑exempt status?"
+  decider: "The IRS staff member acting under 5 C.F.R. §2635.802(b) and conflict‑of‑interest policy."
+  my_role: "Identify whether recusal is required and ensure compliance; do not make the final determination but follow policy."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."} Wait need to write in own words: "The staff member was a founding volunteer of the animal‑rescue nonprofit that filed a pending Form 1023 for tax‑exempt status."
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires that the staff member must be recused from any IRS determination regarding the tax‑exempt status of this organization when a personal interest exists."}
+  - {id: LIVE-F3, kind: prior involvement, status: confirmed, fact: "The staff member's founding volunteer role constitutes a personal interest in the nonprofit's outcome."}
+  - {id: LIVE-F4, kind: recommendation, status: assessed, fact: "The ethics officer recommends excluding the staff member from the determination."}
+  - {id: LIVE-F5, kind: internal record, status: confirmed, fact: "Case NR-2024-067 is under review; no final decision has been logged yet."}
+options:
+  LIVE-O1: "Recuse the staff member from the IRS assessment of the nonprofit's exemption request per 5 C.F.R. §2635.802(b)."
+  LIVE-O2: "Allow the staff member to participate in the assessment, relying on the preliminary impact analysis that suggests limited effect."
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: "conflict_of_interest", favors: [LIVE-O1], weight: strong, why: "5 C.F.R. §2635.802(b) mandates recusal when a personal interest exists. The staff member's founding volunteer role is a personal interest, so participation would violate the regulation."}
+  - {id: LIVE-C2, facts: [LIVE-F4], equity: "institutional_credibility", favors: [LIVE-O1], weight: moderate, why: "The ethics officer's recommendation aligns with safest path; maintaining credibility requires following policy."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: "due_process", favors: [LIVE-O1], weight: moderate, why: "Recusal ensures no perceived bias; the case is still under review, so recusal can be applied without delaying the process."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: "mission_effect", favors: [LIVE-O2], weight: weak, why: "The preliminary impact analysis suggests limited effect, and the staff member could provide useful familiarity."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: "analytic_integrity", favors: [LIVE-O1], weight: moderate, why: "Ensuring unbiased analysis protects record integrity and avoids later challenges."}
+
+kind: reasoning
+weighing: "The regulatory requirement (5 C.F.R. §2635.802(b)) is mandatory and must be followed. While the preliminary impact analysis suggests limited effect, the policy explicitly says the staff member must be recused when a personal interest exists. The ethics officer's recommendation supports recusal. Considering institutional credibility, due process, and analytic integrity, recusal is the safest and compliant course. The weak consideration about limited effect does not override the strong regulatory bar."
+tradecraft: "Implement recusal by removing the staff member from any substantive review, decision‑making, or written assessment of the Form 1023 exemption request. Assign the review to another exempt‑status reviewer. Document the recusal action in the audit trail and notify the relevant team."
+uncertainty: "Uncertainty exists only about the extent of the staff member's involvement; however, the founding volunteer role qualifies as a personal interest under the regulation. No contradictory internal guidance was found."
+handoff: "The staff member will be recused; the tax desk will continue processing other submissions. The ethics officer and reviewer will assign another reviewer for the animal‑rescue nonprofit's case."
+tempting_wrong: {option: LIVE-O2, pull: "Allowing the staff member to participate might seem efficient and familiar, but it conflicts with mandatory recusal.", why_wrong: "Violates 5 C.F.R. §2635.802(b) and creates a conflict of interest."}
+rejected: {LIVE-O2: "Reject because it would place the staff member in a position where personal interest could influence the determination, contrary to policy."}
+
+kind: verdict
+choice: LIVE-O1
+course: "Recuse the staff member from the IRS assessment of the animal‑rescue nonprofit's tax‑exempt status request."
+decisive: [LIVE-C1]
+now:
+  - "Log the recusal decision in the audit trail using log.write and send a notification to the tax desk and ethics officer via comms.send to assign a different reviewer."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the staff member had no personal interest (e.g., no founding volunteer role)", then: LIVE-O2, why: "Then recusal would not be required by §2635.802(b)."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the staff member's involvement were purely professional without personal stake", why: "Recusal would still be required only when a personal interest exists; the founding volunteer role constitutes a personal interest."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any attempt to reassign the staff member back to the review", favors: [LIVE-O2], why: "Monitor for inadvertent reassignment; reinforce recusal policy."}
+
+Now output with "---" separators.
+
+Let's produce the final answer.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the staff member with prior involvement with the animal‑rescue nonprofit be recused from the IRS's assessment of its tax‑exempt status?"
+  decider: "The IRS staff member acting under 5 C.F.R. §2635.802(b) and conflict‑of‑interest policy."
+  my_role: "Identify whether recusal is required and ensure compliance; do not make the final determination but follow policy."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The staff member was a founding volunteer of the animal‑rescue nonprofit that filed a pending Form 1023 for tax‑exempt status."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires that the staff member must be recused from any IRS determination regarding the tax‑exempt status of this organization when a personal interest exists."}
+  - {id: LIVE-F3, kind: prior involvement, status: confirmed, fact: "The staff member's founding volunteer role constitutes a personal interest in the nonprofit's outcome."}
+  - {id: LIVE-F4, kind: recommendation, status: assessed, fact: "The ethics officer recommends excluding the staff member from the determination."}
+  - {id: LIVE-F5, kind: internal record, status: confirmed, fact: "Case NR-2024-067 is under review; no final decision has been logged yet."}
+options:
+  LIVE-O1: "Recuse the staff member from the IRS assessment of the nonprofit's exemption request per 5 C.F.R. §2635.802(b)."
+  LIVE-O2: "Allow the staff member to participate in the assessment, relying on the preliminary impact analysis that suggests limited effect."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: "conflict_of_interest", favors: [LIVE-O1], weight: strong, why: "5 C.F.R. §2635.802(b) mandates recusal when a personal interest exists. The staff member's founding volunteer role is a personal interest, so participation would violate the regulation."}
+  - {id: LIVE-C2, facts: [LIVE-F4], equity: "institutional_credibility", favors: [LIVE-O1], weight: moderate, why: "The ethics officer's recommendation aligns with safest path; maintaining credibility requires following policy."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: "due_process", favors: [LIVE-O1], weight: moderate, why: "Recusal ensures no perceived bias; the case is still under review, so recusal can be applied without delaying the process."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: "mission_effect", favors: [LIVE-O2], weight: weak, why: "The preliminary impact analysis suggests limited effect, and the staff member could provide useful familiarity."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: "analytic_integrity", favors: [LIVE-O1], weight: moderate, why: "Ensuring unbiased analysis protects record integrity and avoids later challenges."}
+---
+kind: reasoning
+weighing: "The regulatory requirement (5 C.F.R. §2635.802(b)) is mandatory and must be followed. While the preliminary impact analysis suggests limited effect, the policy explicitly says the staff member must be recused when a personal interest exists. The ethics officer's recommendation supports recusal. Considering institutional credibility, due process, and analytic integrity, recusal is the safest and compliant course. The weak consideration about limited effect does not override the strong regulatory bar."
+tradecraft: "Implement recusal by removing the staff member from any substantive review, decision‑making, or written assessment of the Form 1023 exemption request. Assign the review to another exempt‑status reviewer. Document the recusal action in the audit trail and notify the relevant team."
+uncertainty: "Uncertainty exists only about the extent of the staff member's involvement; however, the founding volunteer role qualifies as a personal interest under the regulation. No contradictory internal guidance was found."
+handoff: "The staff member will be recused; the tax desk will continue processing other submissions. The ethics officer and reviewer will assign another reviewer for the animal‑rescue nonprofit's case."
+tempting_wrong: {option: LIVE-O2, pull: "Allowing the staff member to participate might seem efficient and familiar, but it conflicts with mandatory recusal.", why_wrong: "Violates 5 C.F.R. §2635.802(b) and creates a conflict of interest."}
+rejected: {LIVE-O2: "Reject because it would place the staff member in a position where personal interest could influence the determination, contrary to policy."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Recuse the staff member from the IRS assessment of the animal‑rescue nonprofit's tax‑exempt status request."
+decisive: [LIVE-C1]
+now:
+  - "Log the recusal decision in the audit trail using log.write and send a notification to the tax desk and ethics officer via comms.send to assign a different reviewer."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the staff member had no personal interest (e.g., no founding volunteer role)", then: LIVE-O2, why: "Then recusal would not be required by §2635.802(b)."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the staff member's involvement were purely professional without personal stake", why: "Recusal would still be required only when a personal interest exists; the founding volunteer role constitutes a personal interest."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any attempt to reassign the staff member back to the review", favors: [LIVE-O2], why: "Monitor for inadvertent reassignment; reinforce recusal policy."}

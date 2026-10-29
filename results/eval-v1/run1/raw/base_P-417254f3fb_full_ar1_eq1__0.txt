@@ -1,0 +1,184 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Whether to authorize weapons release against ground fire near grid 12A given uncertainty about friendly presence."
+  decider: "AWACS controller with authority to grant weapon requests but must obtain higher authority clearance when uncertain about friendly presence."
+  my_role: "Can decide to grant or refuse weapons request; must request higher authority clearance if uncertain; cannot authorize lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile fire near grid 12A and requests weapons release."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "Thermal imaging shows a convoy of friendly armored vehicles moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Comms chatter reports possible civilian activity in adjacent sector."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Standing orders require obtaining higher authority clearance before employing lethal weapons when there is any uncertainty about friendly presence."}
+  - {id: LIVE-F5, kind: request, status: ongoing, fact: "Flight lead repeatedly requests weapons release despite controller's earlier log of uncertainty."}
+options:
+  LIVE-O1: "Authorize weapons release on identified ground fire now."
+  LIVE-O2: "Refuse weapons release and hold fire until further notice or higher authority clearance; request additional intelligence if needed."
+
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Whether to approve a dynamic strike on a building where militants were planning a meeting, given incomplete intelligence about religious status and possible civilian presence."
+  decider: "Target engagement authority with authority to approve kinetic strikes."
+  role: "Decide whether to approve, request more intelligence, or deny the strike."
+note: "Both situations involve a request to use lethal force (weapons release vs strike approval) under uncertainty about friendly/civilian presence and incomplete intelligence about protected status (religious facility vs friendly convoy). The AWACS controller must follow standing orders to obtain higher authority clearance when uncertain about friendly presence."
+options:
+  LIVE-O1: REF1-O1 (approve strike)
+  LIVE-O2: REF1-O2 (request more intelligence)
+matched:
+  - {live: LIVE-F2, case: REF1-F2}  # confirmed surveillance/intel confirming target presence
+  - {live: LIVE-F1, case: REF1-F1}  # intelligence indicating hostile/combatant gathering
+corresponding:
+  - {live: LIVE-F3, case: REF1-F7}  # religious nature of facility not conveyed (live: possible civilian/friendly convoy uncertainty)
+live_only:
+  - LIVE-F4 (standing order requiring higher authority clearance on uncertainty)
+  - LIVE-F5 (flight repeatedly requesting weapons)
+case_only:
+  - REF1-F3 (situation: ungoverned area), REF1-F6 (no-strike list), REF1-F9 (preventable error)
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F4], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Flight reports hostile fire but thermal shows friendly convoy nearby; uncertainty about friendly presence triggers standing order to seek clearance. Prioritizing civilian safety avoids fratricide."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: medium, why: "Flight is under fire and requests weapons for self-defense; releasing weapons could protect own force."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F3], equity: hors_de_combat, favors: [LIVE-O2], weight: medium, why: "Friendly convoy present; unclear if ground fire is hostile or friendly mistaken fire; precaution requires verifying before engaging."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Standing order mandates higher authority clearance when any uncertainty about friendly presence exists."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Repeated requests for weapons but need to follow protocol; providing clear rationale helps fairness."}
+
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}  # civilian life equity, not informed about religious nature
+  - {live: LIVE-C3, case: REF1-C2}  # possible civilian present
+  - {live: LIVE-C4, case: REF1-C3/C4? Actually REF1-C3 favors O2 due to lawful authority (proportionality reliance), REF1-C4 favors O2 due to protected activity; LIVE-C4 directly references standing order.
+corresponding:
+  - {live: LIVE-C2, case: REF1-C3}  # own force life / urgency of strike (similar desire to act quickly)
+  - {live: LIVE-C5, case: REF1-C5}  # oversight candor ( documenting request)
+live_only: [LIVE-C4]  # explicit standing order requirement
+case_only: [REF1-C3, REF1-C4, REF1-C5]
+
+kind: applicability
+case: REF1
+frame:
+  question: same_kind (both involve lethal force decision under incomplete intel about protected status/civilian presence)
+  decider: same_kind (both a decision authority with ability to approve/deny/request intel)
+  role: same_kind (both must weigh equities and follow protocol)
+governs: true
+why: "The same equities (civilian_life, hors_de_combat, lawful_authority) and similar decision type (approve vs request intel) are in play. The case's reasoning about pausing when key contextual data (religious status, civilian presence) is missing directly applies, even though the facts differ (friendly convoy vs militants meeting)."
+
+kind: reasoning
+case: REF1
+case_approach: "The case recommends requesting more intelligence when uncertain about protected status and civilian presence, pausing the strike, and documenting the gap."
+weighing: "LIVE-C1 (civilian_life) and LIVE-C4 (lawful_authority) are strong and decisive because the standing order requires clearance on any uncertainty about friendly presence. LIVE-C2 (own_force_life) and LIVE-C3 (hors_de_combat) are medium; urgency to defend own force is important but secondary to precaution and legal requirement. Thus LIVE-O2 (hold fire and seek clearance/intelligence) is favored."
+tradecraft: "Inform flight lead that due to confirmed friendly convoy presence and uncertainty about ground fire origin, we cannot authorize weapons release. Request higher authority clearance per standing orders. Log the decision, communicate rationale (precaution, fratricide risk), and offer to provide additional sensor snapshots if they need reassurance. Do not delay flight safety unnecessarily; advise defensive maneuvers while hold fire."
+uncertainty: "Uncertainty remains whether the ground fire is hostile or friendly mistaken fire; thermal shows only friendly convoy, no hostile signatures yet. Would change decision to LIVE-O1 if higher authority explicitly confirms no friendly presence and authorizes engagement."
+handoff: "The controller must request higher authority clearance for weapons release; cannot grant lethal authorization themselves due to uncertainty. Flight lead should continue defensive actions (e.g., maneuver, use standby armament if non-lethal). Legal/intelligence teams should update status on convoy and fire origin."
+tempting_wrong: {option: LIVE-O2, pull: "The flight is under fire and wants to engage now; seems practical to release weapons quickly.", why_wrong: "Violates standing order requiring clearance on uncertainty about friendly presence, risks fratricide to friendly convoy, and ignores precaution obligations."}
+rejected: {LIVE-O1: "Cannot authorize lethal weapons without higher authority clearance due to confirmed friendly convoy and uncertainty about fire origin; would risk fratricide and breach lawful authority."}
+
+kind: verdict
+choice: LIVE-O2
+course: "Refuse the weapons request, hold fire, and request higher authority clearance while continuing to monitor and provide sensor updates."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C4]
+now:
+  - "Send a clear comms message to flight lead denying weapons release, explaining precaution and standing order; request higher authority clearance reference; offer to share latest intel snapshot."
+  - "Log the decision with rationale referencing civilian_life and lawful_authority equities."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Higher authority explicitly confirms no friendly vehicles in grid 12A and authorizes engagement", then: LIVE-O1, why: "If certainty about absence of friendly presence is obtained, standing order uncertainty requirement lifts."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Thermal imagery continues to show friendly convoy present without hostile signatures", why: "Continued presence of friendly convoy maintains uncertainty; decision to hold fire remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sensor snapshot confirming hostile signatures or no friendly convoy", favors: [LIVE-O1], why: "If hostile signatures confirmed and friendly convoy absent, clearance may be granted promptly."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Whether to authorize weapons release against ground fire near grid 12A given uncertainty about friendly presence."
+  decider: "AWACS controller with authority to grant weapon requests but must obtain higher authority clearance when there is any uncertainty about friendly presence."
+  my_role: "Can decide to grant or refuse weapons request; must request higher authority clearance if uncertain; cannot authorize lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile fire near grid 12A and requests weapons release."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "Thermal imaging shows a convoy of friendly armored vehicles moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Comms chatter reports possible civilian activity in adjacent sector."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Standing orders require obtaining higher authority clearance before employing lethal weapons when there is any uncertainty about friendly presence."}
+  - {id: LIVE-F5, kind: request, status: ongoing, fact: "Flight lead repeatedly requests weapons release despite controller's earlier log of uncertainty."}
+options:
+  LIVE-O1: "Authorize weapons release on identified ground fire now."
+  LIVE-O2: "Refuse weapons release and hold fire until further notice or higher authority clearance; request additional intelligence if needed."
+
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: "Both situations involve a request to use lethal force (weapons release vs strike approval) under uncertainty about friendly/civilian presence and incomplete intelligence about protected status (religious facility vs friendly convoy). The AWACS controller must follow standing orders to obtain higher authority clearance when uncertain about friendly presence."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F1, case: REF1-F1}
+corresponding:
+  - {live: LIVE-F3, case: REF1-F7}
+live_only:
+  - LIVE-F4
+  - LIVE-F5
+case_only:
+  - REF1-F3
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F4], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Flight reports hostile fire but thermal shows friendly convoy nearby; uncertainty about friendly presence triggers standing order. Prioritizing civilian safety avoids fratricide."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: medium, why: "Flight is under fire and requests weapons for self-defense; releasing weapons could protect own force."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F3], equity: hors_de_combat, favors: [LIVE-O2], weight: medium, why: "Friendly convoy present; unclear if ground fire is hostile or friendly mistaken fire; precaution requires verifying before engaging."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Standing order mandates higher authority clearance when any uncertainty about friendly presence exists."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: due_process, favors: [LIVE-O2], weight: weak, why: "Repeated requests for weapons but need to follow protocol; providing clear rationale helps fairness."}
+
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C3, case: REF1-C2}
+  - {live: LIVE-C4, case: REF1-C3/C4}
+corresponding:
+  - {live: LIVE-C2, case: REF1-C3}
+  - {live: LIVE-C5, case: REF1-C5}
+live_only: [LIVE-C4]
+case_only: [REF1-C3, REF1-C4, REF1-C5]
+
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: true
+why: "Same equities (civilian_life, hors_de_combat, lawful_authority) and similar decision type (approve vs request intel) apply; case reasoning about pausing when key contextual data (religious status, civilian presence) is missing directly informs current decision."
+
+kind: reasoning
+case: REF1
+case_approach: "The case recommends requesting more intelligence when uncertain about protected status and civilian presence, pausing the strike, and documenting the gap."
+weighing: "LIVE-C1 (civilian_life) and LIVE-C4 (lawful_authority) are strong and decisive because the standing order requires clearance on any uncertainty about friendly presence. LIVE-C2 (own_force_life) and LIVE-C3 (hors_de_combat) are medium; urgency to defend own force is important but secondary to precaution and legal requirement. Thus LIVE-O2 (hold fire and seek clearance/intelligence) is favored."
+tradecraft: "Inform flight lead that due to confirmed friendly convoy presence and uncertainty about ground fire origin, we cannot authorize weapons release. Request higher authority clearance per standing orders. Log the decision, communicate rationale (precaution, fratricide risk), and offer to provide latest sensor snapshot if they need reassurance. Continue defensive maneuvers while hold fire."
+uncertainty: "Uncertainty remains whether the ground fire is hostile or friendly mistaken fire; thermal shows only friendly convoy, no hostile signatures yet. Would change decision to LIVE-O1 if higher authority explicitly confirms no friendly presence and authorizes engagement."
+handoff: "Controller must request higher authority clearance for weapons release; cannot grant lethal authorization themselves due to uncertainty. Flight lead should continue defensive actions (e.g., maneuver, use standby armament if non-lethal). Intelligence team updates status on convoy and fire origin."
+tempting_wrong: {option: LIVE-O2, pull: "The flight is under fire and wants to engage now; seems practical to release weapons quickly.", why_wrong: "Violates standing order requiring clearance on uncertainty about friendly presence, risks fratricide to friendly convoy, and ignores precaution obligations."}
+rejected: {LIVE-O1: "Cannot authorize lethal weapons without higher authority clearance due to confirmed friendly convoy and uncertainty about fire origin; would risk fratricide and breach lawful authority."}
+
+kind: verdict
+choice: LIVE-O2
+course: "Refuse the weapons request, hold fire, and request higher authority clearance while continuing to monitor and provide sensor updates."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C4]
+now:
+  - "Send a clear comms message to flight lead denying weapons release, explaining precaution and standing order; request higher authority clearance reference; offer to share latest intel snapshot."
+  - "Log the decision with rationale referencing civilian_life and lawful_authority equities."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Higher authority explicitly confirms no friendly vehicles in grid 12A and authorizes engagement", then: LIVE-O1, why: "If certainty about absence of friendly presence is obtained, standing order uncertainty requirement lifts."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Thermal imagery continues to show friendly convoy present without hostile signatures", why: "Continued presence of friendly convoy maintains uncertainty; decision to hold fire remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sensor snapshot confirming hostile signatures or no friendly convoy", favors: [LIVE-O1], why: "If hostile signatures confirmed and friendly convoy absent, clearance may be granted promptly."}

@@ -1,0 +1,158 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should employee 4729 recuse themselves from participating in the IRS determination of tax‑exempt status for the neighborhood animal‑rescue group (application A-2023-987)?"
+  decider: "The employee (4729) and the ethics office must decide whether a conflict of interest requires recusal under 5 C.F.R. §2635.802(b)."
+  my_role: "As the exempt‑status reviewer, I must determine compliance with the regulation; any recusal decision must be logged and ethics office consulted."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee 4729 helped found a neighborhood animal‑rescue group."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Employee 4729 is assigned to case A-2023-987 (the animal‑rescue group’s tax‑exempt application)." }
+  - {id: LIVE-F3, kind: regulation, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires employees to recuse themselves from any matter in which they have a personal interest, including determinations of tax‑exempt status for organizations with which they are affiliated." }
+  - {id: LIVE-F4, kind: workload, status: assessed, fact: "Queue Q-07 is at 73% capacity, indicating moderate workload pressure." }
+  - {id: LIVE-F5, kind: pending, status: pending, fact: "Ticket T-4512 is pending for an unrelated 990 filing; ticket T-4521 for charity X must be submitted by 2023‑11‑15." }
+options:
+  LIVE-O1: "Employee 4729 participates in the IRS determination of tax‑exempt status for the animal‑rescue group."
+  LIVE-O2: "Employee 4729 recuses themselves from participating in the IRS determination and steps aside (or is assigned to a backup reviewer)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "What should the target engagement authority do regarding approval of a dynamic strike?"
+  decider: "target engagement authority"
+  role: "decide"
+note: "The REF1 case deals with a military strike decision under time‑critical conditions; the equity considerations (civilian life, proportionality, etc.) are analogous to the need to avoid bias or conflict in tax‑exempt determinations. However, the domains differ (military vs. tax compliance). The mapping is primarily on the principle of pausing or requesting additional information when there is uncertainty or a potential conflict."
+options:
+  LIVE-O1: null
+  LIVE-O2: REF1-O2 (i.e., request more intelligence / pause action)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Employee involvement with the animal‑rescue group creates a personal interest; per 5 C.F.R. §2635.802(b), personal interest requires recusal to avoid bias." }
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Maintaining trust in the IRS and avoiding appearance of conflict supports recusal; compliance with regulation is essential." }
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: tempo, favors: [LIVE-O1], weight: weak, why: "High queue utilization may create pressure to expedite; participation could speed up processing." }
+  - {id: LIVE-C4, facts: [LIVE-F5], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Unrelated pending filings do not directly affect the decision; could allocate employee to routine tasks." }
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}]  # both involve civilian protection / fairness
+corresponding: [{live: LIVE-C2, case: REF1-C1}]  # institutional integrity vs analytic integrity
+live_only: [LIVE-C3, LIVE-C4]
+case_only: [REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind  # both involve a decision under pressure where incomplete information or personal interest could affect fairness
+  decider: same_kind  # both involve a decision-maker with authority
+  role: same_kind  # both involve a decision that can be paused for additional info
+governs: false
+why: "The REF1 case is about a military strike with different equities (civilian life, proportionality) and domain; while the principle of pausing when uncertain or conflicted aligns, the specific regulation (5 C.F.R. §2635.802(b)) is definitive and mandatory. The case does not directly govern the recusal requirement under the regulation, though it illustrates reasoning when faced with uncertainty."
+---
+kind: reasoning
+case: REF1
+case_approach: "When uncertain about a protected status or civilian presence, pause the decision and request additional intelligence."
+weighing: "Considerations LIVE-C1 and LIVE-C2 (strong) directly require recusal per regulation and credibility; LIVE-C3 (weak) reflects workload pressure but does not override mandatory conflict rule. Therefore, recusal is the appropriate course."
+tradecraft: "Log the recusal decision in the Ethics Registry, assign the case to a backup reviewer (if available), and inform the backup reviewer of the conflict rationale. Follow up with ethics office for guidance if needed."
+uncertainty: "Uncertainty remains about backup reviewer availability, but recusal is required regardless; the backup reviewer can handle the determination."
+handoff: "The decision to recuse should be made by the employee; the ethics office will confirm guidance; assignment to backup reviewer is a routine operational step."
+tempting_wrong: {option: LIVE-O1, pull: "Employee helped found the group, but involvement is limited and may not materially impair performance; we could proceed quickly.", why_wrong: "Ignoring 5 C.F.R. §2635.802(b) violates strict conflict‑of‑interest policy and risks appearance of bias." }
+rejected: {LIVE-O1: "Contravenes regulation; employee must recuse."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Employee 4729 recuses themselves from participating in the IRS determination of tax‑exempt status for the animal‑rescue group (case A-2023-987) and the case is assigned to a backup reviewer."
+relation: not_governed
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Record recusal in the Ethics Registry using log.query or appropriate entry; notify backup reviewer availability."
+  - "Send confirmation to ethics_office (already done) and follow up on backup reviewer status."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the employee had no personal affiliation (i.e., did not help found the group)", then: LIVE-O1, why: "No conflict would exist; recusal not required."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the regulation permitted participation despite affiliation", why: "Recusal would still be required because regulation is mandatory."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Backup reviewer availability confirmation", favors: [LIVE-O2], why: "Ensures smooth transition; monitor queue Q-07 status."}
+
+Now output the reasoning documents (YAML) and then the verdict. Since the instruction says to write reasoning as YAML documents separated by '---' and close with </think> after the last document before verdict, then write verdict as reply. We'll output all these YAML docs in order.
+
+We must not call tools now; we already sent comms to ethics_office. But we need to log recusal. However, the user asked to confirm conflict check and decide quickly. Our verdict is recusal. We should also log recusal decision in Ethics Registry via log? The tool log.query retrieves logs; there may be a log entry for recusal. But we cannot directly log via tools? The instruction says "accurate logging of any recusal decisions in the Ethics Registry". Probably we need to use some tool? Not provided. However, we can note that we will log it. But we must respond with reasoning and verdict.
+
+Thus final answer should be the YAML documents as described, ending with verdict. Let's produce them.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should employee 4729 recuse themselves from participating in the IRS determination of tax‑exempt status for the neighborhood animal‑rescue group (application A-2023-987)?"
+  decider: "The employee (4729) and the ethics office must decide whether a conflict of interest requires recusal under 5 C.F.R. §2635.802(b)."
+  my_role: "As the exempt‑status reviewer, I must determine compliance with the regulation; any recusal decision must be logged and ethics office consulted."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee 4729 helped found a neighborhood animal‑rescue group."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Employee 4729 is assigned to case A-2023-987 (the animal‑rescue group’s tax‑exempt application)." }
+  - {id: LIVE-F3, kind: regulation, status: confirmed, fact: "5 C.F.R. §2635.802(b) requires employees to recuse themselves from any matter in which they have a personal interest, including determinations of tax‑exempt status for organizations with which they are affiliated." }
+  - {id: LIVE-F4, kind: workload, status: assessed, fact: "Queue Q-07 is at 73% capacity, indicating moderate workload pressure." }
+  - {id: LIVE-F5, kind: pending, status: pending, fact: "Ticket T-4512 is pending for an unrelated 990 filing; ticket T-4521 for charity X must be submitted by 2023‑11‑15." }
+options:
+  LIVE-O1: "Employee 4729 participates in the IRS determination of tax‑exempt status for the animal‑rescue group."
+  LIVE-O2: "Employee 4729 recuses themselves from participating in the IRS determination and steps aside (or is assigned to a backup reviewer)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind  # both involve a decision under pressure where uncertainty or personal interest could affect fairness
+  decider: same_kind
+  role: same_kind
+note: "The REF1 case deals with a military strike decision under time‑critical conditions; the principle of pausing or requesting additional information when there is uncertainty or a potential conflict is conceptually similar. However, the domains (military vs. tax compliance) and the specific regulation differ."
+options:
+  LIVE-O1: null
+  LIVE-O2: REF1-O2 (i.e., request more intelligence / pause action)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Employee involvement with the animal‑rescue group creates a personal interest; per 5 C.F.R. §2635.802(b), personal interest requires recusal to avoid bias." }
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3], equity: institutional_credibility, favors: [LIVE-O2], weight: strong, why: "Maintaining trust in the IRS and avoiding appearance of conflict supports recusal; compliance with regulation is essential." }
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: tempo, favors: [LIVE-O1], weight: weak, why: "High queue utilization may create pressure to expedite; participation could speed up processing." }
+  - {id: LIVE-C4, facts: [LIVE-F5], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Unrelated pending filings do not directly affect the decision; could allocate employee to routine tasks." }
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}]  # both involve civilian protection / fairness
+corresponding: [{live: LIVE-C2, case: REF1-C1}]  # institutional integrity vs analytic integrity
+live_only: [LIVE-C3, LIVE-C4]
+case_only: [REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: "The REF1 case is about a military strike with different equities (civilian life, proportionality) and domain; while the principle of pausing when uncertain or conflicted aligns, the specific regulation (5 C.F.R. §2635.802(b)) is definitive and mandatory. The case does not directly govern the recusal requirement under the regulation, though it illustrates reasoning when faced with uncertainty."
+---
+kind: reasoning
+case: REF1
+case_approach: "When uncertain about a protected status or civilian presence, pause the decision and request additional intelligence."
+weighing: "Considerations LIVE-C1 and LIVE-C2 (strong) directly require recusal per regulation and credibility; LIVE-C3 (weak) reflects workload pressure but does not override mandatory conflict rule. Therefore, recusal is the appropriate course."
+tradecraft: "Log the recusal decision in the Ethics Registry, assign the case to a backup reviewer (if available), and inform the backup reviewer of the conflict rationale. Follow up with ethics office for guidance if needed."
+uncertainty: "Uncertainty remains about backup reviewer availability, but recusal is required regardless; the backup reviewer can handle the determination."
+handoff: "The decision to recuse should be made by the employee; the ethics office will confirm guidance; assignment to backup reviewer is a routine operational step."
+tempting_wrong: {option: LIVE-O1, pull: "Employee helped found the group, but involvement is limited and may not materially impair performance; we could proceed quickly.", why_wrong: "Ignoring 5 C.F.R. §2635.802(b) violates strict conflict‑of‑interest policy and risks appearance of bias." }
+rejected: {LIVE-O1: "Contravenes regulation; employee must recuse."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Employee 4729 recuses themselves from participating in the IRS determination of tax‑exempt status for the animal‑rescue group (case A-2023-987) and the case is assigned to a backup reviewer."
+relation: not_governed
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Record recusal in the Ethics Registry using the appropriate log entry; notify backup reviewer availability."
+  - "Confirm with the ethics office (already messaged) and check backup reviewer status via queue status if needed."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the employee had no personal affiliation (i.e., did not help found the group)", then: LIVE-O1, why: "No conflict would exist; recusal not required."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If the regulation permitted participation despite affiliation", why: "Recusal would still be required because regulation is mandatory."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Backup reviewer availability confirmation", favors: [LIVE-O2], why: "Ensures smooth transition; monitor queue Q-07 status."}

@@ -1,0 +1,404 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire, given uncertainty about friendly presence and pending higher authority clearance?"
+  decider: "The airborne controller, with authority to grant weapon requests only after obtaining higher authority clearance when there is any uncertainty about friendly presence."
+  my_role: "Decide based on available intelligence, higher authority consultation status, and safety considerations; cannot unilaterally grant lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile ground fire near grid 12A and requests weapons release multiple times (21:24:10Z, 21:24:45Z, 21:25:30Z)."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "INTEL FEED 21:23:55Z shows a friendly armored convoy moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "SAFIRE report 21:24:10Z indicates friendly ground forces present near grid 12A, no hostile activity confirmed."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controller consulted higher authority regarding weapon request; response pending."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "At 21:26:11Z, the flight called self-defence and initiated weapons release (muzzle flash and impact reported), two minutes after receiving SAFIRE report and ten seconds after bomb impact."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "Controller repeatedly limited flight's actions despite multiple weapon requests; after self-defence call, controller feels unable to influence flight's actions."}
+options:
+  LIVE-O1: "Grant the flight's request to employ weapons immediately."
+  LIVE-O2: "Refuse the request to employ weapons, hold fire until higher authority provides clearance or friendly presence is ruled out."
+  LIVE-O3: "Ask higher authority again for clarification before deciding (though already consulted)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire while suspecting friendly forces nearby and awaiting higher authority clearance?"
+  decider: "The airborne controller"
+  role: "Decide with authority to grant lethal weapons only after obtaining higher authority clearance when uncertainty about friendly presence exists."
+note: "Both situations involve a flight requesting weapons against observed ground fire near friendly forces, controller consulted higher authority, flight initiates self-defence attack after controller's refusals."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: null (case has no direct equivalent; REF1-O3 is asking higher authority again, but case's deliberation already consulted)
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "Controller had a hunch that friendly forces might be present; here intelligence shows friendly convoy present."}]
+live_only: [LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6]
+case_only: [REF1-F3, REF1-F8] (case had SAFIRE report two minutes before disengage call)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F6], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Flight requests weapons multiple times while friendly convoy is confirmed present (LIVE-F2), controller has repeatedly limited actions due to uncertainty about friendly presence; risk of fratricide if weapons are released without confirmation that no friendly forces are in the target area."}
+  - {id: LIVE-C2, facts: [LIVE-F4, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Controller consulted higher authority; response pending. Without explicit clearance from higher authority, granting lethal weapons would violate lawful authority and ROE."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F6], equity: chain_of_command, favors: [LIVE-O2], weight: weak, why: "After flight declared self-defence at 21:26:11Z, controller feels unable to influence flight's actions; however, controller still retains authority to prevent fratricide if clearance absent."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: escalation_control, favors: [LIVE-O2], weight: weak, why: "Disengage request sent at 21:26:11Z ten seconds after bomb impact; releasing weapons earlier would increase escalation risk."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Flight perceives immediate threat from hostile ground fire sustaining approach vector; self-preservation urgency."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: humanitarian_access, favors: [LIVE-O1], weight: low, why: "Observed ground fire might be harming civilians, but no confirmation; urge to neutralize threat quickly."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}]
+corresponding: [{live: LIVE-C2, case: REF1-C2}]
+live_only: [LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+governs: true
+why: "The case's core considerations (own_force_life and lawful_authority) match directly; the situation differs in that here we have confirmed friendly convoy intelligence (LIVE-F2) and pending higher authority response (LIVE-F4), which align with case facts (hunch + consultation). The case's reasoning about strong considerations outweighing weaker ones applies."
+---
+kind: reasoning
+case: REF1
+case_approach: "Refuse weapon employment when there is reasonable doubt about friendly presence and no higher authority clearance has been received; do not grant after flight self-defence call because controller cannot influence flight but must prevent fratricide."
+weighing: "Strong considerations LIVE-C1 (own_force_life) and LIVE-C2 (lawful_authority) dominate. LIVE-C5 (urgency) is moderate but outweighed by risk of fratricide and lack of clearance. LIVE-C3 and LIVE-C4 are weaker; LIVE-C6 is low. Thus overall favors LIVE-O2."
+tradecraft: "Continue to hold fire, inform flight that weapons release is pending higher authority clearance; transmit clear hold-fire order; log the decision with timestamps; repeat that no clearance exists; monitor for definitive SAFIRE report confirming enemy fire and no friendly presence, which would flip to LIVE-O1 per case flip condition."
+uncertainty: "Uncertainty about exact friendly force location relative to target; intelligence shows convoy near grid 12A but not exact position. If higher authority provides explicit clearance or definitive enemy identification without friendly presence, then LIVE-O1 would be appropriate."
+handoff: "Controller decides now to refuse (LIVE-O2) because higher authority has not granted clearance and uncertainty persists. Further clarification request already made; no need to ask again. Flight's self-defence call does not override controller's duty to prevent fratricide without clearance."
+tempting_wrong: {option: LIVE-O2, pull: "Desire to prevent enemy fire quickly and protect ground troops", why_wrong: "Granting weapons without clearance risks fratricide and violates lawful authority; the case shows this is wrong."}
+rejected: {LIVE-O1: "Granting weapons would violate lawful authority (no clearance) and increase fratricide risk given confirmed friendly convoy presence.", LIVE-O3: "Asking higher authority again is redundant since consultation already pending; no benefit in delaying clearance further."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Refuse the flight's request to employ weapons, hold fire, and inform the flight that no clearance has been received from higher authority pending confirmation that no friendly forces are in the engagement area."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Send a clear hold-fire order to the flight via comms.send, stating: 'HOLD FIRE. No higher authority clearance for weapon release pending confirmation of no friendly presence. Await further instructions.' Log the decision with timestamp."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Higher authority provides explicit clearance to engage or a definitive SAFIRE report confirms hostile fire and no friendly forces present in target area.", then: LIVE-O1, why: "With clearance or confirmed enemy target and no friendly presence, risk of fratricide is removed."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Higher authority continues to withhold clearance despite any further intelligence.", why: "Controller lacks authority to grant fire regardless of personal judgment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Receipt of definitive SAFIRE report confirming enemy fire and no friendly forces.", favors: [LIVE-O1], why: "Such intelligence would shift balance toward granting weapons."}
+
+Now we need to output these YAML documents in order, then the verdict? Actually the format says: Write your reasoning as YAML documents, one per step, in the order below. Separate documents with a line containing only `---`. Write real values. Then "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But we have already included the verdict as a document? The format includes `kind: verdict` as one of the documents. The instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests we should output all reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) and then the verdict document? However the format includes `---` separators between documents. The reply should contain only the reasoning YAML documents and then the verdict? Let's interpret: The assistant should output the reasoning steps (the YAML documents) and then the verdict. But the instruction says "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That means we should output the reasoning documents (up to applicability) and then after a blank line? Actually we should output the documents in order, each separated by `---`. After the applicability document, we should output `</think>` and then the verdict? Let's read carefully:
+
+> Write your reasoning as YAML documents, one per step, in the order below. Separate documents with a line containing only `---`. Write real values: every `"..."` below stands for a sentence you write, and a list such as `a | b | c` means choose exactly one of the words.
+
+> Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply.
+
+Thus we should output:
+
+```
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+```
+
+Then after that, we output `</think>` on a line by itself? Or we embed `</think>` as plain text after the last `---`? The phrase "Close your thinking with </think> after the last document before the verdict" suggests that after we output the applicability document (if case governs) we should output `</think>` line and then the verdict document. However the verdict document also has a `kind: verdict`. But the instruction says "then write the verdict document as your reply." So the reply should include the verdict document as well? Let's see typical usage: The assistant should output the reasoning steps and then the verdict. But to avoid confusion, we can output all documents including verdict as part of the reply? However the format says the reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards. That suggests the assistant's reply should be just the reasoning documents (including verdict) without tool calls? Actually the instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the final reply should be:
+
+```
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+```
+
+Then a line `</think>` (maybe just the literal "</think>"?). Then the verdict document? Let's produce exactly as required. However to simplify, I'll output all documents up to applicability, then a line with `</think>`, then the verdict document. But the instruction says "then write the verdict document as your reply." So after `</think>`, we write the verdict document? That seems redundant.
+
+Given the complexity, I'll output the reasoning documents (including applicability) separated by `---`, then after the last `---` I'll output `</think>` on a new line, and then output the verdict document separately? That might be considered part of the reply. However the evaluation may expect just the reasoning documents and then the verdict? I'll follow the literal instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So I should output:
+
+```
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+
+</think>
+kind: verdict
+...
+```
+
+Yes, that matches: after the applicability document, we output `</think>` line (maybe just the marker), then the verdict document. I'll output a blank line after the last `---`? Actually "Close your thinking with </think> after the last document before the verdict" suggests we should put `</think>` on a line by itself after the applicability document, before the verdict. So:
+
+```
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+
+</think>
+kind: verdict
+...
+```
+
+I'll output exactly that.
+
+Now ensure YAML is valid. Use simple strings without quotes? We'll keep as plain text.
+
+Let's write them:
+
+fact_enumeration:
+```
+kind: fact_enumeration
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire, given uncertainty about friendly presence and pending higher authority clearance?"
+  decider: "The airborne controller, with authority to grant weapon requests only after obtaining higher authority clearance when there is any uncertainty about friendly presence."
+  my_role: "Decide based on available intelligence, higher authority consultation status, and safety considerations; cannot unilaterally grant lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile ground fire near grid 12A and requests weapons release multiple times (21:24:10Z, 21:24:45Z, 21:25:30Z)."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "INTEL FEED 21:23:55Z shows a friendly armored convoy moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "SAFIRE report 21:24:10Z indicates friendly ground forces present near grid 12A, no hostile activity confirmed."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controller consulted higher authority regarding weapon request; response pending."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "At 21:26:11Z, the flight called self-defence and initiated weapons release (muzzle flash and impact reported), two minutes after receiving SAFIRE report and ten seconds after bomb impact."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "Controller repeatedly limited flight's actions despite multiple weapon requests; after self-defence call, controller feels unable to influence flight's actions."}
+options:
+  LIVE-O1: "Grant the flight's request to employ weapons immediately."
+  LIVE-O2: "Refuse the request to employ weapons, hold fire until higher authority provides clearance or friendly presence is ruled out."
+  LIVE-O3: "Ask higher authority again for clarification before deciding (though already consulted)."
+```
+
+fact_mapping:
+```
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+note: "Both situations involve a flight requesting weapons against observed ground fire near friendly forces, controller consulted higher authority, flight initiates self-defence attack after controller's refusals."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: null
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "Controller had a hunch that friendly forces might be present; here intelligence shows friendly convoy present."}]
+live_only: [LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6]
+case_only: [REF1-F3, REF1-F8]
+```
+
+consideration_enumeration:
+```
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F6], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Flight requests weapons multiple times while friendly convoy is confirmed present (LIVE-F2), controller has repeatedly limited actions due to uncertainty about friendly presence; risk of fratricide if weapons are released without confirmation that no friendly forces are in the target area."}
+  - {id: LIVE-C2, facts: [LIVE-F4, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Controller consulted higher authority; response pending. Without explicit clearance from higher authority, granting lethal weapons would violate lawful authority and ROE."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F6], equity: chain_of_command, favors: [LIVE-O2], weight: weak, why: "After flight declared self-defence at 21:26:11Z, controller feels unable to influence flight's actions; however, controller still retains authority to prevent fratricide if clearance absent."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: escalation_control, favors: [LIVE-O2], weight: weak, why: "Disengage request sent at 21:26:11Z ten seconds after bomb impact; releasing weapons earlier would increase escalation risk."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Flight perceives immediate threat from hostile ground fire sustaining approach vector; self-preservation urgency."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: humanitarian_access, favors: [LIVE-O1], weight: low, why: "Observed ground fire might be harming civilians, but no confirmation; urge to neutralize threat quickly."}
+```
+
+consideration_mapping:
+```
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}]
+corresponding: [{live: LIVE-C2, case: REF1-C2}]
+live_only: [LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C3, REF1-C4]
+```
+
+applicability:
+```
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+governs: true
+why: "The case's core considerations (own_force_life and lawful_authority) match directly; the situation differs in that here we have confirmed friendly convoy intelligence (LIVE-F2) and pending higher authority response (LIVE-F4), which align with case facts (hunch + consultation). The case's reasoning about strong considerations outweighing weaker ones applies."
+```
+
+verdict (we'll output after ə? Actually we output verdict after ə, but we need to output it in the reply. We'll output after `</think>` as per instruction.
+
+verdict:
+```
+kind: verdict
+choice: LIVE-O2
+course: "Refuse the flight's request to employ weapons, hold fire, and inform the flight that no clearance has been received from higher authority pending confirmation that no friendly forces are in the engagement area."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Send a clear hold-fire order to the flight via comms.send, stating: 'HOLD FIRE. No higher authority clearance for weapon release pending confirmation of no friendly presence. Await further instructions.' Log the decision with timestamp."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Higher authority provides explicit clearance to engage or a definitive SAFIRE report confirms hostile fire and no friendly forces present in target area.", then: LIVE-O1, why: "With clearance or confirmed enemy target and no friendly presence, risk of fratricide is removed."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Higher authority continues to withhold clearance despite any further intelligence.", why: "Controller lacks authority to grant fire regardless of personal judgment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Receipt of definitive SAFIRE report confirming enemy fire and no friendly forces.", favors: [LIVE-O1], why: "Such intelligence would shift balance toward granting weapons."}
+```
+
+Now output all documents separated by `---`. After applicability, output `</think>` line, then verdict? According to instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So we should output applicability document, then a line `</think>`, then verdict document. I'll do that.
+
+Thus final output:
+
+```
+---
+kind: fact_enumeration
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire, given uncertainty about friendly presence and pending higher authority clearance?"
+  decider: "The airborne controller, with authority to grant weapon requests only after obtaining higher authority clearance when there is any uncertainty about friendly presence."
+  my_role: "Decide based on available intelligence, higher authority consultation status, and safety considerations; cannot unilaterally grant lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile ground fire near grid 12A and requests weapons release multiple times (21:24:10Z, 21:24:45Z, 21:25:30Z)."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "INTEL FEED 21:23:55Z shows a friendly armored convoy moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "SAFIRE report 21:24:10Z indicates friendly ground forces present near grid 12A, no hostile activity confirmed."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controller consulted higher authority regarding weapon request; response pending."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "At 21:26:11Z, the flight called self-defence and initiated weapons release (muzzle flash and impact reported), two minutes after receiving SAFIRE report and ten seconds after bomb impact."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "Controller repeatedly limited flight's actions despite multiple weapon requests; after self-defence call, controller feels unable to influence flight's actions."}
+options:
+  LIVE-O1: "Grant the flight's request to employ weapons immediately."
+  LIVE-O2: "Refuse the request to employ weapons, hold fire until higher authority provides clearance or friendly presence is ruled out."
+  LIVE-O3: "Ask higher authority again for clarification before deciding (though already consulted)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+note: "Both situations involve a flight requesting weapons against observed ground fire near friendly forces, controller consulted higher authority, flight initiates self-defence attack after controller's refusals."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: null
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "Controller had a hunch that friendly forces might be present; here intelligence shows friendly convoy present."]
+live_only: [LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6]
+case_only: [REF1-F3, REF1-F8]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F6], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Flight requests weapons multiple times while friendly convoy is confirmed present (LIVE-F2), controller has repeatedly limited actions due to uncertainty about friendly presence; risk of fratricide if weapons are released without confirmation that no friendly forces are in the target area."}
+  - {id: LIVE-C2, facts: [LIVE-F4, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Controller consulted higher authority; response pending. Without explicit clearance from higher authority, granting lethal weapons would violate lawful authority and ROE."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F6], equity: chain_of_command, favors: [LIVE-O2], weight: weak, why: "After flight declared self-defence at 21:26:11Z, controller feels unable to influence flight's actions; however, controller still retains authority to prevent fratricide if clearance absent."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: escalation_control, favors: [LIVE-O2], weight: weak, why: "Disengage request sent at 21:26:11Z ten seconds after bomb impact; releasing weapons earlier would increase escalation risk."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Flight perceives immediate threat from hostile ground fire sustaining approach vector; self-preservation urgency."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: humanitarian_access, favors: [LIVE-O1], weight: low, why: "Observed ground fire might be harming civilians, but no confirmation; urge to neutralize threat quickly."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}]
+corresponding: [{live: LIVE-C2, case: REF1-C2}]
+live_only: [LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C3, REF1-C4]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+governs: true
+why: "The case's core considerations (own_force_life and lawful_authority) match directly; the situation differs in that here we have confirmed friendly convoy intelligence (LIVE-F2) and pending higher authority response (LIVE-F4), which align with case facts (hunch + consultation). The case's reasoning about strong considerations outweighing weaker ones applies."
+
+</think>
+kind: verdict
+choice: LIVE-O2
+course: "Refuse the flight's request to employ weapons, hold fire, and inform the flight that no clearance has been received from higher authority pending confirmation that no friendly forces are in the engagement area."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Send a clear hold-fire order to the flight via comms.send, stating: 'HOLD FIRE. No higher authority clearance for weapon release pending confirmation of no friendly presence. Await further instructions.' Log the decision with timestamp."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Higher authority provides explicit clearance to engage or a definitive SAFIRE report confirms hostile fire and no friendly forces present in target area.", then: LIVE-O1, why: "With clearance or confirmed enemy target and no friendly presence, risk of fratricide is removed."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Higher authority continues to withhold clearance despite any further intelligence.", why: "Controller lacks authority to grant fire regardless of personal judgment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Receipt of definitive SAFIRE report confirming enemy fire and no friendly forces.", favors: [LIVE-O1], why: "Such intelligence would shift balance toward granting weapons."}
+```
+
+But need to ensure the YAML formatting is consistent (no trailing commas). I wrote `{live: LIVE-F2, case: REF1-F2, note: "Controller had a hunch..."}` but note field may need quotes? It's fine as string without quotes? YAML strings can be unquoted. However to avoid YAML parsing issues with colons inside strings, I'll keep simple.
+
+But note: In YAML mapping like `- {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact..."}` that's fine.
+
+However the note line had a period inside parentheses; it's fine.
+
+Now output exactly as above.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire, given uncertainty about friendly presence and pending higher authority clearance?"
+  decider: "The airborne controller, with authority to grant weapon requests only after obtaining higher authority clearance when there is any uncertainty about friendly presence."
+  my_role: "Decide based on available intelligence, higher authority consultation status, and safety considerations; cannot unilaterally grant lethal weapons without clearance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Flight lead reports visual on hostile ground fire near grid 12A and requests weapons release multiple times (21:24:10Z, 21:24:45Z, 21:25:30Z)."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "INTEL FEED 21:23:55Z shows a friendly armored convoy moving eastward along the riverbed near grid 12A. No hostile signatures detected in immediate vicinity."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "SAFIRE report 21:24:10Z indicates friendly ground forces present near grid 12A, no hostile activity confirmed."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controller consulted higher authority regarding weapon request; response pending."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "At 21:26:11Z, the flight called self-defence and initiated weapons release (muzzle flash and impact reported), two minutes after receiving SAFIRE report and ten seconds after bomb impact."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "Controller repeatedly limited flight's actions despite multiple weapon requests; after self-defence call, controller feels unable to influence flight's actions."}
+options:
+  LIVE-O1: "Grant the flight's request to employ weapons immediately."
+  LIVE-O2: "Refuse the request to employ weapons, hold fire until higher authority provides clearance or friendly presence is ruled out."
+  LIVE-O3: "Ask higher authority again for clarification before deciding (though already consulted)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same_kind
+note: "Both situations involve a flight requesting weapons against observed ground fire near friendly forces, controller consulted higher authority, flight initiates self-defence attack after controller's refusals."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: null
+matched: [{live: LIVE-F1, case: REF1-F1}]
+cor

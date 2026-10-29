@@ -1,0 +1,318 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the Board approve the precision strike on the building where two hostile shooters are entrenched on the second floor, given no civilians have been observed?"
+  decider: "Strike Authorization Board"
+  my_role: "Decide to approve or decline the strike; select munition; record decision in log."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Coalition forces are engaged in an offensive to seize a sector of the New Dawn area; two hostile shooters are observed firing from the second floor of a building."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "Forward observers report no civilians seen in the target grid prior to 0600Z; no civilian movement detected."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Rules of Engagement permit engagement of identified hostile shooters when there is no evidence of civilian presence; the Board has positively identified the shooters and determined the engagement meets ROE."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Precision munition PG-M1 selected; blast radius confined to 5 m; expected structural impact limited to 16‑20 % of second floor."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Intelligence Summary states no civilian presence known and no intelligence indicates secondary explosive caches in the building; all SIGINT and HUMINT sources confirm target is occupied solely by hostile combatants."}
+  - {id: LIVE-F6, kind: uncertainty, status: assessed, fact: "No verification of civilian presence or secondary explosives; uncertainty about possible secondary explosives emplaced by hostiles remains."}
+options:
+  LIVE-O1: "Decline the strike (i.e., hold fire pending further intel or no strike)."
+  LIVE-O2: "Approve the precision strike as outlined in the operational plan."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Should the Target Engagement Authority approve the strike on a building where two ISIS snipers are firing at partner forces, given no civilians were reported?"
+  decider: "Target Engagement Authority"
+  role: "Decide"
+note: "Both situations involve identified hostile shooters (snipers vs hostile shooters) on the second floor of a building, no civilians observed, Rules of Engagement positively identified the shooters, precision munition selected with limited structural impact. Differences: live scenario has no mention of secondary explosive threat intelligence, but uncertainty remains; case had uncertainty about secondary explosives and explicitly noted 'could not have predicted secondary explosive caches'. Also live scenario has logistics and status checks but no direct conflict."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F4}]  # situation, intelligence no civilians, authority positive identification
+corresponding: [{live: LIVE-F5, case: REF1-F7, note: "Live has explicit statement no civilian presence known and no secondary explosive caches known; case had 'could not have predicted secondary explosives' – similar uncertainty."}]
+live_only: [LIVE-F6]  # explicit uncertainty about secondary explosives remains
+case_only: [REF1-F3]  # case had 'Two ISIS snipers observed engaging CTS soldiers' (same), but case also had 'visual observers saw two ISIS snipers' (similar)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F3], equity: hors_de_combat, favors: [LIVE-O2], weight: weak, why: "Hostile shooters are confirmed combatants; engaging them is consistent with ROE and reduces threat to own forces."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "No civilians observed, but uncertainty about civilian presence and possible secondary explosives creates risk to non-combatants; precautionary principle applies; strong weight because civilian life is paramount and uncertainty is significant."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Neutralizing shooters would reduce threat to coalition troops and support sector seizure; military necessity exists."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "ROE permits engagement of identified hostile shooters when no civilian evidence; authority is confirmed."}
+  - {id: LIVE-C5, facts: [LIVE-F4, LIVE-F6], equity: proportionality (implied by civilian_life and critical_services), favors: [LIVE-O1], weight: medium, why: "Precision munition limits structural damage (16‑20%) but still risk to civilians inside (unknown occupancy); proportionality requires balancing risk."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C4, case: REF1-C4}]  # combat necessity and lawful authority
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Both address civilian life; REF1-C2 is strong due to uncertainty; LIVE-C2 is strong due to uncertainty."}, {live: LIVE-C3, case: REF1-C3, role: "Both address own force life; REF1-C3 is strong; LIVE-C3 is strong."}]
+live_only: [LIVE-C2, LIVE-C5]  # civilian life with precaution; proportionality medium
+case_only: [REF1-C2, REF1-C3]  # same as above
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+governs: true
+why: "The case's considerations (civilian_life strong due to uncertainty; hors_de_combat weak; own_force_life strong; lawful_authority strong) are directly applicable. The live scenario shares the same factual pattern: identified hostile shooters on second floor, no civilians observed, uncertainty about secondary explosives, precision munition with limited structural impact. The case's reasoning weights civilian life strongly when uncertainty about civilians and secondary explosives exists, even if combat necessity is strong. Therefore the case's considerations are close enough for its reasoning to govern."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh civilian_life (strong) against own_force_life and hors_de_combat (weak/strong) and lawful_authority (strong). The case gave priority to civilian life when uncertainty about civilian presence and secondary explosives existed, even though combat necessity was strong. The weighing concluded that civilian life (REF1-C2) outweighed the weakened combat-necessity arguments (REF1-C1, REF1-C3, REF1-C4), leading to strike rejection."
+weighing: "In the live scenario, LIVE-C2 (civilian_life, strong) directly mirrors REF1-C2. LIVE-C1 and LIVE-C4 (hors_de_combat and lawful_authority) correspond to REF1-C1 and REF1-C4, which were considered but gave weaker weight in the case due to uncertainty. LIVE-C3 (own_force_life, strong) corresponds to REF1-C3, also strong but the case's weighing gave it less weight because civilian life had strong precedence. LIVE-C5 (proportionality, medium) adds nuance but does not change the strong civilian_life weight. Therefore, following the case's approach, we should weigh LIVE-C2 as strong and decisive, leading to favoring LIVE-O1 (decline the strike) unless a flip condition applies."
+tradecraft: "If approving the strike, use the precision munition PG-M1 as selected; if declining, hold fire pending further intel to verify civilian absence and secondary explosive risk. Record decision in log, transmit brief to forward observers and ops lead, and monitor for intelligence indicating secondary explosives or civilian presence."
+uncertainty: "Uncertainty about whether any civilians are present inside the building (occupants unknown) and whether hostiles may have emplaced secondary explosives. The precautionary principle suggests erring on the side of rejection when uncertainty is significant. Confidence in no civilian presence from forward observers is high (no movement detected), but buildings can have hidden occupants. Also, intelligence says no secondary explosive caches known, but unknown."
+handoff: "The Board decides now; no need to consult higher authority because the case's reasoning is applicable and the decision is within Board authority. Log the decision and communicate result."
+tempting_wrong: {option: LIVE-O2, pull: "Approving the strike would immediately neutralize the shooters, reduce risk to coalition troops, and align with ROE that permits engagement of identified hostile shooters when no civilians are seen.", why_wrong: "However, uncertainty about civilian presence and possible secondary explosives means the strike could cause unacceptable harm to civilians inside, violating proportionality and the precautionary principle; the case precedent indicates civilian life should outweigh combat necessity under such uncertainty."}
+rejected: {LIVE-O2: "While the strike would neutralize shooters and align with ROE, the strong uncertainty about civilian presence and possible secondary explosives makes civilian life the decisive equity; following the precautionary principle and the precedent REF1, the strike should be declined pending further verification."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Decline the precision strike for now; hold fire pending further intelligence to verify civilian absence and secondary explosive risk."
+relation: distinguished
+via: null
+decisive: [LIVE-C2]
+now:
+  - "Inform forward observers and ops lead that strike is on hold; request updated ISR (intelligence, surveillance, reconnaissance) within 30 minutes to confirm no civilians inside and no secondary explosives."
+  - "Log the decision with reasoning referencing uncertainty and precautionary principle."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "New intelligence shows the building houses a critical enemy command node or secondary explosive caches are confirmed absent and civilians verified absent", then: LIVE-O2, why: "If command node is essential and no civilian risk, the military necessity may outweigh precaution; but the case's flip condition required 'enemy-emplaced secondary explosives' indicating risk; absence of secondary explosives and verified civilian absence would change."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Intelligence confirms civilians are present or secondary explosives are confirmed present", then: LIVE-O1, why: "Direct civilian risk or confirmed explosives would maintain rejection."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Intelligence indicating enemy-emplaced secondary explosives in the building", favors: [LIVE-O2], why: "Such intelligence would require heightened precaution but does not by itself invalidate proportionality when civilians are not known to be present; however, it would reinforce caution."}
+
+Now output the reasoning documents? The instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Actually we need to output only the reasoning documents (the YAML steps) and then the verdict? The format says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But we have included verdict in the YAML? We have a verdict document as the last kind: verdict. However the instruction says "then write the verdict document as your reply." That suggests that after writing the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) we should output the verdict separately? Let's read carefully:
+
+"Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: We should output the reasoning documents (up to applicability or reasoning) and then 
+</think> and then the verdict? Actually they want the reply to be the verdict document? The typical pattern in previous tasks: The assistant writes the reasoning documents (YAML) and then writes "### Verdict" etc? But here they explicitly say: "Write your reasoning as YAML documents, one per step, in the order below. ... This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards."
+
+But then they say: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output the YAML documents (all but verdict) and then 
+</think> and then the verdict YAML? Let's parse: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Means that if the case governs, we output up to reasoning (or applicability?) Actually they list kinds: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. The "last document before the verdict" would be reasoning when the case governs, or applicability when not governed. So we should output all documents up to and including applicability (if not governed) or reasoning (if governed), then end with "</think>", then output the verdict document separately? The instruction: "then write the verdict document as your reply." So the final answer should be the verdict document (kind: verdict) as plain text? But they want the verdict YAML? In the format, verdict is a YAML block with choice, course, etc. However earlier they said "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output:
+
+--- (YAML doc1)
+--- (YAML doc2)
+...
+--- (YAML docN)  # last reasoning or applicability
+
+Then a line with "</think>"
+
+Then the verdict YAML block.
+
+But the user expects the assistant's next action? The conversation is ongoing; the assistant should now decide and log. However the instruction says we must reason from the reference case and decide before calling tools. So we should output the reasoning documents and verdict. Then we will call log.write with the decision.
+
+Thus I will output the YAML docs up to reasoning (since case governs), then 
+</think>, then verdict YAML. But we included verdict in the list; we need to separate. Let's produce:
+
+kind: fact_enumeration
+...
+
+kind: fact_mapping
+...
+
+kind: consideration_enumeration
+...
+
+kind: consideration_mapping
+...
+
+kind: applicability
+...
+
+kind: reasoning
+...
+
+Then 
+</think>
+
+Then verdict YAML.
+
+But the instruction says "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern)". Since case governs, the last document before verdict is reasoning. So we output up to reasoning, then 
+</think>, then verdict.
+
+Thus I will output only the first five documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) and then 
+</think>, then verdict. However we have six reasoning steps? Actually we have: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. So last before verdict is reasoning. So we output up to reasoning.
+
+Let's output them in order:
+
+--- (YAML) fact_enumeration
+--- (YAML) fact_mapping
+--- (YAML) consideration_enumeration
+--- (YAML) consideration_mapping
+--- (YAML) applicability
+--- (YAML) reasoning
+
+Then 
+</think>
+
+Then verdict YAML.
+
+But we must ensure we don't include the verdict in the reasoning outputs. So I'll output the five reasoning documents (excluding verdict) and then 
+</think> and then verdict.
+
+Let's construct the YAML exactly as required.
+
+Note: In fact_mapping, we used options mapping; need to ensure mapping is correct. We'll output minimal but accurate.
+
+Let's write them.
+
+First YAML:
+
+kind: fact_enumeration
+frame:
+  question: "Should the Board approve the precision strike on the building where two hostile shooters are entrenched on the second floor, given no civilians have been observed?"
+  decider: "Strike Authorization Board"
+  my_role: "Decide to approve or decline the strike; select munition; record decision in log."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Coalition forces are engaged in an offensive to seize a sector of the New Dawn area; two hostile shooters are observed firing from the second floor of a building."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "Forward observers report no civilians seen in the target grid prior to 0600Z; no civilian movement detected."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Rules of Engagement permit engagement of identified hostile shooters when there is no evidence of civilian presence; the Board has positively identified the shooters and determined the engagement meets ROE."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Precision munition PG-M1 selected; blast radius confined to 5 m; expected structural impact limited to 16‑20 % of second floor."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Intelligence Summary states no civilian presence known and no intelligence indicates secondary explosive caches in the building; all SIGINT and HUMINT sources confirm target is occupied solely by hostile combatants."}
+  - {id: LIVE-F6, kind: uncertainty, status: assessed, fact: "No verification of civilian presence or secondary explosives; uncertainty about possible secondary explosives emplaced by hostiles remains."}
+options:
+  LIVE-O1: "Decline the strike (i.e., hold fire pending further intel or no strike)."
+  LIVE-O2: "Approve the precision strike as outlined in the operational plan."
+---
+
+Second YAML:
+
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+note: "Both situations involve identified hostile shooters (snipers vs hostile shooters) on the second floor of a building, no civilians observed, Rules of Engagement positively identified the shooters, precision munition selected with limited structural impact. Differences: live scenario has no mention of secondary explosive threat intelligence, but uncertainty remains; case had uncertainty about secondary explosives and explicitly noted 'could not have predicted secondary explosive caches'. Also live scenario has logistics and status checks but no direct conflict."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F4}]
+corresponding: [{live: LIVE-F5, case: REF1-F7, note: "Live has explicit statement no civilian presence known and no secondary explosive caches known; case had 'could not have predicted secondary explosives' – similar uncertainty."}]
+live_only: [LIVE-F6]
+case_only: [REF1-F3]
+---
+
+Third YAML:
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F3], equity: hors_de_combat, favors: [LIVE-O2], weight: weak, why: "Hostile shooters are confirmed combatants; engaging them is consistent with ROE and reduces threat to own forces."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "No civilians observed, but uncertainty about civilian presence and possible secondary explosives creates risk to non-combatants; precautionary principle applies; strong weight because civilian life is paramount and uncertainty is significant."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Neutralizing shooters would reduce threat to coalition troops and support sector seizure; military necessity exists."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "ROE permits engagement of identified hostile shooters when no civilian evidence; authority is confirmed."}
+  - {id: LIVE-C5, facts: [LIVE-F4, LIVE-F6], equity: proportionality, favors: [LIVE-O1], weight: medium, why: "Precision munition limits structural damage (16‑20%) but still risk to civilians inside (unknown occupancy); proportionality requires balancing risk."}
+---
+
+Fourth YAML:
+
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C4, case: REF1-C4}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Both address civilian life; REF1-C2 is strong due to uncertainty; LIVE-C2 is strong due to uncertainty."}, {live: LIVE-C3, case: REF1-C3, role: "Both address own force life; REF1-C3 is strong; LIVE-C3 is strong."}]
+live_only: [LIVE-C2, LIVE-C5]
+case_only: [REF1-C2, REF1-C3]
+---
+
+Fifth YAML:
+
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+governs: true
+why: "The case's considerations (civilian_life strong due to uncertainty; hors_de_combat weak; own_force_life strong; lawful_authority strong) are directly applicable. The live scenario shares the same factual pattern: identified hostile shooters on second floor, no civilians observed, uncertainty about secondary explosives, precision munition with limited structural impact. The case's reasoning weights civilian life strongly when uncertainty about civilian presence and secondary explosives exists, even though combat necessity is strong. Therefore the case's considerations are close enough for its reasoning to govern."
+---
+
+Sixth YAML:
+
+kind: reasoning
+case: REF1
+case_approach: "Weigh civilian_life (strong) against own_force_life and hors_de_combat (weak/strong) and lawful_authority (strong). The case gave priority to civilian life when uncertainty about civilian presence and secondary explosives existed, even though combat necessity was strong. The weighing concluded that civilian life (REF1-C2) outweighed the weakened combat-necessity arguments (REF1-C1, REF1-C3, REF1-C4), leading to strike rejection."
+weighing: "In the live scenario, LIVE-C2 (civilian_life, strong) directly mirrors REF1-C2. LIVE-C1 and LIVE-C4 (hors_de_combat and lawful_authority) correspond to REF1-C1 and REF1-C4, which were considered but gave weaker weight in the case due to uncertainty. LIVE-C3 (own_force_life, strong) corresponds to REF1-C3, also strong but the case's weighing gave it less weight because civilian life had strong precedence. LIVE-C5 (proportionality, medium) adds nuance but does not change the strong civilian_life weight. Therefore, following the case's approach, we should weigh LIVE-C2 as strong and decisive, leading to favoring LIVE-O1 (decline the strike) unless a flip condition applies."
+tradecraft: "If approving the strike, use the precision munition PG-M1 as selected; if declining, hold fire pending further intel to verify civilian absence and secondary explosive risk. Record decision in log, transmit brief to forward observers and ops lead, and monitor for intelligence indicating secondary explosives or civilian presence."
+uncertainty: "Uncertainty about whether any civilians are present inside the building (occupants unknown) and whether hostiles may have emplaced secondary explosives. The precautionary principle suggests erring on the side of rejection when uncertainty is significant. Confidence in no civilian presence from forward observers is high (no movement detected), but buildings can have hidden occupants. Also, intelligence says no secondary explosive caches known, but unknown."
+handoff: "The Board decides now; no need to consult higher authority because the case's reasoning is applicable and the decision is within Board authority. Log the decision and communicate result."
+tempting_wrong: {option: LIVE-O2, pull: "Approving the strike would immediately neutralize the shooters, reduce risk to coalition troops, and align with ROE that permits engagement of identified hostile shooters when no civilians are seen.", why_wrong: "However, uncertainty about civilian presence and possible secondary explosives means the strike could cause unacceptable harm to civilians inside, violating proportionality and the precautionary principle; the case precedent indicates civilian life should outweigh combat necessity under such uncertainty."}
+rejected: {LIVE-O2: "While the strike would neutralize shooters and align with ROE, the strong uncertainty about civilian presence and possible secondary explosives makes civilian life the decisive equity; following the precautionary principle and the precedent REF1, the strike should be declined pending further verification."}
+---
+
+Now output these YAML documents separated by '---', then 
+</think>, then verdict YAML.
+
+But we must ensure each YAML document starts with 'kind:' and we separate with a line containing only '---'. We'll output them in order.
+
+Let's produce the final answer accordingly.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the Board approve the precision strike on the building where two hostile shooters are entrenched on the second floor, given no civilians have been observed?"
+  decider: "Strike Authorization Board"
+  my_role: "Decide to approve or decline the strike; select munition; record decision in log."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Coalition forces are engaged in an offensive to seize a sector of the New Dawn area; two hostile shooters are observed firing from the second floor of a building."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "Forward observers report no civilians seen in the target grid prior to 0600Z; no civilian movement detected."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Rules of Engagement permit engagement of identified hostile shooters when there is no evidence of civilian presence; the Board has positively identified the shooters and determined the engagement meets ROE."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Precision munition PG-M1 selected; blast radius confined to 5 m; expected structural impact limited to 16‑20 % of second floor."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Intelligence Summary states no civilian presence known and no intelligence indicates secondary explosive caches in the building; all SIGINT and HUMINT sources confirm target is occupied solely by hostile combatants."}
+  - {id: LIVE-F6, kind: uncertainty, status: assessed, fact: "No verification of civilian presence or secondary explosives; uncertainty about possible secondary explosives emplaced by hostiles remains."}
+options:
+  LIVE-O1: "Decline the strike (i.e., hold fire pending further intel or no strike)."
+  LIVE-O2: "Approve the precision strike as outlined in the operational plan."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+note: "Both situations involve identified hostile shooters (snipers vs hostile shooters) on the second floor of a building, no civilians observed, Rules of Engagement positively identified the shooters, precision munition selected with limited structural impact. Differences: live scenario has no mention of secondary explosive threat intelligence, but uncertainty remains; case had uncertainty about secondary explosives and explicitly noted 'could not have predicted secondary explosive caches'. Also live scenario has logistics and status checks but no direct conflict."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F4}]
+corresponding: [{live: LIVE-F5, case: REF1-F7, note: "Live has explicit statement no civilian presence known and no secondary explosive caches known; case had 'could not have predicted secondary explosives' – similar uncertainty."}]
+live_only: [LIVE-F6]
+case_only: [REF1-F3]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F3], equity: hors_de_combat, favors: [LIVE-O2], weight: weak, why: "Hostile shooters are confirmed combatants; engaging them is consistent with ROE and reduces threat to own forces."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "No civilians observed, but uncertainty about civilian presence and possible secondary explosives creates risk to non-combatants; precautionary principle applies; strong weight because civilian life is paramount and uncertainty is significant."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Neutralizing shooters would reduce threat to coalition troops and support sector seizure; military necessity exists."}
+  - {id: LIVE-C4, facts: [LIVE-F3], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "ROE permits engagement of identified hostile shooters when no civilian evidence; authority is confirmed."}
+  - {id: LIVE-C5, facts: [LIVE-F4, LIVE-F6], equity: proportionality, favors: [LIVE-O1], weight: medium, why: "Precision munition limits structural damage (16‑20%) but still risk to civilians inside (unknown occupancy); proportionality requires balancing risk."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C4, case: REF1-C4}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Both address civilian life; REF1-C2 is strong due to uncertainty; LIVE-C2 is strong due to uncertainty."}, {live: LIVE-C3, case: REF1-C3, role: "Both address own force life; REF1-C3 is strong; LIVE-C3 is strong."}]
+live_only: [LIVE-C2, LIVE-C5]
+case_only: [REF1-C2, REF1-C3]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+governs: true
+why: "The case's considerations (civilian_life strong due to uncertainty; hors_de_combat weak; own_force_life strong; lawful_authority strong) are directly applicable. The live scenario shares the same factual pattern: identified hostile shooters on second floor, no civilians observed, uncertainty about secondary explosives, precision munition with limited structural impact. The case's reasoning weights civilian life strongly when uncertainty about civilian presence and secondary explosives exists, even though combat necessity is strong. Therefore the case's considerations are close enough for its reasoning to govern."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh civilian_life (strong) against own_force_life and hors_de_combat (weak/strong) and lawful_authority (strong). The case gave priority to civilian life when uncertainty about civilian presence and secondary explosives existed, even though combat necessity was strong. The weighing concluded that civilian life (REF1-C2) outweighed the weakened combat-necessity arguments (REF1-C1, REF1-C3, REF1-C4), leading to strike rejection."
+weighing: "In the live scenario, LIVE-C2 (civilian_life, strong) directly mirrors REF1-C2. LIVE-C1 and LIVE-C4 (hors_de_combat and lawful_authority) correspond to REF1-C1 and REF1-C4, which were considered but gave weaker weight in the case due to uncertainty. LIVE-C3 (own_force_life, strong) corresponds to REF1-C3, also strong but the case's weighing gave it less weight because civilian life had strong precedence. LIVE-C5 (proportionality, medium) adds nuance but does not change the strong civilian_life weight. Therefore, following the case's approach, we should weigh LIVE-C2 as strong and decisive, leading to favoring LIVE-O1 (decline the strike) unless a flip condition applies."
+tradecraft: "If approving the strike, use the precision munition PG-M1 as selected; if declining, hold fire pending further intel to verify civilian absence and secondary explosive risk. Record decision in log, transmit brief to forward observers and ops lead, and monitor for intelligence indicating secondary explosives or civilian presence."
+uncertainty: "Uncertainty about whether any civilians are present inside the building (occupants unknown) and whether hostiles may have emplaced secondary explosives. The precautionary principle suggests erring on the side of rejection when uncertainty is significant. Confidence in no civilian presence from forward observers is high (no movement detected), but buildings can have hidden occupants. Also, intelligence says no secondary explosive caches known, but unknown."
+handoff: "The Board decides now; no need to consult higher authority because the case's reasoning is applicable and the decision is within Board authority. Log the decision and communicate result."
+tempting_wrong: {option: LIVE-O2, pull: "Approving the strike would immediately neutralize the shooters, reduce risk to coalition troops, and align with ROE that permits engagement of identified hostile shooters when no civilians are seen.", why_wrong: "However

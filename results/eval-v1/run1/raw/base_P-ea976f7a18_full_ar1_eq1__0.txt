@@ -1,0 +1,98 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the strike aircraft be permitted to continue using weapons against the ground fire given the recent engagement?"
+  decider: "The airborne weapons controller, delegated authority to impose or lift weapon release restrictions, must defer to senior command when authority conflicts arise."
+  my_role: "I may impose or lift restrictions based on intelligence and policy, log actions, and request clarification. I must decline weapon requests when a hunch of friendly presence exists unless senior command explicitly authorizes it."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The flight declared self-defence and released weapons on the identified ground fire at approximately 21:26Z (212611Z)." }
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "ISR analysis shows no friendly ground forces present in the target area. SIGINT indicates no hostile radars active." }
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Senior command granted permission to engage the observed ground fire at 21:23Z." }
+  - {id: LIVE-F4, kind: restriction_log, status: confirmed, fact: "Controller previously imposed a weapon release restriction and denied repeat requests from the flight at 21:25Z." }
+  - {id: LIVE-F5, kind: flight_request, status: confirmed, fact: "Flight transmitted a disengage request at 21:26Z, approximately ten seconds after impact." }
+  - {id: LIVE-F6, kind: policy, status: confirmed, fact: "SOP Section 4.2 includes a clarification request form that can be sent to senior command before a final decision is made." }
+options:
+  LIVE-O1: "Lift the weapon release restriction and permit the flight to continue using weapons against the ground fire as requested, given senior command's explicit permission to engage."
+  LIVE-O2: "Maintain or re-impose the weapon release restriction pending further clarification from senior command, despite the permission granted, because the restriction was previously imposed and the flight's self-defence declaration may need verification."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F3], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "The flight declared self-defence and already employed weapons; continuing engagement aligns with protecting crew safety if hostile fire poses imminent threat."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F4], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Previous restriction was imposed due to uncertainty about friendly presence; lifting it without confirming no civilian harm could violate civilian protection."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "Senior command explicitly granted permission to engage the observed ground fire at 21:23Z, which delegates authority to the controller to approve engagement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Flight transmitted a disengage request shortly after impact, suggesting possible hesitation or uncertainty about necessity."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F3], equity: escalation_control, favors: [LIVE-O1], weight: medium, why: "Permission to engage and no hostile radar activity suggest the engagement is proportional; continuing could prevent escalation if fire persists."}
+
+---
+kind: reasoning
+weighing: "Senior command explicitly granted permission to engage the observed ground fire at 21:23Z (LIVE-F3), which directly addresses the authority question. The controller's previous restriction (LIVE-F4) was based on uncertainty about friendly presence; however, ISR confirms no friendly ground forces (LIVE-F2) and SIGINT shows no hostile radars. The flight already engaged under self-defence (LIVE-F1) at ~21:26Z, which is consistent with lawful authority. While civilians must be protected (LIVE-C2), ISR shows no friendly presence and the permission was granted after intelligence review. The disengage request (LIVE-F5) may reflect standard procedural caution but does not override explicit permission. Thus, the strong consideration from lawful authority (LIVE-C3) and proportionality (LIVE-C5) outweighs the strong civilian protection concern if no evidence of civilians present. The restriction previously imposed was appropriate under uncertainty; now that permission is explicit and intelligence is clear, lifting the restriction aligns with authority and escalation control."
+tradecraft: "Approve the flight's request to employ weapons (as already done by weap.approve at 21:26Z), but document the decision with clear rationale referencing senior command permission and current ISR. Communicate the lift of restriction to the flight via coms.send, confirm no civilians in area per ISR, and log the action. Do not impose new restrictions without new uncertainty."
+uncertainty: "Unknown whether civilians are present in the immediate vicinity despite ISR showing no friendly ground forces; ISR may have limitations for very small civilian groups. However, the permission granted by senior command was based on the observed ground fire threat, not civilian assessment. Watch for any new ISR indicating civilian presence before further engagements."
+handoff: "The decision to lift the restriction and permit continued weapon use is within delegated authority given explicit senior command permission (LIVE-F3) and confirmed lack of friendly forces (LIVE-F2). No need to defer to senior command again; simply act on the permission already given. However, continue to monitor ISR for civilian indicators."
+tempting_wrong: {option: LIVE-O2, pull: "Maintaining restriction aligns with caution and past uncertainty; seems safer to wait for clarification.", why_wrong: "Senior command explicitly granted permission to engage at 21:23Z; repeating restriction without new uncertainty violates lawful authority and may unnecessarily delay response to hostile fire."}
+rejected: {LIVE-O2: "Reject because senior command already authorized engagement; repeating restriction ignores explicit permission and could endanger crew if hostile fire persists."}
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Lift the weapon release restriction and permit the flight to continue using weapons against the ground fire, in accordance with senior command's explicit permission at 21:23Z and current ISR showing no friendly forces."
+decisive: [LIVE-C3]
+now:
+  - "Send a coms message to flight F-12 confirming restriction lift, stating rationale: senior command permission granted, ISR shows no friendly forces, safe to continue engagement if ground fire persists."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "ISR or new SIGINT indicates visible civilian presence or imminent civilian harm in the engagement zone", then: LIVE-O2, why: "Civilian protection becomes paramount; restriction should be reinstated or engagement limited."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No new intelligence indicating civilian harm or friendly forces appears within five minutes", why: "Current facts support permission; no change needed."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any ISR update showing civilians, vehicles, or people near the ground fire target within 2 minutes", favors: [LIVE-O2], why: "If civilians appear, reconsider restriction lift."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the strike aircraft be permitted to continue using weapons against the ground fire given the recent engagement?"
+  decider: "The airborne weapons controller, delegated authority to impose or lift weapon release restrictions, must defer to senior command when authority conflicts arise."
+  my_role: "I may impose or lift restrictions based on intelligence and policy, log actions, and request clarification. I must decline weapon requests when a hunch of friendly presence exists unless senior command explicitly authorizes it."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The flight declared self-defence and released weapons on the identified ground fire at approximately 21:26Z (212611Z)." }
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "ISR analysis shows no friendly ground forces present in the target area. SIGINT indicates no hostile radars active." }
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Senior command granted permission to engage the observed ground fire at 21:23Z." }
+  - {id: LIVE-F4, kind: restriction_log, status: confirmed, fact: "Controller previously imposed a weapon release restriction and denied repeat requests from the flight at 21:25Z." }
+  - {id: LIVE-F5, kind: flight_request, status: confirmed, fact: "Flight transmitted a disengage request at 21:26Z, approximately ten seconds after impact." }
+  - {id: LIVE-F6, kind: policy, status: confirmed, fact: "SOP Section 4.2 includes a clarification request form that can be sent to senior command before a final decision is made." }
+options:
+  LIVE-O1: "Lift the weapon release restriction and permit the flight to continue using weapons against the ground fire as requested, given senior command's explicit permission to engage."
+  LIVE-O2: "Maintain or re-impose the weapon release restriction pending further clarification from senior command, despite the permission granted, because the restriction was previously imposed and the flight's self-defence declaration may need verification."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F3], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "The flight declared self-defence and already employed weapons; continuing engagement aligns with protecting crew safety if hostile fire poses imminent threat."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F4], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Previous restriction was imposed due to uncertainty about friendly presence; lifting it without confirming no civilian harm could violate civilian protection."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "Senior command explicitly granted permission to engage the observed ground fire at 21:23Z, which delegates authority to the controller to approve engagement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Flight transmitted a disengage request shortly after impact, suggesting possible hesitation or uncertainty about necessity."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F3], equity: escalation_control, favors: [LIVE-O1], weight: medium, why: "Permission to engage and no hostile radar activity suggest the engagement is proportional; continuing could prevent escalation if fire persists."}
+
+---
+kind: reasoning
+weighing: "Senior command explicitly granted permission to engage the observed ground fire at 21:23Z (LIVE-F3), which directly addresses the authority question. The controller's previous restriction (LIVE-F4) was based on uncertainty about friendly presence; however, ISR confirms no friendly ground forces (LIVE-F2) and SIGINT shows no hostile radars. The flight already engaged under self-defence (LIVE-F1) at ~21:26Z, which is consistent with lawful authority. While civilians must be protected (LIVE-C2), ISR shows no friendly presence and the permission was granted after intelligence review. The disengage request (LIVE-F5) may reflect standard procedural caution but does not override explicit permission. Thus, the strong consideration from lawful authority (LIVE-C3) and proportionality (LIVE-C5) outweighs the strong civilian protection concern if no evidence of civilians present. The restriction previously imposed was appropriate under uncertainty; now that permission is explicit and intelligence is clear, lifting the restriction aligns with authority and escalation control."
+tradecraft: "Approve the flight's request to employ weapons (as already done by weap.approve at 21:26Z), but document the decision with clear rationale referencing senior command permission and current ISR. Communicate the lift of restriction to the flight via coms.send, confirm no civilians in area per ISR, and log the action. Do not impose new restrictions without new uncertainty."
+uncertainty: "Unknown whether civilians are present in the immediate vicinity despite ISR showing no friendly ground forces; ISR may have limitations for very small civilian groups. However, the permission granted by senior command was based on the observed ground fire threat, not civilian assessment. Watch for any new ISR indicating civilian presence before further engagements."
+handoff: "The decision to lift the restriction and permit continued weapon use is within delegated authority given explicit senior command permission (LIVE-F3) and confirmed lack of friendly forces (LIVE-F2). No need to defer to senior command again; simply act on the permission already given. Continue to monitor ISR for civilian indicators."
+tempting_wrong: {option: LIVE-O2, pull: "Maintaining restriction aligns with caution and past uncertainty; seems safer to wait for clarification.", why_wrong: "Senior command explicitly granted permission to engage at 21:23Z; repeating restriction without new uncertainty violates lawful authority and may unnecessarily delay response to hostile fire."}
+rejected: {LIVE-O2: "Reject because senior command already authorized engagement; repeating restriction ignores explicit permission and could endanger crew if hostile fire persists."}
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Lift the weapon release restriction and permit the flight to continue using weapons against the ground fire, in accordance with senior command's explicit permission at 21:23Z and current ISR showing no friendly forces."
+decisive: [LIVE-C3]
+now:
+  - "Send a coms message to flight F-12 confirming restriction lift, stating rationale: senior command permission granted, ISR shows no friendly forces, safe to continue engagement if ground fire persists."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "ISR or new SIGINT indicates visible civilian presence or imminent civilian harm in the engagement zone", then: LIVE-O2, why: "Civilian protection becomes paramount; restriction should be reinstated or engagement limited."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No new intelligence indicating civilian harm or friendly forces appears within five minutes", why: "Current facts support permission; no change needed."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any ISR update showing civilians, vehicles, or people near the ground fire target within 2 minutes", favors: [LIVE-O2], why: "If civilians appear, reconsider restriction lift."}

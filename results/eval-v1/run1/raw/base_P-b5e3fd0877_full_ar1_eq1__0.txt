@@ -1,0 +1,214 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "What should the wingman pilot do regarding the perceived ground fire given no SAFIRE report filed and no weapons clearance yet?"
+  decider: "The wingman pilot (under United States Air Force operational command) decides on immediate response to perceived ground fire."
+  my_role: "The wingman pilot can decide to engage under self-defence rules of engagement if imminent danger exists; must still report and await formal clearance for further actions; cannot direct other pilots or command; must communicate via comms."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two F‑16s observed ground activity near the airfield that appeared as a quick flash followed by a plume of dust, interpreted as surface‑to‑air fire."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intelligence indicates ground fire consists of sporadic anti‑tank shells and small‑arms tracer rounds, never exceeding about 1,000 ft AGL."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "SAFIRE report for the sighting has not been filed; coordinates and threat category are unavailable."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controlling command has not issued explicit weapons clearance for engaging ground fire."}
+  - {id: LIVE-F5, kind: capability, status: confirmed, fact: "Wingman aircraft descended to lower altitude and throttled back while remaining within the immediate threat zone; no evasive maneuver taken."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "Wingman completed a bomb run on the target approximately four minutes before declaring self‑defence; no radar warning received during the pass."}
+  - {id: LIVE-F7, kind: rules_of_engagement, status: confirmed, fact: "Self‑defence ROE permits use of force only when an imminent danger is present, requiring necessity and proportionality."}
+options:
+  LIVE-O1: "Disengage from the area, pull back, hold position, and await explicit weapons clearance before any further engagement."
+  LIVE-O2: "Engage the perceived ground fire under self‑defence rules of engagement (i.e., fire on the ground threat) given the imminent danger and lack of clearance."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve F‑16s observing ground activity interpreted as surface‑to‑air fire near an airfield, with incomplete SAFIRE report and no weapons clearance. Live scenario also includes a bomb run by wingman shortly before self‑defence declaration."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F1, case: REF1-F2}  # both observe ground activity perceived as surface-to-air fire
+  - {live: LIVE-F3, case: REF1-F3}  # SAFIRE report not completed
+  - {live: LIVE-F4, case: REF1-F4}  # no weapons clearance
+  - {live: LIVE-F5, case: REF1-F5}  # wingman remained close, descended, reduced speed
+  - {live: LIVE-F6, case: REF1-F9}  # wingman invoked self-defence ~4 min after bomb impact
+  - {live: LIVE-F7, case: REF1-F6}  # self-defence ROE permits use only when present danger exists
+corresponding:
+  - {live: LIVE-F2, case: REF1-F7, note: "Live intelligence describes anti‑tank shells and small‑arms tracer rounds; case describes occasional anti‑tank rounds and small‑arms tracers, never >1,000 ft AGL."}
+live_only:
+  - LIVE-F4 (explicit bomb run before self-defence declaration; case mentions marking but not bomb run)
+  - LIVE-F6 (bomb run timing; case mentions self-defence invocation after observation)
+case_only:
+  - REF1-F8 (no calls about ground threat after marking), REF1-F10 (not present in live)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F5, LIVE-F7], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "The wingman remained in the immediate vicinity and descended, indicating a present danger to the aircraft; self‑defence ROE allows engagement when an imminent danger exists, even without clearance."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "SAFIRE report not filed and no weapons clearance are procedural gaps; compliance with reporting and clearance is normally required, but procedural gaps can be overridden by an imminent present danger."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O1], weight: weak, why: "Ground fire consists of low‑altitude anti‑tank shells and tracer rounds; risk of unintended civilian casualties exists, especially if fire is not clearly hostile."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F1], equity: escalation_control, favors: [LIVE-O2], weight: moderate, why: "Descending into the perceived threat zone suggests the aircraft is already within range of hostile fire; engaging immediately may prevent escalation by addressing the imminent danger."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: chain_of_command, favors: [LIVE-O1], weight: moderate, why: "Wingman completed a bomb run before declaring self‑defence; waiting for clearance aligns with standard operating procedure to avoid premature engagement."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C4}  # strong weight in favor of engagement due to proximity and immediate danger
+  - {live: LIVE-C2, case: REF1-C1}  # weak weight in favor of disengagement due to procedural gaps
+  - {live: LIVE-C3, case: REF1-C5}  # weak weight in favor of disengagement due to civilian risk
+  - {live: LIVE-C4, case: REF1-C2}  # moderate weight in favor of engagement due to escalation concerns (though case found weak)
+  - {live: LIVE-C5, case: REF1-C3}  # moderate weight in favor of disengagement due to ROE necessity vs chain of command
+corresponding:
+  - {live: LIVE-C2, case: REF1-C1, role: "Procedural compliance vs present danger"}
+  - {live: LIVE-C4, case: REF1-C2, role: "Proximity and trajectory vs escalation"}
+live_only:
+  - LIVE-C5 (chain_of_command consideration tied to bomb run timing)
+case_only:
+  - REF1-C3 (weak weight in favor of disengagement due to escalation)
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The key considerations—proximity to perceived hostile fire (own_force_life and escalation_control), procedural gaps (lawful_authority), civilian risk (civilian_life), and chain-of-command timing—are present in both scenarios. The live scenario differs in having a bomb run before self-defence declaration, but the core question of whether to engage under self‑defence when an imminent danger appears is governed by the same reasoning approach."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh proximity and present danger (strong) against procedural compliance (weak) and civilian risk (weak). The case gave strong weight to REF1-C4 (proximity justifying engagement) because the wingman was close and descending, satisfying the necessity element of self‑defence. It acknowledged that procedural gaps (SAFIRE report, clearance) are normally important but can be overridden when a present danger exists."
+weighing:
+  - LIVE-C1 (own_force_life): strong – the aircraft is physically close and has descended toward the fire, indicating an imminent threat to the wingman; self‑defence ROE permits engagement when present danger exists.
+  - LIVE-C4 (escalation_control): moderate – engaging immediately addresses the threat and may reduce escalation; however, risk of miscalculation is low given low altitude (<1,000 ft) and the threat appears to be targeting aircraft.
+  - LIVE-C2 (lawful_authority): weak – procedural gaps exist, but ROE allows exception for imminent danger; compliance does not require waiting if danger is present.
+  - LIVE-C3 (civilian_life): weak – ground fire includes anti‑tank shells that could affect civilians, but proportionality requires targeting the threat to the aircraft; a precise engagement (e.g., AIM-120 or AGM) with minimal collateral is reasonable.
+  - LIVE-C5 (chain_of_command): moderate – standard procedure is to await clearance, but self‑defence overrides normal chain-of-command timing when necessity applies.
+  Overall balance: strong support for LIVE-O2 (engage) because the immediate danger to the aircraft is real and self‑defence ROE explicitly permits use of force when an imminent danger is present. The procedural gap (no SAFIRE report, no clearance) does not negate self‑defence authority in this circumstance.
+tradecraft: "If engaging, select a minimal-force option (e.g., AIM-120 or a warning burst) aimed directly at the source of the fire consistent with proportionality. Immediately after engagement, file the SAFIRE report with coordinates, threat category, and engagement details. Transmit a concise comms message to command acknowledging self‑defence engagement and requesting formal weapons clearance for any further action. Continue to hold position and monitor for radar warnings or additional hostile fire."
+uncertainty: "Uncertainty about exact altitude of tracer rounds and whether the ground fire is solely hostile or possibly civilian; however, the wingman’s proximity and descent suggest the fire is within range and poses an imminent danger. Would change mind if radar warning were received or if ground observation later confirmed the fire was purely non‑hostile (e.g., training exercise)."
+handoff: "The wingman pilot decides whether to engage under self‑defence now; after engagement, must report via SAFIRE and await formal weapons clearance for any additional strikes. Communicating the decision and intent to command is required; no further tactical decisions (e.g., targeting package) are needed now."
+tempting_wrong: {option: LIVE-O2, pull: "Engaging immediately seems aggressive but the wingman is already close and has just completed a bomb run; might appear to bypass clearance.", why_wrong: "While self‑defence ROE permits engagement when an imminent danger exists, the wingman should still report the engagement promptly and seek clearance for further actions. The tempting wrong is to think engagement violates clearance; actually ROE allows it under present danger."}
+rejected: {LIVE-O1: "Waiting for clearance is prudent and avoids risk, but if the ground fire is actively targeting the aircraft (as indicated by the flash, plume, and low altitude), waiting could expose the wingman to immediate harm. The self‑defence rule explicitly allows use of force when imminent danger is present, making disengagement potentially unsafe."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Engage the perceived ground fire immediately under self‑defence rules of engagement using minimal force appropriate to the threat, then file the SAFIRE report and notify command of the engagement."
+relation: follows
+via: null
+decisive: [LIVE-C1]
+now:
+  - "Select a suitable air‑to‑ground or air‑to‑air interceptor (e.g., AIM‑120) aimed at the source of the fire; fire only once to neutralize the imminent threat."
+  - "Immediately transmit a brief comms message to command stating: 'Self‑defence engagement on ground fire near [approximate coordinates]; engaged with [weapon]; awaiting SAFIRE report submission and further clearance.' "
+  - "File the SAFIRE report via SPINS with estimated coordinates, threat category 'surface‑to‑air fire', engagement details, and attach sensor imagery if available."
+flip_conditions:
+  - {id: LIVE-flip1, if: "If radar warning indicator (RWI) or other objective detection (e.g., radar lock, acoustic sensor confirmation) activates during the pass", then: LIVE-O2, why: "Objective detection would confirm hostile fire, reinforcing the imminent danger justification."}
+  - {id: LIVE-noflip1, if: "If ground observation later confirms the fire was purely training or non‑hostile (e.g., artillery rehearsal), no imminent danger to aircraft existed", why: "No imminent danger would mean self‑defence does not apply; the correct action would be disengage (LIVE-O1). But currently the wingman perceives imminent danger based on flash, plume, and proximity."}
+  - {id: LIVE-watch1, what: "Receipt of radar warning, infrared detection, or confirmation from ground observers that fire is hostile", favors: [LIVE-O2], why: "Such confirmation would objectively indicate present danger, supporting engagement under self‑defence."}
+
+Now produce the final reply with these documents.
+</think>
+kind: fact_enumeration
+frame:
+  question: "What should the wingman pilot do regarding the perceived ground fire given no SAFIRE report filed and no weapons clearance yet?"
+  decider: "The wingman pilot (under United States Air Force operational command) decides on immediate response to perceived ground fire."
+  my_role: "The wingman pilot can decide to engage under self-defence rules of engagement if imminent danger exists; must still report and await formal clearance for further actions; cannot direct other pilots or command; must communicate via comms."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two F‑16s observed ground activity near the airfield that appeared as a quick flash followed by a plume of dust, interpreted as surface‑to‑air fire."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intelligence indicates ground fire consists of sporadic anti‑tank shells and small‑arms tracer rounds, never exceeding about 1,000 ft AGL."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "SAFIRE report for the sighting has not been filed; coordinates and threat category are unavailable."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Controlling command has not issued explicit weapons clearance for engaging ground fire."}
+  - {id: LIVE-F5, kind: capability, status: confirmed, fact: "Wingman aircraft descended to lower altitude and throttled back while remaining within the immediate threat zone; no evasive maneuver taken."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "Wingman completed a bomb run on the target approximately four minutes before declaring self‑defence; no radar warning received during the pass."}
+  - {id: LIVE-F7, kind: rules_of_engagement, status: confirmed, fact: "Self‑defence ROE permits use of force only when an imminent danger is present, requiring necessity and proportionality."}
+options:
+  LIVE-O1: "Disengage from the area, pull back, hold position, and await explicit weapons clearance before any further engagement."
+  LIVE-O2: "Engage the perceived ground fire under self‑defence rules of engagement (i.e., fire on the ground threat) given the imminent danger and lack of clearance."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve F‑16s observing ground activity interpreted as surface‑to‑air fire near an airfield, with incomplete SAFIRE report and no weapons clearance. Live scenario also includes a bomb run by wingman shortly before self‑defence declaration."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F1, case: REF1-F2}  # both observe ground activity perceived as surface‑to‑air fire
+  - {live: LIVE-F3, case: REF1-F3}  # SAFIRE report not completed
+  - {live: LIVE-F4, case: REF1-F4}  # no weapons clearance
+  - {live: LIVE-F5, case: REF1-F5}  # wingman remained close, descended, reduced speed
+  - {live: LIVE-F6, case: REF1-F9}  # wingman invoked self-defence ~4 min after bomb impact
+  - {live: LIVE-F7, case: REF1-F6}  # self-defence ROE permits use only when present danger exists
+corresponding:
+  - {live: LIVE-F2, case: REF1-F7, note: "Live intelligence describes anti‑tank shells and small‑arms tracer rounds; case describes occasional anti‑tank rounds and small‑arms tracers, never >1,000 ft AGL."}
+live_only:
+  - LIVE-F4 (explicit bomb run before self-defence declaration; case mentions marking but not bomb run)
+  - LIVE-F6 (bomb run timing; case mentions self-defence invocation after observation)
+case_only:
+  - REF1-F8 (no calls about ground threat after marking), REF1-F10 (not present in live)
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F5, LIVE-F7], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "The wingman remained in the immediate vicinity and descended, indicating a present danger to the aircraft; self‑defence ROE allows engagement when an imminent danger exists, even without clearance."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "SAFIRE report not filed and no weapons clearance are procedural gaps; compliance with reporting and clearance is normally required, but procedural gaps can be overridden by an imminent present danger."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O1], weight: weak, why: "Ground fire consists of low‑altitude anti‑tank shells and tracer rounds; risk of unintended civilian casualties exists, especially if fire is not clearly hostile."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F1], equity: escalation_control, favors: [LIVE-O2], weight: moderate, why: "Descending into the perceived threat zone suggests the aircraft is already within range of hostile fire; engaging immediately may prevent escalation by addressing the imminent danger."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: chain_of_command, favors: [LIVE-O1], weight: moderate, why: "Wingman completed a bomb run before declaring self‑defence; waiting for clearance aligns with standard operating procedure to avoid premature engagement."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C4}  # strong weight in favor of engagement due to proximity and immediate danger
+  - {live: LIVE-C2, case: REF1-C1}  # weak weight in favor of disengagement due to procedural gaps
+  - {live: LIVE-C3, case: REF1-C5}  # weak weight in favor of disengagement due to civilian risk
+  - {live: LIVE-C4, case: REF1-C2}  # moderate weight in favor of engagement due to escalation concerns (though case found weak)
+  - {live: LIVE-C5, case: REF1-C3}  # moderate weight in favor of disengagement due to ROE necessity vs chain of command
+corresponding:
+  - {live: LIVE-C2, case: REF1-C1, role: "Procedural compliance vs present danger"}
+  - {live: LIVE-C4, case: REF1-C2, role: "Proximity and trajectory vs escalation"}
+live_only:
+  - LIVE-C5 (chain_of_command consideration tied to bomb run timing)
+case_only:
+  - REF1-C3 (weak weight in favor of disengagement due to escalation)
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The key considerations—proximity to perceived hostile fire (own_force_life and escalation_control), procedural gaps (lawful_authority), civilian risk (civilian_life), and chain-of-command timing—are present in both scenarios. The live scenario differs in having a bomb run before self-defence declaration, but the core question of whether to engage under self‑defence when an imminent danger appears is governed by the same reasoning approach."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh proximity and present danger (strong) against procedural compliance (weak) and civilian risk (weak). The case gave strong weight to REF1-C4 (proximity justifying engagement) because the wingman was close and descending, satisfying the necessity element of self‑defence. It acknowledged that procedural gaps (SAFIRE report, clearance) are normally important but can be overridden when a present danger exists."
+weighing:
+  - LIVE-C1 (own_force_life): strong – the aircraft is physically close and has descended toward the fire, indicating an imminent threat to the wingman; self‑defence ROE allows engagement when an imminent danger exists, even without clearance.
+  - LIVE-C4 (escalation_control): moderate – engaging immediately addresses the threat and may reduce escalation; however, risk of miscalculation is low given low altitude (<1,000 ft) and the threat appears to be targeting aircraft.
+  - LIVE-C2 (lawful_authority): weak – procedural gaps exist, but ROE allows exception for imminent danger; compliance does not require waiting if danger is present.
+  - LIVE-C3 (civilian_life): weak – ground fire consists of anti‑tank shells and tracer rounds; proportionality requires targeting the threat to the aircraft; a precise engagement (e.g., AIM-120 or AGM) with minimal collateral is reasonable.
+  - LIVE-C5 (chain_of_command): moderate – standard procedure is to await clearance, but self‑defence overrides normal chain-of-command timing when necessity applies.
+  Overall balance: strong support for LIVE-O2 (engage) because the immediate danger to the aircraft is real and self‑defence ROE explicitly permits use of force when an imminent danger is present. The procedural gap (no SAFIRE report, no clearance) does not negate self‑defence authority in this circumstance.
+tradecraft: "If engaging, select a minimal-force option (e.g., AIM-120 or a warning burst) aimed directly at the source of the fire consistent with proportionality. Immediately after engagement, file the SAFIRE report with coordinates, threat category, and engagement details. Transmit a concise comms message to command acknowledging self‑defence engagement and requesting formal weapons clearance for any further action. Continue to hold position and monitor for radar warnings or additional hostile fire."
+uncertainty: "Uncertainty about exact altitude of tracer rounds and whether the ground fire is solely hostile or possibly civilian; however, the wingman’s proximity and descent suggest the fire is within range and poses an imminent danger. Would change mind if radar warning were received or if ground observation later confirmed the fire was purely non‑hostile (e.g., training exercise)."
+handoff: "The wingman pilot decides whether to engage under self‑defence now; after engagement, must report via SAFIRE and await formal weapons clearance for any additional strikes. Communicating the decision and intent to command is required; no further tactical decisions (e.g., targeting package) are needed now."
+tempting_wrong: {option: LIVE-O2, pull: "Engaging immediately seems aggressive but the wingman is already close and has just completed a bomb run; might appear to bypass clearance.", why_wrong: "While self‑defence ROE permits engagement when an imminent danger exists, the wingman should still report the engagement promptly and seek clearance for further actions. The tempting wrong is to think engagement violates clearance; actually ROE allows it under present danger."}
+rejected: {LIVE-O1: "Waiting for clearance is prudent and avoids risk, but if the ground fire is actively targeting the aircraft (as indicated by the flash, plume, and low altitude), waiting could expose the wingman to immediate harm. The self‑defence rule explicitly allows use of force when imminent danger is present, making disengagement potentially unsafe."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Engage the perceived ground fire immediately under self‑defence rules of engagement using minimal force appropriate to the threat, then file the SAFIRE report and notify command of the engagement."
+relation: follows
+via: null
+decisive: [LIVE-C1]
+now:
+  - "Select a suitable air‑to‑ground or air‑to‑air interceptor (e.g., AIM‑120) aimed at the source of the fire; fire only once to neutralize the imminent threat."
+  - "Immediately transmit a brief comms message to command stating: 'Self‑defence engagement on ground fire near [approximate coordinates]; engaged with [weapon]; awaiting SAFIRE report submission and further clearance.' "
+  - "File the SAFIRE report via SPINS with estimated coordinates, threat category 'surface‑to‑air fire', engagement details, and attach sensor imagery if available."
+flip_conditions:
+  - {id: LIVE-flip1, if: "If radar warning indicator (RWI) or other objective detection (e.g., radar lock, acoustic sensor confirmation) activates during the pass", then: LIVE-O2, why: "Objective detection would confirm hostile fire, reinforcing the imminent danger justification."}
+  - {id: LIVE-noflip1, if: "If ground observation later confirms the fire was purely training or non‑hostile (e.g., artillery rehearsal), no imminent danger to aircraft existed", why: "No imminent danger would mean self‑defence does not apply; the correct action would be disengage (LIVE-O1). But currently the wingman perceives imminent danger based on flash, plume, and proximity."}
+  - {id: LIVE-watch1, what: "Receipt of radar warning, infrared detection, or confirmation from ground observers that fire is hostile", favors: [LIVE-O2], why: "Such confirmation would objectively indicate present danger, supporting engagement under self‑defence."}

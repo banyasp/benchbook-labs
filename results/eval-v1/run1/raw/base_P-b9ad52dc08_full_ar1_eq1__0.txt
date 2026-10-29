@@ -1,0 +1,104 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Whether to grant, deny, or hold the access authorization for the contractor employee under Guideline G."
+  decider: "Administrative Judge under DOE security regulations, applying Guideline G and relevant medical assessments."
+  my_role: "I may grant, deny, or hold a decision based on evidence from LSO, psychologist, and medical records; I can issue interim holds, restore when eligibility confirmed, or deny when not met. I can hold decision pending additional evidence when eligibility under Guideline G is uncertain."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee currently holds a DOE access authorization as a contractor."}
+  - {id: LIVE-F2, kind: capability, status: confirmed, fact: "Employee self-reported emergency-room visit for alcohol-related heart palpitations in September 2025."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "DOE psychologist diagnosed Alcohol Use Disorder, Moderate, per DSM-5-TR criteria."}
+  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: "Local Security Office (LSO) issued a Notification Letter expressing substantial doubt about the Individual’s eligibility under Guideline G."}
+  - {id: LIVE-F5, kind: capability, status: confirmed, fact: "Psychologist revised assessment notes the Individual is in early remission for AUD Moderate, gives a good prognosis, but the 12‑month treatment recommendation has not yet been satisfied."}
+  - {id: LIVE-F6, kind: evidence, status: confirmed, fact: "Monthly PEth tests from September 2025 through June 2026 were negative except the September 2025 test (105 ng/mL), indicating nine months of sobriety after the initial positive."}
+  - {id: LIVE-F7, kind: guidance, status: confirmed, fact: "Policy Memo – Access Restoration Guidance states restoration is appropriate when medical evidence demonstrates sustained recovery and compliance with treatment protocols."}
+  - {id: LIVE-F8, kind: guidance, status: confirmed, fact: "Policy Memo – Denial Considerations states denial may be warranted pending further evidence if the 12‑month treatment recommendation remains unmet."}
+  - {id: LIVE-F9, kind: input, status: assessed, fact: "Employee’s treatment program runs from 2025‑09‑25 to 2025‑12‑31 with after‑care (weekly therapy and AA) continued through 2026‑06."}
+options:
+  LIVE-O1: "Hold the decision pending additional evidence regarding satisfaction of the 12‑month treatment recommendation."
+  LIVE-O2: "Deny the Individual’s access authorization based on the LSO’s substantial doubt and the unmet 12‑month recommendation."
+  LIVE-O3: "Grant and restore the access authorization now, based on early remission, good prognosis, and nine months of sobriety."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O1], weight: strong, why: "The LSO expressed substantial doubt; due process requires fairness and not an automatic denial without further review."}
+  - {id: LIVE-C2, facts: [LIVE-F5, LIVE-F6], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Psychologist notes early remission, good prognosis, and nine months of sobriety (negative PEth tests after September), indicating sustained recovery progress."}
+  - {id: LIVE-C3, facts: [LIVE-F8], equity: mission_effect, favors: [LIVE-O1], weight: moderate, why: "Denial may hinder mission needs if the employee is otherwise qualified; holding allows continued eligibility pending evidence."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: hors_de_combat (interpreted broadly as safety), favors: [LIVE-O2], weight: strong, why: "Alcohol-related heart palpitations in emergency room indicate ongoing health risk; LSO doubt reflects security concern."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: moderate, why: "Treatment recommendation not yet satisfied; Guideline G may require full completion for restoration."}
+  - {id: LIVE-C6, facts: [LIVE-F7], equity: institutional_credibility, favors: [LIVE-O1], weight: moderate, why: "Restoration guidance explicitly supports when medical evidence shows sustained recovery and compliance."}
+---
+kind: reasoning
+weighing: "The strongest considerations are due_process (C1), early remission and sobriety (C2), and restoration guidance (C6), which together favor holding the decision pending evidence of treatment completion. The strong safety concern (C4) and unmet recommendation (C5) support denial, but the policy memo indicates denial is appropriate only 'pending further evidence' when the 12‑month recommendation remains unmet. Thus, holding aligns with due process, acknowledges progress, and follows policy guidance to await completion of the recommendation."
+tradecraft: "Issue an interim hold on the authorization (i.e., do not restore nor fully deny yet), communicate the hold to LSO and psychologist, request confirmation of treatment milestones or completion date, and set a reasonable review date (e.g., 30–60 days) based on the after‑care schedule through June 2026."
+uncertainty: "Whether the 12‑month treatment recommendation is considered satisfied depends on definition (e.g., calendar months vs. treatment duration). Current record shows treatment from Sep 2025 to Dec 2025 plus after‑care through June 2026; unclear if recommendation refers to 12 months of abstinence or completion of structured treatment. Additional clarification from psychologist or treatment program would resolve."
+handoff: "I decide to hold the decision; LSO and psychologist should provide clarification on treatment recommendation status by the review date. No further action needed from other offices at this time."
+tempting_wrong: {option: LIVE-O2, pull: "It seems safest to deny given LSO doubt and emergency‑room visit.", why_wrong: "Denial without considering progress and policy guidance for holding when uncertain violates due process and may unnecessarily restrict a contractor who shows early remission and sobriety."}
+rejected: {LIVE-O2: "Denial would be premature because the policy memo allows holding pending evidence; LSO doubt alone does not override medical progress."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Hold the access authorization decision pending additional evidence on whether the 12‑month treatment recommendation has been satisfied, and schedule a review within 60 days."
+decisive: [LIVE-C1]
+now:
+  - "Send a hold notice to the LSO and psychologist requesting written confirmation of treatment milestones or expected completion date, and set a review date no later than 60 days from today."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Psychologist confirms that the 12‑month treatment recommendation has been satisfied (e.g., completion of after‑care phase or documented abstinence milestone)", then: LIVE-O3, why: "If recommendation is satisfied, restoration per guidance becomes appropriate."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "LSO provides written evidence that the individual poses an ongoing security risk unrelated to recovery status", why: "Safety concerns would reinforce denial, but still may need to weigh against due process; however, the hold already allows review."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any new PEth positive test or reported alcohol use", favors: [LIVE-O2], why: "A recurrence would indicate ongoing risk and could support denial at review."}
+
+Now output as per format.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Whether to grant, deny, or hold the access authorization for the contractor employee under Guideline G."
+  decider: "Administrative Judge under DOE security regulations, applying Guideline G and relevant medical assessments."
+  my_role: "I may grant, deny, or hold a decision based on evidence from LSO, psychologist, and medical records; I can issue interim holds, restore when eligibility confirmed, or deny when not met. I can hold decision pending additional evidence when eligibility under Guideline G is uncertain."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee currently holds a DOE access authorization as a contractor."}
+  - {id: LIVE-F2, kind: capability, status: confirmed, fact: "Employee self-reported emergency-room visit for alcohol-related heart palpitations in September 2025."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "DOE psychologist diagnosed Alcohol Use Disorder, Moderate, per DSM-5-TR criteria."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Local Security Office (LSO) issued a Notification Letter expressing substantial doubt about the Individual’s eligibility under Guideline G."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Psychologist revised assessment notes the Individual is in early remission for AUD Moderate, gives a good prognosis, but the 12‑month treatment recommendation has not yet been satisfied."}
+  - {id: LIVE-F6, kind: evidence, status: confirmed, fact: "Monthly PEth tests from September 2025 through June 2026 were negative except the September 2025 test (105 ng/mL), indicating nine months of sobriety after the initial positive."}
+  - {id: LIVE-F7, kind: guidance, status: confirmed, fact: "Policy Memo – Access Restoration Guidance states restoration is appropriate when medical evidence demonstrates sustained recovery and compliance with treatment protocols."}
+  - {id: LIVE-F8, kind: guidance, status: confirmed, fact: "Policy Memo – Denial Considerations states denial may be warranted pending further evidence if the 12‑month treatment recommendation remains unmet."}
+  - {id: LIVE-F9, kind: input, status: assessed, fact: "Treatment program runs from 2025‑09‑25 to 2025‑12‑31 with after‑care (weekly therapy and AA) continued through 2026‑06."}
+options:
+  LIVE-O1: "Hold the decision pending additional evidence regarding satisfaction of the 12‑month treatment recommendation."
+  LIVE-O2: "Deny the Individual’s access authorization based on the LSO’s substantial doubt and the unmet 12‑month recommendation."
+  LIVE-O3: "Grant and restore the access authorization now, based on early remission, good prognosis, and nine months of sobriety."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F4], equity: due_process, favors: [LIVE-O1], weight: strong, why: "The LSO expressed substantial doubt; due process requires fairness and not an automatic denial without further review."}
+  - {id: LIVE-C2, facts: [LIVE-F5, LIVE-F6], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Psychologist notes early remission, good prognosis, and nine months of sobriety (negative PEth tests after September), indicating sustained recovery progress."}
+  - {id: LIVE-C3, facts: [LIVE-F8], equity: mission_effect, favors: [LIVE-O1], weight: moderate, why: "Denial may hinder mission needs if the employee is otherwise qualified; holding allows continued eligibility pending evidence."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: hors_de_combat (interpreted broadly as safety), favors: [LIVE-O2], weight: strong, why: "Alcohol-related heart palpitations in emergency room indicate ongoing health risk; LSO doubt reflects security concern."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: moderate, why: "Treatment recommendation not yet satisfied; Guideline G may require full completion for restoration."}
+  - {id: LIVE-C6, facts: [LIVE-F7], equity: institutional_credibility, favors: [LIVE-O1], weight: moderate, why: "Restoration guidance explicitly supports when medical evidence shows sustained recovery and compliance."}
+---
+kind: reasoning
+weighing: "The strongest considerations are due_process (C1), early remission and sobriety (C2), and restoration guidance (C6), which together favor holding the decision pending evidence of treatment completion. The strong safety concern (C4) and unmet recommendation (C5) support denial, but the policy memo indicates denial is appropriate only 'pending further evidence' when the 12‑month recommendation remains unmet. Thus, holding aligns with due process, acknowledges progress, and follows policy guidance to await completion of the recommendation."
+tradecraft: "Issue an interim hold on the authorization (i.e., do not restore nor fully deny yet), communicate the hold to LSO and psychologist, request confirmation of treatment milestones or completion date, and set a reasonable review date (e.g., 30–60 days) based on the after‑care schedule through June 2026."
+uncertainty: "Whether the 12‑month treatment recommendation is considered satisfied depends on definition (e.g., calendar months vs. treatment duration). Current record shows treatment from Sep 2025 to Dec 2025 plus after‑care through June 2026; unclear if recommendation refers to 12 months of abstinence or completion of structured treatment. Additional clarification from psychologist or treatment program would resolve."
+handoff: "I decide to hold the decision; LSO and psychologist should provide clarification on treatment recommendation status by the review date. No further action needed from other offices at this time."
+tempting_wrong: {option: LIVE-O2, pull: "It seems safest to deny given LSO doubt and emergency‑room visit.", why_wrong: "Denial without considering progress and policy guidance for holding when uncertain violates due process and may unnecessarily restrict a contractor who shows early remission and sobriety."}
+rejected: {LIVE-O2: "Denial would be premature because the policy memo allows holding pending evidence; LSO doubt alone does not override medical progress."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Hold the access authorization decision pending additional evidence on whether the 12‑month treatment recommendation has been satisfied, and schedule a review within 60 days."
+decisive: [LIVE-C1]
+now:
+  - "Send a hold notice to the LSO and psychologist requesting written confirmation of treatment milestones or expected completion date, and set a review date no later than 60 days from today."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Psychologist confirms that the 12‑month treatment recommendation has been satisfied (e.g., completion of after‑care phase or documented abstinence milestone)", then: LIVE-O3, why: "If recommendation is satisfied, restoration per guidance becomes appropriate."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "LSO provides written evidence that the individual poses an ongoing security risk unrelated to recovery status", why: "Safety concerns would reinforce denial, but the hold already allows review."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any new PEth positive test or reported alcohol use", favors: [LIVE-O2], why: "A recurrence would indicate ongoing risk and could support denial at review."}

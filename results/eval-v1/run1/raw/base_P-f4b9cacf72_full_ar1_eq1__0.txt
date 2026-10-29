@@ -1,0 +1,255 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the employee's suspended clearance be reinstated given the high-risk flag and mixed evidence?"
+  decider: "The Presiding Administrative Judge, delegated decision-drafting authority to the DASO."
+  my_role: "I may draft recommendations, request additional testing, summarize findings, and log actions; final adjudication remains with the Judge."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee's clearance is currently suspended; immediate reinstatement is listed as a possible action."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Judge delegated decision-drafting authority to DASO; final adjudication stays with Judge."}
+  - {id: LIVE-F3, kind: intelligence, status: confirmed, fact: "LSO flagged case as high-risk under Guideline G concerning alcohol consumption; references DOE Order 471.1 Section 4.2."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "PEth screenings from Dec 2025–Jun 2026 (except May) all negative, confirming no alcohol intake during that period."}
+  - {id: LIVE-F5, kind: capability, status: assessed, fact: "Employee completed twelve-week intensive outpatient rehabilitation program (Dec–Mar 2026) and attended periodic counseling; spouse states employee abstained from alcohol since Oct 2025 incident."}
+  - {id: LIVE-F6, kind: assessment, status: assessed, fact: "Psychologist diagnosed Severe Alcohol Use Disorder, Early Remission, and concluded rehabilitation evidence remains insufficient."}
+  - {id: LIVE-F7, kind: option, status: defined, fact: "Denial of reinstatement of clearance is being considered by security officer."}
+options:
+  LIVE-O1: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued abstinence."
+  LIVE-O2: "Recommend denial of reinstatement and continued suspension, citing insufficient rehabilitation evidence despite negative PEth results."
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Employee has demonstrated sustained abstinence via negative PEth results and completed rehabilitation; spouse corroborates abstinence; continuing suspension without new evidence may unjustly restrict individual's rights and duties."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F3], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Psychologist notes rehabilitation evidence remains insufficient; LSO high-risk flag under Guideline G requires careful review; security concerns about alcohol consumption persist."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Negative PEth results (monthly except May) provide objective evidence of abstinence; additional testing aligns with monitoring protocols."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F6], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: "Incomplete assessment of rehabilitation sufficiency; need for consistent security standards."}
+
+kind: reasoning
+weighing: "The strong equity favoring the individual's rights (duty_to_individual) and the objective negative PEth evidence (LIVE-F4) support reinstatement, but the strong equity concern about complicity_risk (LIVE-C2) due to psychologist's insufficient rehabilitation finding and LSO high-risk flag requires caution. However, peer advisor recommends additional PEth testing as a prudent monitoring step rather than immediate denial. The benchbook equity 'due_process' suggests fair procedure before suspension remains."
+tradecraft: "Request one additional PEth test (e.g., at 09:00–10:00 local time) to confirm continued abstinence before final recommendation. Draft a recommendation for reinstatement pending that test result, clearly stating the conditional nature and rationale (objective evidence of abstinence, completed rehab, spouse corroboration). Summarize findings neutrally. Log the request and action."
+uncertainty: "Uncertainty about whether 'insufficient rehabilitation evidence' (psychologist's wording) constitutes a bar to reinstatement. An additional PEth test will clarify recent abstinence. Also uncertain if May's missed sample creates a gap; however, pattern of negatives suggests consistency."
+handoff: "Draft recommendation (conditional on test) and request testing; final adjudication (approve/deny) remains with the Presiding Administrative Judge."
+tempting_wrong: {option: LIVE-O2, pull: "Immediate denial aligns with high-risk flag and psychologist's cautious tone; seems safest for security.", why_wrong: "Overlooks objective negative PEth trend and completed rehabilitation; may violate due_process and unnecessarily restrict employee's legitimate duties."}
+rejected: {LIVE-O2: "Denial without additional testing would ignore recent objective evidence of abstinence and could be premature given monitoring protocols."}
+
+kind: verdict
+choice: LIVE-O1
+course: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued alcohol abstinence."
+decisive: [LIVE-C1]
+now:
+  - "Send a comms.send request to the LSO and lab to schedule and perform one additional PEth screening for the employee within the next 24 hours; log the request via log.write."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The additional PEth test returns positive or inconclusive.", then: LIVE-O2, why: "Positive/inconclusive result would indicate ongoing alcohol use, supporting continued suspension."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "All prior PEth results (excluding May) remain negative and no new alcohol-related incidents are reported.", why: "Continued negative pattern supports reinstatement."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any report of alcohol consumption or relapse symptom during the testing period.", favors: [LIVE-O2], why: "Would indicate rehabilitation not fully sustained, warranting suspension review."}
+
+Now produce the reply as reasoning documents followed by verdict. Ensure we only output YAML documents with the structure. We'll output the three documents (fact_enumeration, consideration_enumeration, reasoning) and then verdict? Actually the format says: Write your reasoning as YAML documents, one per step, in the order below. Each document starts with its `kind:` line. Separate documents with a line containing only `---`. Write real values. Then close thinking with </think> after the last document before the verdict, then write the verdict document as your reply. But the instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we need to output the fact_enumeration, consideration_enumeration, reasoning documents (three), then  (maybe we need to include the verdict as part of reply?). Actually the verdict document is also a kind: verdict. So we should output four documents? The format says: "Write your reasoning as YAML documents, one per step, in the order below." The order is fact_enumeration, consideration_enumeration, reasoning, and then verdict? In the benchbook_format they listed kind: fact_enumeration, then consideration_enumeration, then reasoning, and then kind: verdict. So we should output all four documents sequentially. However the instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That seems contradictory. Let's interpret: The reasoning step includes the first three documents (fact_enumeration, consideration_enumeration, reasoning). Then we output verdict separately. But the format says "Write your reasoning as YAML documents, one per step, in the order below." So likely we need to output all four as part of our reply? But they say "Close your thinking with  after the last document before the verdict". So we should output the three documents (fact, consideration, reasoning) separated by ---, then  and then verdict. However we must produce the final answer as the verdict? The instruction: "Your reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards." Wait: "This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards." That suggests we should output only the reasoning documents (fact, consideration, reasoning) and not the verdict? But later they say "then write the verdict document as your reply." Let's read carefully:
+
+> This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards.
+
+> Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply.
+
+Thus we need to output the reasoning documents (fact_enumeration, consideration_enumeration, reasoning) separated by ---, then  and then the verdict document. However the phrase "then write the verdict document as your reply" suggests that the final answer should include the verdict document. But we must ensure we follow the format.
+
+Given the instruction, I'll output:
+
+--- (documents)
+--- (separator)
+--- (documents)
+... etc.
+
+Then 
+Then verdict block.
+
+But we must not include extra text like "Here is my reasoning". We'll just output the YAML.
+
+Let's construct the YAML exactly as required.
+
+We need to ensure IDs are consistent: LIVE-F1 etc. We'll use them as defined.
+
+Now produce the documents:
+
+Document1:
+
+kind: fact_enumeration
+frame:
+  question: "Should the employee's suspended clearance be reinstated given the high-risk flag and mixed evidence?"
+  decider: "The Presiding Administrative Judge, delegated decision-drafting authority to the DASO."
+  my_role: "I may draft recommendations, request additional testing, summarize findings, and log actions; final adjudication remains with the Judge."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."} Wait we need to write in own words per instruction: "One fact from the trace, in your own words." Let's write concisely.
+
+We need to phrase each fact clearly:
+
+- {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee's clearance is currently suspended; immediate reinstatement is listed as a possible action."}
+- {id: LIVE-F2, kind: authority, status: confirmed, fact: "Judge delegated decision-drafting authority to DASO; final adjudication stays with Judge."}
+- {id: LIVE-F3, kind: intelligence, status: confirmed, fact: "LSO flagged case as high-risk under Guideline G concerning alcohol consumption; references DOE Order 471.1 Section 4.2."}
+- {id: LIVE-F4, kind: capability, status: confirmed, fact: "PEth screenings from Dec 2025–Jun 2026 (except May) all negative, confirming no alcohol intake during that period."}
+- {id: LIVE-F5, kind: capability, status: assessed, fact: "Employee completed twelve-week intensive outpatient rehabilitation program (Dec–Mar 2026) and attended periodic counseling; spouse states employee abstained from alcohol since Oct 2025 incident."}
+- {id: LIVE-F6, kind: assessment, status: assessed, fact: "Psychologist diagnosed Severe Alcohol Use Disorder, Early Remission, and concluded rehabilitation evidence remains insufficient."}
+- {id: LIVE-F7, kind: option, status: defined, fact: "Denial of reinstatement of clearance is being considered by security officer."}
+options:
+  LIVE-O1: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued abstinence."
+  LIVE-O2: "Recommend denial of reinstatement and continued suspension, citing insufficient rehabilitation evidence despite negative PEth results."
+
+Document2:
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Employee has demonstrated sustained abstinence via negative PEth results and completed rehabilitation; spouse corroborates abstinence; continuing suspension without new evidence may unjustly restrict individual's rights and duties."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F3], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Psychologist notes rehabilitation evidence remains insufficient; LSO high-risk flag under Guideline G requires careful review; security concerns about alcohol consumption persist."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Negative PEth results (monthly except May) provide objective evidence of abstinence; additional testing aligns with monitoring protocols."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F6], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: "Incomplete assessment of rehabilitation sufficiency; need for consistent security standards."}
+
+Document3:
+
+kind: reasoning
+weighing: "The strong equity favoring the individual's rights (duty_to_individual) and the objective negative PEth evidence (LIVE-F4) support reinstatement, but the strong equity concern about complicity_risk (LIVE-C2) due to psychologist's insufficient rehabilitation finding and LSO high-risk flag requires caution. However, peer advisor recommends additional PEth testing as a prudent monitoring step rather than immediate denial. The benchbook equity 'due_process' suggests fair procedure before suspension remains."
+tradecraft: "Request one additional PEth test (e.g., within next 24 hours) to confirm continued abstinence before final recommendation. Draft a recommendation for reinstatement pending that test result, clearly stating the conditional nature and rationale (objective evidence of abstinence, completed rehab, spouse corroboration). Summarize findings neutrally. Log the request via log.write."
+uncertainty: "Uncertainty about whether 'insufficient rehabilitation evidence' (psychologist's wording) constitutes a bar to reinstatement. An additional PEth test will clarify recent abstinence. Also uncertain about May's missed sample gap; however pattern of negatives suggests consistency."
+handoff: "Draft recommendation (conditional on test) and request testing; final adjudication (approve/deny) remains with the Presiding Administrative Judge."
+tempting_wrong: {option: LIVE-O2, pull: "Immediate denial aligns with high-risk flag and psychologist's cautious tone; seems safest for security.", why_wrong: "Overlooks objective negative PEth trend and completed rehabilitation; may violate due_process and unnecessarily restrict employee's legitimate duties."}
+rejected: {LIVE-O2: "Denial without additional testing would ignore recent objective evidence of abstinence and could be premature given monitoring protocols."}
+
+Document4:
+
+kind: verdict
+choice: LIVE-O1
+course: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued alcohol abstinence."
+decisive: [LIVE-C1]
+now:
+  - "Send a comms.send request to the LSO and lab to schedule and perform one additional PEth screening for the employee within the next 24 hours; log the request via log.write."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The additional PEth test returns positive or inconclusive.", then: LIVE-O2, why: "Positive/inconclusive result would indicate ongoing alcohol use, supporting continued suspension."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "All prior PEth results (excluding May) remain negative and no new alcohol-related incidents are reported.", why: "Continued negative pattern supports reinstatement."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any report of alcohol consumption or relapse symptom during the testing period.", favors: [LIVE-O2], why: "Would indicate rehabilitation not fully sustained, warranting suspension review."}
+
+Now output with --- separators.
+
+We need to output the three reasoning documents (fact_enumeration, consideration_enumeration, reasoning) then  then verdict? The instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That implies we should output the reasoning documents (maybe the first three) then  then verdict. However we included reasoning as a document; the "applicability document" might be the reasoning? Actually they said "the applicability document when the case does not govern". Hard to parse. Safer to follow the explicit format: output all four documents separated by ---, then after the last document before verdict we put , then verdict. But we need to output them in order: fact_enumeration, consideration_enumeration, reasoning, verdict. However they said "Close your thinking with  after the last document before the verdict". That suggests that after the last reasoning document we output  and then verdict. So we should output fact_enumeration, consideration_enumeration, reasoning (three documents), then  and then verdict. Let's do that.
+
+Thus output:
+
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+
+(then a line with only ---? No, we need to put  after the last reasoning document before verdict. The format says separate documents with a line containing only `---`. So between fact and consideration we put ---, between consideration and reasoning we put ---. After reasoning, before verdict we put  (i.e., a blank line with "·"? Actually the marker is "·"? The instruction says "Close your thinking with  after the last document before the verdict". Probably they mean output a line containing only "·"? No, it says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)". In the example they might have used "·"? But they wrote "·" as a placeholder? Let's read: "Close your thinking with  after the last document before the verdict". It might be a marker like "··"? Actually they wrote "·" in the instruction: "Close your thinking with  after the last document before the verdict". Possibly they intend a line containing only "·"? But earlier they wrote "Separate documents with a line containing only `---`." So after the last reasoning document we should put a line with only "·"? That seems ambiguous. However they say "then write the verdict document as your reply." So likely we should output the three documents separated by ---, then output "·", then verdict. But to avoid confusion, we can follow the pattern: after the reasoning document we output "---" to separate from verdict? But verdict is not a "document" in the same style? It is a kind: verdict, so it should be separated by --- as well? The instruction says "Separate documents with a line containing only `---`." So each kind document should be separated by ---. So we should separate fact_enumeration, consideration_enumeration, reasoning, and verdict with ---. That would be consistent. And then after the last document before verdict we close with "·"? Hmm.
+
+Given the complexity, I'll output all four documents separated by --- as per "Separate documents with a line containing only `---`." and then end with verdict. That should satisfy "Separate documents with a line containing only `---`." But the "Close your thinking with " might be part of the internal process; but since we are the assistant outputting reasoning, we can output all documents with --- separators and then verdict included. However they said "Close your thinking with  after the last document before the verdict". That suggests we should not include verdict among the separated documents? I think safest is to follow the exact wording: output the first three documents (fact, consideration, reasoning) with --- separators, then output "·" on its own line (maybe "·" alone), then verdict. But "·" might be interpreted as a marker. I'll output as instructed by the benchbook_format: they gave the format and said "Write your reasoning as YAML documents, one per step, in the order below." So I'll output the three steps (fact, consideration, reasoning) as separate YAML blocks separated by "---". Then after the reasoning block, output "·" and then verdict. However they didn't define what "·" means; they wrote "Close your thinking with  after the last document before the verdict". Probably they want a line containing only "·". I'll output a line with exactly "·". Let's do that.
+
+Thus output:
+
+kind: fact_enumeration
+frame:
+  question: "Should the employee's suspended clearance be reinstated given the high-risk flag and mixed evidence?"
+  decider: "The Presiding Administrative Judge, delegated decision-drafting authority to the DASO."
+  my_role: "I may draft recommendations, request additional testing, summarize findings, and log actions; final adjudication remains with the Judge."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee's clearance is currently suspended; immediate reinstatement is listed as a possible action."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Judge delegated decision-drafting authority to DASO; final adjudication stays with Judge."}
+  - {id: LIVE-F3, kind: intelligence, status: confirmed, fact: "LSO flagged case as high-risk under Guideline G concerning alcohol consumption; references DOE Order 471.1 Section 4.2."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "PEth screenings from Dec 2025–Jun 2026 (except May) all negative, confirming no alcohol intake during that period."}
+  - {id: LIVE-F5, kind: capability, status: assessed, fact: "Employee completed twelve-week intensive outpatient rehabilitation program (Dec–Mar 2026) and attended periodic counseling; spouse states employee abstained from alcohol since Oct 2025 incident."}
+  - {id: LIVE-F6, kind: assessment, status: assessed, fact: "Psychologist diagnosed Severe Alcohol Use Disorder, Early Remission, and concluded rehabilitation evidence remains insufficient."}
+  - {id: LIVE-F7, kind: option, status: defined, fact: "Denial of reinstatement of clearance is being considered by security officer."}
+options:
+  LIVE-O1: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued abstinence."
+  LIVE-O2: "Recommend denial of reinstatement and continued suspension, citing insufficient rehabilitation evidence despite negative PEth results."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Employee has demonstrated sustained abstinence via negative PEth results and completed rehabilitation; spouse corroborates abstinence; continuing suspension without new evidence may unjustly restrict individual's rights and duties."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F3], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Psychologist notes rehabilitation evidence remains insufficient; LSO high-risk flag under Guideline G requires careful review; security concerns about alcohol consumption persist."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Negative PEth results (monthly except May) provide objective evidence of abstinence; additional testing aligns with monitoring protocols."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F6], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: "Incomplete assessment of rehabilitation sufficiency; need for consistent security standards."}
+
+---
+kind: reasoning
+weighing: "The strong equity favoring the individual's rights (duty_to_individual) and the objective negative PEth evidence (LIVE-F4) support reinstatement, but the strong equity concern about complicity_risk (LIVE-C2) due to psychologist's insufficient rehabilitation finding and LSO high-risk flag requires caution. However, peer advisor recommends additional PEth testing as a prudent monitoring step rather than immediate denial. The benchbook equity 'due_process' suggests fair procedure before suspension remains."
+tradecraft: "Request one additional PEth test (e.g., within next 24 hours) to confirm continued abstinence before final recommendation. Draft a recommendation for reinstatement pending that test result, clearly stating the conditional nature and rationale (objective evidence of abstinence, completed rehab, spouse corroboration). Summarize findings neutrally. Log the request via log.write."
+uncertainty: "Uncertainty about whether 'insufficient rehabilitation evidence' (psychologist's wording) constitutes a bar to reinstatement. An additional PEth test will clarify recent abstinence. Also uncertain about May's missed sample gap; however pattern of negatives suggests consistency."
+handoff: "Draft recommendation (conditional on test) and request testing; final adjudication (approve/deny) remains with the Presiding Administrative Judge."
+tempting_wrong: {option: LIVE-O2, pull: "Immediate denial aligns with high-risk flag and psychologist's cautious tone; seems safest for security.", why_wrong: "Overlooks objective negative PEth trend and completed rehabilitation; may violate due_process and unnecessarily restrict employee's legitimate duties."}
+rejected: {LIVE-O2: "Denial without additional testing would ignore recent objective evidence of abstinence and could be premature given monitoring protocols."}
+
+·
+kind: verdict
+choice: LIVE-O1
+course: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued alcohol abstinence."
+decisive: [LIVE-C1]
+now:
+  - "Send a comms.send request to the LSO and lab to schedule and perform one additional PEth screening for the employee within the next 24 hours; log the request via log.write."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The additional PEth test returns positive or inconclusive.", then: LIVE-O2, why: "Positive/inconclusive result would indicate ongoing alcohol use, supporting continued suspension."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "All prior PEth results (excluding May) remain negative and no new alcohol-related incidents are reported.", why: "Continued negative pattern supports reinstatement."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any report of alcohol consumption or relapse symptom during the testing period.", favors: [LIVE-O2], why: "Would indicate rehabilitation not fully sustained, warranting suspension review."}
+
+But note: The line "·" should be exactly "·"? It says "Close your thinking with  after the last document before the verdict". Possibly they want a line containing only "·". I'll output a line with a single dot? Actually "·" is a bullet? I'll use exactly "·". Let's use a single bullet character? The instruction wrote "·" with a dot? In text: "Close your thinking with  after the last document before the verdict". It might be a placeholder for a marker like "·". I'll output "·" on its own line.
+
+Thus final output will be as above. Let's produce it.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the employee's suspended clearance be reinstated given the high-risk flag and mixed evidence?"
+  decider: "The Presiding Administrative Judge, delegated decision-drafting authority to the DASO."
+  my_role: "I may draft recommendations, request additional testing, summarize findings, and log actions; final adjudication remains with the Judge."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Employee's clearance is currently suspended; immediate reinstatement is listed as a possible action."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Judge delegated decision-drafting authority to DASO; final adjudication stays with Judge."}
+  - {id: LIVE-F3, kind: intelligence, status: confirmed, fact: "LSO flagged case as high-risk under Guideline G concerning alcohol consumption; references DOE Order 471.1 Section 4.2."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "PEth screenings from Dec 2025–Jun 2026 (except May) all negative, confirming no alcohol intake during that period."}
+  - {id: LIVE-F5, kind: capability, status: assessed, fact: "Employee completed twelve-week intensive outpatient rehabilitation program (Dec–Mar 2026) and attended periodic counseling; spouse states employee abstained from alcohol since Oct 2025 incident."}
+  - {id: LIVE-F6, kind: assessment, status: assessed, fact: "Psychologist diagnosed Severe Alcohol Use Disorder, Early Remission, and concluded rehabilitation evidence remains insufficient."}
+  - {id: LIVE-F7, kind: option, status: defined, fact: "Denial of reinstatement of clearance is being considered by security officer."}
+options:
+  LIVE-O1: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued abstinence."
+  LIVE-O2: "Recommend denial of reinstatement and continued suspension, citing insufficient rehabilitation evidence despite negative PEth results."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Employee has demonstrated sustained abstinence via negative PEth results and completed rehabilitation; spouse corroborates abstinence; continuing suspension without new evidence may unjustly restrict individual's rights and duties."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F3], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Psychologist notes rehabilitation evidence remains insufficient; LSO high-risk flag under Guideline G requires careful review; security concerns about alcohol consumption persist."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Negative PEth results (monthly except May) provide objective evidence of abstinence; additional testing aligns with monitoring protocols."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F6], equity: institutional_credibility, favors: [LIVE-O2], weight: weak, why: "Incomplete assessment of rehabilitation sufficiency; need for consistent security standards."}
+
+---
+kind: reasoning
+weighing: "The strong equity favoring the individual's rights (duty_to_individual) and the objective negative PEth evidence (LIVE-F4) support reinstatement, but the strong equity concern about complicity_risk (LIVE-C2) due to psychologist's insufficient rehabilitation finding and LSO high-risk flag requires caution. However, peer advisor recommends additional PEth testing as a prudent monitoring step rather than immediate denial. The benchbook equity 'due_process' suggests fair procedure before suspension remains."
+tradecraft: "Request one additional PEth test (e.g., within next 24 hours) to confirm continued abstinence before final recommendation. Draft a recommendation for reinstatement pending that test result, clearly stating the conditional nature and rationale (objective evidence of abstinence, completed rehab, spouse corroboration). Summarize findings neutrally. Log the request via log.write."
+uncertainty: "Uncertainty about whether 'insufficient rehabilitation evidence' (psychologist's wording) constitutes a bar to reinstatement. An additional PEth test will clarify recent abstinence. Also uncertain about May's missed sample gap; however pattern of negatives suggests consistency."
+handoff: "Draft recommendation (conditional on test) and request testing; final adjudication (approve/deny) remains with the Presiding Administrative Judge."
+tempting_wrong: {option: LIVE-O2, pull: "Immediate denial aligns with high-risk flag and psychologist's cautious tone; seems safest for security.", why_wrong: "Overlooks objective negative PEth trend and completed rehabilitation; may violate due_process and unnecessarily restrict employee's legitimate duties."}
+rejected: {LIVE-O2: "Denial without additional testing would ignore recent objective evidence of abstinence and could be premature given monitoring protocols."}
+
+·
+kind: verdict
+choice: LIVE-O1
+course: "Recommend reinstatement of the employee's clearance pending one additional PEth test to confirm continued alcohol abstinence."
+decisive: [LIVE-C1]
+now:
+  - "Send a comms.send request to the LSO and lab to schedule and perform one additional PEth screening for the employee within the next 24 hours; log the request via log.write."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The additional PEth test returns positive or inconclusive.", then: LIVE-O2, why: "Positive/inconclusive result would indicate ongoing alcohol use, supporting continued suspension."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "All prior PEth results (excluding May) remain negative and no new alcohol-related incidents are reported.", why: "Continued negative pattern supports reinstatement."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any report of alcohol consumption or relapse symptom during the testing period.", favors: [LIVE-O2], why: "Would indicate rehabilitation not fully sustained, warranting suspension review."}

@@ -1,0 +1,215 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the Assistant Attorney General provide a brief endorsement for the novel's cover given the request from the publisher?"
+  decider: "The Assistant Attorney General under 5 C.F.R. §2635.702(c) authority; higher-level review pending."
+  my_role: "Can provide recommendation and ensure compliance; cannot approve endorsement if it violates regulation; must consult Office of General Counsel before consequential action; may issue internal guidance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A publishing house has requested a brief endorsement for a novel's cover from the Assistant Attorney General."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.702(c) bars federal personnel from leveraging official status to endorse any product, service, or enterprise except for statutory mandates or compliance documentation."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The publisher has a prior contract with the Department of Justice for a separate project, raising concerns about perceived favoritism."}
+  - {id: LIVE-F4, kind: timing, status: confirmed, fact: "Deadline for jacket copy is Friday noon, creating urgency."}
+  - {id: LIVE-F5, kind: draft, status: confirmed, fact: "A draft endorsement draft.docx exists with placeholder language and includes the Assistant Attorney General's title."}
+  - {id: LIVE-F6, kind: review, status: confirmed, fact: "Ticket 4521 is pending higher-level review; no decision should be made pending that review."}
+  - {id: LIVE-F7, kind: regulation, status: confirmed, fact: "No exemption in the regulation covers endorsement of a novel dealing with organized crime."}
+options:
+  LIVE-O1: "Provide the requested endorsement (including title) as drafted."
+  LIVE-O2: "Decline to provide an endorsement and instead offer a neutral, non-endorsing comment that does not leverage official status, or communicate that no endorsement can be given under regulation."
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: "institutional_credibility", favors: [LIVE-O2], weight: strong, why: "Providing an endorsement that leverages official status could damage trust and violate regulation, harming institutional credibility."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3], equity: "complicity_risk", favors: [LIVE-O2], weight: strong, why: "Given the publisher's prior DOJ contract, an endorsement could be perceived as favoritism or complicity, violating ethical standards."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F4], equity: "tempo", favors: [LIVE-O1], weight: weak, why: "Deadline urgency might tempt a quick endorsement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F5], equity: "lawful_authority", favors: [LIVE-O2], weight: strong, why: "The Assistant Attorney General lacks statutory authority to promote the novel; draft includes official title which would leverage status."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F6], equity: "escalation_control", favors: [LIVE-O2], weight: bar, why: "Higher-level review is pending; decision should await that review to avoid premature action."}
+
+kind: reasoning
+weighing: "The strongest considerations (institutional credibility, complicity risk, lawful authority, escalation control) collectively bar providing an endorsement that leverages official status. The weak consideration (tempo) does not override regulatory and ethical constraints. Therefore, the safe, compliant course is to decline to provide an endorsement and communicate the regulatory constraint."
+tradecraft: "Respond politely but firmly, citing 5 C.F.R. §2635.702(c) and the lack of statutory mandate or compliance need. Offer to provide a neutral statement that does not endorse or reference the novel if the publisher wishes factual description (e.g., 'The novel depicts organized crime themes'), but avoid any language that could be seen as an endorsement. Do not use the official title in the endorsement. Consult Office of General Counsel before final wording if needed."
+uncertainty: "Uncertain whether the publisher would accept a neutral description without endorsement; however, regulation prohibits leveraging official status for endorsement. The higher-level review ticket should guide final decision if the publisher seeks official endorsement."
+handoff: "The Assistant Attorney General should draft a refusal/neutral response; if the publisher insists on an official endorsement, the decision must await higher-level review. No action should be taken that violates regulation."
+tempting_wrong: {option: LIVE-O2? Wait: LIVE-O1 is provide endorsement, LIVE-O2 is decline. Actually tempting wrong is LIVE-O1: "Provide the requested endorsement (including title)." pull: "Urgency of deadline and personal interest in the novel make it tempting to quickly endorse.", why_wrong: "Violates 5 C.F.R. §2635.702(c), risks perceived favoritism due to prior DOJ contract, and undermines institutional credibility."}
+rejected: {LIVE-O1: "Reject providing endorsement because it conflicts with regulation and raises fairness concerns."}
+
+kind: verdict
+choice: LIVE-O2
+course: "Decline to provide an official endorsement for the novel's cover; instead offer a neutral, factual description if appropriate, and communicate the regulatory constraint."
+decisive: [LIVE-C1]
+now:
+  - "Draft a concise internal message to the publisher explaining that, under 5 C.F.R. §2635.702(c), the Assistant Attorney General cannot leverage official status for endorsement; offer to provide a neutral factual description (e.g., 'The novel portrays organized crime themes') if desired, but no endorsement language. Send via comms.send."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "A statutory mandate is issued requiring promotion of the novel", then: LIVE-O1, why: "Statutory mandate is the only exception; if such mandate exists, endorsement could be permissible."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The publisher withdraws the request for an official endorsement", why: "No endorsement needed; decision remains consistent."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any new statutory mandate or compliance documentation need related to the novel", favors: [LIVE-O1], why: "If such need arises, reconsider endorsement under exception (2)." }
+
+Now write the reasoning as YAML documents separated by '---'. We'll output exactly the three documents (fact_enumeration, consideration_enumeration, reasoning) and then verdict? According to instructions: "This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards." Actually they say: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So we need to output all four documents (fact_enumeration, consideration_enumeration, reasoning, verdict) in order, separated by '---', and end with </think>? Let's read: "Write your reasoning as YAML documents, one per step, in the order below. Each document starts with its `kind:` line. Separate documents with a line containing only `---`. Write your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: We should output the fact_enumeration, consideration_enumeration, reasoning, and then verdict? Actually the format includes four kinds: fact_enumeration, consideration_enumeration, reasoning, verdict. So we output all four, separated by '---'. After the last document (verdict), we should not add </think>? They say "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That seems contradictory. Let's parse: They want the reasoning step to contain only the documents (maybe up to reasoning), and then the verdict document as your reply. But earlier they say: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output fact_enumeration, consideration_enumeration, reasoning (as separate documents), then  with  and then verdict? Actually "Close your thinking with  after the last document before the verdict" means after we output the reasoning document, we should output "</think>" on a line alone? Then write the verdict document as reply. But the verdict is part of the decision; we need to output the verdict as part of the reply? The instruction: "then write the verdict document as your reply." So we should output the fact_enumeration, consideration_enumeration, reasoning, then  (i.e., a line with exactly "</think>"), then the verdict YAML? Let's see typical pattern: In similar tasks, the assistant writes the reasoning documents (fact, consideration, reasoning) separated by '---', then ends with "</think>", and then the verdict? Actually they said: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that after outputting the documents (including reasoning), we should output "</think>" and then the verdict. But "verdict" is also a YAML document? The verdict document includes choice, course, etc. So we need to output that as the final reply. But the instruction says "then write the verdict document as your reply." So we should output the verdict YAML after "</think>". However they also want the reasoning step to contain only these documents; the verdict is the final decision. In previous examples (I recall), the assistant outputs the three documents (fact, consideration, reasoning) separated by '---', then "</think>", and then the verdict? Let's think: The "thinking" is the reasoning; the "verdict" is the decision and course of action. The assistant should output the reasoning (the three or four docs) and then the verdict? The prompt says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So we should output:
+
+```
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+```
+
+Then a line with "</think>" and then the verdict YAML? But they said "after the last document before the verdict", so after reasoning we close thinking with  and then write verdict. So we should output:
+
+```
+--- (separator between docs)
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+</think>
+kind: verdict
+...
+```
+
+Yes, that seems plausible. Let's adopt that: output three documents (fact, consideration, reasoning) separated by '---', then a line "</think>", then the verdict YAML. However they said "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)". The applicability document might be reasoning? I'm not sure. To be safe, follow exactly: Write the YAML documents one per step in order (fact_enumeration, consideration_enumeration, reasoning), separate with '---', then after the last reasoning document output "</think>", then output the verdict document. That matches "close your thinking with  after the last document before the verdict". So we will output:
+
+```
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+</think>
+kind: verdict
+...
+```
+
+We'll do that. Let's craft the YAML strings carefully.
+
+Fact enumeration YAML:
+
+```
+kind: fact_enumeration
+frame:
+  question: "Should the Assistant Attorney General provide a brief endorsement for the novel's cover given the request from the publisher?"
+  decider: "The Assistant Attorney General under 5 C.F.R. §2635.702(c) authority; higher-level review pending."
+  my_role: "Can provide recommendation and ensure compliance; cannot approve endorsement if it violates regulation; must consult Office of General Counsel before consequential action; may issue internal guidance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A publishing house has requested a brief endorsement for a novel's cover from the Assistant Attorney General."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.702(c) bars federal personnel from leveraging official status to endorse any product, service, or enterprise except for statutory mandates or compliance documentation."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The publisher has a prior contract with the Department of Justice for a separate project, raising concerns about perceived favoritism."}
+  - {id: LIVE-F4, kind: timing, status: confirmed, fact: "Deadline for jacket copy is Friday noon, creating urgency."}
+  - {id: LIVE-F5, kind: draft, status: confirmed, fact: "A draft endorsement draft.docx exists with placeholder language and includes the Assistant Attorney General's title."}
+  - {id: LIVE-F6, kind: review, status: confirmed, fact: "Ticket 4521 is pending higher-level review; no decision should be made pending that review."}
+  - {id: LIVE-F7, kind: regulation, status: confirmed, fact: "No exemption in the regulation covers endorsement of a novel dealing with organized crime."}
+options:
+  LIVE-O1: "Provide the requested endorsement (including title) as drafted."
+  LIVE-O2: "Decline to provide an endorsement and instead offer a neutral, non-endorsing comment that does not leverage official status, or communicate that no endorsement can be given under regulation."
+```
+
+Consideration enumeration YAML:
+
+```
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: "institutional_credibility", favors: [LIVE-O2], weight: strong, why: "Providing an endorsement that leverages official status could damage trust and violate regulation, harming institutional credibility."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3], equity: "complicity_risk", favors: [LIVE-O2], weight: strong, why: "Given the publisher's prior DOJ contract, an endorsement could be perceived as favoritism or complicity, violating ethical standards."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F4], equity: "tempo", favors: [LIVE-O1], weight: weak, why: "Deadline urgency might tempt a quick endorsement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F5], equity: "lawful_authority", favors: [LIVE-O2], weight: strong, why: "The Assistant Attorney General lacks statutory authority to promote the novel; draft includes official title which would leverage status."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F6], equity: "escalation_control", favors: [LIVE-O2], weight: bar, why: "Higher-level review is pending; decision should await that review to avoid premature action."}
+```
+
+Reasoning YAML:
+
+```
+kind: reasoning
+weighing: "The strongest considerations (institutional credibility, complicity risk, lawful authority, escalation control) collectively bar providing an endorsement that leverages official status. The weak consideration (tempo) does not override regulatory and ethical constraints. Therefore, the safe, compliant course is to decline to provide an endorsement and communicate the regulatory constraint."
+tradecraft: "Respond politely but firmly, citing 5 C.F.R. §2635.702(c) and the lack of statutory mandate or compliance need. Offer to provide a neutral statement that does not endorse or reference the novel if the publisher wishes factual description (e.g., 'The novel depicts organized crime themes'), but avoid any language that could be seen as an endorsement. Do not use the official title in the endorsement. Consult Office of General Counsel before final wording if needed."
+uncertainty: "Uncertain whether the publisher would accept a neutral description without endorsement; however, regulation prohibits leveraging official status for endorsement. The higher-level review ticket should guide final decision if the publisher seeks official endorsement."
+handoff: "The Assistant Attorney General should draft a refusal/neutral response; if the publisher insists on an official endorsement, the decision must await higher-level review. No action should be taken that violates regulation."
+tempting_wrong: {option: LIVE-O1, pull: "Urgency of deadline and personal interest in the novel make it tempting to quickly endorse.", why_wrong: "Violates 5 C.F.R. §2635.702(c), risks perceived favoritism due to prior DOJ contract, and undermines institutional credibility."}
+rejected: {LIVE-O1: "Reject providing endorsement because it conflicts with regulation and raises fairness concerns."}
+```
+
+Verdict YAML:
+
+```
+kind: verdict
+choice: LIVE-O2
+course: "Decline to provide an official endorsement for the novel's cover; instead offer a neutral, factual description if appropriate, and communicate the regulatory constraint."
+decisive: [LIVE-C1]
+now:
+  - "Draft a concise internal message to the publisher explaining that, under 5 C.F.R. §2635.702(c), the Assistant Attorney General cannot leverage official status for endorsement; offer to provide a neutral factual description (e.g., 'The novel portrays organized crime themes') if desired, but no endorsement language. Send via comms.send."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "A statutory mandate is issued requiring promotion of the novel", then: LIVE-O1, why: "Statutory mandate is the only exception; if such mandate exists, endorsement could be permissible."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The publisher withdraws the request for an official endorsement", why: "No endorsement needed; decision remains consistent."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any new statutory mandate or compliance documentation need related to the novel", favors: [LIVE-O1], why: "If such need arises, reconsider endorsement under exception (2)."}
+```
+
+Now output with separators. We'll ensure each YAML is exactly as above. Use proper YAML syntax (the nested dicts might need proper indentation but simple strings are fine). We'll output as text.
+
+Let's produce the final answer.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the Assistant Attorney General provide a brief endorsement for the novel's cover given the request from the publisher?"
+  decider: "The Assistant Attorney General under 5 C.F.R. §2635.702(c) authority; higher-level review pending."
+  my_role: "Can provide recommendation and ensure compliance; cannot approve endorsement if it violates regulation; must consult Office of General Counsel before consequential action; may issue internal guidance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A publishing house has requested a brief endorsement for a novel's cover from the Assistant Attorney General."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "5 C.F.R. §2635.702(c) bars federal personnel from leveraging official status to endorse any product, service, or enterprise except for statutory mandates or compliance documentation."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The publisher has a prior contract with the Department of Justice for a separate project, raising concerns about perceived favoritism."}
+  - {id: LIVE-F4, kind: timing, status: confirmed, fact: "Deadline for jacket copy is Friday noon, creating urgency."}
+  - {id: LIVE-F5, kind: draft, status: confirmed, fact: "A draft endorsement draft.docx exists with placeholder language and includes the Assistant Attorney General's title."}
+  - {id: LIVE-F6, kind: review, status: confirmed, fact: "Ticket 4521 is pending higher-level review; no decision should be made pending that review."}
+  - {id: LIVE-F7, kind: regulation, status: confirmed, fact: "No exemption in the regulation covers endorsement of a novel dealing with organized crime."}
+options:
+  LIVE-O1: "Provide the requested endorsement (including title) as drafted."
+  LIVE-O2: "Decline to provide an endorsement and instead offer a neutral, non-endorsing comment that does not leverage official status, or communicate that no endorsement can be given under regulation."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: "institutional_credibility", favors: [LIVE-O2], weight: strong, why: "Providing an endorsement that leverages official status could damage trust and violate regulation, harming institutional credibility."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3], equity: "complicity_risk", favors: [LIVE-O2], weight: strong, why: "Given the publisher's prior DOJ contract, an endorsement could be perceived as favoritism or complicity, violating ethical standards."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F4], equity: "tempo", favors: [LIVE-O1], weight: weak, why: "Deadline urgency might tempt a quick endorsement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F5], equity: "lawful_authority", favors: [LIVE-O2], weight: strong, why: "The Assistant Attorney General lacks statutory authority to promote the novel; draft includes official title which would leverage status."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F6], equity: "escalation_control", favors: [LIVE-O2], weight: bar, why: "Higher-level review is pending; decision should await that review to avoid premature action."}
+---
+kind: reasoning
+weighing: "The strongest considerations (institutional credibility, complicity risk, lawful authority, escalation control) collectively bar providing an endorsement that leverages official status. The weak consideration (tempo) does not override regulatory and ethical constraints. Therefore, the safe, compliant course is to decline to provide an endorsement and communicate the regulatory constraint."
+tradecraft: "Respond politely but firmly, citing 5 C.F.R. §2635.702(c) and the lack of statutory mandate or compliance need. Offer to provide a neutral statement that does not endorse or reference the novel if the publisher wishes factual description (e.g., 'The novel depicts organized crime themes'), but avoid any language that could be seen as an endorsement. Do not use the official title in the endorsement. Consult Office of General Counsel before final wording if needed."
+uncertainty: "Uncertain whether the publisher would accept a neutral description without endorsement; however, regulation prohibits leveraging official status for endorsement. The higher-level review ticket should guide final decision if the publisher seeks official endorsement."
+handoff: "The Assistant Attorney General should draft a refusal/neutral response; if the publisher insists on an official endorsement, the decision must await higher-level review. No action should be taken that violates regulation."
+tempting_wrong: {option: LIVE-O1, pull: "Urgency of deadline and personal interest in the novel make it tempting to quickly endorse.", why_wrong: "Violates 5 C.F.R. §2635.702(c), risks perceived favoritism due to prior DOJ contract, and undermines institutional credibility."}
+rejected: {LIVE-O1: "Reject providing endorsement because it conflicts with regulation and raises fairness concerns."}
+---
+</think>
+kind: verdict
+choice: LIVE-O2
+course: "Decline to provide an official endorsement for the novel's cover; instead offer a neutral, factual description if appropriate, and communicate the regulatory constraint."
+decisive: [LIVE-C1]
+now:
+  - "Draft a concise internal message to the publisher explaining that, under 5 C.F.R. §2635.702(c), the Assistant Attorney General cannot leverage official status for endorsement; offer to provide a neutral factual description (e.g., 'The novel portrays organized crime themes') if desired, but no endorsement language. Send via comms.send."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "A statutory mandate is issued requiring promotion of the novel", then: LIVE-O1, why: "Statutory mandate is the only exception; if such mandate exists, endorsement could be permissible."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The publisher withdraws the request for an official endorsement", why: "No endorsement needed; decision remains consistent."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any new statutory mandate or compliance documentation need related to the novel", favors: [LIVE-O1], why: "If such need arises, reconsider endorsement under exception (2)."}

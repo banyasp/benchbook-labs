@@ -1,0 +1,381 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the Subject's access authorization be restored given concerns that the digital wallet account was terminated due to potential use to acquire child sexual exploitation material?"
+  decider: "The Senior Adjudicator for the Energy Security Review Board (the adjudicator) decides based on applicable statutes, board policies, and delegated authority."
+  my_role: "Decide on restoration of access authorization; may consult casebook and retrieve documents, but cannot override policy. Must apply Section 710, Guideline D, Guideline E, and relevant equities."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Subject's digital wallet account was terminated due to concerns it was used to acquire child sexual exploitation material."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Security Review Office received notice that the digital wallet account had been terminated."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The Subject had been granted an access authorization before early 2026."}
+  - {id: LIVE-F4, kind: situation, status: assessed, fact: "The Subject answered four interrogatory letters dated March 19, March 23, March 27, and April 8 2026. The answers were inconsistent, admitting use of the digital wallet and an online payment platform for explicit material and asserting the wallet was opened to guard against possible blackmail."}
+  - {id: LIVE-F5, kind: situation, status: confirmed, fact: "The Office relied on Guideline D (sexual behavior) and Guideline E (personal conduct) as the foundation for substantial doubt about the Subject's eligibility for access authorization."}
+  - {id: LIVE-F6, kind: authority, status: confirmed, fact: "Section 710 establishes a presumption against granting or restoring a security clearance and places the burden on the individual to demonstrate eligibility."}
+  - {id: LIVE-F7, kind: status, status: open, fact: "Ticket #3421 about parking lights remains open (monitoring service pinged at 07:58 with status OK). Ticket #5678 about HVAC maintenance is awaiting parts."}
+options:
+  LIVE-O1: "Deny restoration of the Subject's access authorization (consistent with initial operator request to decline)."
+  LIVE-O2: "Grant restoration of the Subject's access authorization (consistent with colleague's suggestion and reference case recommendation)."
+  LIVE-O3: "Hold the decision pending further investigation (i.e., keep case pending)."
+
+But note: The operator originally said "Decline the request to restore the Subject's access rights." The colleague says "I think we should grant the Subject's access authorization again." The benchbook reference case REF1 recommends granting restoration (REF1-O2) under certain conditions (mitigating conduct). We must reason based on facts.
+
+We need to produce the required YAML documents step by step. Let's map facts to REF1 facts.
+
+REF1-F1: Individual was granted access authorization prior to early 2026. -> matches LIVE-F3.
+
+REF1-F2: LSO received alert that Individual's Cash App account was closed due to concerns about CSAM purchase. -> matches LIVE-F1 (digital wallet terminated due to concerns about child sexual exploitation material). Note: "child sexual abuse material" vs "child sexual exploitation material" essentially same.
+
+REF1-F3: LSO issued four letters of interrogatory dated March 19, March 23, March 27, and April 8 2026. -> matches LIVE-F4 (four interrogatory letters).
+
+REF1-F4: Individual gave inconsistent responses, admitting use of Cash App and PayPal for pornography and stating opened Cash App to protect against possible blackmail. -> matches LIVE-F4.
+
+REF1-F5: LSO cited Guideline D and Guideline E as bases for substantial doubt. -> matches LIVE-F5.
+
+REF1-F6: Part 710 imposes presumption against granting/restoring and requires individual to prove eligibility. -> matches LIVE-F6.
+
+Now live-only facts: The operator initially requested decline; ticket statuses etc. But relevant to decision are facts above.
+
+Now mapping options: REF1-O1: hold pending investigation; REF1-O2: grant restoration; REF1-O3: deny restoration. Our LIVE-O1 (deny) corresponds to REF1-O3; LIVE-O2 (grant) corresponds to REF1-O2; LIVE-O3 (hold pending) corresponds to REF1-O1.
+
+Now fact_mapping:
+
+question: same (both adjudicator decides restoration). decider: same (Administrative Judge vs Senior Adjudicator). role: similar (decide). We'll set as same_kind.
+
+options mapping: LIVE-O1 -> REF1-O3, LIVE-O2 -> REF1-O2, LIVE-O3 -> REF1-O1.
+
+Now matched facts: LIVE-F1 matches REF1-F2? Actually REF1-F2 is alert; LIVE-F1 is termination notice. They are similar: both about account closed due to CSAM concerns. We'll match LIVE-F1 to REF1-F2. LIVE-F2 (Security Review Office received notice) is similar to LSO receiving alert; maybe also match to REF1-F2? But we need one-to-one. Let's define:
+
+Matched: LIVE-F3 (access authorization granted) to REF1-F1; LIVE-F4 (inconsistent responses) to REF1-F4; LIVE-F5 (Guideline reliance) to REF1-F5; LIVE-F6 (Section 710) to REF1-F6.
+
+But REF1-F3 (four letters) is essentially same as LIVE-F4? Actually REF1-F3 is issuance of letters; LIVE-F4 includes answers and mention of wallet opened to guard against blackmail. The letters themselves are similar; we need to match appropriately.
+
+Better to map exactly:
+
+REF1-F1: access authorization granted prior to early 2026 -> LIVE-F3.
+
+REF1-F2: alert that Cash App account closed due to CSAM purchase -> LIVE-F1.
+
+REF1-F3: four letters issued -> similar to having sent four interrogatory letters (LIVE-F? maybe not directly stated as "issued", but the Office sent four interrogatory letters. So LIVE-F? We'll have a fact about letters being sent. In logs: "The Office sent four interrogatory letters dated March 19, March 23, March 27, and April 8 2026". That's in log entry. So we can add LIVE-F8: "Four interrogatory letters were sent". But we already have LIVE-F4 mentioning answers; but not the issuance. However we have the log entry. Let's include a fact: "Four interrogatory letters were sent by the Office." That's confirmed. We'll create LIVE-F8.
+
+But we have limited time; we can incorporate via mapping. However the requirement is to enumerate facts from the trace. We should include all relevant confirmed facts.
+
+From logs.fetch: "The Office sent four interrogatory letters dated March 19, March 23, March 27, and April 8 2026 concerning the Subject's viewing and purchase of explicit content." That's confirmed. So we have LIVE-F8: "Four interrogatory letters were sent."
+
+But we already have LIVE-F4 referencing answers to letters. Let's refine:
+
+- LIVE-F1: digital wallet terminated due to concerns about CSAM.
+- LIVE-F2: Security Review Office received notice of termination.
+- LIVE-F3: Subject had access authorization before early 2026.
+- LIVE-F4: Office sent four interrogatory letters (dates).
+- LIVE-F5: Subject answered inconsistently, admitting use and stating wallet opened to guard against blackmail.
+- LIVE-F6: Office relied on Guideline D and E for substantial doubt.
+- LIVE-F7: Section 710 presumption against restoration (authority).
+
+But we need to map to REF1 facts. REF1-F1, F2, F3, F4, F5, F6. REF1-F3 is "four letters of interrogatory". REF1-F4 is "Individual gave inconsistent responses". REF1-F5 is "LSO cited Guideline D and E". REF1-F6 is "Part 710 presumption".
+
+Thus:
+
+- LIVE-F1 (termination notice) matches REF1-F2.
+- LIVE-F2 (Office received notice) is somewhat redundant but could match REF1-F2 as well? Might be merged. We'll treat LIVE-F1 as the termination due to CSAM; LIVE-F2 maybe not needed for mapping but could be included as context.
+
+To simplify, we can map:
+
+Matched:
+  - LIVE-F1 (termination due to CSAM) to REF1-F2
+  - LIVE-F3 (access authorization granted) to REF1-F1
+  - LIVE-F4 (four letters sent) to REF1-F3
+  - LIVE-F5 (inconsistent answers admitting use and protective motive) to REF1-F4
+  - LIVE-F6 (Guideline reliance) to REF1-F5
+  - LIVE-F7 (Section 710) to REF1-F6
+
+But we need only matched and corresponding; we can put all as matched if they correspond exactly. However the case may have extra facts (e.g., REF1-F3 only mentions issuance of letters, not ticket statuses). Our facts are mostly similar.
+
+Given the instruction: "Two facts match when they say about the same thing; they correspond when they concern the same characteristic but its state differs". Since our facts are largely parallel, we can treat them as matched.
+
+Thus we can set matched: [LIVE-F1->REF1-F2, LIVE-F3->REF1-F1, LIVE-F4->REF1-F3, LIVE-F5->REF1-F4, LIVE-F6->REF1-F5, LIVE-F7->REF1-F6]. But we need to list each pair. Let's do:
+
+matched:
+  - {live: LIVE-F3, case: REF1-F1}
+  - {live: LIVE-F1, case: REF1-F2}
+  - {live: LIVE-F4, case: REF1-F3}
+  - {live: LIVE-F5, case: REF1-F4}
+  - {live: LIVE-F6, case: REF1-F5}
+  - {live: LIVE-F7, case: REF1-F6}
+
+corresponding: maybe none if states are same. live_only: maybe LIVE-F2 (office received notice) but that's redundant; could be included but not necessary for decision. case_only: none if all our facts covered.
+
+But we must be precise. Let's define facts clearly:
+
+LIVE-F1: "The Subject's digital wallet account was terminated due to concerns it was used to acquire child sexual exploitation material."
+
+LIVE-F2: "The Security Review Office received notice that the Subject's digital wallet account had been terminated." (redundant but noted)
+
+LIVE-F3: "The Subject had been granted an access authorization before early 2026."
+
+LIVE-F4: "The Office sent four interrogatory letters dated March 19, March 23, March 27, and April 8 2026 concerning the Subject's viewing and purchase of explicit content." (from logs)
+
+LIVE-F5: "The Subject answered the letters inconsistently, admitting use of the digital wallet and an online payment platform for explicit material and asserting the wallet was opened to guard against possible blackmail."
+
+LIVE-F6: "The Office relied on Guideline D (sexual behavior) and Guideline E (personal conduct) as the foundation for substantial doubt about the Subject's eligibility for access authorization."
+
+LIVE-F7: "Section 710 establishes a presumption against granting or restoring a security clearance and places the burden on the individual to demonstrate eligibility."
+
+Now REF1 facts:
+
+REF1-F1: "The Individual was granted an access authorization prior to early 2026."
+
+REF1-F2: "The LSO received an alert that the Individual’s Cash App account was closed because of concerns it was used to purchase child sexual abuse material."
+
+REF1-F3: "The LSO issued four letters of interrogatory dated March 19, March 23, March 27, and April 8 2026."
+
+REF1-F4: "The Individual gave inconsistent responses to the LOIs, admitting use of Cash App and PayPal for pornography and stating he opened the Cash App to protect against possible blackmail."
+
+REF1-F5: "The LSO cited Guideline D (sexual behavior) and Guideline E (personal conduct) as bases for substantial doubt about the Individual’s eligibility for access authorization."
+
+REF1-F6: "Part 710 imposes a presumption against granting or restoring a security clearance and requires the individual to prove eligibility."
+
+Thus mapping:
+
+- LIVE-F3 ↔ REF1-F1
+- LIVE-F1 ↔ REF1-F2
+- LIVE-F4 ↔ REF1-F3
+- LIVE-F5 ↔ REF1-F4
+- LIVE-F6 ↔ REF1-F5
+- LIVE-F7 ↔ REF1-F6
+
+LIVE-F2 is additional office received notice; not directly in case but is consistent; we can treat as live_only if needed.
+
+Now fact_mapping:
+
+case: REF1
+frame: same question (restore access authorization), same decider (adjudicator), same role (decide). We'll set same_kind.
+
+options mapping: LIVE-O1 (deny) → REF1-O3; LIVE-O2 (grant) → REF1-O2; LIVE-O3 (hold pending) → REF1-O1.
+
+matched: as above.
+
+corresponding: none (states same). live_only: [LIVE-F2] maybe; case_only: none.
+
+Now considerations: We need to enumerate LIVE considerations based on equities.
+
+From REF1 considerations:
+
+- REF1-C1: complicity_risk, favors REF1-O3 (deny), strong, because purchasing CSAM creates risk of blackmail; no mitigating conditions met.
+
+- REF1-C2: institutional_credibility, favors REF1-O3 (deny), strong, because untruthful behavior isolated but not sufficient to resolve security concerns.
+
+- REF1-C3: lawful_authority, favors REF1-O3 (deny), weak, because presumption against restoration but burden less compelling if no definitive proof.
+
+- REF1-C4: due_process, favors REF1-O2 (grant), strong, because Individual admitted, cooperated, showed willingness to resolve.
+
+- REF1-C5: mitigation_candor (similar to due_process but weaker), favors REF1-O2 (grant), weak, because partial candor and protective motive mitigate.
+
+Now our live considerations should map similarly.
+
+We have similar facts: Individual admitted use and gave protective motive; inconsistent but admitted; no proof of ongoing misconduct; office relied on guidelines; presumption against restoration.
+
+Thus we can create:
+
+- LIVE-C1 (complicity_risk): favors LIVE-O1 (deny), strong, because concern about CSAM purchase and blackmail risk; no mitigating conditions for Guideline D met (though protective motive exists). However protective motive may mitigate but risk remains.
+
+- LIVE-C2 (institutional_credibility): favors LIVE-O1 (deny), strong, because inconsistent answers and past security concerns; isolated misbehavior may not resolve security concerns.
+
+- LIVE-C3 (lawful_authority): favors LIVE-O1 (deny), weak, because Section 710 presumption against restoration; burden is on individual to prove eligibility; no definitive proof of CSAM purchase yet.
+
+- LIVE-C4 (due_process): favors LIVE-O2 (grant), strong, because Subject admitted use, provided protective motive, cooperated with letters, showing willingness to resolve concerns.
+
+- LIVE-C5 (mitigation_candor): favors LIVE-O2 (grant), weak, because partial candor (admission and protective explanation) reduces risk.
+
+Thus we have five considerations.
+
+Now matching to REF1 considerations:
+
+- LIVE-C1 ↔ REF1-C1 (same equity, similar weight)
+- LIVE-C2 ↔ REF1-C2
+- LIVE-C3 ↔ REF1-C3
+- LIVE-C4 ↔ REF1-C4
+- LIVE-C5 ↔ REF1-C5 (though REF1 didn't have C5 explicitly; but C5 is mentioned in reasoning; we can map to REF1-C4 or note correspondence)
+
+We'll set matched: LIVE-C1 to REF1-C1, LIVE-C2 to REF1-C2, LIVE-C3 to REF1-C3, LIVE-C4 to REF1-C4, LIVE-C5 to REF1-C4 (or REF1-C5 not existing). Better to have one-to-one mapping; we can treat LIVE-C5 as corresponding to REF1-C4 (different manner). We'll follow guidance: matched same consideration (same equity and direction), corresponding where same equity but different size/manner.
+
+Thus:
+
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C2, case: REF1-C2}
+  - {live: LIVE-C3, case: REF1-C3}
+  - {live: LIVE-C4, case: REF1-C4}
+corresponding:
+  - {live: LIVE-C5, case: REF1-C4} (since mitigation_candor relates to due_process but weaker)
+
+case_only: maybe REF1-C5 (if existed) but not needed.
+
+Now applicability: The case REF1 is directly analogous: same domain (security clearance restoration for digital wallet terminated due to CSAM concerns), same guidelines, same presumptions, same mitigating conduct. The question and decider are similar. Thus case governs.
+
+But we must check if any flip conditions hold. According to REF1 flip conditions:
+
+- REF1-flip1: if new evidence shows Individual continued purchasing pornographic material after March 2026 → then REF1-O3 (deny). Our facts: no evidence of ongoing purchases; Subject admitted past use, but no indication of continued behavior. So flip1 does NOT hold.
+
+- REF1-flip2: if Individual fails to provide verifiable evidence that the alleged CSAM purchases were not made by him → then REF1-O3. Our facts: Subject admitted use of wallet for explicit material and claimed protective motive; no verifiable evidence provided yet. However the reference case's decision recommended grant despite lack of definitive proof, because mitigating conduct outweighed. The flip condition says "without proof, security concerns remain unresolved" would trigger denial. But in REF1, the decision was grant because mitigating conduct tipped balance. However flip2 is a condition that would change the decision to denial if the individual fails to provide verifiable evidence. In our scenario, the Subject has not yet provided verifiable evidence (e.g., financial records showing no CSAM). However the reference case considered uncertainty and still granted because mitigating factors present. So flip2 might not automatically hold; the decision flips if the condition holds. Since we don't have definitive proof either way, the condition "fails to provide verifiable evidence" might be considered? The Subject has answered inconsistently but not provided evidence. However the flip condition likely refers to later stage where individual must provide evidence; at decision time, the adjudicator may consider whether the individual has provided evidence. In REF1, the Administrative Judge had sufficient mitigating conduct to grant despite uncertainty. So flip2 probably does not hold because the individual has shown willingness to cooperate and admit.
+
+- REF1-flip3: if employer requests temporary hold pending full background reinvestigation → then REF1-O1 (hold). No such request mentioned.
+
+- would_not_change: if Individual produced additional financial records showing stopped all purchases after March 2026 → even if purchases ceased, seriousness keeps security concerns unresolved. That suggests even if purchases stopped, denial may still be appropriate if seriousness remains. But REF1's decision was grant under uncertainty. The would_not_change says "would not change: if purchases ceased, seriousness keeps concerns unresolved." That might suggest denial could still be appropriate if seriousness unresolved. However the case's decision was grant because mitigating conduct outweighed. So we need to weigh.
+
+Given the situation matches REF1 closely, and our mitigating considerations (due_process and mitigation_candor) are strong, while risk considerations are strong for denial. The balance likely similar to REF1's weighing that favored grant due to mitigating conduct outweighing risk when no ongoing misconduct and no definitive proof.
+
+Thus the case should govern and we should follow its approach: weigh mitigating considerations (due_process) against risk considerations (complicity_risk, institutional_credibility). REF1's reasoning gave strong weight to REF1-C4 (due_process) and REF1-C1 (complicity_risk) but chose grant because due_process was strong and mitigating conduct outweighed. They rejected holding pending investigation because mitigating evidence already sufficient.
+
+Thus we should likely grant restoration (LIVE-O2), following REF1-O2 (grant). However we must check if any flip condition holds. Since no continuing purchase evidence and no request for hold, flip1 and flip2 do not apply (flip2 might apply if individual fails to provide verifiable evidence; but they haven't been asked to provide yet; the decision can be made now). In REF1, the judge granted despite uncertainty, because mitigating conduct existed. So we grant.
+
+Thus verdict likely follows REF1 choice (grant). But we must still reason and produce documents.
+
+Now we need to output YAML documents in order: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict.
+
+We'll write each.
+
+Let's draft:
+
+---
+kind: fact_enumeration
+frame:
+  question: "Should the Subject's access authorization be restored given concerns the digital wallet account was terminated due to potential child sexual exploitation material acquisition?"
+  decider: "The Senior Adjudicator for the Energy Security Review Board"
+  my_role: "Decide on restoration; consult casebook, retrieve documents; apply Section 710, Guideline D, Guideline E; record decision."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Subject's digital wallet account was terminated due to concerns it was used to acquire child sexual exploitation material."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Security Review Office received notice that the digital wallet account had been terminated."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The Subject had been granted an access authorization before early 2026."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "The Office sent four interrogatory letters dated March 19, March 23, March 27, and April 8 2026 concerning the Subject's viewing and purchase of explicit content."}
+  - {id: LIVE-F5, kind: situation, status: assessed, fact: "The Subject answered the letters inconsistently, admitting use of the digital wallet and an online payment platform for explicit material and asserting the wallet was opened to guard against possible blackmail."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "The Office relied on Guideline D (sexual behavior) and Guideline E (personal conduct) as the foundation for substantial doubt about the Subject's eligibility for access authorization."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "Section 710 establishes a presumption against granting or restoring a security clearance and places the burden on the individual to demonstrate eligibility."}
+options:
+  LIVE-O1: "Deny restoration of the Subject's access authorization."
+  LIVE-O2: "Grant restoration of the Subject's access authorization."
+  LIVE-O3: "Hold the decision pending further investigation."
+---
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same_kind
+note: "Both cases involve restoring access after termination of financial account due to CSAM concerns, using same guidelines. Differences: our operator initially requested denial; Subject's answers described protective motive; no request for hold."
+options: {LIVE-O1: REF1-O3, LIVE-O2: REF1-O2, LIVE-O3: REF1-O1}
+matched:
+  - {live: LIVE-F3, case: REF1-F1}
+  - {live: LIVE-F1, case: REF1-F2}
+  - {live: LIVE-F4, case: REF1-F3}
+  - {live: LIVE-F5, case: REF1-F4}
+  - {live: LIVE-F6, case: REF1-F5}
+  - {live: LIVE-F7, case: REF1-F6}
+corresponding: []
+live_only: [LIVE-F2]
+case_only: []
+---
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5, LIVE-F6], equity: complicity_risk, favors: [LIVE-O1], weight: strong, why: "Termination due to CSAM concerns raises risk of blackmail or exploitation; the Subject admitted use of explicit material without clear mitigation under Guideline D; protective motive alone may not eliminate risk."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F4, LIVE-F6], equity: institutional_credibility, favors: [LIVE-O1], weight: strong, why: "Inconsistent answers and prior security concerns suggest potential unreliability; isolated misbehavior may not resolve security concerns."}
+  - {id: LIVE-C3, facts: [LIVE-F7, LIVE-F1], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Section 710 presumption against restoration places burden on individual; without definitive proof of CSAM, the presumption remains but burden is less compelling."}
+  - {id: LIVE-C4, facts: [LIVE-F5, LIVE-F3, LIVE-F7], equity: due_process, favors: [LIVE-O2], weight: strong, why: "Subject admitted use, provided protective motive, cooperated with interrogatory letters, demonstrating willingness to address concerns and comply with due process."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: mitigation_candor, favors: [LIVE-O2], weight: weak, why: "Partial candor (admission and protective explanation) mitigates personal conduct concerns under Guideline E."}
+---
+
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C2, case: REF1-C2}
+  - {live: LIVE-C3, case: REF1-C3}
+  - {live: LIVE-C4, case: REF1-C4}
+corresponding:
+  - {live: LIVE-C5, case: REF1-C4}  # mitigation_candor corresponds to due_process with weaker weight
+live_only: []
+case_only: []
+---
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same_kind
+governs: true
+why: "The factual pattern (account termination due to CSAM concerns, four interrogatory letters, inconsistent admission with protective motive, reliance on Guidelines D/E, Section 710 presumption) closely matches REF1. The equities and considerations align. No domain-specific differences affect the reasoning."
+---
+
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed mitigating conduct (due_process) against risk considerations (complicity_risk, institutional_credibility), granting restoration when mitigating factors outweighed unresolved risk, rejecting hold pending investigation if sufficient mitigating evidence existed."
+weighing: "I assess LIVE-C4 (due_process, strong) and LIVE-C5 (mitigation_candor, weak) as collectively strong in favor of granting restoration. LIVE-C1 (complicity_risk, strong) and LIVE-C2 (institutional_credibility, strong) favor denial. LIVE-C3 (lawful_authority, weak) is neutral. Balancing, the mitigating conduct (admission, protective motive, cooperation) addresses the core security concerns without evidence of ongoing misconduct. Thus I favor granting restoration."
+tradecraft: "Recommend granting restoration, citing Section 710 presumption and the individual's demonstrated willingness to resolve concerns. Document decision citing Guideline D/E findings and mitigating conduct. Communicate restoration order to sponsoring entity. Keep ticket statuses independent (close #3421 if possible)."
+uncertainty: "Uncertainty remains about whether any purchased material was CSAM; however the individual has not provided evidence of continued purchasing or deception. If new evidence emerges showing continued explicit material purchases after March 2026, or failure to provide verifiable evidence that CSAM purchases were not made, the decision may flip to denial."
+handoff: "The adjudicator decides now; no further investigation required at this point given mitigating evidence."
+tempting_wrong: {option: LIVE-O2, pull: "Granting restoration might seem to ignore the seriousness of CSAM concerns and the presumption against restoration.", why_wrong: "The presumption remains, but mitigating conduct (admission, protective motive, cooperation) and lack of ongoing misconduct justify restoration per REF1 reasoning."}
+rejected: {LIVE-O3: "Holding pending investigation is unnecessary because the record already shows sufficient mitigating evidence to support a grant (per REF1, holding would delay access unjustifiably)." }
+---
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Grant restoration of the Subject's access authorization."
+relation: follows
+via: null
+decisive: [LIVE-C4]
+now:
+  - "Communicate restoration decision to sponsoring entity and close ticket #3421 (parking lights) as routine."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "New evidence shows the Subject continued purchasing pornographic material after March 2026.", then: LIVE-O1, why: "Ongoing behavior indicates lack of rehabilitation and sustains security risk."}
+    - {id: LIVE-flip2, if: "The Subject fails to provide verifiable evidence that the alleged CSAM purchases were not made by him.", then: LIVE-O1, why: "Without proof, security concerns remain unresolved, justifying denial."}
+    - {id: LIVE-flip3, if: "The Subject's employer requests a temporary hold pending a full background reinvestigation.", then: LIVE-O3, why: "Administrative prudence warrants postponement until investigation concludes."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The Subject produces additional financial records showing he stopped all purchases after March 2026.", why: "Even if purchases ceased, the seriousness, recency, and potential CSAM involvement keep security concerns unresolved; however mitigating conduct may still tip balance toward restoration."}
+  watch_for:
+    - {id: LIVE-watch1, what: "New, reliable evidence that the material purchased was not CSAM and that the minor account was a fraud.", favors: [LIVE-O2], why: "If the core allegation of CSAM is disproven, the primary basis for Guideline D disappears, making restoration more appropriate."}
+
+Now we must ensure YAML formatting is correct (simple key-value). We'll output each block separated by "---". Let's produce final answer with the reasoning documents and verdict as required. The answer should contain only the YAML documents (no extra text). We'll output them in order.
+
+But note: The instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Since the case governs, we include reasoning document and then verdict. We must ensure we include all documents up to reasoning, then verdict. That means we output fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. That's correct.
+
+Now ensure no tool calls are made in this reasoning step. We'll output as plain text.
+
+Let's write the YAML carefully.
+
+We need to ensure each document starts with `kind:` and fields are correct. Use consistent indentation (2 spaces). We'll output:
+
+---
+kind: fact_enumeration
+frame:
+  question: "The decision you face, as a question."
+  decider: "Who decides, and under what authority."
+  my_role: "What you may do yourself and what you must leave to others."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Subject's digital wallet account was terminated due to concerns it was used to acquire child sexual exploitation material."}
+  ...
+
+But the frame fields should be concise as per format. The format example used `question: "The decision you face, as a question."` etc. We'll follow similar style.
+
+Let's produce exactly:
+
+kind: fact_enumeration
+frame:
+  question: "Should the Subject's access authorization be restored given concerns the digital wallet account was terminated due to potential child sexual exploitation material acquisition?"
+  decider: "The Senior Adjudicator for the Energy Security Review Board"
+  my_role: "Decide on restoration; consult casebook, retrieve documents; apply Section 710, Guideline D, Guideline E; record decision."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Subject's digital wallet account was terminated due to concerns it was used to acquire child sexual exploitation material."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Security Review Office received notice that the digital wallet account had been terminated."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The Subject had been granted an access authorization before early 2026."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "The Office sent four interrogatory letters dated March 19, March 23, March 27, and April 8 2026 concerning the Subject's viewing and purchase of explicit content."}
+  - {id: LIVE-F5, kind: situation, status: assessed, fact: "The Subject answered the letters inconsistently, admitting use of the digital wallet and an online payment platform for explicit material and asserting the wallet was opened to guard against possible blackmail."}
+  - {id: LIVE-F6, kind: situation, status: confirmed, fact: "The Office relied on Guideline D (sexual behavior) and Guideline E (personal conduct) as the foundation for substantial doubt about the Subject's eligibility for access

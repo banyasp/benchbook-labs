@@ -1,0 +1,160 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Whether to strike the second and third vehicles after the first was hit, given the division commander's night-time cease‑fire directive for humanitarian convoys."
+  decider: "The Brigade Fire Support Commander (a Major) has authority to coordinate artillery and mortar fire in support of brigade operations, but must follow IDF SOPs, ROE, and obtain explicit Division Commander approval for any strike within a humanitarian fire‑control zone."
+  my_role: "Decide whether to fire on the second and third vehicles; if unsure, consult the Division Commander or pass the request up. Do not execute the strike without approval."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A convoy of white vehicles arrived at a warehouse and was initially requested to be struck. The first vehicle was struck (confirmed)."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "The Division Commander issued a direction that no more strikes around humanitarian convoys should occur that night (night‑time cease‑fire). The Brigade Commander passed this direction to his Chief of Staff."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "The strike occurred in a humanitarian fire‑control zone, which requires explicit Division Commander approval prior to engagement."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "It is unclear whether the Division Commander’s direction is a formal written order or only verbal; staff assessment says the direction was conveyed verbally."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Brigade staff assessed that after the white vehicles left the warehouse the situation had changed and the vehicles became targetable."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "The Brigade Fire Support Commander, a Major, guided the strikes and has the delegated authority to coordinate fire but must comply with SOPs/ROE and obtain approval for humanitarian‑zone strikes."}
+options:
+  LIVE-O1: "Strike the second and third vehicles (i.e., continue fire on remaining targetable vehicles)."
+  LIVE-O2: "Withhold fire on the second and third vehicles (i.e., observe the night‑time cease‑fire and await explicit Division Commander approval)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a humanitarian convoy at a warehouse, an initial strike on the first vehicle, and a Division Commander’s night‑time cease‑fire direction for humanitarian convoys. The Brigade Fire Support Commander (a Major) faces the same authority constraints (humanitarian fire‑control zone requires Division Commander approval). Differences: In REF1 the formal nature of the cease‑fire direction was uncertain; here also uncertain. Live scenario adds explicit verbal conveyance by Chief of Staff and staff reassessment of targetability."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "Both have a Division Commander cease‑fire direction for humanitarian convoys, though LIVE-F2 emphasizes verbal conveyance by Chief of Staff."}, {live: LIVE-F5, case: REF1-F5, note: "Live staff reassessed targetability after vehicles left warehouse; REF1 staff had similar assessment."}]
+live_only: [LIVE-F4, LIVE-F6]
+case_only: [REF1-F3 (maybe), REF1-F4 (formal order uncertainty), REF1-F6 (maybe)]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "The Division Commander explicitly directed no further strikes around humanitarian convoys that night; striking in the humanitarian fire‑control zone without Division Commander approval would breach lawful authority and IDF SOPs/ROE."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3], equity: chain_of_command, favors: [LIVE-O2], weight: strong, why: "The Brigade Commander passed the Division Commander’s direction to the Chief of Staff, establishing a clear chain of command; ignoring it would violate hierarchy."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Staff assess that after the vehicles left the warehouse they are now targetable, suggesting a tactical opportunity to neutralize potential threats."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: lawful_authority (uncertainty), favors: [LIVE-O1], weight: weak, why: "Since the cease‑fire direction may not be formal, there is some doubt about its binding nature, tempting engagement based on tactical assessment."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1, role: "Strong favor for withholding fire based on SOP/ROE and commander’s explicit direction."}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Chain‑of‑command emphasis; similar strong favor for withholding."}, {live: LIVE-C3, case: REF1-C4, role: "Weak tactical assessment; similar weak favor for striking."}]
+live_only: [LIVE-C4]
+case_only: [REF1-C3 (maybe), REF1-C5]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The same equities (lawful_authority, chain_of_command, mission_effect) and similar fact pattern (unclear formal status of cease‑fire direction, humanitarian fire‑control zone requiring approval) make the case's considerations directly applicable. The case’s reasoning about weighing strong considerations over weak tactical assessment applies here."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh strong considerations (lawful authority, chain of command, need for approval in humanitarian zone) against weak tactical assessment. Treat the cease‑fire direction as binding until a clear revocation, even if verbal."
+weighing: "LIVE-C1 and LIVE-C2 are strong and directly tied to SOP/ROE, chain of command, and mandatory approval in humanitarian zone; they outweigh LIVE-C3 (weak tactical assessment) and LIVE-C4 (weak uncertainty about formality). Therefore the prudent course is to withhold fire."
+tradecraft: "Document the decision to withhold fire, cite SOP/ROE references (e.g., humanitarian fire‑control zone approval rule), inform the Brigade Chief of Staff and Division Commander of the decision for transparency, and request clarification if the Division Commander wishes to revoke or modify the cease‑fire direction. Do not execute the strike without explicit approval."
+uncertainty: "Uncertainty about whether the Division Commander’s direction is formal; however, the prudent interpretation under ROE is to treat it as binding until a clear revocation is received. If later the Division Commander formally revokes the cease‑fire, the decision could change."
+handoff: "The Brigade Fire Support Commander decides alone to withhold fire (consistent with authority to follow orders). They must inform the Brigade Chief of Staff and Division Commander; no further action is needed from others."
+tempting_wrong: {option: LIVE-O2, pull: "The desire to engage what staff judged newly targetable vehicles; seems tactically logical.", why_wrong: "Would breach IDF SOPs/ROE, ignore the explicit night‑time cease‑fire direction, and violate the humanitarian fire‑control zone approval requirement."}
+rejected: {LIVE-O1: "Reject because it would violate lawful authority, chain of command, and the humanitarian zone approval rule; the weak tactical assessment does not override higher‑level commander directives."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Withhold fire on the second and third vehicles and observe the night‑time cease‑fire directive. Inform the Brigade Chief of Staff and Division Commander of the decision."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Immediately stop any planned fire on the second and third vehicles. Send a brief comms message to the Brigade Chief of Staff confirming the decision to withhold fire and referencing the Division Commander’s night‑time cease‑fire direction."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The Division Commander formally revokes or explicitly approves striking the remaining vehicles in the humanitarian zone.", then: LIVE-O1, why: "A clear written revocation or explicit approval would remove the binding cease‑fire constraint, allowing engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The operation remains within the humanitarian fire‑control zone and no formal approval from the Division Commander is received.", why: "Without approval, the cease‑fire direction stays binding regardless of tactical reassessment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any formal written revocation or new approval from the Division Commander.", favors: [LIVE-O1], why: "A documented change in orders would legitimize striking the remaining vehicles."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Whether to strike the second and third vehicles after the first was hit, given the division commander's night-time cease‑fire directive for humanitarian convoys."
+  decider: "The Brigade Fire Support Commander (a Major) has authority to coordinate artillery and mortar fire in support of brigade operations, but must follow IDF SOPs, ROE, and obtain explicit Division Commander approval for any strike within a humanitarian fire‑control zone."
+  my_role: "Decide whether to fire on the second and third vehicles; if unsure, consult the Division Commander or pass the request up. Do not execute the strike without approval."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A convoy of white vehicles arrived at a warehouse and was initially requested to be struck. The first vehicle was struck (confirmed)."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "The Division Commander issued a direction that no more strikes around humanitarian convoys should occur that night (night‑time cease‑fire). The Brigade Commander passed this direction to his Chief of Staff."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "The strike occurred in a humanitarian fire‑control zone, which requires explicit Division Commander approval prior to engagement."}
+  - {id: LIVE-F4, kind: intelligence, status: assessed, fact: "It is unclear whether the Division Commander’s direction is a formal written order or only verbal; staff assessment says the direction was conveyed verbally."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Brigade staff assessed that after the white vehicles left the warehouse the situation had changed and the vehicles became targetable."}
+  - {id: LIVE-F6, kind: capability, status: confirmed, fact: "The Brigade Fire Support Commander, a Major, guided the strikes and has the delegated authority to coordinate fire but must comply with SOPs/ROE and obtain approval for humanitarian‑zone strikes."}
+options:
+  LIVE-O1: "Strike the second and third vehicles (i.e., continue fire on remaining targetable vehicles)."
+  LIVE-O2: "Withhold fire on the second and third vehicles (i.e., observe the night‑time cease‑fire and await explicit Division Commander approval)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a humanitarian convoy at a warehouse, an initial strike on the first vehicle, and a Division Commander’s night‑time cease‑fire direction for humanitarian convoys. The Brigade Fire Support Commander (a Major) faces the same authority constraints (humanitarian fire‑control zone requires Division Commander approval). Differences: In REF1 the formal nature of the cease‑fire direction was uncertain; here also uncertain. Live scenario adds explicit verbal conveyance by Chief of Staff and staff reassessment of targetability."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}]
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "Both have a Division Commander cease‑fire direction for humanitarian convoys, though LIVE-F2 emphasizes verbal conveyance by Chief of Staff."}, {live: LIVE-F5, case: REF1-F5, note: "Live staff reassessed targetability after vehicles left warehouse; REF1 staff had similar assessment."}]
+live_only: [LIVE-F4, LIVE-F6]
+case_only: [REF1-F3, REF1-F4, REF1-F5]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "The Division Commander explicitly directed no further strikes around humanitarian convoys that night; striking in the humanitarian fire‑control zone without Division Commander approval would breach lawful authority and IDF SOPs/ROE."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3], equity: chain_of_command, favors: [LIVE-O2], weight: strong, why: "The Brigade Commander passed the Division Commander’s direction to the Chief of Staff, establishing a clear chain of command; ignoring it would violate hierarchy."}
+  - {id: LIVE-C3, facts: [LIVE-F5], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Staff assess that after the vehicles left the warehouse they are now targetable, suggesting a tactical opportunity to neutralize potential threats."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: lawful_authority (uncertainty), favors: [LIVE-O1], weight: weak, why: "Since the cease‑fire direction may not be formal, there is some doubt about its binding nature, tempting engagement based on tactical assessment."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1, role: "Strong favor for withholding fire based on SOP/ROE and commander’s explicit direction."}]
+corresponding: [{live: LIVE-C2, case: REF1-C2, role: "Chain‑of‑command emphasis; similar strong favor for withholding."}, {live: LIVE-C3, case: REF1-C4, role: "Weak tactical assessment; similar weak favor for striking."}]
+live_only: [LIVE-C4]
+case_only: [REF1-C3, REF1-C5]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The same equities (lawful_authority, chain_of_command, mission_effect) and similar fact pattern (unclear formal status of cease‑fire direction, humanitarian fire‑control zone requiring approval) make the case's considerations directly applicable. The case’s reasoning about weighing strong considerations over weak tactical assessment applies here."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh strong considerations (lawful authority, chain of command, need for approval in humanitarian zone) against weak tactical assessment. Treat the cease‑fire direction as binding until a clear revocation is received, even if verbal."
+weighing: "LIVE-C1 and LIVE-C2 are strong and directly tied to SOP/ROE, chain of command, and mandatory approval in humanitarian zone; they outweigh LIVE-C3 (weak tactical assessment) and LIVE-C4 (weak uncertainty about formality). Therefore the prudent course is to withhold fire."
+tradecraft: "Document the decision to withhold fire, cite SOP/ROE references (e.g., humanitarian fire‑control zone approval rule), inform the Brigade Chief of Staff and Division Commander of the decision for transparency, and request clarification if the Division Commander wishes to revoke or modify the cease‑fire. Do not execute the strike without explicit approval."
+uncertainty: "Uncertainty about whether the Division Commander’s direction is formal; however, the prudent interpretation under ROE is to treat it as binding until a clear revocation is received. If later the Division Commander formally revokes the cease‑fire, the decision could change."
+handoff: "The Brigade Fire Support Commander decides alone to withhold fire (consistent with authority to follow orders). They must inform the Brigade Chief of Staff and Division Commander; no further action is needed from others."
+tempting_wrong: {option: LIVE-O2, pull: "The desire to engage what staff judged newly targetable vehicles; seems tactically logical.", why_wrong: "Would breach IDF SOPs/ROE, ignore the explicit night‑time cease‑fire direction, and violate the humanitarian fire‑control zone approval requirement."}
+rejected: {LIVE-O1: "Reject because it would violate lawful authority, chain of command, and the humanitarian zone approval rule; the weak tactical assessment does not override higher‑level commander directives."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Withhold fire on the second and third vehicles and observe the night‑time cease‑fire directive. Inform the Brigade Chief of Staff and Division Commander of the decision."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2]
+now:
+  - "Immediately stop any planned fire on the second and third vehicles. Send a brief comms message to the Brigade Chief of Staff confirming the decision to withhold fire and referencing the Division Commander’s night‑time cease‑fire direction."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The Division Commander formally revokes or explicitly approves striking the remaining vehicles in the humanitarian zone.", then: LIVE-O1, why: "A clear written revocation or explicit approval would remove the binding cease‑fire constraint, allowing engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The operation remains within the humanitarian fire‑control zone and no formal approval from the Division Commander is received.", why: "Without approval, the cease‑fire direction stays binding regardless of tactical reassessment."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any formal written revocation or new approval from the Division Commander.", favors: [LIVE-O1], why: "A documented change in orders would legitimize striking the remaining vehicles."}

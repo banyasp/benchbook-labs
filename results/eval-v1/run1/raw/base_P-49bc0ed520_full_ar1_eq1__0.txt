@@ -1,0 +1,192 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the individual's access rights be reinstated given their DUI arrest, severe Alcohol Use Disorder in early remission, completed treatment, and no alcohol consumption since October 2025?"
+  decider: "Administrative Judge (judge)"
+  my_role: "Adjudication Support Agent drafts recommendation; judge issues final decision."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Individual was taken into custody in October 2025 for DUI, reckless driving, and open‑container violations."}
+  - {id: LIVE-F2, kind: medical, status: confirmed, fact: "DOE psychologist’s report diagnoses Alcohol Use Disorder, severe, currently in early remission."}
+  - {id: LIVE-F3, kind: treatment, status: confirmed, fact: "Individual completed a six‑week alcohol education and awareness program and attended regular sessions with an HRP psychologist."}
+  - {id: LIVE-F4, kind: treatment, status: confirmed, fact: "Individual completed a twelve‑week intensive outpatient treatment from December 2025 through March 2026, with ongoing counseling thereafter."}
+  - {id: LIVE-F5, kind: behavior, status: confirmed, fact: "Partner/individual reports no alcohol consumption since the October 2025 incident."}
+  - {id: LIVE-F6, kind: security, status: assessed, fact: "LSO flagged Guideline G (alcohol consumption) as a security issue due to arrests and diagnosis."}
+  - {id: LIVE-F7, kind: testing, status: confirmed, fact: "PEth testing results from Dec 2025 through Apr 2026 are negative; May 2026 no sample; Jun 2026 negative. System flag requests further PEth testing prior to final decision."}
+options:
+  LIVE-O1: "Reinstate the individual's access rights now."
+  LIVE-O2: "Keep access on hold while continued monitoring proceeds."
+  LIVE-O3: "Deny reinstatement of access rights."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind  # Both involve decisions about action versus precaution given uncertain civilian/security risk; here it's about access vs hold.
+  decider: same_kind  # Both a commander (REF1) and a judge (LIVE) decide; analogous authority.
+  role: same_kind
+note: "REF1 involved a commander deciding whether to strike a building uncertainly populated. LIVE involves a judge deciding whether to reinstate access given uncertain alcohol risk. Both require weighing imminent threat/security concern against demonstrated rehabilitation."
+options:
+  LIVE-O1: REF1-O2  # "hold fire pending further assessment" analogized to "keep access on hold" (monitoring). Note: REF1-O2 is hold fire; REF1-O3 is strike. Our hold is analogous to hold fire.
+  LIVE-O2: REF1-O2  # keep access on hold corresponds to hold fire.
+  LIVE-O3: REF1-O3  # deny reinstatement analogous to striking (taking action to deny).
+matched: [{live: LIVE-F1, case: REF1-F2}, {live: LIVE-F6, case: REF1-F6? not exist; but case has uncertainty about civilian presence}. We'll map generically.
+corresponding: []  # fact differences: REF1 had intelligence about enemy group; LIVE has psychological diagnosis and treatment.
+live_only: [LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F7]
+case_only: [REF1-F1, REF1-F3, REF1-F5, REF1-F6, REF1-F8, REF1-F9]
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F6], equity: source_protection, favors: [LIVE-O2], weight: strong, why: "Security concern (Guideline G) creates risk that alcohol use could compromise security; early remission does not eliminate risk; ongoing monitoring aligns with precaution."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Individual completed structured treatment, attended regular sessions, reports no alcohol use since arrest; demonstrates rehabilitation and respects individual's welfare."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O2], weight: medium, why: "PEth testing negative but system flag requests further testing; continued monitoring respects due process and ensures accurate assessment before full reinstatement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Judge may reinstate if rehabilitation sufficient; guideline G is a concern but not absolute bar."}
+  - {id: LIVE-C5, facts: [LIVE-F6, LIVE-F5], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: "No current alcohol consumption reduces risk, but security office still flags guideline; precaution suggests continued oversight."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}]  # Security concern analogous to civilian life protection; REF1-C2 (civilian life) favored holding fire.
+corresponding: [{live: LIVE-C2, case: REF1-C1}]  # Rehabilitation analogous to own force life? Actually REF1-C1 favored striking (own force protection). So LIVE-C2 (individual welfare) corresponds to REF1-C1 (own force life). We'll note difference in magnitude.
+live_only: [LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5]
+case_only: [REF1-C3]  # REF1-C3 (lawful authority) assumption: absent analogous authority constraint? We'll assume not bar.
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: different  # Different domain but similar balancing of security/precaution vs rehabilitation.
+  decider: same_kind
+  role: same_kind
+governs: true
+why: "Same core consideration: precautionary principle for civilian life vs own force protection; here security vs individual rehabilitation. The case's reasoning about holding fire when civilian presence uncertain maps to holding access while monitoring when alcohol risk uncertain."
+
+---
+kind: reasoning
+case: REF1
+case_approach: "Hold fire pending further assessment when civilian presence cannot be confirmed; i.e., weigh strong civilian protection (civilian_life) against weaker own‑force urgency (tempo)."
+weighing: "LIVE-C1 (security/source_protection) and LIVE-C3 (due_process testing) are strong because Guideline G flags alcohol as a security issue and continued monitoring respects due process. LIVE-C2 (individual rehabilitation) is strong but the security concern is precautionary. Thus the balance favors continued monitoring (hold) over immediate reinstatement, analogous to holding fire. LIVE-C4 and LIVE-C5 are weaker and do not override the precaution."
+tradecraft: "Recommend keeping access on hold while conducting a short‑term PEth test (per system flag) and periodic check‑ins with HRP psychologist. If test negative and no further alcohol use reported for a defined period (e.g., 30 days), then recommend reinstatement in a follow‑up recommendation."
+uncertainty: "Uncertainty about whether a single additional PEth test would definitively reduce risk; also uncertainty about future alcohol use despite self‑report."
+handoff: "Draft recommendation to keep access on hold (LIVE-O2) pending one additional PEth test; flag to Security Office to consider relaxing Guideline G monitoring if test negative and no alcohol use confirmed."
+tempting_wrong: {option: LIVE-O1, pull: "Reinstate now because treatment completed and no drinking reported; saves hassle and respects rehabilitation.", why_wrong: "Overlooks precautionary security concern; Guideline G flags alcohol consumption as security issue; continued monitoring protects both safety and due process."}
+rejected: {LIVE-O3: "Denial ignores demonstrated rehabilitation and lack of current drinking; would violate duty_to_individual and may be inconsistent with guideline if monitored."}
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Keep the individual's access on hold while a single follow‑up PEth test is conducted and continued brief monitoring proceeds; reinstate access if test is negative and no alcohol use is reported for a reasonable period."
+relation: distinguished
+via: null
+decisive: [LIVE-C1, LIVE-C3]
+now:
+  - "Request Security Office to schedule a PEth test within 14 days and to review Guideline G monitoring level pending test result."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Follow‑up PEth test is negative and individual confirms no alcohol use for 30 days", then: LIVE-O1, why: "Precaution satisfied; risk reduced; access can be reinstated."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Follow‑up PEth test is positive or inconclusive", then: LIVE-O2, why: "Risk remains; continue hold."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any reported alcohol consumption or positive PEth test", favors: [LIVE-O2], why: "Immediate trigger to keep hold or escalate monitoring."}
+
+Now we need to output the reasoning documents and then the verdict? According to benchbook format, we should write all these YAML documents as our reply, ending with verdict. The instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." But we have included all documents including verdict. Actually we must output the documents in order, and after the last document (which should be reasoning? Wait format says: "Before your next action, reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with  at the end of the last reasoning document before verdict, then write the verdict document as your reply."
+
+Thus we need to output fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, and then verdict? The format includes verdict as last kind. However the instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that the verdict should be separate after thinking? But typical pattern: you output the reasoning steps (including applicability and reasoning) and then output verdict as separate YAML? Actually they say "then write the verdict document as your reply." So our reply should contain the YAML documents in order (including verdict). We'll output all documents separated by '---' and end with verdict.
+
+Thus produce:
+
+--- (blank line?) We'll output each with kind:...
+
+Let's craft concise but accurate YAML.
+
+We'll ensure no extra text. Let's write.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the individual's access rights be reinstated given their DUI arrest, severe Alcohol Use Disorder in early remission, completed treatment, and no alcohol consumption since October 2025?"
+  decider: "Administrative Judge (judge)"
+  my_role: "Adjudication Support Agent drafts recommendation; judge issues final decision."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Individual was taken into custody in October 2025 for DUI, reckless driving, and open‑container violations."}
+  - {id: LIVE-F2, kind: medical, status: confirmed, fact: "DOE psychologist’s report diagnoses Alcohol Use Disorder, severe, currently in early remission."}
+  - {id: LIVE-F3, kind: treatment, status: confirmed, fact: "Individual completed a six‑week alcohol education and awareness program and attended regular sessions with an HRP psychologist."}
+  - {id: LIVE-F4, kind: treatment, status: confirmed, fact: "Individual completed a twelve‑week intensive outpatient treatment from December 2025 through March 2026, with ongoing counseling thereafter."}
+  - {id: LIVE-F5, kind: behavior, status: confirmed, fact: "Partner/individual reports no alcohol consumption since the October 2025 incident."}
+  - {id: LIVE-F6, kind: security, status: assessed, fact: "LSO flagged Guideline G (alcohol consumption) as a security issue due to arrests and diagnosis."}
+  - {id: LIVE-F7, kind: testing, status: confirmed, fact: "PEth testing results from Dec 2025 through Apr 2026 are negative; May 2026 no sample; Jun 2026 negative. System flag requests further PEth testing prior to final decision."}
+options:
+  LIVE-O1: "Reinstate the individual's access rights now."
+  LIVE-O2: "Keep access on hold while continued monitoring proceeds."
+  LIVE-O3: "Deny reinstatement of access rights."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: "REF1 involved a commander deciding whether to strike a building uncertainly populated. LIVE involves a judge deciding whether to reinstate access given uncertain alcohol risk. Both require weighing imminent threat/security concern against demonstrated rehabilitation."
+options:
+  LIVE-O1: REF1-O3
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+matched: []
+corresponding: []
+live_only: [LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+case_only: [REF1-F1, REF1-F3, REF1-F5, REF1-F6, REF1-F8, REF1-F9]
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F6], equity: source_protection, favors: [LIVE-O2], weight: strong, why: "Security concern (Guideline G) creates risk that alcohol use could compromise security; early remission does not eliminate risk; ongoing monitoring aligns with precaution."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F4, LIVE-F5], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "Individual completed structured treatment, attended regular sessions, reports no alcohol use since arrest; demonstrates rehabilitation and respects individual's welfare."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O2], weight: medium, why: "PEth testing negative but system flag requests further testing; continued monitoring respects due process and ensures accurate assessment before full reinstatement."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: lawful_authority, favors: [LIVE-O1], weight: weak, why: "Judge may reinstate if rehabilitation sufficient; guideline G is a concern but not absolute bar."}
+  - {id: LIVE-C5, facts: [LIVE-F6, LIVE-F5], equity: complicity_risk, favors: [LIVE-O2], weight: weak, why: "No current alcohol consumption reduces risk, but security office still flags guideline; precaution suggests continued oversight."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}]  # security precaution analogous to civilian life protection
+corresponding: [{live: LIVE-C2, case: REF1-C1}]  # rehabilitation analogous to own‑force protection
+live_only: [LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5]
+case_only: [{case: REF1-C3, assumption: "No absolute bar to treatment completion"}]
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: different
+  decider: same_kind
+  role: same_kind
+governs: true
+why: "Same core consideration: precautionary principle for security vs individual rehabilitation; analogous to holding fire when civilian presence uncertain."
+
+---
+kind: reasoning
+case: REF1
+case_approach: "Hold fire pending further assessment when civilian presence cannot be confirmed; i.e., weigh strong civilian protection (civilian_life) against weaker own‑force urgency (tempo)."
+weighing: "LIVE-C1 (security/source_protection) and LIVE-C3 (due_process testing) are strong because Guideline G flags alcohol as a security issue and continued monitoring respects due process. LIVE-C2 (individual rehabilitation) is strong but the security concern is precautionary. Thus the balance favors continued monitoring (hold) over immediate reinstatement, analogous to holding fire. LIVE-C4 and LIVE-C5 are weaker and do not override the precaution."
+tradecraft: "Recommend keeping access on hold while conducting a short‑term PEth test (per system flag) and periodic check‑ins with HRP psychologist. If test is negative and no alcohol use is reported for a defined period (e.g., 30 days), then recommend reinstatement in a follow‑up recommendation."
+uncertainty: "Uncertainty about whether a single additional PEth test would definitively reduce risk; also uncertainty about future alcohol use despite self‑report."
+handoff: "Draft recommendation to keep access on hold (LIVE-O2) pending one additional PEth test; flag to Security Office to consider relaxing Guideline G monitoring if test negative and no alcohol use confirmed."
+tempting_wrong: {option: LIVE-O1, pull: "Reinstate now because treatment completed and no drinking reported; saves hassle and respects rehabilitation.", why_wrong: "Overlooks precautionary security concern; Guideline G flags alcohol consumption as security issue; continued monitoring protects both safety and due process."}
+rejected: {LIVE-O3: "Denial ignores demonstrated rehabilitation and lack of current drinking; would violate duty_to_individual and may be inconsistent with guideline if monitored."}
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Keep the individual's access on hold while a single follow‑up PEth test is conducted and continued brief monitoring proceeds; reinstate access if test is negative and no alcohol use is reported for a reasonable period (e.g., 30 days)."
+relation: distinguished
+via: null
+decisive: [LIVE-C1, LIVE-C3]
+now:
+  - "Request Security Office to schedule a PEth test within 14 days and to review Guideline G monitoring level pending test result."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Follow‑up PEth test is negative and individual confirms no alcohol use for 30 days", then: LIVE-O1, why: "Precaution satisfied; risk reduced; access can be reinstated."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Follow‑up PEth test is positive or inconclusive", then: LIVE-O2, why: "Risk remains; continue hold."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any reported alcohol consumption or positive PEth test", favors: [LIVE-O2], why: "Immediate trigger to keep hold or escalate monitoring."}

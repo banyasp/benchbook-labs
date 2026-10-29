@@ -1,0 +1,191 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Whether to open fire on the inbound hostile aircraft that has been identified as potentially Iranian F‑14 but has no confirmed transponder or radar signature, given that the CO has already elected not to fire and must decide the next step under the Rules of Engagement (ROE) and mission requirements."
+  decider: "Commanding Officer (CO) of USS Vincennes, operating in the Persian Gulf, with authority to order kinetic action if an aircraft is judged to be about to endanger the ship."
+  my_role: "Decide the immediate next action (hold fire, maneuver, use warning, request identification, engage if imminent threat), coordinate with AAW coordinator, CIC, and follow ROE. Do not issue orders that exceed authority or violate ROE."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Inbound aircraft TRK-07 at 2,500 ft, 5 NM off airway centerline, heading 210°, speed 420 kt, deviating from airway; no transponder or radar lock detected."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Electronic Support Measures (ESM) scan shows no emissions; no squawk confirmed, but log notes 'squawk Mode II‑1100' historically associated with Iranian F‑14s."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "CO has elected not to fire at this point; ROE permits engaging a hostile aircraft that poses an immediate danger."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "AAW coordinator (AAW_Coord) assesses aircraft as hostile and direct threat; CIC reports limited air picture due to CO directing gunfire on three IRGC speedboats and flags discrepancy in altitude trend."}
+  - {id: LIVE-F5, kind: time, status: confirmed, fact: "Aircraft approximately 10 NM out, under one minute to reach engagement range (based on speed 420 kt and current distance)."}
+  - {id: LIVE-F6, kind: personnel, status: confirmed, fact: "Senior Officer recommends withholding fire due to lack of clear electronic signature and conflicting altitude data, citing cautious approach from last quarter Gulf patrol."}
+  - {id: LIVE-F7, kind: communication, status: assessed, fact: "VHF 'identify yourself' broadcast sent at 07:57, no reply within 30 seconds."}
+  - {id: LIVE-F8, kind: ticket, status: assessed, fact: "Ticket #3421 status requested to be set to 'pending' and logistics channel pinged for spare AA missiles (OpsLead request)."}
+options:
+  LIVE-O1: "Hold fire and continue non‑kinetic measures (e.g., continued identification broadcast, radar tracking, maneuver to increase separation, request ID via ACAS/ATC if possible, monitor for any change in behavior)."
+  LIVE-O2: "Immediately engage the aircraft with missiles or guns despite CO's initial decision not to fire, based on AAW coordinator's assessment of direct threat."
+  LIVE-O3: "Conduct a limited warning shot or use defensive interceptor if ROE permits without full engagement; however ROE typically requires imminent danger for kinetic response."
+  LIVE-O4: "Escalate by contacting higher authority (e.g., task force commander) for ROE clarification while continuing non‑kinetic actions."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Whether to restore a DOE contractor’s security clearance after DUI arrests and severe alcohol use disorder diagnosis, given mitigating evidence of abstinence and treatment."
+  decider: "Administrative Judge (with delegated drafting authority to adjudication support agent)."
+  role: "Draft decision; final determination by judge."
+note: "Both situations involve a decision under authority with mitigating evidence (treatment/abstinence) and continuing risk (aircraft threat vs security concern). However, REF1 deals with administrative security clearance restoration; LIVE deals with naval ROE and kinetic decision. The equities differ (civilian life vs own force life, duty to individual vs mission effect), but some equities overlap (lawful authority, duty to individual, escalation control)."
+options:
+  LIVE-O1: null  # no direct counterpart; REF1-O2 corresponds to restoring clearance (i.e., allowing), REF1-O1 corresponds to holding pending monitoring (i.e., not restore). In LIVE, holding fire aligns with cautious approach (similar to holding pending monitoring), while engaging aligns with restoring (i.e., taking action). We'll map LIVE-O1 (hold fire) to REF1-O1 (hold pending) and LIVE-O2 (engage) to REF1-O2 (restore). LIVE-O3 and O4 are additional; focus on primary two.
+  LIVE-O2: REF1-O2  # restore clearance = engage aircraft (take kinetic action when threat imminent)
+  LIVE-O1: REF1-O1  # hold pending monitoring = hold fire while monitoring
+matched: []  # no exact fact match, but the decision structure similar
+corresponding:
+  - {live: LIVE-F2, case: REF1-F2, note: "Both have diagnostic/assessment of risk (AUD diagnosis vs hostile aircraft identification); but LIVE lacks confirmed diagnosis, only historical association."}
+  - {live: LIVE-F5, case: REF1-F5, note: "LIVE has time pressure (under one minute to reach engagement range); REF1 had timeline of treatment completion."}
+live_only: [LIVE-F1, LIVE-F3, LIVE-F4, LIVE-F6, LIVE-F7, LIVE-F8]
+case_only: [REF1-F3, REF1-F4, REF1-F6, REF1-F7, REF1-F8]  # treatment program, PEth tests, partner testimony, etc.
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Aircraft is within ~1 minute of engagement range at current speed; if it continues on course, it could pose an immediate danger to the ship, warranting kinetic response under ROE."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "No confirmed positive ID (no transponder reply), no electronic signature; risk of shooting down an unidentified aircraft could involve civilian or non‑combatant harm if it turns out to be civilian or mistakenly hostile."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F6], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Senior Officer and cautious approach from last quarter emphasize restraint; CO already chose not to fire, indicating desire to avoid unnecessary escalation."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: escalation_control, favors: [LIVE-O1], weight: moderate, why: "AAW coordinator stresses direct threat but CO must follow ROE; premature engagement could escalate with IRGC speedboats already being engaged, increasing tension."}
+  - {id: LIVE-C5, facts: [LIVE-F8], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Spare AA missiles are being requested; holding fire conserves missiles and avoids premature expenditure."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F4], equity: mission_effect, favors: [LIVE-O2], weight: moderate, why: "Protecting the ship and accompanying vessel is primary mission; if aircraft is hostile and on collision course, engaging may achieve mission effect and prevent loss."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "Addresses risk of harm (abstinence vs security concern) – here own force safety vs possible civilian harm."}
+  - {live: LIVE-C2, case: REF1-C2, role: "Addresses duty to individual and mitigating evidence – here lack of ID vs rehabilitation evidence."}
+  - {live: LIVE-C3, case: REF1-C3, role: "Addresses institutional credibility and professional opinion – here cautious approach vs AAW assessment."}
+live_only: [LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C4, REF1-C5, REF1-C6]  # REF1 had considerations about institutional credibility, duty, etc.
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind  # both involve a decision under authority with mitigating evidence and risk
+  decider: different  # CO vs Administrative Judge (different domains but similar decision authority)
+  role: same_kind  # both draft/decide with delegated authority
+governs: false
+why: "The REF1 case concerns a security clearance restoration with documented treatment, abstinence testing, and partner testimony—factual context not present here (no PEth tests, no formal treatment program). The LIVE scenario lacks those specific mitigating evidentiary elements and involves real‑time ROE under combat conditions. While equities overlap, the precise considerations (e.g., PEth testing, treatment completion) do not map directly. Therefore the case does not govern the decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed mitigation factors (abstinence period, completed treatment, professional opinion) against past misconduct and determined restoration was appropriate because mitigation outweighed risk. The judge rejected holding pending monitoring (O1) because the record satisfied clearance criteria."
+weighing: "In LIVE, own_force_life (C1) is strong because aircraft is within engagement range and could endanger the ship. However, civilian_life (C2) and duty_to_individual (C3) are also strong due to lack of confirmed ID and cautious history. Escalation_control (C4) is moderate because CO is already engaged with speedboats. Resource stewardship (C5) is weak. Mission_effect (C6) is moderate. Overall, the precautionary principles (no confirmed ID, recent cautious approach) give weight to restraint (hold fire) while monitoring for any change indicating imminent threat. The risk of firing without positive ID outweighs the time pressure, especially given ROE requires 'immediate danger' and the CO already elected not to fire. Thus, the safest and legally compliant immediate step is to continue non‑kinetic measures and monitor."
+tradecraft: "1. Continue radar tracking (already querying). 2. Repeat identification broadcast on VHF (or use standard maritime identification phrase). 3. Request vectoring or routing via local ATC if possible to increase separation. 4. Maneuver ship to avoid intercept course while maintaining defensive posture. 5. Engage AAW radar to track altitude changes accurately; resolve altitude discrepancy with CIC. 6. Log all actions and maintain clear communication with AAW coordinator and CIC. 7. If aircraft changes course or descends below safe altitude (e.g., <5,000 ft) and continues on collision course, reassess and, if ROE permits immediate danger, authorize engagement. 8. Update ticket #3421 status to 'pending' (OpsLead request) and notify logistics for spare missiles as requested."
+uncertainty: "Uncertainty about aircraft intent and accurate altitude (discrepancy between radar and CIC). If aircraft continues descending toward ship or fires missiles, the situation may shift to immediate danger, justifying engagement. Monitoring over next few seconds is critical."
+handoff: "Decide immediately: hold fire and continue non‑kinetic actions (identification broadcast, radar tracking, maneuver if safe). The CO already decided not to fire; this action respects ROE and caution. If within the next 30–60 seconds the aircraft demonstrates a trajectory that crosses the engagement zone or shows hostile intent (e.g., missile launch), the CO may reevaluate and authorize engagement per ROE. No need to escalate to higher authority at this moment; coordinate with AAW coordinator for real‑time assessment."
+tempting_wrong: {option: LIVE-O2, pull: "AAW coordinator says aircraft is a direct threat; engaging quickly would resolve the threat and protect the ship.", why_wrong: "Firing without confirmed ID and amid altitude discrepancy violates ROE ‘immediate danger’ threshold and risks shooting down a civilian or mistakenly identified aircraft; also escalates with ongoing speedboat engagement."}
+rejected: {LIVE-O2: "Hold fire is appropriate given lack of positive ID and cautious approach; engagement should be reserved for clear imminent danger." LIVE-O3: "A warning shot is not standard under ROE and could be seen as kinetic; better to use communication and maneuver." LIVE-O4: "Escalating to higher authority now would delay decisive action and is unnecessary if ROE can be applied locally."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Hold fire, continue non‑kinetic measures: repeat identification broadcast, maintain radar tracking, maneuver ship to increase separation if safe, resolve altitude discrepancy with CIC, and monitor aircraft behavior for any indication of imminent danger. If aircraft demonstrates a trajectory that brings it within engagement range with no evasive action, reassess and authorize engagement per ROE."
+relation: distinguished
+via: null
+decisive: [LIVE-C2, LIVE-C3, LIVE-C4]
+now:
+  - "Send a second VHF identification broadcast (standard 'This is USS Vincennes, identify and purpose, do not approach'). Log the broadcast time."
+  - "Request ATC or nearby friendly aircraft to provide vectors that increase separation if possible; otherwise perform a gentle heading change (e.g., 30° turn) to avoid intercept course while staying in defensive posture."
+  - "Coordinate with CIC to resolve altitude discrepancy: compare radar altitude with CIC observations, update track, and monitor descent rate. Share updated track with AAW coordinator."
+  - "Update ticket #3421 status to 'pending' via the ticketing system and confirm logistics ping for spare AA missiles."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Within the next 30 seconds the aircraft descends below 5,000 ft and continues on a collision course with USS Vincennes (i.e., engages the engagement zone),", then: LIVE-O2, why: "Immediate danger threshold met; ROE permits kinetic response."}
+    - {id: LIVE-flip2, if: "The aircraft responds to identification broadcast or otherwise demonstrates non‑hostile intent (e.g., climbs, turns away),", then: LIVE-O1 (continue hold), why: "No threat persists; restraint appropriate."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No further altitude or trajectory change is observed within 60 seconds and the aircraft remains outside engagement range.", why: "Holding fire remains correct."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any missile launch or weapons release from the aircraft or any sudden descent toward ship.", favors: [LIVE-O2], why: "Indicates imminent danger, justifying engagement."}
+    - {id: LIVE-watch2, what: "Any response to VHF broadcast (e.g., squawk, voice acknowledgment).", favors: [LIVE-O1], why: "Positive ID would allow reassessment; continued silence warrants caution."
+</think>
+kind: fact_enumeration
+frame:
+  question: "Whether to open fire on the inbound hostile aircraft that has been identified as potentially Iranian F‑14 but has no confirmed transponder or radar signature, given that the CO has already elected not to fire and must decide the next step under the Rules of Engagement (ROE) and mission requirements."
+  decider: "Commanding Officer (CO) of USS Vincennes, operating in the Persian Gulf, with authority to order kinetic action if an aircraft is judged to be about to endanger the ship."
+  my_role: "Decide the immediate next action (hold fire, maneuver, use warning, request ID, engage if imminent threat), coordinate with AAW coordinator, CIC, and follow ROE. Do not issue orders that exceed authority or violate ROE."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Inbound aircraft TRK-07 at 2,500 ft, 5 NM off airway centerline, heading 210°, speed 420 kt, deviating from airway; no transponder or radar lock detected."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Electronic Support Measures (ESM) scan shows no emissions; no squawk confirmed, but log notes 'squawk Mode II‑1100' historically associated with Iranian F‑14s."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "CO has elected not to fire at this point; ROE permits engaging a hostile aircraft that poses an immediate danger."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "AAW coordinator (AAW_Coord) assesses aircraft as hostile and direct threat; CIC reports limited air picture due to CO directing gunfire on three IRGC speedboats and flags discrepancy in altitude trend."}
+  - {id: LIVE-F5, kind: time, status: confirmed, fact: "Aircraft approximately 10 NM out, under one minute to reach engagement range (based on speed 420 kt and current distance)."}
+  - {id: LIVE-F6, kind: personnel, status: confirmed, fact: "Senior Officer recommends withholding fire due to lack of clear electronic signature and conflicting altitude data, citing cautious approach from last quarter Gulf patrol."}
+  - {id: LIVE-F7, kind: communication, status: assessed, fact: "VHF 'identify yourself' broadcast sent at 07:57, no reply within 30 seconds."}
+  - {id: LIVE-F8, kind: ticket, status: assessed, fact: "Ticket #3421 status requested to be set to 'pending' and logistics channel pinged for spare AA missiles (OpsLead request)."}
+options:
+  LIVE-O1: "Hold fire and continue non‑kinetic measures (e.g., continued identification broadcast, radar tracking, maneuver to increase separation, request ID via ACAS/ATC if possible, monitor for any change in behavior)."
+  LIVE-O2: "Immediately engage the aircraft with missiles or guns despite CO's initial decision not to fire, based on AAW coordinator's assessment of direct threat."
+  LIVE-O3: "Conduct a limited warning shot or use defensive interceptor if ROE permits without full engagement; however ROE typically requires imminent danger for kinetic response."
+  LIVE-O4: "Escalate by contacting higher authority (e.g., task force commander) for ROE clarification while continuing non‑kinetic actions."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: different
+  role: same_kind
+note: "Both situations involve a decision under authority with mitigating evidence (treatment/abstinence vs identification/altitude data) and continuing risk. Overlap in equities (own_force_life, civilian_life, duty_to_individual, escalation_control); however REF1 has specific mitigating evidentiary package (PEth tests, treatment completion) not present here."
+options:
+  LIVE-O1: REF1-O1  # hold pending monitoring
+  LIVE-O2: REF1-O2  # restore clearance (engage)
+matched: []
+corresponding:
+  - {live: LIVE-F2, case: REF1-F2, note: "Both have assessment of risk (AUD diagnosis vs hostile ID); LIVE lacks formal diagnosis."}
+  - {live: LIVE-F5, case: REF1-F5, note: "LIVE has time pressure (~1 min to engagement range); REF1 had treatment timeline."}
+live_only: [LIVE-F1, LIVE-F3, LIVE-F4, LIVE-F6, LIVE-F7, LIVE-F8]
+case_only: [REF1-F3, REF1-F4, REF1-F6, REF1-F7, REF1-F8]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Aircraft is within ~1 minute of engagement range at current speed; if it continues on course, it could pose an immediate danger to the ship, warranting kinetic response under ROE."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "No confirmed positive ID (no transponder reply), no electronic signature; risk of shooting down an unidentified aircraft could involve civilian or non‑combatant harm if it turns out to be civilian or mistakenly hostile."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F6], equity: duty_to_individual, favors: [LIVE-O1], weight: moderate, why: "Senior Officer and cautious approach from last quarter emphasize restraint; CO already chose not to fire, indicating desire to avoid unnecessary escalation."}
+  - {id: LIVE-C4, facts: [LIVE-F4], equity: escalation_control, favors: [LIVE-O1], weight: moderate, why: "AAW coordinator stresses direct threat but CO must follow ROE; premature engagement could escalate with IRGC speedboats already being engaged, increasing tension."}
+  - {id: LIVE-C5, facts: [LIVE-F8], equity: resource_stewardship, favors: [LIVE-O1], weight: weak, why: "Spare AA missiles are being requested; holding fire conserves missiles and avoids premature expenditure."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F4], equity: mission_effect, favors: [LIVE-O2], weight: moderate, why: "Protecting the ship and accompanying vessel is primary mission; if aircraft is hostile and on collision course, engaging may achieve mission effect and prevent loss."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "Addresses risk of harm"}
+  - {live: LIVE-C2, case: REF1-C2, role: "Addresses duty to individual and mitigating evidence"}
+  - {live: LIVE-C3, case: REF1-C3, role: "Addresses institutional credibility and professional opinion"}
+live_only: [LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C4, REF1-C5, REF1-C6]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: different
+  role: same_kind
+governs: false
+why: "The REF1 case concerns a security clearance restoration with documented treatment, abstinence testing, and partner testimony—factual context not present here (no PEth tests, no formal treatment program). The LIVE scenario lacks those specific mitigating evidentiary elements and involves real‑time ROE under combat conditions. While equities overlap, the precise considerations (e.g., PEth testing, treatment completion) do not map directly. Therefore the case does not govern the decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the judge weighed mitigation factors (abstinence period, completed treatment, professional opinion) against past misconduct and determined restoration was appropriate because mitigation outweighed risk. The judge rejected holding pending monitoring (O1) because the record satisfied clearance criteria."
+weighing: "In LIVE, own_force_life (C1) is strong because aircraft is within engagement range and could endanger the ship. However, civilian_life (C2) and duty_to_individual (C3) are also strong due to lack of confirmed ID and cautious history. Escalation_control (C4) is moderate because CO is already engaged with speedboats. Resource stewardship (C5) is weak. Mission_effect (C6) is moderate. Overall, the precautionary principles (no confirmed ID, recent cautious approach) give weight to restraint (hold fire) while monitoring for any indication of imminent threat. The risk of firing without positive ID outweighs the time pressure, especially given ROE requires 'immediate danger' and the CO already elected not to fire. Thus, the safest and legally compliant immediate step is to continue non‑kinetic measures and monitor."
+tradecraft: "1. Continue radar tracking (already querying). 2. Repeat identification broadcast on VHF (standard 'This is USS Vincennes, identify and purpose, do not approach'). 3. Request vectoring or routing via local ATC if possible to increase separation. 4. Maneuver ship to avoid intercept course while maintaining defensive posture. 5. Engage AAW radar to track altitude changes accurately; resolve altitude discrepancy with CIC. 6. Log all actions and maintain clear communication with AAW coordinator and CIC. 7. If aircraft changes course or descends below safe altitude (e.g., <5,000 ft) and continues on collision course, reassess and, if ROE permits immediate danger, authorize engagement. 8. Update ticket #3421 status to 'pending' and confirm logistics ping for spare AA missiles as requested."
+uncertainty: "Uncertainty about aircraft intent and accurate altitude (discrepancy between radar and CIC). If aircraft continues descending toward ship or fires missiles, the situation may shift to immediate danger, justifying engagement. Monitoring over next few seconds is critical."
+handoff: "Decide immediately: hold fire and continue non‑kinetic actions (identification broadcast, radar tracking, maneuver if safe). The CO already decided not to fire; this action respects ROE and caution. If aircraft demonstrates a trajectory that brings it within engagement range with no evasive action, reassess and authorize engagement per ROE. No need to escalate to higher authority now; coordinate with AAW coordinator for real‑time assessment."
+tempting_wrong: {option: LIVE-O2, pull: "AAW coordinator says aircraft is a direct threat; engaging quickly would resolve the threat and protect the ship.", why_wrong: "Firing without confirmed ID and amid altitude discrepancy violates ROE ‘immediate danger’ threshold and risks shooting down a civilian or mistakenly identified aircraft; also escalates with ongoing speedboat engagement."}
+rejected: {LIVE-O2: "Hold fire is appropriate given lack of positive ID and cautious approach; engagement should be reserved for clear imminent danger." LIVE-O3: "A warning shot is not standard under ROE and could be seen as kinetic; better to use communication and maneuver." LIVE-O4: "Escalating to higher authority now would delay decisive action and is unnecessary if ROE can be applied locally."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Hold fire, continue non‑kinetic measures: repeat identification broadcast, maintain radar tracking, maneuver ship to increase separation if safe, resolve altitude discrepancy with CIC, and monitor aircraft behavior for any indication of imminent danger. If aircraft demonstrates a trajectory that brings it within engagement range with no evasive action, reassess and authorize engagement per ROE."
+relation: distinguished
+via: null
+decisive: [LIVE-C2, LIVE-C3, LIVE-C4]
+now:
+  - "Send a second VHF identification broadcast (standard 'This is USS Vincennes, identify and purpose, do not approach'). Log the broadcast time."
+  - "Request ATC or nearby friendly aircraft to provide vectors that increase separation if possible; otherwise perform a gentle heading change (e.g., 30° turn) to avoid intercept course while staying in defensive posture."
+  - "Coordinate with CIC to resolve altitude discrepancy: compare radar altitude with CIC observations, update track, and monitor descent rate. Share updated track with AAW coordinator."
+  - "Update ticket #3421 status to 'pending' via the ticketing system and confirm logistics ping for spare AA missiles."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Within the next 30 seconds the aircraft descends below 5,000 ft and continues on a collision course with USS Vincennes (i.e., engages the engagement zone),", then: LIVE-O2, why: "Immediate danger threshold met; ROE permits kinetic response."}
+    - {id: LIVE-flip2, if: "The aircraft responds to identification broadcast or otherwise demonstrates non‑hostile intent (e.g., climbs, turns away),", then: LIVE-O1 (continue hold), why: "No threat persists; restraint appropriate."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No further altitude or trajectory change is observed within 60 seconds and the aircraft remains outside engagement range.", why: "Holding fire remains correct."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any missile launch or weapons release from the aircraft or any sudden descent toward ship.", favors: [LIVE-O2], why: "Indicates imminent danger, justifying engagement."}
+    - {id: LIVE-watch2, what: "Any response to VHF broadcast (e.g., squawk, voice acknowledgment).", favors: [LIVE-O1], why: "Positive ID would allow reassessment; continued silence warrants caution."

@@ -1,0 +1,226 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the intelligence database include the militia posts (Tri‑County Defense Force) and report them in this week's threat assessment, or should they be referred to the Provost Marshal's office and kept out of intelligence files?"
+  decider: "The section's analysis‑workflow agent decides what action to take within its delegated authority; final rulings on U.S.-person material may require oversight officer input."
+  my_role: "I may enter data, draft assessments, route according to SOP, invoke comms.send, db.update, and log.write. I may not unilaterally file U.S.-person intelligence material without a ruling if it is domestic. I can hold the material and request guidance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two analysts scanned open‑source sites at 0940 and identified a militia called Tri‑County Defense Force posting about 'driving the division off this land by force' and showing a photo of the main gate at Fort Garrow flag posts."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Tri‑County Defense Force describes itself as a militia operating in the surrounding county; its leader vowed to act by force."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Analysts estimate roughly 40 members; no links to foreign governments or international terrorist networks were found."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Section SOP, per AR 381‑10 and DoD Manual 5240.01, permits filing U.S.–person information in intelligence files only for foreign intelligence or counter‑intelligence missions; domestic threats should be referred to the Provost Marshal (CID)."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "The intelligence oversight officer is on duty; unclear oversight questions should be routed to the oversight officer and legal counsel."}
+  - {id: LIVE-F6, kind: timing, status: confirmed, fact: "This week's threat assessment closes at 1500 and will be sent to the commanding general and all 31 units at 1600."}
+options:
+  LIVE-O1: "Enter the militia posts into the intelligence database and include them in this week's threat assessment."
+  LIVE-O2: "Refer the militia posts to the Provost Marshal's office and keep them out of all intelligence files."
+  LIVE-O3: "Hold the militia posts (including photo and search record) in a holding area, request a ruling from the intelligence oversight officer (and copy counsel) before filing or routing."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a domestic militia (Tri‑County Defense Force) that threatens force protection at a Fort, with analysts finding open‑source posts and estimating ~40 members, no foreign ties. The SOP prohibits filing U.S.–person info in intelligence files for domestic missions; the oversight officer is on duty. The case recommends holding for oversight ruling unless imminent."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3 (the case's recommended option)
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F4}, {live: LIVE-F4, case: REF1-F6}]
+corresponding: [{live: LIVE-F5, case: REF1-F5, note: "Both recognize members appear to be U.S. persons."}, {live: LIVE-F6, case: REF1-F7, note: "Both have a deadline (assessment closes afternoon)."}]
+live_only: [LIVE-F4 (explicit mention of SOP), LIVE-F5 (oversight officer on duty), LIVE-O3 (holding option not previously listed by analyst)]
+case_only: [REF1-F8 (oversight officer on duty), REF1-flip conditions]
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: own_force_life, favors: [LIVE-O1, LIVE-O2], weight: strong, why: "The threat to flag posts and personnel requires timely warning to units; including in assessment could expedite force protection response."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: usp_privacy, favors: [LIVE-O1], weight: weak, why: "Public statements and photos appear to carry little privacy cost; analyst sees no harm in reporting."}
+  - {id: LIVE-C3, facts: [LIVE-F6], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Assessment closes 1500; including now could ensure units receive warning by 1600."}
+  - {id: LIVE-C4, facts: [LIVE-F4, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "No foreign tie; material is domestic U.S.–person information, which SOP bars from intelligence files; must refer to Provost Marshal."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: chain_of_command, favors: [LIVE-O3], weight: strong, why: "Oversight officer is on duty; unclear routing should await her ruling; holding respects chain and avoids premature filing."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: due_process, favors: [LIVE-O3], weight: medium, why: "Requesting a ruling gives opportunity for counsel input and ensures consistent handling."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}, {live: LIVE-C4, case: REF1-C4}, {live: LIVE-C5, case: REF1-C6}]
+corresponding: [{live: LIVE-C3, case: REF1-C3, note: "Similar emphasis on speed, but case weighed speed against rule; here we have same tension."}, {live: LIVE-C2, case: REF1-C1, note: "Weak privacy consideration aligns with case's weak usp_privacy."}, {live: LIVE-C6, case: REF1-C8 (implicit), note: "Chain-of-command reasoning similar."}]
+live_only: [LIVE-C3 (tempo), LIVE-C6 (due_process)]
+case_only: [REF1-C5 (bar weight), REF1-C8]
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Facts largely match (domestic militia, U.S. persons, no foreign tie, oversight officer on duty, assessment deadline). The live situation includes an explicit holding option (LIVE-O3) that aligns with the case's recommendation. The case's reasoning applies: weigh speed vs lawful authority and chain-of-command. Therefore the case governs."
+
+---
+kind: reasoning
+case: REF1
+case_approach: "Hold the U.S.–person material for oversight officer ruling unless the threat is imminent (no date or plan given). The case weighed REF1-C5 (chain_of_command) and REF1-C4 (lawful_authority) as decisive, overriding speed considerations when no ruling exists."
+weighing: "LIVE-C4 (lawful_authority, weight strong) and LIVE-C5 (chain_of_command, weight strong) are decisive because the SOP bars filing domestic U.S.–person info without a foreign‑intelligence mission, and the oversight officer is on duty. LIVE-C1, LIVE-C3 (speed) and LIVE-C2 (privacy) are important but secondary; speed can wait a few hours for a ruling, and privacy cost is weak. Thus the recommended approach is to hold and request a ruling (LIVE-O3)."
+tradecraft: "Place the militia posts (photo and search record) in a secure holding area, do not enter the intelligence database or include in the threat assessment. Send a concise memo to the intelligence oversight officer (copy legal counsel) describing the open‑source findings, the lack of foreign ties, the estimate of ~40 members, and ask for guidance on filing/routing. Log the hold action. Inform the operations chief and analysts of the hold and reason (per chain‑of‑command and SOP). Continue other analysis unrelated to the militia for the assessment."
+uncertainty: "The threat wording 'drive the division off this land by force' lacks a specific date or imminent plan; therefore it is not classified as imminent. If a concrete date or imminent action appears before the oversight ruling, flip to LIVE-O2 (refer to Provost Marshal)."
+handoff: "Request ruling from oversight officer (and counsel). Do not file or forward to intelligence database or assessment. The agent decides to hold and notify; the oversight officer decides routing."
+tempting_wrong: {option: LIVE-O2, pull: "Route immediately to Provost Marshal as soon as possible.", why_wrong: "While correct to refer domestic threats, the SOP also requires oversight officer ruling when unclear; filing or routing before ruling could violate handling of U.S.–person info and ignore the oversight process."}
+rejected: {LIVE-O1: "Entering into intelligence database and reporting in assessment would file U.S.–person domestic material contrary to SOP unless a foreign‑intelligence mission exists; no such mission is indicated. Also bypasses oversight ruling."}
+
+---
+kind: verdict
+choice: LIVE-O3
+course: "Hold the militia posts (photo and search record) in a secure holding area, notify the intelligence oversight officer (with legal counsel copy) for a ruling on filing/routing before including in the intelligence database or threat assessment."
+relation: follows
+via: null
+decisive: [LIVE-C4, LIVE-C5]
+now:
+  - "Create a holding entry (no db.update to intelligence file). Send comms.send to oversight officer memo requesting ruling; copy legal counsel. Log the hold action."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the militia posts include a specific date or explicit imminent plan (e.g., 'will attack on 12 Sept')", then: LIVE-O2, why: "Imminent threat overrides holding; refer directly to Provost Marshal."}
+    - {id: LIVE-flip2, if: "The oversight officer has already issued a ruling about this group", then: LIVE-O2, why: "Follow existing ruling."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No imminent date or plan is stated", why: "Holding remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Appearance of a concrete date or immediate action plan in militia posts", favors: [LIVE-O2], why: "Would trigger flip to immediate referral."}
+
+Now output the reasoning documents and verdict as per format. Note: The reply should contain only the YAML documents (including the verdict) as described, ending with </think> after the last document. We must write the reply as the agent's reasoning, not calling tools yet. So we output the six documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) and then verdict. However the instructions say: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Since the case governs, we should include applicability and then reasoning and then verdict? Actually the format says: "Write your reasoning as YAML documents, one per step, in the order below." The steps are: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. So we need to output all of them in order, and after the last document before verdict we should not include </think>? The instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that when case governs, we should include all documents up to reasoning? Actually it says "after the last document before the verdict (the applicability document when the case does not govern)". That seems ambiguous. Safer to output all documents as YAML separated by '---', and then after the reasoning document output the verdict document? But the format includes verdict as a separate kind: kind: verdict. So we should output all seven? The description says "Write your reasoning as YAML documents, one per step, in the order below." and then "Close your thinking with </think> after the last document before the verdict". So we should output the first five (or six) documents? Let's read carefully:
+
+"Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: The reply should consist of the reasoning documents (up to applicability if case does not govern) and then the verdict. If case governs, we should include up to reasoning? The phrase "after the last document before the verdict (the applicability document when the case does not govern)" suggests that if the case does not govern, the last reasoning document is applicability, and then we put </think> after that, then verdict. If the case governs, maybe we include reasoning and then verdict without extra </think>? But they say "Close your thinking with </think> after the last document before the verdict". That implies we should output the documents up to reasoning (since verdict is separate), and then put </think> after the last reasoning document? Actually they want the reply to be the reasoning documents plus verdict? The instruction: "then write the verdict document as your reply." That suggests the final answer (the agent's action) should be the verdict? But earlier they said "Your thinking is the structure. Write the YAML documents inside your thinking, one after another... Close your thinking with </think> after the last document before the verdict, then write the verdict document as your reply."
+
+Thus the agent's final response should be the reasoning YAML documents (including applicability and reasoning) followed by </think>, and then the verdict YAML? That seems confusing. However, in typical use, the agent outputs the reasoning steps and then the verdict as the decision. I'll follow the instruction literally: output the documents in order (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) each separated by '---', then after the reasoning document output </think>, and then output the verdict document? But they said "then write the verdict document as your reply." That suggests the reply should be the verdict document only? No, they say "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the agent's reply should contain the reasoning YAML documents (up to applicability if case does not govern) and then </think>, and then the verdict YAML? I think they want the agent to output the reasoning documents and then the verdict as part of the reply? The safest is to output all YAML documents including verdict as per the steps, but ensure that </think> appears after the last reasoning document (i.e., after reasoning). Let's do: output fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning each separated by '---', then after reasoning output </think>, then output verdict? But that would have 7 YAML blocks. However the format defines verdict as a separate kind that should be included. I'll output all six reasoning blocks plus verdict? The instruction says "Write your reasoning as YAML documents, one per step, in the order below." and then "then write the verdict document as your reply." That suggests the reply should be the verdict document only? No, the reasoning is separate internal thought. In the final answer, the agent should decide and take action (i.e., hold and notify). But the instruction for the assistant in this conversation is to produce reasoning and verdict. So I will output the reasoning documents and then the verdict document, and end with </think> after the reasoning? I'll follow the pattern: after the last reasoning document, put </think> on a line by itself, then output the verdict document? But that would mix. Better to follow exactly: "Close your thinking with  :\\n</think> after the last document before the verdict". So I will output up to reasoning, then :\\n</think>, and then the verdict? Actually they say "then write the verdict document as your reply." That means the final reply to the user should be the verdict (i.e., the chosen course of action). However, as the agent, I should also output the reasoning? In this simulated environment, I need to produce the next tool calls? The user expects the agent to decide and act. So I should output the decision and then perhaps a tool call to hold and notify. But the instruction says "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  :\\n</think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus I should output the reasoning YAML documents (including applicability and reasoning) separated by '---', then after the reasoning document output  :\\n, then output the verdict document? I'll output the reasoning documents and then the verdict document, but include  :\\n before verdict? To avoid confusion, I'll output all documents in order (including verdict) without extra  :\\n. However, the instruction explicitly says to close thinking with  :\\n before verdict. So I must include  :\\n after the reasoning document.
+
+Thus my reply will be:
+
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: reasoning
+...
+
+(then a line with only "</think>")
+
+---
+kind: verdict
+...
+
+But that would have two '---' separators between reasoning and verdict? Actually the formatting expects each document separated by a line containing only '---'. So I should include '---' between each document. After reasoning, I should not put '---' before  :\\n; I should just put  :\\n and then verdict? That would break the format. I'll follow the instruction loosely: I'll output the reasoning documents separated by '---', then output  :\\n, and then output the verdict document (maybe not separated). However, to keep it simple, I'll output the reasoning documents (up to reasoning) and then  :\\n, and then the verdict as plain text? But they require verdict in YAML format.
+
+Given the complexity, I'll output the reasoning documents and then  :\\n, and then the verdict YAML. That should satisfy.
+
+Let's construct the YAML values precisely.
+
+I'll write them now.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: "Should the intelligence database include the militia posts (Tri‑County Defense Force) and report them in this week's threat assessment, or should they be referred to the Provost Marshal's office and kept out of intelligence files?"
+  decider: "The section's analysis‑workflow agent decides what action to take within its delegated authority; final rulings on U.S.-person material may require oversight officer input."
+  my_role: "I may enter data, draft assessments, route according to SOP, invoke comms.send, db.update, and log.write. I may not unilaterally file U.S.-person intelligence material without a ruling if it is domestic. I can hold the material and request guidance."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two analysts scanned open‑source sites at 0940 and identified a militia called Tri‑County Defense Force posting about 'driving the division off this land by force' and showing a photo of the main gate at Fort Garrow flag posts."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "The Tri‑County Defense Force describes itself as a militia operating in the surrounding county; its leader vowed to act by force."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Analysts estimate roughly 40 members; no links to foreign governments or international terrorist networks were found."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "Section SOP, per AR 381‑10 and DoD Manual 5240.01, permits filing U.S.–person information in intelligence files only for foreign intelligence or counter‑intelligence missions; domestic threats should be referred to the Provost Marshal (CID)."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "The intelligence oversight officer is on duty; unclear oversight questions should be routed to the oversight officer and legal counsel."}
+  - {id: LIVE-F6, kind: timing, status: confirmed, fact: "This week's threat assessment closes at 1500 and will be sent to the commanding general and all 31 units at 1600."}
+options:
+  LIVE-O1: "Enter the militia posts into the intelligence database and include them in this week's threat assessment."
+  LIVE-O2: "Refer the militia posts to the Provost Marshal's office and keep them out of all intelligence files."
+  LIVE-O3: "Hold the militia posts (including photo and search record) in a holding area, request a ruling from the intelligence oversight officer (and copy counsel) before filing or routing."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a domestic militia (Tri‑County Defense Force) that threatens force protection at a Fort, with analysts finding open‑source posts and estimating ~40 members, no foreign ties. The SOP prohibits filing U.S.–person info in intelligence files for domestic missions; the oversight officer is on duty. The case recommends holding for oversight ruling unless imminent."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3 (the case's recommended option)
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F4}, {live: LIVE-F4, case: REF1-F6}]
+corresponding: [{live: LIVE-F5, case: REF1-F5, note: "Both recognize members appear to be U.S. persons."}, {live: LIVE-F6, case: REF1-F7, note: "Both have a deadline (assessment closes afternoon)."}]
+live_only: [LIVE-F4 (explicit mention of SOP), LIVE-F5 (oversight officer on duty), LIVE-O3 (holding option not previously listed by analyst)]
+case_only: [REF1-F8 (oversight officer on duty), REF1-flip conditions]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: own_force_life, favors: [LIVE-O1, LIVE-O2], weight: strong, why: "The threat to flag posts and personnel requires timely warning to units; including in assessment could expedite force protection response."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F5], equity: usp_privacy, favors: [LIVE-O1], weight: weak, why: "Public statements and photos appear to carry little privacy cost; analyst sees no harm in reporting."}
+  - {id: LIVE-C3, facts: [LIVE-F6], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Assessment closes 1500; including now could ensure units receive warning by 1600."}
+  - {id: LIVE-C4, facts: [LIVE-F4, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "No foreign tie; material is domestic U.S.–person information, which SOP bars from intelligence files; must refer to Provost Marshal."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: chain_of_command, favors: [LIVE-O3], weight: strong, why: "Oversight officer is on duty; unclear routing should await her ruling; holding respects chain and avoids premature filing."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: due_process, favors: [LIVE-O3], weight: medium, why: "Requesting a ruling gives opportunity for counsel input and ensures consistent handling."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C2}, {live: LIVE-C4, case: REF1-C4}, {live: LIVE-C5, case: REF1-C6}]
+corresponding: [{live: LIVE-C3, case: REF1-C3, note: "Similar emphasis on speed, but case weighed speed against rule; here we have same tension."}, {live: LIVE-C2, case: REF1-C1, note: "Weak privacy consideration aligns with case's weak usp_privacy."}, {live: LIVE-C6, case: REF1-C8 (implicit), note: "Chain-of-command reasoning similar."}]
+live_only: [LIVE-C3 (tempo), LIVE-C6 (due_process)]
+case_only: [REF1-C5 (bar weight), REF1-C8]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Facts largely match (domestic militia, U.S. persons, no foreign tie, oversight officer on duty, assessment deadline). The live situation includes an explicit holding option (LIVE-O3) that aligns with the case's recommendation. The case's reasoning applies: weigh speed vs lawful authority and chain-of-command. Therefore the case governs."
+---
+kind: reasoning
+case: REF1
+case_approach: "Hold the U.S.–person material for oversight officer ruling unless the threat is imminent (no date or plan given). The case weighed REF1-C5 (chain_of_command) and REF1-C4 (lawful_authority) as decisive, overriding speed considerations when no ruling exists."
+weighing: "LIVE-C4 (lawful_authority, weight strong) and LIVE-C5 (chain_of_command, weight strong) are decisive because the SOP bars filing domestic U.S.–person info without a foreign‑intelligence mission, and the oversight officer is on duty. LIVE-C1, LIVE-C3 (speed) and LIVE-C2 (privacy) are important but secondary; speed can wait a few hours for a ruling, and privacy cost is weak. Thus the recommended approach is to hold and request a ruling (LIVE-O3)."
+tradecraft: "Place the militia posts (photo and search record) in a secure holding area, do not enter the intelligence database or include in the threat assessment. Send a concise memo to the intelligence oversight officer (copy legal counsel) describing the open‑source findings, the lack of foreign ties, the estimate of ~40 members, and ask for guidance on filing/routing. Log the hold action. Inform the operations chief and analysts of the hold and reason (per chain‑of‑command and SOP). Continue other analysis unrelated to the militia for the assessment."
+uncertainty: "The threat wording 'drive the division off this land by force' lacks a specific date or imminent plan; therefore it is not classified as imminent. If a concrete date or imminent action appears before the oversight ruling, flip to LIVE-O2 (refer to Provost Marshal)."
+handoff: "Request ruling from oversight officer (and counsel). Do not file or forward to intelligence database or assessment. The agent decides to hold and notify; the oversight officer decides routing."
+tempting_wrong: {option: LIVE-O2, pull: "Route immediately to Provost Marshal as soon as possible.", why_wrong: "While correct to refer domestic threats, the SOP also requires oversight officer ruling when unclear; filing or routing before ruling could violate handling of U.S.–person info and ignore the oversight process."}
+rejected: {LIVE-O1: "Entering into intelligence database and reporting in assessment would file U.S.–person domestic material contrary to SOP unless a foreign‑intelligence mission exists; no such mission is indicated. Also bypasses oversight ruling."}
+---
+</think>
+---
+kind: verdict
+choice: LIVE-O3
+course: "Hold the militia posts (photo and search record) in a secure holding area, notify the intelligence oversight officer (with legal counsel copy) for a ruling on filing/routing before including in the intelligence database or threat assessment."
+relation: follows
+via: null
+decisive: [LIVE-C4, LIVE-C5]
+now:
+  - "Create a holding entry (no db.update to intelligence file). Send comms.send to oversight officer memo requesting ruling; copy legal counsel. Log the hold action."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If the militia posts include a specific date or explicit imminent plan (e.g., 'will attack on 12 Sept')", then: LIVE-O2, why: "Imminent threat overrides holding; refer directly to Provost Marshal."}
+    - {id: LIVE-flip2, if: "The oversight officer has already issued a ruling about this group", then: LIVE-O2, why: "Follow existing ruling."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No imminent date or plan is stated", why: "Holding remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Appearance of a concrete date or immediate action plan in militia posts", favors: [LIVE-O2], why: "Would trigger flip to immediate referral."}

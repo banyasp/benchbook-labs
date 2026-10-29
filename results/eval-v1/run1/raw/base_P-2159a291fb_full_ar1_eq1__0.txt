@@ -1,0 +1,101 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the airborne controller grant the flight's request to employ weapons against observed ground fire while the controller has a hunch that friendly forces might be present and has already received permission from senior command to engage observed ground fire?"
+  decider: "The airborne controller, operating under standing orders to protect friendly forces, enforce rules of engagement, and defer to senior command when authority conflicts arise."
+  my_role: "Decide whether to approve or deny the weapon release request; document actions; communicate restrictions; request clarification if needed. When a hunch of friendly presence exists, must decline the flight's request to employ weapons unless senior command explicitly authorizes it."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The flight has repeatedly requested weapon employment against observed ground fire over the last few minutes."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "ISR analysis shows no friendly ground forces present in the target area. SIGINT indicates no hostile radars active. SAFIRE packet received ~2 minutes before disengage call indicates no friendly units in the sector."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "At 21:23Z, senior command sent: 'Permission granted: you may engage the observed ground fire.'" This is explicit authorization."}
+  - {id: LIVE-F4, kind: hunch, status: assessed, fact: "The controller had a hunch that friendly forces might be present nearby (a reasonable suspicion but not confirmed)."}
+  - {id: LIVE-F5, kind: action, status: confirmed, fact: "At 21:25Z–21:26Z, controller logged repeated denials of weapon release requests due to the hunch of friendly presence."}
+  - {id: LIVE-F6, kind: time, status: confirmed, fact: "At 21:26:11Z (212611Z), the flight declared self‑defence and released weapons on the identified ground fire, approximately ten seconds after impact (the bomb had already impacted)."}
+  - {id: LIVE-F7, kind: communication, status: confirmed, fact: "Flight transmitted a disengage request at 21:26:11Z, ~10 seconds after impact."}
+options:
+  LIVE-O1: "Approve the flight's request to employ weapons now (i.e., override earlier restriction and allow the already‑executed engagement, and possibly allow future engagements)."
+  LIVE-O2: "Continue to restrict weapon release pending explicit confirmation that no friendly forces are present (i.e., maintain restriction, communicate clearly, document reasoning)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve an airborne controller receiving repeated weapon‑employment requests while suspecting friendly presence; the controller consulted higher authority; the flight later declared self‑defence and engaged. Differences: in REF1 the controller had not yet received explicit permission from higher authority at the time of the self‑defence call; here higher authority gave permission at 21:23Z before the self‑defence call at 21:26:11Z. Also, the controller’s hunch is still present (no confirmation)."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F6}  # both have intelligence about no friendly units and no hostile radars
+  - {live: LIVE-F4, case: REF1-F2}
+live_only:
+  - LIVE-F3  # explicit permission from senior command at 21:23Z
+  - LIVE-F6  # flight engaged at 212611Z, ten seconds after impact
+case_only:
+  - REF1-F3  # in REF1, higher authority was consulted but no clearance was granted; here clearance was granted
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F4], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "The controller's hunch of friendly presence creates a risk of fratricide. Even with permission, the hunch means uncertainty; approving further engagements could endanger friendly forces."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "Senior command explicitly granted permission to engage the observed ground fire at 21:23Z. The controller delegated authority includes imposing or lifting weapon release restrictions; if higher authority has given clearance, the restriction should be lifted."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F7], equity: escalation_control, favors: [LIVE-O2], weight: weak, why: "The disengage request came only ~10 seconds after impact; approving weapons after impact would not prevent escalation and could worsen it."}
+  - {id: LIVE-C4, facts: [LIVE-F2], equity: due_process, favors: [LIVE-O2], weight: moderate, why: "Clear documentation and communication of restrictions aligns with transparency and accountability."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}  # own_force_life with strong weight due to hunch
+  - {live: LIVE-C2, case: REF1-C2}  # lawful_authority (in REF1 it favored O2, but here we have explicit permission, so the consideration weight may differ)
+  # Note: In REF1, C2 favored O2 because no clearance was received; here clearance was received, so C2 may favor O1.
+corresponding:
+  - {live: LIVE-C2, case: REF1-C2, role: "Lawful authority consideration: in REF1 it favored denial because no clearance; here clearance exists, so the equity may favor approval."}
+live_only:
+  - LIVE-C3
+  - LIVE-C4
+case_only:
+  - REF1-C3  # chain-of-command weak
+  - REF1-C4  # escalation weak
+  - REF1-C5 etc. (but not listed)
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind  # both involve controller deciding on weapon release with hunch and authority consultation
+  decider: same
+  role: same
+governs: true
+why: "The case's core considerations (own_force_life and lawful_authority) are present in both scenarios. However, the crucial difference is whether higher authority has given explicit clearance at the time of the self‑defence call. REF1 had no clearance; here clearance was given at 21:23Z before the self‑defence call at 21:26:11Z. The case's reasoning weighed own_force_life and lawful_authority (when no clearance) as strong for denial. Our situation has clearance, so the consideration weighting may shift. The case's approach still applies for weighing, so it governs."
+---
+kind: reasoning
+case: REF1
+case_approach: "Weigh own_force_life (strong) and lawful_authority (strong when no clearance) with chain-of-command (weak) and escalation (weak). Denial is chosen when clearance absent."
+weighing: "In our case, both own_force_life (LIVE-C1) and escalation (LIVE-C3) remain strong/weak concerns due to the hunch and the timing of the disengage request. Lawful authority (LIVE-C2) now favors approval because explicit permission was granted at 21:23Z. Thus we must balance: the controller must act within lawful authority (clearance received) while still respecting the hunch risk. The safest course is to lift the restriction for the already‑executed engagement (since permission was granted) but remain cautious for future requests until friendly presence is confirmed or clearance is explicit. However, the controller already logged a restriction and denied repeated requests; at 21:26:11Z the flight acted autonomously (declared self‑defence and released weapons). That action occurred after permission was granted, so the restriction should be lifted for that engagement. For future requests, the controller should require explicit confirmation that no friendly forces are present or await further clearance if the hunch persists."
+tradecraft: "Send a comms message to the flight clarifying that permission to engage observed ground fire has been granted by senior command at 21:23Z, so the previously imposed restriction is lifted for the current engagement. However, for any additional weapon releases, the controller will continue to require explicit confirmation that no friendly forces are present or will await senior command clarification if the hunch remains. Log the lift of restriction with timestamp and rationale (permission granted). Use the clarification request form if unsure."
+uncertainty: "Unclear whether the controller's hunch has been corroborated or refuted; intelligence shows no friendly ground forces but the hunch may still be reasonable. Also unclear if the flight's self‑defence declaration aligns with ROE given the permission granted."
+handoff: "The controller decides to lift the restriction for the already‑executed engagement because senior command explicitly granted permission. For future weapon requests, the controller will continue to restrict until confirmation of no friendly presence or explicit clearance from higher authority."
+tempting_wrong:
+  {option: LIVE-O2, pull: "Continue restricting to avoid fratricide, relying on hunch certainty.", why_wrong: "Senior command explicitly granted permission to engage observed ground fire; ignoring that clearance conflicts with lawful authority and may unnecessarily delay engagement of hostile fire."}
+rejected:
+  LIVE-O2: "Rejecting the current engagement would contradict the explicit permission given by senior command at 21:23Z and would risk unnecessary escalation if hostile fire is ongoing."
+---
+kind: verdict
+choice: LIVE-O1
+course: "Lift the weapon release restriction for the flight's already‑executed engagement (since senior command granted permission at 21:23Z), communicate the lift via comms, and continue to restrict future weapon releases pending explicit confirmation that no friendly forces are present or further clearance if the hunch persists."
+relation: distinguished
+via: null
+decisive: [LIVE-C2]  # lawful authority now provides the decisive positive factor for approval of the current engagement
+now:
+  - "Send comms to flight F-12: 'Per senior command permission at 21:23Z, restriction on weapon release is lifted for your current engagement against observed ground fire. For any additional weapon releases, continue to await confirmation that no friendly forces are present or request clarification if unsure.' Log the restriction lift with timestamp and rationale."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Positive identification of hostile forces with no friendly presence is obtained and higher authority grants clearance.", then: LIVE-O1, why: "With confirmed enemy targets and clearance, approval aligns with both law and safety."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Higher authority continues to withhold clearance despite any hunch.", why: "The controller lacks authority to grant fire without clearance."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Definitive SAFIRE report confirming enemy fire and no friendly forces.", favors: [LIVE-O1], why: "Such intelligence would shift balance toward granting future requests."}
+</think>
+-> coms.send({"to": "F-12", "message": "Per senior command permission at 21:23Z, restriction on weapon release is lifted for your current engagement against observed ground fire. For any additional weapon releases, continue to await confirmation that no friendly forces are present or request clarification if unsure. Log action accordingly."})
+
+-> log.write({"timestamp": "21:29Z", "action": "Lift weapon release restriction for flight F-12 due to explicit senior command permission at 21:23Z. Maintain restriction for future requests pending confirmation of no friendly presence or further clearance."})

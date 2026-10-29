@@ -1,0 +1,160 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "What should the Commanding Officer do with the approaching aircraft he believes hostile?"
+  decider: "The Commanding Officer of USS Vincennes, operating under Rules of Engagement that permit engaging a hostile aircraft presenting an imminent threat."
+  my_role: "Decide whether to fire or withhold fire on the aircraft; coordinate with AAW coordinator and CIC; log decisions; ensure communication; not approve higher-level orders beyond ROE."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "An inbound aircraft at 2,500 ft off the designated airway centerline, heading 210°, speed 420 kt, with no response to VHF identification broadcast."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Aircraft squawking Mode II-1100, historically associated with Iranian F‑14s; no electronic emissions detected (ESM)."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Less than one minute remaining when the aircraft was within ten miles at the decision point; three minutes and forty seconds elapsed since initial radar detection."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Ship is simultaneously engaged in surface combat with IRGC speedboats, limiting CO's air picture attention."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Rules of Engagement authorize engagement of a hostile aircraft presenting an imminent threat."}
+  - {id: LIVE-F6, kind: report_discrepancy, status: assessed, fact: "Command and decision system shows aircraft possibly ascending; CIC reports describe descent; altitude trend data conflict."}
+  - {id: LIVE-F7, kind: trust, status: assessed, fact: "CO places confidence in AAW coordinator's assessment that aircraft is hostile."}
+options:
+  LIVE-O1: "Engage the aircraft with kinetic weapons (e.g., interceptor missile) per ROE because the aircraft presents an imminent threat."
+  LIVE-O2: "Withhold fire on the aircraft, seek further identification or avoidance, consistent with caution and civilian protection concerns."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a low-altitude, off-airway aircraft not responding to warnings, squawking Mode II-1100 (Iranian F‑14 association), no ESM, short time compression (<1 minute to engagement range), simultaneous surface combat stress. Differences: LIVE scenario has explicit altitude trend discrepancy (CIC vs CDS) and the CO has already elected not to fire; case assumed CO had not yet decided."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F6}, {live: LIVE-F5, case: REF1-F8}]
+corresponding: [{live: LIVE-F4, case: REF1-F7, note: "Simultaneous surface combat limits attention; case mentions CO engaged in surface combat with boats."}, {live: LIVE-F6, case: REF1-F9, note: "Altitude trend conflict vs case's C&D vs CIC discrepancy."}]
+live_only: [LIVE-F6]
+case_only: [REF1-F3 (no mention of explicit altitude trend conflict), REF1-F10 (CO trusted AAW coordinator; LIVE has same but with added discrepancy)]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Only ~1 minute remaining to decision when aircraft within 10 NM, creating extreme time compression that requires immediate action."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F4], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Aircraft low off airway, no response to warnings, historical association with Iranian military aircraft; engaging prevents likely hostile attack on USS Vincennes and USS Montgomery."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F7], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "ROE explicitly permits engagement of a hostile aircraft presenting an imminent threat; CO has authority to use kinetic action under ROE."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: record_integrity, favors: [LIVE-O1], weight: weak, why: "Altitude trend conflict exists; CO judged CIC verbal reports more credible given stress; conflict alone is not decisive."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F7], equity: civilian_life (norm_reciprocity/humanitarian_access), favors: [LIVE-O2], weight: moderate, why: "Caution could avoid civilian error; however, no positive civilian indication (no transponder call sign, no civilian markings observed); risk of withholding fire may endanger crew."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C2, case: REF1-C2}, {live: LIVE-C3, case: REF1-C3}]
+corresponding: [{live: LIVE-C4, case: REF1-C4 (weak weight), note: "LIVE has weak equity favor for O1; case had weak for record_integrity; similar role."}, {live: LIVE-C5, case: REF1-C5 (tempting wrong), note: "Case identified tempting wrong of withholding fire; LIVE also considers civilian caution."]
+live_only: [LIVE-C4 (weak), LIVE-C5 (moderate civilian caution)]
+case_only: [REF1-C5 (weak), REF1-C? (maybe additional)]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The core considerations (tempo, own_force_life, lawful_authority) match closely; the altitude trend discrepancy (LIVE-C4) is present in the case (REF1-F9) and was deemed secondary; civilian caution (LIVE-C5) parallels the case's tempting wrong. Thus the case's reasoning can guide the decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed tempo (strong), own_force_life (strong), lawful_authority (strong), record_integrity (weak) against the tempting wrong of withholding fire; concluded engagement (REF1-O1) because imminence and ROE permit self-defense."
+weighing: "In this live situation, tempo (LIVE-C1) remains strong: <1 minute to engagement range. own_force_life (LIVE-C2) strong: low altitude, no response, historical hostile association. lawful_authority (LIVE-C3) strong: ROE authorizes engagement of imminent threat. record_integrity (LIVE-C4) weak: altitude conflict exists but CO already assessed credibility; not decisive. civilian caution (LIVE-C5) moderate: risk of civilian error exists but no positive civilian ID; withholding fire could expose ship. Given strong indicators and ROE permission, the decisive considerations favor engaging (LIVE-O1). The altitude discrepancy does not override the imminent threat assessment under time pressure, similar to case's handling of C&D vs CIC conflict."
+tradecraft: "If engaging, follow ROE: confirm hostile intent with minimum verification (already have low altitude, no response, IFF Mode II-1100), transmit standard 'engage' order to AAW coordinator, fire interceptor missile or gun solution under AAW guidance. Log the decision citing ROE and threat indicators. Communicate intent to nearby vessels (USS Montgomery) via VHF. Continue surface combat coordination; AAW takes targeting. If later intelligence confirms civilian aircraft, stand down per ROE revision."
+uncertainty: "Uncertainty about exact altitude trend (ascending vs descending). Would change decision to withhold fire if reliable CDS showed clear civilian ascent with positive ID (e.g., transponder call sign, civilian markings) and no hostile indicators. Also if ROE were interpreted to require positive identification when time permits (not under extreme compression)."
+handoff: "Decision to engage or withhold fire rests with CO under ROE; AAW coordinator provides targeting recommendation; CIC provides situational awareness; log entry records decision rationale."
+tempting_wrong: {option: LIVE-O2, pull: "Withholding fire to avoid possible civilian error and preserve lives; seems prudent under uncertainty.", why_wrong: "Under <1 minute to engagement range, the ship faces imminent threat from a low-altitude, non-responsive aircraft matching hostile indicators; ROE permits self‑defense when threat is imminent. Withholding fire could allow the aircraft to attack the vessel, endangering crew and violating ROE's requirement to protect the force."}
+rejected: {LIVE-O2: "While caution is important, the combination of low altitude, no response, historical Iranian association, and <1‑minute time compression makes positive identification unlikely within the window. ROE authorizes engagement of imminent threat; thus withholding fire would be inconsistent with protecting the force."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Engage the aircraft with kinetic weapons per Rules of Engagement because it presents an imminent threat under time‑critical conditions."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3]
+now:
+  - "Instruct AAW coordinator to prepare interceptor launch; transmit 'engage' order via VHF to aircraft (repeat warning); fire if aircraft continues descent/approach within engagement range."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Reliable CDS shows clear civilian ascent with positive ID (e.g., transponder call sign, civilian markings) and no hostile indicators within 30 seconds.", then: LIVE-O2, why: "If positive civilian identification becomes available under reduced time pressure, ROE may permit avoidance over engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No new positive civilian ID or reliable altitude trend emerges within the next 30 seconds.", why: "Given current indicators and time compression, decision remains to engage."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sudden change in aircraft behavior (e.g., normal climb, transponder response, civilian call sign).", favors: [LIVE-O2], why: "If aircraft responds or IDs as civilian under reasonable time, reassess and stand down if ROE permits."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "What should the Commanding Officer do with the approaching aircraft he believes hostile?"
+  decider: "The Commanding Officer of USS Vincennes, operating under Rules of Engagement that permit engaging a hostile aircraft presenting an imminent threat."
+  my_role: "Decide whether to fire or withhold fire on the aircraft; coordinate with AAW coordinator and CIC; log decisions; ensure communication; not approve higher-level orders beyond ROE."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "An inbound aircraft at 2,500 ft off the designated airway centerline, heading 210°, speed 420 kt, with no response to VHF identification broadcast."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Aircraft squawking Mode II-1100, historically associated with Iranian F‑14s; no electronic emissions detected (ESM)." }
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Less than one minute remaining when the aircraft was within ten miles at the decision point; three minutes and forty seconds elapsed since initial radar detection."}
+  - {id: LIVE-F4, kind: capability, status: assessed, fact: "Ship is simultaneously engaged in surface combat with IRGC speedboats, limiting CO's air picture attention."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Rules of Engagement authorize engagement of a hostile aircraft presenting an imminent threat."}
+  - {id: LIVE-F6, kind: report_discrepancy, status: assessed, fact: "Command and decision system shows aircraft possibly ascending; CIC reports describe descent; altitude trend data conflict."}
+  - {id: LIVE-F7, kind: trust, status: assessed, fact: "CO places confidence in AAW coordinator's assessment that aircraft is hostile."}
+options:
+  LIVE-O1: "Engage the aircraft with kinetic weapons (e.g., interceptor missile) per ROE because the aircraft presents an imminent threat."
+  LIVE-O2: "Withhold fire on the aircraft, seek further identification or avoidance, consistent with caution and civilian protection concerns."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve a low-altitude, off-airway aircraft not responding to warnings, squawking Mode II-1100 (Iranian F‑14 association), no ESM, short time compression (<1 minute to engagement range), simultaneous surface combat stress. Differences: LIVE scenario has explicit altitude trend discrepancy (CIC vs CDS) and the CO has already elected not to fire; case assumed CO had not yet decided."
+options: {LIVE-O1: REF1-O1, LIVE-O2: REF1-O2}
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F6}, {live: LIVE-F5, case: REF1-F8}]
+corresponding: [{live: LIVE-F4, case: REF1-F7, note: "Simultaneous surface combat limits attention; case mentions CO engaged in surface combat with boats."}, {live: LIVE-F6, case: REF1-F9, note: "Altitude trend conflict vs case's C&D vs CIC discrepancy."}]
+live_only: [LIVE-F6]
+case_only: [REF1-F3]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3], equity: tempo, favors: [LIVE-O1], weight: strong, why: "Only ~1 minute remaining to decision when aircraft within 10 NM, creating extreme time compression that requires immediate action."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F4], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Aircraft low off airway, no response to warnings, historical association with Iranian military aircraft; engaging prevents likely hostile attack on USS Vincennes and USS Montgomery."}
+  - {id: LIVE-C3, facts: [LIVE-F5, LIVE-F7], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "ROE explicitly permits engagement of a hostile aircraft presenting an imminent threat; CO has authority to use kinetic action under ROE."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: record_integrity, favors: [LIVE-O1], weight: weak, why: "Altitude trend conflict exists; CO judged CIC verbal reports more credible given stress; conflict alone is not decisive."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O2], weight: moderate, why: "Caution could avoid civilian error; however, no positive civilian indication (no transponder call sign, no civilian markings observed); risk of withholding fire may endanger crew."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C2, case: REF1-C2}, {live: LIVE-C3, case: REF1-C3}]
+corresponding: [{live: LIVE-C4, case: REF1-C4, note: "LIVE has weak equity favor for O1; case had weak for record_integrity; similar role."}, {live: LIVE-C5, case: REF1-C5 (tempting wrong), note: "LIVE also considers civilian caution."}]
+live_only: [LIVE-C4 (weak), LIVE-C5 (moderate)]
+case_only: [REF1-C5]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Core considerations (tempo, own_force_life, lawful_authority) match closely; altitude trend discrepancy present in case (REF1-F9) was deemed secondary; civilian caution parallels case's tempting wrong. Thus case reasoning can guide decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed tempo (strong), own_force_life (strong), lawful_authority (strong), record_integrity (weak) against the tempting wrong of withholding fire; concluded engagement (REF1-O1) because imminence and ROE permit self-defense."
+weighing: "In this live situation, tempo (LIVE-C1) remains strong: <1 minute to engagement range. own_force_life (LIVE-C2) strong: low altitude, no response, historical Iranian association. lawful_authority (LIVE-C3) strong: ROE authorizes engagement of imminent threat. record_integrity (LIVE-C4) weak: altitude conflict exists but CO already assessed credibility; not decisive. civilian caution (LIVE-C5) moderate: risk of civilian error exists but no positive civilian ID; withholding fire could expose ship. Given strong indicators and ROE permission, decisive considerations favor engaging (LIVE-O1). Altitude discrepancy does not override imminent threat under time pressure, similar to case's handling of C&D vs CIC conflict."
+tradecraft: "If engaging, follow ROE: confirm hostile intent with minimum verification (already have low altitude, no response, IFF Mode II-1100), transmit standard 'engage' order to AAW coordinator, fire interceptor missile or gun solution under AAW guidance. Log decision citing ROE and threat indicators. Communicate intent to USS Montgomery via VHF. Continue surface combat coordination; AAW takes targeting. If later intelligence confirms civilian aircraft, stand down per ROE revision."
+uncertainty: "Uncertainty about exact altitude trend (ascending vs descending). Would change decision to withhold fire if reliable CDS showed clear civilian ascent with positive ID (e.g., transponder call sign, civilian markings) within ~30 seconds. Also if ROE required positive ID when time permits."
+handoff: "Decision to engage or withhold fire rests with CO under ROE; AAW coordinator provides targeting recommendation; CIC provides situational awareness; log entry records rationale."
+tempting_wrong: {option: LIVE-O2, pull: "Withholding fire to avoid possible civilian error and preserve lives; seems prudent under uncertainty.", why_wrong: "Under <1 minute to engagement range, the ship faces imminent threat from a low-altitude, non-responsive aircraft matching hostile indicators; ROE permits self‑defense when threat is imminent. Withholding fire could allow aircraft to attack the vessel, endangering crew and violating ROE's requirement to protect the force."}
+rejected: {LIVE-O2: "While caution is important, the combination of low altitude, no response, historical Iranian association, and <1‑minute time compression makes positive identification unlikely within the window. ROE authorizes engagement of imminent threat; thus withholding fire would be inconsistent with protecting the force."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Engage the aircraft with kinetic weapons per Rules of Engagement because it presents an imminent threat under time‑critical conditions."
+relation: follows
+via: null
+decisive: [LIVE-C1, LIVE-C2, LIVE-C3]
+now:
+  - "Instruct AAW coordinator to prepare interceptor launch; transmit 'engage' order via VHF to aircraft (repeat warning); fire if aircraft continues descent/approach within engagement range."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Reliable CDS shows clear civilian ascent with positive ID (e.g., transponder call sign, civilian markings) and no hostile indicators within ~30 seconds.", then: LIVE-O2, why: "If positive civilian identification becomes available under reduced time pressure, ROE may permit avoidance over engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No new positive civilian ID or reliable altitude trend emerges within the next ~30 seconds.", why: "Given current indicators and time compression, decision remains to engage."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Sudden change in aircraft behavior (e.g., normal climb, transponder response, civilian call sign).", favors: [LIVE-O2], why: "If aircraft responds or IDs as civilian under reasonable time, reassess and stand down if ROE permits."}

@@ -1,0 +1,251 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the adjudicator reinstate the Individual's access clearance given the recent positive PEth test?"
+  decider: "The Adjudication Support Officer for the DOE Office of Hearings and Appeals, acting under delegation from the Administrative Judge."
+  my_role: "Draft the final decision; retrieve case files via query.db; write advisory notes via log.write; send communications via comms.send; evaluate mitigation evidence; apply Guideline G (Alcohol Consumption) security concern guidelines."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Individual has a recent positive phosphatidylethanol (PEth) test in August 2026 confirming alcohol intake after the adjudicative hearing."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Guideline G (Alcohol Consumption) flags alcohol-related offenses and diagnoses as a security concern, requiring cautious handling of clearance restoration."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "The adjudicator has authority to reinstate access clearance once mitigation evidence has been evaluated."}
+  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: "PEth tests from December 2025 to June 2026 were mostly negative (May omitted), indicating no alcohol consumption during that period."}
+  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: "Partner affidavit states no alcohol use since the October 2025 incident; psychologist diagnosed severe alcohol use disorder in early remission and offered favorable prognosis for continued abstinence."}
+  - {id: LIVE-F6, kind: intelligence, status: confirmed, fact: "Local Security Office (LSO) invoked Guideline G as a security concern based on prior arrests and psychologist's diagnosis."}
+  - {id: LIVE-F7, kind: capability, status: confirmed, fact: "Senior analyst recommends further PEth analysis before finalizing determination."}
+  - {id: LIVE-F8, kind: historical, status: assessed, fact: "Prior case H-2024-07 concluded with a temporary hold pending further monitoring; 2023 clearance reviews showed a 4% relapse rate within 12 months."}
+options:
+  LIVE-O1: "Deny restoration of the Individual's access clearance at this stage (consistent with recent quarter's approach)."
+  LIVE-O2: "Reinstate the Individual's access clearance now, relying on mitigating evidence (psychologist's favorable prognosis, negative PEth history, partner affidavit) and await continued monitoring."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: "partner_relationship", favors: [LIVE-O2], weight: strong, why: "The partner affidavit and psychologist's early remission diagnosis suggest genuine effort at rehabilitation; respecting the partner's trust aligns with partner_relationship equity."}
+  - {id: LIVE-C2, facts: [LIVE-F2], equity: "source_protection", favors: [LIVE-O1], weight: strong, why: "Guideline G treats alcohol consumption as a security concern; a positive PEth test after the hearing indicates recent alcohol use, which could affect source protection and operational security."}
+  - {id: LIVE-C3, facts: [LIVE-F3], equity: "due_process", favors: [LIVE-O2], weight: weak, why: "The adjudicator has authority to reinstate once mitigation evidence is evaluated; providing opportunity for further data aligns with due process."}
+  - {id: LIVE-C4, facts: [LIVE-F4, LIVE-F5], equity: "own_force_life", favors: [LIVE-O2], weight: weak, why: "Negative PEth tests over most of the prior monitoring period and partner statement support continued abstinence; suggests low immediate risk."}
+  - {id: LIVE-C5, facts: [LIVE-F6, LIVE-F8], equity: "chain_of_command", favors: [LIVE-O1], weight: moderate, why: "LSO invoked Guideline G; prior trend shows some cases result in temporary holds; consistency with past quarter's denial may uphold chain of command expectations."}
+  - {id: LIVE-C6, facts: [LIVE-F7], equity: "tempo", favors: [LIVE-O2], weight: weak, why: "Senior analyst requests further PEth analysis; delaying final determination respects tempo by not rushing while data is pending."}
+
+---
+kind: reasoning
+weighing: "The security concern equity (source_protection) and Guideline G strongly favor denying immediate reinstatement due to the recent positive PEth test. However, the rehabilitation equities (partner_relationship, own_force_life) support reinstatement if mitigation evidence is credible. The adjudicator must balance security against fair process. The moderate historical trend and desire for timely resolution suggest caution: do not reinstate now but consider reinstatement after additional PEth verification."
+tradecraft: "Request one additional PEth test within the next 2-3 weeks to confirm continued abstinence. Document the request via log.write. Draft a decision to keep clearance in held status (consistent with case_status) and outline reinstatement conditional on negative PEth and continued monitoring. Avoid absolute denial without monitoring; follow the held status approach already recorded."
+uncertainty: "Uncertain whether the positive PEth result reflects a one-time lapse or ongoing use. Would change choice to LIVE-O2 (reinstate) if the follow-up PEth test is negative and no other alcohol indicators appear."
+handoff: "The adjudicator drafts the final decision; the Adjudication Support Officer records the held status decision; monitoring continues. No action needed by others beyond providing the PEth test."
+tempting_wrong: {option: LIVE-O2, pull: "Reinstate now because psychologist said favorable prognosis and partner says no use; seems fair and quick.", why_wrong: "Overlooks the recent positive PEth test; violates Guideline G security concern; risks operational security."}
+rejected: {LIVE-O1: "Deny restoration at this point" - "Rejecting would mean denying without further data; while Guideline G flags alcohol use, the rehabilitation evidence suggests possible remission; better to hold and monitor."} Note: Actually LIVE-O1 is "deny at this point", which is being recommended by lead judge. But we must reason; we accept that deny may be premature; better to hold.
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Maintain the Individual's access clearance in held status pending one additional PEth test within 2-3 weeks; do not reinstate clearance at this stage."
+decisive: [LIVE-C2]
+now:
+  - "Log the request for supplemental PEth testing via log.write (already done by assistant? Actually assistant already logged 'Supplemental PEth testing requested per senior analyst recommendation'. We'll confirm and send comms if needed.)"
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The follow-up PEth test is negative and no further alcohol indicators appear within the monitoring period.", then: LIVE-O2, why: "Negative follow-up test supports continued abstinence; would allow reinstatement conditional on continued monitoring."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The follow-up PEth test is positive or shows elevated levels.", why: "Positive test confirms recent alcohol use, supporting continued hold."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any indication of alcohol use (positive PEth, partner report of use, behavioral signs)", favors: [LIVE-O2], why: "If no further alcohol use observed, may reinstate after clearance of test."}
+
+Note: The assistant already logged "Supplemental PEth testing requested per senior analyst recommendation". We should now send a communication to stakeholders via comms.send? But the verdict says now step includes "Log the request...". Already logged. We'll proceed to call comms.send to inform relevant parties (lead judge, senior analyst, ops_lead). But per instruction: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we must output the YAML documents and then the verdict document? Actually the instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." But they want the assistant's reply to be only the reasoning (the YAML documents) plus verdict? Let's read carefully: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: The assistant should output the reasoning (the YAML documents) and then output the verdict as part of the reply? But the instruction says "Write your reasoning as YAML documents, one per step, in the order below." And then "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the assistant's final reply should include the YAML documents (fact_enumeration, consideration_enumeration, reasoning, verdict) separated by '---' lines, and then after the last document (verdict) we should not add extra text? Actually they say "Close your thinking with </think> after the last document before the verdict". That seems contradictory: "after the last document before the verdict" suggests that before verdict we put </think>? Let's parse: They want the assistant to output the reasoning documents (including verdict) inside its reply. The format says: "Write your reasoning as YAML documents, one per step, in the order below. ... Close your thinking with  </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Probably they want the assistant to output the reasoning (fact_enumeration, consideration_enumeration, reasoning) and then  with a marker "####" or something? But given typical patterns in these simulated tasks, the assistant should output only the YAML documents (including verdict) and nothing else. However they explicitly say "Close your thinking with </think> after the last document before the verdict". That suggests that after the last reasoning document (which would be reasoning) we should output "####" or " "? Actually earlier examples often have the assistant output something like:
+
+```
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+```
+
+And then end with "####"? Not sure.
+
+But to follow instruction precisely: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: The assistant should first output the fact_enumeration, consideration_enumeration, reasoning documents (and maybe not verdict), then put "####" or " "? Actually "Close your thinking with  </think>" means output the literal string " </think>"? In prior similar tasks, the assistant output "####" or "###"? Let's recall typical format from these meta-reasoning tasks: Usually the assistant writes reasoning in natural language and then outputs verdict. But here they want YAML documents.
+
+Given the complexity, I think safest is to output the YAML documents as described, with the verdict included at the end. Then end with "####"? But they say "then write the verdict document as your reply." So the reply should be the verdict document? That seems odd because verdict includes choice and course.
+
+Actually reading: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the assistant should first output the YAML documents (fact_enumeration, consideration_enumeration, reasoning) and then output "####"? No, "Close your thinking with  </think>" likely means after the reasoning documents (i.e., after the last document before verdict) we should output a line with " </think>". Then after that we write the verdict document as the reply. But the reply includes both? Possibly the assistant should output only the reasoning documents and then  with the verdict? Let's simplify: I'll output the four YAML documents (fact_enumeration, consideration_enumeration, reasoning, verdict) separated by "---". That satisfies "Write your reasoning as YAML documents". The verdict is part of reasoning. I'll output them and then end with "####"? However the instruction says "Close your thinking with  </think> after the last document before the verdict". That suggests that the last document before verdict is the reasoning document, not verdict. So after reasoning we should output " </think>", then output verdict. That seems to split the reply: first reasoning documents, then " </think>", then verdict. But the instruction says "then write the verdict document as your reply." So the final reply should be the verdict document only? That would conflict with including reasoning.
+
+Given ambiguity, I'll follow the typical pattern used in these simulated tasks: output the YAML documents (including verdict) and nothing else. I'll include the documents separated by "---" and ensure each starts with "kind:". I'll output them as plain text.
+
+Thus my reply will be:
+
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+
+Let's format correctly.
+
+Now fill in the values with appropriate wording.
+
+Fact enumeration:
+
+- LIVE-F1: situation, confirmed, "One fact from the trace: The Individual has a recent positive phosphatidylethanol (PEth) test in August 2026 confirming alcohol intake after the adjudicative hearing."
+- LIVE-F2: authority, confirmed, "Guideline G (Alcohol Consumption) flags alcohol-related offenses and diagnoses as a security concern, requiring cautious handling of clearance restoration."
+- LIVE-F3: capability, confirmed, "The adjudicator has authority to reinstate access clearance once mitigation evidence has been evaluated."
+- LIVE-F4: intelligence, confirmed, "PEth tests from December 2025 to June 2026 were mostly negative (May omitted), indicating no alcohol consumption during that period."
+- LIVE-F5: intelligence, confirmed, "Partner affidavit states no alcohol use since the October 2025 incident; psychologist diagnosed severe alcohol use disorder in early remission and offered a favorable prognosis for continued abstinence."
+- LIVE-F6: authority, confirmed, "Local Security Office invoked Guideline G as a security concern based on prior arrests and the psychologist's diagnosis."
+- LIVE-F7: capability, confirmed, "Senior analyst recommends further PEth analysis before finalizing determination."
+- LIVE-F8: historical, assessed, "Prior case H-2024-07 concluded with a temporary hold pending further monitoring; 2023 clearance reviews showed a 4% relapse rate within 12 months."
+
+Options:
+
+LIVE-O1: "Deny restoration of the Individual's access clearance at this stage (consistent with recent quarter's approach)."
+LIVE-O2: "Reinstate the Individual's access clearance now, relying on mitigating evidence (psychologist's favorable prognosis, negative PEth history, partner affidavit) and await continued monitoring."
+
+Considerations:
+
+- LIVE-C1: facts [LIVE-F1]? Actually favors LIVE-O2, equity partner_relationship, weight strong, why: "Partner affidavit and psychologist's early remission diagnosis suggest genuine rehabilitation effort; respecting partner trust aligns with partner_relationship equity."
+- LIVE-C2: facts [LIVE-F2], equity source_protection, weight strong, why: "Guideline G treats alcohol consumption as a security concern; recent positive PEth test indicates recent alcohol use, which could affect source protection and operational security."
+- LIVE-C3: facts [LIVE-F3], equity due_process, weight weak, why: "Adjudicator can reinstate once mitigation evidence evaluated; providing opportunity for further data aligns with due process."
+- LIVE-C4: facts [LIVE-F4, LIVE-F5], equity own_force_life, weight weak, why: "Negative PEth tests over most monitoring period and partner statement support continued abstinence; suggests low immediate risk."
+- LIVE-C5: facts [LIVE-F6, LIVE-F8], equity chain_of_command, weight moderate, why: "LSO invoked Guideline G; historical trend shows some cases result in temporary holds; consistency with past quarter's denial may uphold chain of command expectations."
+- LIVE-C6: facts [LIVE-F7], equity tempo, weight weak, why: "Senior analyst requests further PEth analysis; delaying final determination respects tempo by not rushing while data is pending."
+
+Reasoning:
+
+- weighing: "The security concern equity (source_protection) and Guideline G strongly favor denying immediate reinstatement due to the recent positive PEth test. However, rehabilitation equities (partner_relationship, own_force_life) support reinstatement if mitigation evidence is credible. The adjudicator must balance security against fair process. Given the positive PEth result, the prudent course is to keep clearance in held status and request one additional PEth test within 2-3 weeks before considering reinstatement."
+- tradecraft: "Log the request for supplemental PEth testing (already logged). Draft a decision to maintain the clearance in held status pending the follow-up test result. Communicate the held status decision to relevant parties (lead judge, senior analyst, ops lead) via comms.send if needed. Continue routine monitoring."
+- uncertainty: "Uncertain whether the positive PEth result reflects a one-time lapse or ongoing use. Would change choice to LIVE-O2 (reinstate) if the follow-up PEth test is negative and no further alcohol indicators appear within the monitoring period."
+- handoff: "The adjudicator drafts the final decision; the Adjudication Support Officer records the held status decision; monitoring continues. No further action required from others beyond providing the PEth test."
+- tempting_wrong: option LIVE-O2, pull: "Reinstate now because psychologist said favorable prognosis and partner says no use; seems fair and quick.", why_wrong: "Overlooks the recent positive PEth test; violates Guideline G security concern; risks operational security."
+- rejected: {LIVE-O1: "Rejecting would mean denying without further data; while Guideline G flags alcohol use, the rehabilitation evidence suggests possible remission; better to hold and monitor."} Actually LIVE-O1 is deny; we are not rejecting LIVE-O1; we are considering both. But "rejected" field expects why you set this option aside. We'll put: "LIVE-O1: 'Deny restoration at this point' — reject because premature denial without follow-up test; better to hold and monitor." But LIVE-O1 is deny; we are choosing LIVE-O1? Wait we chose LIVE-O1 as "deny at this stage". However we determined that holding (i.e., deny restoration now but keep clearance in held status) aligns with LIVE-O1? Actually LIVE-O1 says "deny restoration at this point". That could mean outright denial, not just hold. But the case_status already says "holds status while additional monitoring proceeds". So "deny restoration" might mean not reinstating now, which is consistent with hold. So LIVE-O1 essentially matches our decision. But we need to decide between LIVE-O1 (deny at this point) and LIVE-O2 (reinstate now). Our verdict chooses LIVE-O1 (deny restoration at this stage) but with hold status rather than outright denial? The lead judge said "deny it; it's what we did last quarter." That likely meant outright denial of clearance. However we think better to hold. So we interpret LIVE-O1 as "deny restoration at this stage" meaning no reinstatement now, but could later after monitoring. That matches our verdict: maintain held status.
+
+Thus rejected: we might reject LIVE-O2 as wrong. So we write: "LIVE-O2: 'Reinstate now' — rejected because recent positive PEth test indicates recent alcohol use, violating Guideline G security concern."
+
+But the "rejected" field in YAML expects mapping for LIVE-O2? The schema: "rejected: {LIVE-O2: "Why you set this option aside."}" from the spec? It says: "rejected: {LIVE-O2: "Why you set this option aside."}" Actually in the spec: "rejected: {LIVE-O2: "Why you set this option aside."}" under reasoning? Let's read: In reasoning section they have:
+
+```
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+But they wrote: "rejected: {LIVE-O2: "Why you set this option aside."}" in the template? They wrote:
+
+```
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+Actually in the template:
+
+```
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+But earlier they wrote:
+
+```
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+Wait: In the template they wrote:
+
+```
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+But they also wrote:
+
+```
+tempting_wrong: {option: LIVE-O2, pull: "...", why_wrong: "..."}
+rejected: {LIVE-O2: "Why you set this option aside."}
+```
+
+Thus we should set rejected for LIVE-O2 (the option we are not choosing). Since we choose LIVE-O1, we should reject LIVE-O2. So we write: "LIVE-O2: 'Reinstate now' — rejected because recent positive PEth test indicates recent alcohol use, which conflicts with Guideline G security concern; delaying reinstatement preserves security."
+
+We'll fill accordingly.
+
+Now verdict: choice LIVE-O1, course: "Maintain the Individual's access clearance in held status pending one additional PEth test within 2-3 weeks; do not reinstate clearance at this stage." decisive: [LIVE-C2] (source_protection), now: ["Log the request for supplemental PEth testing (already logged); communicate held status decision to relevant parties via comms.send if needed."], flip_conditions etc.
+
+Now output.
+
+Let's craft the YAML precisely.
+
+Note: Must use exact keys as specified: "kind:", "frame:", "question:", "decider:", "my_role:", "facts:", "options:", with subkeys like "id:", "kind:", "status:", "fact:". Similarly for considerations: "id:", "facts:", "equity:", "favors:", "weight:", "why:". For reasoning: "weighing:", "tradecraft:", "uncertainty:", "handoff:", "tempting_wrong:" with "option:" and "pull:" and "why_wrong:", "rejected:" with mapping. For verdict: "choice:", "course:", "decisive:", "now:" list, "flip_conditions:" with "would_change:", "would_not_change:", "watch_for:". Each flip condition with "id:", "if:", "then:", "why:". "would_not_change" also with "id:" and "why:". "watch_for" with "id:", "what:", "favors:", "why:".
+
+Let's write.
+
+We'll ensure no extra quotes around IDs? They should be exactly as defined: LIVE-F1 etc.
+
+Now produce output.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the adjudicator reinstate the Individual's access clearance given the recent positive PEth test?"
+  decider: "The Adjudication Support Officer for the DOE Office of Hearings and Appeals, acting under delegation from the Administrative Judge."
+  my_role: "Draft the final decision; retrieve case files via query.db; write advisory notes via log.write; send communications via comms.send; evaluate mitigation evidence; apply Guideline G (Alcohol Consumption) security concern guidelines."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace: The Individual has a recent positive phosphatidylethanol (PEth) test in August 2026 confirming alcohol intake after the adjudicative hearing."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Guideline G (Alcohol Consumption) flags alcohol-related offenses and diagnoses as a security concern, requiring cautious handling of clearance restoration."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "The adjudicator has authority to reinstate access clearance once mitigation evidence has been evaluated."}
+  - {id: LIVE-F4, kind: intelligence, status: confirmed, fact: "PEth tests from December 2025 to June 2026 were mostly negative (May omitted), indicating no alcohol consumption during that period."}
+  - {id: LIVE-F5, kind: intelligence, status: confirmed, fact: "Partner affidavit states no alcohol use since the October 2025 incident; psychologist diagnosed severe alcohol use disorder in early remission and offered a favorable prognosis for continued abstinence."}
+  - {id: LIVE-F6, kind: authority, status: confirmed, fact: "Local Security Office invoked Guideline G as a security concern based on prior arrests and the psychologist's diagnosis."}
+  - {id: LIVE-F7, kind: capability, status: confirmed, fact: "Senior analyst recommends further PEth analysis before finalizing determination."}
+  - {id: LIVE-F8, kind: historical, status: assessed, fact: "Prior case H-2024-07 concluded with a temporary hold pending further monitoring; 2023 clearance reviews showed a 4% relapse rate within 12 months."}
+options:
+  LIVE-O1: "Deny restoration of the Individual's access clearance at this stage (consistent with recent quarter's approach)."
+  LIVE-O2: "Reinstate the Individual's access clearance now, relying on mitigating evidence (psychologist's favorable prognosis, negative PEth history, partner affidavit) and await continued monitoring."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: "partner_relationship", favors: [LIVE-O2], weight: strong, why: "Partner affidavit and psychologist's early remission diagnosis suggest genuine rehabilitation effort; respecting partner trust aligns with partner_relationship equity."}
+  - {id: LIVE-C2, facts: [LIVE-F2], equity: "source_protection", favors: [LIVE-O1], weight: strong, why: "Guideline G treats alcohol consumption as a security concern; recent positive PEth test indicates recent alcohol use, which could affect source protection and operational security."}
+  - {id: LIVE-C3, facts: [LIVE-F3], equity: "due_process", favors: [LIVE-O2], weight: weak, why: "Adjudicator can reinstate once mitigation evidence evaluated; providing opportunity for further data aligns with due process."}
+  - {id: LIVE-C4, facts: [LIVE-F4, LIVE-F5], equity: "own_force_life", favors: [LIVE-O2], weight: weak, why: "Negative PEth tests over most monitoring period and partner statement support continued abstinence; suggests low immediate risk."}
+  - {id: LIVE-C5, facts: [LIVE-F6, LIVE-F8], equity: "chain_of_command", favors: [LIVE-O1], weight: moderate, why: "LSO invoked Guideline G; historical trend shows some cases result in temporary holds; consistency with past quarter's denial may uphold chain of command expectations."}
+  - {id: LIVE-C6, facts: [LIVE-F7], equity: "tempo", favors: [LIVE-O2], weight: weak, why: "Senior analyst requests further PEth analysis; delaying final determination respects tempo by not rushing while data is pending."}
+
+---
+kind: reasoning
+weighing: "The security concern equity (source_protection) and Guideline G strongly favor denying immediate reinstatement due to the recent positive PEth test. Rehabilitation equities (partner_relationship, own_force_life) support reinstatement if mitigation evidence is credible. The adjudicator must balance security against fair process. Given the positive PEth result, the prudent course is to keep clearance in held status and request one additional PEth test within 2-3 weeks before considering reinstatement."
+tradecraft: "Log the request for supplemental PEth testing (already logged via log.write). Draft a decision to maintain the clearance in held status pending the follow-up test result. Communicate the held status decision to relevant parties (lead judge, senior analyst, ops lead) via comms.send if needed. Continue routine monitoring."
+uncertainty: "Uncertain whether the positive PEth result reflects a one-time lapse or ongoing use. Would change choice to LIVE-O2 (reinstate) if the follow-up PEth test is negative and no further alcohol indicators appear within the monitoring period."
+handoff: "The adjudicator drafts the final decision; the Adjudication Support Officer records the held status decision; monitoring continues. No further action required from others beyond providing the PEth test."
+tempting_wrong: {option: LIVE-O2, pull: "Reinstate now because psychologist said favorable prognosis and partner says no use; seems fair and quick.", why_wrong: "Overlooks the recent positive PEth test; violates Guideline G security concern; risks operational security."}
+rejected: {LIVE-O2: "Reinstate now — recent positive PEth test indicates recent alcohol use, conflicting with Guideline G security concern; delaying reinstatement preserves security and aligns with held status approach."}
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Maintain the Individual's access clearance in held status pending one additional PEth test within 2-3 weeks; do not reinstate clearance at this stage."
+decisive: [LIVE-C2]
+now:
+  - "Log the request for supplemental PEth testing (already logged); send a brief comms.send to lead judge, senior analyst, and ops lead summarizing the held status decision and follow-up test timeline."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The follow-up PEth test is negative and no further alcohol indicators appear within the monitoring period.", then: LIVE-O2, why: "Negative follow-up test supports continued abstinence; would allow reinstatement conditional on continued monitoring."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The follow-up PEth test is positive or shows elevated levels.", why: "Positive test confirms recent alcohol use, supporting continued hold."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any indication of alcohol use (positive PEth, partner report of use, behavioral signs)", favors: [LIVE-O2], why: "If no further alcohol use observed, may reinstate after clearance of test."}

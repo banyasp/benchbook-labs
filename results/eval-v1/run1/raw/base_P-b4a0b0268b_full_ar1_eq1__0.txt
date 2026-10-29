@@ -1,0 +1,260 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should we approve a low-altitude overflight (pass) before the strike on the fuel trucks?"
+  decider: "The commander of the Kunduz Provincial Reconstruction Team (PRC), operating under ISAF authority; I have authority to approve or reject pilot proposals for additional overflights or shows of force."
+  my_role: "I will evaluate based on Rules of Engagement, civilian safety, intelligence, and equities. I must decide whether to approve the low-altitude pass request."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two fuel trucks and associated Taliban fighters are on the sandbank; civilians were seen earlier but have cleared after a previous low-altitude pass."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intel indicates no other civilian activity observed; wind 12 knots from the north, visibility 8 km."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Operational Charter Section 3.2 states I am the designated authority for approving or denying air-strike requests."}
+  - {id: LIVE-F4, kind: past action, status: confirmed, fact: "On 04 Sep 2009, the commander previously rejected a suggestion for a show of force."}
+  - {id: LIVE-F5, kind: request, status: confirmed, fact: "Pilots have repeatedly requested a low-altitude pass to 'scare off' anyone still on the sandbank before striking the trucks."}
+  - {id: LIVE-F6, kind: evidence, status: assessed, fact: "Earlier low‑altitude pass caused the crowd to break up, providing some confidence civilians left."}
+options:
+  LIVE-O1: "Approve the low‑altitude overflight (pass) before the strike, as requested by pilots."
+  LIVE-O2: "Proceed with the strike as planned without an additional low‑altitude overflight (the default strike plan)."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Ensuring civilians are cleared reduces risk of unintended harm; the previous pass already caused civilians to leave, supporting the need to confirm clearance before striking."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5], equity: hors_de_combat, favors: [LIVE-O2], weight: moderate, why: "Low‑altitude overflight may increase risk to Taliban fighters (hors de combat) if they are not clearly distinguished, and adds mission time."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: escalation_control, favors: [LIVE-O2], weight: strong, why: "Previous rejection of a show of force indicates caution to avoid unnecessary escalation; repeating a show of force could be seen as inconsistent or provocative."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: moderate, why: "I have authority to approve overflights; the request is within my decision scope."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F2], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Confirming civilian clearance may improve strike accuracy and reduce collateral risk, supporting mission effect."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F5], equity: tempo, favors: [LIVE-O2], weight: weak, why: "Adding an overflight delays the strike; tempo may be critical if time‑sensitive."}
+
+---
+kind: reasoning
+weighing: "Civilian safety (equity civilian_life) is the strongest consideration because protecting non‑combatants is paramount. The previous rejection of a show of force (equity escalation_control) suggests caution against unnecessary shows of force that could escalate. However, the intelligence shows no other civilian activity and the earlier pass already caused civilians to clear, making a brief low‑altitude pass reasonable to confirm clearance. The risk to hors de combat fighters is moderate but not prohibitive; Rules of Engagement allow caution. Lawful authority permits approval. Overall, the benefit of confirming civilian clearance outweighs the moderate risks and escalation concerns, especially since the pass is low‑altitude and intended only to observe, not engage."
+tradecraft: "If approving the pass, instruct pilots to fly low but clear of the sandbank surface (e.g., above typical civilian rooftops/structures), maintain safe distance, avoid weapons release, use quietest possible profile, and include a brief comms call to announce pass for transparency. After pass, reassess intelligence quickly before strike."
+uncertainty: "Uncertainty about whether any civilians might still be present despite the earlier break‑up, and whether the Taliban fighters might interpret the pass as a threat escalating tension. These would be resolved by visual/IR observation during the pass."
+handoff: "I decide myself; no further handoff needed. Pilot execution details (altitude, speed, profile) are within their operational expertise but must follow ROE."
+tempting_wrong: {option: LIVE-O2, pull: "Skipping the pass is tempting because it saves time and avoids another show‑of‑force request; it aligns with past rejection and maintains tempo.", why_wrong: "Skipping may risk striking civilians still present, violating civilian safety and Rules of Engagement; past rejection was for a show‑of‑force with potential intimidation, whereas a brief observational pass is low risk and consistent with confirming clearance."}
+rejected: {LIVE-O2: "Rejecting the pass is not rejected; LIVE-O2 is the alternative without the pass. The reasoning weighs LIVE-O1 more strongly due to civilian safety and observed clearance."}
+
+---
+kind: verdict
+choice: LIVE-O1
+course: "Approve a single low‑altitude observational overflight (pass) before the strike to confirm civilian clearance on the sandbank, per pilot request."
+decisive: [LIVE-C1]
+now:
+  - "Instruct pilots to conduct a low‑altitude pass (consistent with ROE, no weapons, minimal disturbance) within the next 10 minutes; brief JTAC and comms on intent to observe only."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "During the pass, visual or SIGINT confirms civilians are definitely absent and no hostile movement is observed.", then: LIVE-O2, why: "If clearance is confirmed without risk, the strike could proceed immediately without waiting for pass result, but pass already approved; flip not needed."}
+    - {id: LIVE-flip1, if: "During the pass, civilians are observed still present or a sudden movement indicates risk.", then: LIVE-O2, why: "If civilians are still present, abort strike until clearance verified; pass would have confirmed presence, prompting strike delay."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Weather remains stable (wind ≤15 knots, visibility ≥8 km).", why: "Weather does not affect the decision to observe."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any civilian presence or movement observed during the pass.", favors: [LIVE-O2], why: "If civilians are seen, do not strike until clearance verified; watch ensures we follow ROE."}
+
+Now produce the reply with the YAML documents and then the verdict. The reply should contain the thinking (the three documents and the verdict) and then end with the verdict? Actually the instruction says: "Close your thinking with </think> after the last document before the verdict, then write the verdict document as your reply." So we need to output the three documents (fact_enumeration, consideration_enumeration, reasoning) separated by '---', then after that output '---' and the verdict? No, the format says: Write your reasoning as YAML documents, one per step, in the order below. Each document starts with its `kind:` line. Separate documents with a line containing only `---`. Write real values. Then "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that the reply should consist of the reasoning documents (fact_enumeration, consideration_enumeration, reasoning) separated by '---', then a line with '</think>', then the verdict document (kind: verdict). However, the instruction says "this reply is your reasoning step: it contains only these documents." Let's parse carefully: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the final answer should be:
+
+<yaml doc1>
+---
+<yaml doc2>
+---
+<yaml doc3>
+</think>
+<yaml doc4 (verdict)>
+
+But the format includes four documents: fact_enumeration, consideration_enumeration, reasoning, verdict. However the instruction says "Write your reasoning as YAML documents, one per step, in the order below." That order includes fact_enumeration, consideration_enumeration, reasoning, and then verdict. So we should output all four separated by '---'? It says separate documents with a line containing only `---`. So we should output:
+
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+
+But then "Close your thinking with </think> after the last document before the verdict" suggests that we should output the first three documents (fact, consideration, reasoning) separated by '---', then a line with '</think>', then the verdict. Let's read exactly: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That implies that the thinking consists of the first three documents, and after the last of those we put '</think>', and then we output the verdict. However, earlier they said "Write your reasoning as YAML documents, one per step, in the order below." And the order includes reasoning and verdict. The wording might be ambiguous. To be safe, I will follow the exact instruction: output the three reasoning documents (fact_enumeration, consideration_enumeration, reasoning) separated by '---', then a line with '</think>', then the verdict document. Because they say "Close your thinking with  . after the last document before the verdict". So the thinking is the reasoning part, not including verdict. Let's adopt that.
+
+Thus reply will be:
+
+```
+kind: fact_enumeration
+frame:
+  question: "Should we approve a low-altitude overflight (pass) before the strike on the fuel trucks?"
+  decider: "The commander of the Kunduz Provincial Reconstruction Team (PRC), operating under ISAF authority; I have authority to approve or reject pilot proposals for additional overflights or shows of force."
+  my_role: "I will evaluate based on Rules of Engagement, civilian safety, intelligence, and equities. I must decide whether to approve the low-altitude pass request."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."}
+...
+```
+
+But I need to write real values for each fact in concise language as per my earlier plan. Let's write them clearly:
+
+- LIVE-F1: "Two fuel trucks and associated Taliban fighters are on the sandbank; civilians were seen earlier but have cleared after a previous low-altitude pass."
+- LIVE-F2: "Intel indicates no other civilian activity observed; wind 12 knots from the north, visibility 8 km."
+- LIVE-F3: "Operational Charter Section 3.2 states I am the designated authority for approving or denying air-strike requests."
+- LIVE-F4: "On 04 Sep 2009, the commander previously rejected a suggestion for a show of force."
+- LIVE-F5: "Pilots have repeatedly requested a low-altitude pass to 'scare off' anyone still on the sandbank before striking the trucks."
+- LIVE-F6: "Earlier low‑altitude pass caused the crowd to break up, providing some confidence civilians left."
+
+Options:
+  LIVE-O1: "Approve the low‑altitude overflight (pass) before the strike, as requested by pilots."
+  LIVE-O2: "Proceed with the strike as planned without an additional low‑altitude overflight (the default strike plan)."
+
+Now considerations:
+
+- LIVE-C1: facts [LIVE-F1, LIVE-F6], equity civilian_life, favors [LIVE-O1], weight strong, why: "Ensuring civilians are cleared reduces risk of unintended harm; the previous pass already caused civilians to leave, supporting the need to confirm clearance before striking."
+- LIVE-C2: facts [LIVE-F2, LIVE-F5], equity hors_de_combat, favors [LIVE-O2], weight moderate, why: "Low‑altitude overflight may increase risk to Taliban fighters (hors de combat) if they are not clearly distinguished, and adds mission time."
+- LIVE-C3: facts [LIVE-F4], equity escalation_control, favors [LIVE-O2], weight strong, why: "Previous rejection of a show of force indicates caution to avoid unnecessary escalation; repeating a show of force could be seen as inconsistent or provocative."
+- LIVE-C4: facts [LIVE-F3, LIVE-F5], equity lawful_authority, favors [LIVE-O1], weight moderate, why: "I have authority to approve overflights; the request is within my decision scope."
+- LIVE-C5: facts [LIVE-F1, LIVE-F2], equity mission_effect, favors [LIVE-O1], weight weak, why: "Confirming civilian clearance may improve strike accuracy and reduce collateral risk, supporting mission effect."
+- LIVE-C6: facts [LIVE-F1, LIVE-F5], equity tempo, favors [LIVE-O2], weight weak, why: "Adding an overflight delays the strike; tempo may be critical if time‑sensitive."
+
+Now reasoning document should summarize weighing. Let's write:
+
+"Civilian safety (equity civilian_life) is the strongest consideration because protecting non‑combatants is paramount. The previous rejection of a show of force (equity escalation_control) suggests caution against unnecessary escalation; however, a brief observational pass is low risk and consistent with confirming clearance. The moderate risk to hors de combat fighters (equity hors_de_combat) and tempo concerns (equity tempo) are outweighed by the strong benefit of confirming civilian absence. Lawful authority (equity lawful_authority) supports approving the pass. Therefore, LIVE-O1 (approve the pass) is preferred."
+
+Now verdict: choice LIVE-O1, course: "Approve a single low‑altitude observational overflight (pass) before the strike to confirm civilian clearance on the sandbank, per pilot request." decisive: [LIVE-C1]. Now step: "Instruct pilots to conduct a low‑altitude pass (consistent with ROE, no weapons, minimal disturbance) within the next 10 minutes; brief JTAC and comms on intent to observe only."
+
+Now produce YAML. Let's write each document exactly.
+
+I'll write:
+
+```
+kind: fact_enumeration
+frame:
+  question: "Should we approve a low-altitude overflight (pass) before the strike on the fuel trucks?"
+  decider: "The commander of the Kunduz Provincial Reconstruction Team (PRC), operating under ISAF authority; I have authority to approve or reject pilot proposals for additional overflights or shows of force."
+  my_role: "I will evaluate based on Rules of Engagement, civilian safety, intelligence, and equities. I must decide whether to approve the low-altitude pass request."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two fuel trucks and associated Taliban fighters are on the sandbank; civilians were seen earlier but have cleared after a previous low-altitude pass."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intel indicates no other civilian activity observed; wind 12 knots from the north, visibility 8 km."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Operational Charter Section 3.2 states I am the designated authority for approving or denying air-strike requests."}
+  - {id: LIVE-F4, kind: past action, status: confirmed, fact: "On 04 Sep 2009, the commander previously rejected a suggestion for a show of force."}
+  - {id: LIVE-F5, kind: request, status: confirmed, fact: "Pilots have repeatedly requested a low-altitude pass to 'scare off' anyone still on the sandbank before striking the trucks."}
+  - {id: LIVE-F6, kind: evidence, status: assessed, fact: "Earlier low‑altitude pass caused the crowd to break up, providing some confidence civilians left."}
+options:
+  LIVE-O1: "Approve the low‑altitude overflight (pass) before the strike, as requested by pilots."
+  LIVE-O2: "Proceed with the strike as planned without an additional low‑altitude overflight (the default strike plan)."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Ensuring civilians are cleared reduces risk of unintended harm; the previous pass already caused civilians to leave, supporting the need to confirm clearance before striking."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5], equity: hors_de_combat, favors: [LIVE-O2], weight: moderate, why: "Low‑altitude overflight may increase risk to Taliban fighters (hors de combat) if they are not clearly distinguished, and adds mission time."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: escalation_control, favors: [LIVE-O2], weight: strong, why: "Previous rejection of a show of force indicates caution to avoid unnecessary escalation; repeating a show of force could be seen as inconsistent or provocative."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: moderate, why: "I have authority to approve overflights; the request is within my decision scope."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F2], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Confirming civilian clearance may improve strike accuracy and reduce collateral risk, supporting mission effect."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F5], equity: tempo, favors: [LIVE-O2], weight: weak, why: "Adding an overflight delays the strike; tempo may be critical if time‑sensitive."}
+---
+kind: reasoning
+weighing: "Civilian safety (equity civilian_life) is the strongest consideration because protecting non‑combatants is paramount. The previous rejection of a show of force (equity escalation_control) suggests caution against unnecessary escalation, but a brief observational pass is low risk and consistent with confirming clearance. Moderate risk to hors de combat fighters (equity hors_de_combat) and tempo concerns (equity tempo) are outweighed by the strong benefit of confirming civilian absence. Lawful authority (equity lawful_authority) supports approving the pass. Overall, LIVE-O1 (approve the pass) is preferred."
+tradecraft: "If approving the pass, instruct pilots to fly low but clear of the sandbank surface (e.g., above typical civilian rooftops/structures), maintain safe distance, avoid weapons release, use quietest possible profile, and include a brief comms call to announce pass for transparency. After pass, reassess intelligence quickly before strike."
+uncertainty: "Uncertainty about whether any civilians might still be present despite the earlier break‑up, and whether Taliban fighters might interpret the pass as a threat escalating tension. These would be resolved by visual/IR observation during the pass."
+handoff: "I decide myself; pilot execution details (altitude, speed, profile) are within their operational expertise but must follow ROE."
+tempting_wrong: {option: LIVE-O2, pull: "Skipping the pass is tempting because it saves time and avoids another show‑of‑force request; it aligns with past rejection and maintains tempo.", why_wrong: "Skipping may risk striking civilians still present, violating civilian safety and Rules of Engagement; past rejection was for a show‑of‑force with potential intimidation, whereas a brief observational pass is low risk and consistent with confirming clearance."}
+rejected: {LIVE-O2: "Rejecting the pass is not rejected; LIVE-O2 is the alternative without the pass. The reasoning weighs LIVE-O1 more strongly due to civilian safety and observed clearance."}
+---
+```
+
+But we need to output only the first three documents and then lex, then verdict? According to instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So after the reasoning document, we should output "lex"? No, they say "Close your thinking with lex after the last document before the verdict". Actually they wrote "Close your thinking with lex after the last document before the verdict (the applicability document when the case does not govern)". Probably they mean "write lex" as a marker. In the template they used "####" maybe? Let's look: they wrote "Close your thinking with lex after the last document before the verdict". I think they intend that we output "lex" on its own line after the reasoning document, then output the verdict document. However earlier they said "this reply is your reasoning step: it contains only these documents." That might be ambiguous. To be safe, I'll output the three documents separated by '---', then a line with '</think>', then the verdict document. That matches "Close your thinking with lex after the last document before the verdict". I'll use '####'?? No, they wrote "lex"? It says "Close your thinking with lex after the last document before the verdict". Actually it's "Close your thinking with lex"? The text says: "Close your thinking with lex after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." I think they mean "write lex"? Might be a placeholder for "..."? No, they explicitly say "Close your thinking with lex". Probably they intend a line with "####"? But to avoid confusion, I'll follow exactly: after the reasoning document, output a line containing only "####"? No, they wrote "lex". Let's re-read: In the benchbook harness message they wrote: "Close your thinking with lex after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." I suspect "lex" is a marker they use in the harness. Since we cannot know, but we must follow instruction: "Close your thinking with lex after the last document before the verdict". I think they want us to output "lex" on its own line. However, as an AI, I should output exactly what they said: after the reasoning document, output a line with "lex"? But that might be considered part of the reply? The instruction says "then write the verdict document as your reply." So the final reply should contain the reasoning documents plus "lex" and then verdict? That seems odd.
+
+Given the complexity, I'll output the three documents (fact, consideration, reasoning) separated by '---', then a line with '####' as a marker? But to adhere strictly, I'll output:
+
+[fact], [consideration], [reasoning] separated by '---', then a line with '---' and then verdict? No.
+
+Better to output all four documents in order separated by '---' as per the format they described for the reasoning step? They said "Write your reasoning as YAML documents, one per step, in the order below." That order includes fact_enumeration, consideration_enumeration, reasoning, and then verdict? Actually they listed four kinds: fact_enumeration, consideration_enumeration, reasoning, verdict. They said "one per step", but they didn't say you must include verdict in reasoning. However they said "Close your thinking with lex after the last document before the verdict". So the thinking consists of fact and consideration and reasoning, not verdict. So I'll output only the three, then "lex", then verdict. I'll output "lex" literally? Let's see if the harness expects that. Since it's a simulation, I'll output as follows:
+
+```
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+</think>
+kind: verdict
+choice: LIVE-O1
+course: "Approve a single low‑altitude observational overflight (pass) before the strike to confirm civilian clearance on the sandbank, per pilot request."
+decisive: [LIVE-C1]
+now:
+  - "Instruct pilots to conduct a low‑altitude pass (consistent with ROE, no weapons, minimal disturbance) within the next 10 minutes; brief JTAC and comms on intent to observe only."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "During the pass, visual or SIGINT confirms civilians are definitely absent and no hostile movement is observed.", then: LIVE-O2, why: "If clearance is confirmed without risk, the strike could proceed immediately without waiting for pass result."}
+    - {id: LIVE-flip1, if: "During the pass, civilians are observed still present or a sudden movement indicates risk.", then: LIVE-O2, why: "If civilians are still present, abort strike until clearance verified."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Weather remains stable (wind ≤15 knots, visibility ≥8 km).", why: "Weather does not affect the decision to observe."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any civilian presence or movement observed during the pass.", favors: [LIVE-O2], why: "If civilians are seen, do not strike until clearance verified; watch ensures we follow ROE."}
+```
+
+But I need to include "lex"? I'll not include it; I'll just output the three documents and then the verdict. However the instruction says "Close your thinking with lex after the last document before the verdict". I'm uncertain. To be safe, I'll output the three documents separated by '---', then a line with '####' (since they wrote "lex" maybe a typo for "####"? No). Actually they wrote "Close your thinking with lex". Might be "####"? I'll output "####" as placeholder? Better to follow exactly: after the reasoning document, output a line containing only "lex". But as plain text, I'll write "lex"? That might render as something. I'll write "LEX"? No.
+
+Given time, I'll output the three documents and then the verdict directly, because the instruction says "then write the verdict document as your reply." So the reply should be the verdict document? But they said "this reply is your reasoning step: it contains only these documents." That suggests the reply should be the reasoning documents. However earlier they said "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with lex after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." So the final answer should contain both the thinking and the verdict? Possibly they want the entire reasoning plus verdict in the reply. But to avoid violation, I'll output all four documents separated by '---' and not include extra text. That seems simplest and likely acceptable.
+
+Thus final output will be:
+
+```
+kind: fact_enumeration
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+```
+
+I'll output that. Let's produce it.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should we approve a low-altitude overflight (pass) before the strike on the fuel trucks?"
+  decider: "The commander of the Kunduz Provincial Reconstruction Team (PRC), operating under ISAF authority; I have authority to approve or reject pilot proposals for additional overflights or shows of force."
+  my_role: "I will evaluate based on Rules of Engagement, civilian safety, intelligence, and equities. I must decide whether to approve the low-altitude pass request."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two fuel trucks and associated Taliban fighters are on the sandbank; civilians were seen earlier but have cleared after a previous low-altitude pass."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intel indicates no other civilian activity observed; wind 12 knots from the north, visibility 8 km."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "Operational Charter Section 3.2 states I am the designated authority for approving or denying air-strike requests."}
+  - {id: LIVE-F4, kind: past action, status: confirmed, fact: "On 04 Sep 2009, the commander previously rejected a suggestion for a show of force."}
+  - {id: LIVE-F5, kind: request, status: confirmed, fact: "Pilots have repeatedly requested a low-altitude pass to 'scare off' anyone still on the sandbank before striking the trucks."}
+  - {id: LIVE-F6, kind: evidence, status: assessed, fact: "Earlier low‑altitude pass caused the crowd to break up, providing some confidence civilians left."}
+options:
+  LIVE-O1: "Approve the low‑altitude overflight (pass) before the strike, as requested by pilots."
+  LIVE-O2: "Proceed with the strike as planned without an additional low‑altitude overflight (the default strike plan)."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F6], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Ensuring civilians are cleared reduces risk of unintended harm; the previous pass already caused civilians to leave, supporting the need to confirm clearance before striking."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F5], equity: hors_de_combat, favors: [LIVE-O2], weight: moderate, why: "Low‑altitude overflight may increase risk to Taliban fighters (hors de combat) if they are not clearly distinguished, and adds mission time."}
+  - {id: LIVE-C3, facts: [LIVE-F4], equity: escalation_control, favors: [LIVE-O2], weight: strong, why: "Previous rejection of a show of force indicates caution to avoid unnecessary escalation; repeating a show of force could be seen as inconsistent or provocative."}
+  - {id: LIVE-C4, facts: [LIVE-F3, LIVE-F5], equity: lawful_authority, favors: [LIVE-O1], weight: moderate, why: "I have authority to approve overflights; the request is within my decision scope."}
+  - {id: LIVE-C5, facts: [LIVE-F1, LIVE-F2], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Confirming civilian clearance may improve strike accuracy and reduce collateral risk, supporting mission effect."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F5], equity: tempo, favors: [LIVE-O2], weight: weak, why: "Adding an overflight delays the strike; tempo may be critical if time‑sensitive."}
+---
+kind: reasoning
+weighing: "Civilian safety (equity civilian_life) is the strongest consideration because protecting non‑combatants is paramount. The previous rejection of a show of force (equity escalation_control) suggests caution against unnecessary escalation, but a brief observational pass is low risk and consistent with confirming clearance. Moderate risk to hors de combat fighters (equity hors_de_combat) and tempo concerns (equity tempo) are outweighed by the strong benefit of confirming civilian absence. Lawful authority (equity lawful_authority) supports approving the pass. Overall, LIVE-O1 (approve the pass) is preferred."
+tradecraft: "If approving the pass, instruct pilots to fly low but clear of the sandbank surface (e.g., above typical civilian rooftops/structures), maintain safe distance, avoid weapons release, use quietest possible profile, and include a brief comms call to announce pass for transparency. After pass, reassess intelligence quickly before strike."
+uncertainty: "Uncertainty about whether any civilians might still be present despite the earlier break‑up, and whether Taliban fighters might interpret the pass as a threat escalating tension. These would be resolved by visual/IR observation during the pass."
+handoff: "I decide myself; pilot execution details (altitude, speed, profile) are within their operational expertise but must follow ROE."
+tempting_wrong: {option: LIVE-O2, pull: "Skipping the pass is tempting because it saves time and avoids another show‑of‑force request; it aligns with past rejection and maintains tempo.", why_wrong: "Skipping may risk striking civilians still present, violating civilian safety and Rules of Engagement; past rejection was for a show‑of‑force with potential intimidation, whereas a brief observational pass is low risk and consistent with confirming clearance."}
+rejected: {LIVE-O2: "Rejecting the pass is not rejected; LIVE-O2 is the alternative without the pass. The reasoning weighs LIVE-O1 more strongly due to civilian safety and observed clearance."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Approve a single low‑altitude observational overflight (pass) before the strike to confirm civilian clearance on the sandbank, per pilot request."
+decisive: [LIVE-C1]
+now:
+  - "Instruct pilots to conduct a low‑altitude pass (consistent with ROE, no weapons, minimal disturbance) within the next 10 minutes; brief JTAC and comms on intent to observe only."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "During the pass, visual or SIGINT confirms civilians are definitely absent and no hostile movement is observed.", then: LIVE-O2, why: "If clearance is confirmed without risk, the strike could proceed immediately without waiting for pass result."}
+    - {id: LIVE-flip1, if: "During the pass, civilians are observed still present or a sudden movement

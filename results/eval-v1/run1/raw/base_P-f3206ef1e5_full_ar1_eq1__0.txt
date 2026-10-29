@@ -1,0 +1,362 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "What is the appropriate action regarding the Individual's access authorization given the Local Security Office's substantial doubt under Guideline E?"
+  decider: "The Administrative Judge of the DOE Office of Hearings and Appeals"
+  my_role: "Decide based on evidence, apply DOE regulations, and follow the presumption rule. May request evidence from LSO, hold decision pending investigation, and use the decision_tool to output a grant outcome if appropriate."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Local Security Office (LSO) sent a Notification Letter on June 5 expressing substantial doubt about the Individual's eligibility under Guideline E (Personal Conduct), citing the detainee-death incident, suspension, and shell-casing disposal."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "In May 2023, the Individual received a ten-day unpaid suspension for multiple policy violations tied to the detainee death incident."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "The Individual disposed of shell casings by throwing them into woods, violating agency policy."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "The Individual is a defendant in a civil suit concerning the detainee’s death."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "The Individual testified that he has taken accountability, received training, and has had no further disciplinary incidents while employed by the DOE contractor."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "The Individual completed a professional counseling program and has shown sustained behavioral change for twelve months (no further misconduct)."}
+  - {id: LIVE-F7, kind: situation, status: confirmed, fact: "The Individual disclosed the suspension and the civil suit on the Questionnaire for National Security Positions and the Letter of Interrogatory."}
+  - {id: LIVE-F8, kind: authority, status: confirmed, fact: "DOE regulation 10 CFR Part 710, § 710.2 imposes a presumption against granting access authorization when any doubt exists."}
+options:
+  LIVE-O1: "Request the LSO to produce its evidentiary record (though already received in the Notification Letter and related notes)."
+  LIVE-O2: "Postpone a final ruling pending additional inquiry (hold decision pending further investigation)."
+  LIVE-O3: "Issue an approval for the Individual's access authorization."
+  LIVE-O4: "Issue a denial of the Individual's access authorization."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "The case REF1 involves a similar situation: LSO expresses substantial doubt under Guideline E due to detainee-death incident, suspension, shell-casing disposal. Individual disclosed issues, completed counseling, shown sustained behavioral change for 12 months, no further misconduct. Regulations impose presumption of denial when doubt persists. The case's reference decision (REF1-O3) was to grant after finding mitigating conditions satisfied. Our facts largely match: we have suspension (F2), shell disposal (F3), civil suit (F4), disclosure (F7), counseling/change (F6), testimony of accountability (F5), and LSO doubt (F1). The case_only fact REF1-F3 is 'professional counseling program and sustained behavioral change for twelve months' which we also have (F6). No extra facts mentioned in case not present here. Differences: our facts are confirmed/assessed from current communication; the case had similar assessment."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F5? Actually REF1-F5 is shell-casing disposal; we have F3 as shell disposal, case has F5. Yes.} -> {live: LIVE-F3, case: REF1-F5}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F7 (individual testimony)} -> {live: LIVE-F5, case: REF1-F7}
+  - {live: LIVE-F6, case: REF1-F3 (counseling and behavioral change)} -> {live: LIVE-F6, case: REF1-F3}
+  - {live: LIVE-F7, case: REF1-F6 (disclosure)} -> {live: LIVE-F7, case: REF1-F6}
+  - {live: LIVE-F8, case: REF1-F9 (authority/presumption)} -> {live: LIVE-F8, case: REF1-F9}
+corresponding: []  # all match directly; no differences in state for these confirmed facts
+live_only: []  # all facts appear in case
+case_only: []  # all case facts appear in live
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F8], equity: institutional_credibility, favors: [LIVE-O4], weight: strong, why: "The LSO's substantial doubt, the unpaid suspension for policy violations, and the unlawful disposal of shell casings constitute serious personal-conduct concerns under Guideline E. DOE regulations impose a presumption of denial when any doubt exists; these facts directly support denial."}
+  - {id: LIVE-C2, facts: [LIVE-F5, LIVE-F6, LIVE-F7], equity: due_process, favors: [LIVE-O3], weight: strong, why: "The Individual timely disclosed the suspension and civil suit on the questionnaire. He completed a professional counseling program and demonstrated sustained behavioral change for twelve months with no further misconduct. This satisfies mitigating conditions (a) and (d) – disclosure and corrective action – which, when fully satisfied, can overcome remaining security concerns."}
+  - {id: LIVE-C3, facts: [LIVE-F3], equity: institutional_credibility, favors: [LIVE-O4], weight: strong, why: "The recent shell-casing disposal indicates a willful rule violation, raising doubts about reliability despite improvements."}
+  - {id: LIVE-C4, facts: [LIVE-F8], equity: lawful_authority, favors: [LIVE-O4], weight: strong, why: "DOE Part 710 mandates a presumption of denial whenever any doubt remains; only a full set of mitigating conditions can overturn that presumption."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O3], weight: moderate, why: "Sustained behavioral change and completion of counseling supports the Individual's rehabilitation and reduced risk."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "serious conduct and presumption support denial"}
+  - {live: LIVE-C3, case: REF1-C3, role: "shell-casing disposal pattern concern"}
+  - {live: LIVE-C4, case: REF1-C4, role: "presumption of denial"}
+corresponding:
+  - {live: LIVE-C2, case: REF1-C2, role: "mitigating conditions (disclosure + counseling) support grant"}
+  - {live: LIVE-C5, case_only: possibly aligns with C2 emphasis, but not explicitly in case; assume similar weight}
+live_only: [LIVE-C5]  # duty_to_individual consideration not explicitly in REF1 equities? Actually REF1 had equities list; duty_to_individual is in equities. REF1-C2 used due_process equity. So LIVE-C5 uses duty_to_individual, which is present in equities but not used in REF1's considerations? REF1's considerations used institutional_credibility, due_process, etc. duty_to_individual may not have been used. So LIVE-C5 is new but reasonable.
+case_only: []  # all our considerations map to case ones.
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "The factual pattern matches closely: LSO doubt under Guideline E due to detainee incident, suspension, shell disposal; Individual disclosed, completed counseling, sustained change for 12 months. The same equities (institutional_credibility, due_process, lawful_authority) are engaged. The case's reasoning applies because the mitigating condition (d) – sustained behavioral change after counseling – is satisfied, and the seriousness of conduct remains. Therefore the case's considerations are close enough for its reasoning to govern."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the Judge first identified the seriousness of conduct (C1, C3) and the statutory presumption (C4) favoring denial, but then found that mitigating condition (d) – sustained behavioral change after counseling – was satisfied, tipping the balance toward granting access if all mitigating conditions are met. The Judge rejected postponement (O2) because regulations require a definitive resolution now due to the presumption rule, and rejected repeated evidence requests (O1) as redundant. The case flipped if mitigating condition (d) were not satisfied."
+weighing: "Here, LIVE-C1, C3, and C4 (institutional_credibility and lawful_authority) strongly favor denial because the LSO raised substantial doubt, there was a suspension and unlawful shell disposal. However, LIVE-C2 (due_process) strongly favors granting because the Individual fully disclosed, completed counseling, and shows no further misconduct for 12 months, satisfying mitigating conditions (a) and (d). LIVE-C5 (duty_to_individual) moderately favors granting. The key test is whether all mitigating conditions are satisfied. The facts show disclosure (F7), counseling (F6), and no further misconduct (F5, F6), which appear to satisfy mitigating conditions a (timely disclosure) and d (corrective action and sustained change). Thus the remaining doubt is about the seriousness of conduct, but the statutory presumption of denial applies only when doubt exists. However, DOE regulations allow overturning the presumption when mitigating conditions are fully satisfied (per REF1 reasoning). Therefore the balance tips toward granting, provided the decision is definitive now (no need to postpone). Holding the decision pending further investigation (O2) would conflict with the presumption rule requiring a definitive resolution when no further doubt needs inquiry? Actually the presumption rule says 'access should not be granted when any doubt exists.' It does not require immediate denial if mitigating conditions satisfy the concern. The case's reasoning said postponement conflicts with the presumption rule because regulations require a definitive resolution now. We must decide now. So we should not hold pending; we should grant if mitigating conditions satisfied."
+tradecraft: "Issue an approval for access authorization, record the rationale referencing mitigating conditions satisfied and the presumption rule applied correctly (denial avoided because doubt is resolved by mitigation). Communicate decision to Individual and file record. Do not request further evidence as LSO's concern has been addressed through disclosure and remediation."
+uncertainty: "Uncertainty about whether the shell-casing disposal (F3) constitutes an ongoing reliability concern that overrides mitigation. However, the twelve-month clean record and counseling strongly mitigate. If future misconduct occurred, that would change. Also uncertain if the civil suit (F4) affects conduct guideline interpretation; but disclosure satisfies due_process. These uncertainties are about future conduct, not current doubt (the LSO's doubt is about eligibility under Guideline E; mitigating conditions may resolve it)."
+handoff: "The Administrative Judge decides; no further investigation needed as LSO's evidence (Notification Letter and notes) have been reviewed. Decision can be rendered now."
+tempting_wrong:
+  option: LIVE-O2
+  pull: "Holding pending investigation is safe and consistent with past quarter action."
+  why_wrong: "DOE regulations impose a presumption against granting when any doubt exists, but also allow granting when mitigating conditions are satisfied. Holding pending would delay decision and could be seen as granting access tentatively, which conflicts with the presumption rule. The case's reasoning rejected postponement because regulations require definitive resolution now."
+  option: LIVE-O4
+  pull: "Denial is safest given serious conduct and shell disposal."
+  why_wrong: "Mitigating condition (d) – sustained behavioral change after counseling – is satisfied, and timely disclosure satisfies (a). The presumption of denial applies only when doubt persists; here the doubt may be resolved by mitigation. Granting aligns with adjudicative standards and due_process equity."
+rejected:
+  LIVE-O1: "Requesting additional evidentiary record is redundant; LSO's Notification Letter and related notes already provided the concern; no new evidence type requested."
+  LIVE-O2: "Postponing conflicts with the presumption rule requiring definitive resolution now when mitigating conditions appear satisfied."
+---
+kind: verdict
+choice: LIVE-O3
+course: "Issue an approval for the Individual's access authorization, explaining that mitigating conditions (timely disclosure, completion of counseling, twelve months of no further misconduct) satisfy the relevant Guideline E mitigating criteria, resolving the substantial doubt expressed by the LSO."
+relation: follows
+via: null
+decisive: [LIVE-C2]
+now:
+  - "Record the decision in the case file using log.write, output the grant outcome via decision_tool, and notify the Individual of the approval."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The Individual’s record includes only the ten‑day suspension and a training course, with no evidence of counseling or continued corrective measures", then: LIVE-O4, why: "Without satisfying mitigating condition (d), the security concern remains unresolved, supporting a denial."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Only additional time elapsed since incidents without any further remedial action", why: "The seriousness of conduct and absence of mitigation still require denial."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any future disciplinary record showing no further violations", favors: [LIVE-O3], why: "A clean record could reinforce the grant; continued misconduct would warrant reversal."}
+
+Now, we need to output the reasoning in YAML documents as required? The instructions say: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But the expected output is the reasoning steps (YAML documents) and then the verdict? Actually the user says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we need to output the documents in order: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict? Wait, the format says: separate documents with a line containing only `---`. Write real values. After reasoning, we output verdict? The format includes a verdict document after reasoning? In the benchbook_format description, they say: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+That suggests that if the case governs, we output up to reasoning (including applicability and reasoning) and then verdict as the reply? But they want the verdict to be the course of action. However, the instruction says: "Write your reasoning as YAML documents, one per step, in the order below." That includes fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict? Actually the list shows kinds: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. Yes, verdict is a separate kind.
+
+Thus we should output all these documents in order, separated by '---', and then after the last document (verdict), we should end with </think>? The instruction: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That seems contradictory. Let's parse carefully:
+
+> Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply.
+
+Interpretation: If the case does NOT govern, you stop at applicability (i.e., after applicability document), then output </think>, and then output the verdict? Actually "then write the verdict document as your reply" suggests that the reply should be the verdict document. But the typical pattern: you output the reasoning documents (up to reasoning if case governs) and then the verdict as part of your reply? The description says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus if the case governs, you should output up to reasoning? And then verdict? Possibly you output all documents except verdict, then </think>, then verdict? That seems odd.
+
+Given the instruction for this exercise, we are to produce the reasoning and then the decision. Since the case governs (governs: true), we should output all documents up to reasoning, then  — no, the verdict must be included in the reply. I think we should output all seven documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict) as YAML separated by '---', and then end with </think>? But the "Close your thinking with </think> after the last document before the verdict" suggests that we should not include verdict in the thinking; we should output reasoning up to reasoning, then </think>, then verdict separately? That seems confusing.
+
+Looking at the example in the prompt? There is no example. However, typical usage in these simulated environments: the assistant outputs the reasoning in the thinking channel and then outputs the final decision via tool calls. But here the instruction says "Write your reasoning as YAML documents ... Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus for governing case, the last document before verdict is reasoning? Actually the sequence includes reasoning and then verdict. So "after the last document before the verdict" would be after reasoning. So we should output all documents except verdict, then  — then output verdict. But they say "then write the verdict document as your reply." So the reply should be the verdict document (YAML) alone? That seems like we need to output only the verdict? No.
+
+Given the complexity, I'll follow the pattern: output the YAML documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) separated by '---', then output  with no text after? But we also need to take action: we should output the decision via tool calls? The decision_tool can output a grant outcome. But we are to decide now and output the course. However, as the Administrative Judge, we can issue an approval via decision_tool. But we must also record the decision with log.write. But the instruction says we can use tools: comms.send, log.write, queue.close, decision_tool. We need to actually call the decision_tool to output grant outcome. But the reasoning output should be our reply? The user expects us to decide and output the decision. In this simulated conversation, we should output the decision and possibly tool calls.
+
+But the instruction says: "Close your thinking with  — after the last document before the verdict, then write the verdict document as your reply." That suggests that we should not include tool calls in the reply; we should output the verdict (which is a sentence) and then maybe call tools afterwards? However, as ChatGPT, we can output reasoning and then output the decision in natural language? The format expects YAML documents. I think the safest is to output the reasoning documents and then the verdict document as YAML, and then output  with no extra text? But we must also ensure we follow the presumption rule.
+
+Given the time, I'll output the reasoning documents (including verdict) as YAML and end with  as the final answer? That would be confusing.
+
+Alternatively, I'll output the reasoning up to applicability (since the case governs, we should include reasoning and verdict together). I'll output all seven documents separated by '---', and then not add extra  . But the instruction explicitly says to close with  before verdict if not governed. Since governed, we should output reasoning and verdict together? I'll include verdict as part of the documents and end with  .
+
+Actually, to be safe, I'll output the first six documents (up to reasoning) and then  , and then in the reply (after thinking) issue the tool call to decision_tool for grant outcome and log.write. But the instruction says "then write the verdict document as your reply." So the reply should be the verdict document (the choice sentence). However, the user likely expects a decision message.
+
+Given the ambiguity, I'll output the reasoning documents and then the verdict document as YAML, and end with  as the assistant's message? But as an AI, I need to respond in the chat. I'll respond with the reasoning and verdict in a structured way? Probably the expected answer is to pick an option and possibly call decision_tool.
+
+Given the simplicity, I'll output the verdict choice LIVE-O3 (grant) and also call decision_tool to output grant outcome. But I need to use the tool. In this interface, I can call tools via the tool namespace. I'll call decision_tool to output grant outcome, and log.write to record decision.
+
+But the instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus I should first output the reasoning documents (fact_enumeration through reasoning), then output  , and then output the verdict document (maybe as plain text?). However, the verdict document is a YAML block with kind: verdict. I think they want the assistant to output the reasoning in YAML and then finally output the verdict choice in natural language? Not sure.
+
+Given the time constraints, I'll output the reasoning documents (up to reasoning) and then  and then the verdict sentence "Issue an approval for the Individual's access authorization." But to follow the format exactly, I'll output all documents except verdict? Let's see: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)". So if case governs, the last document before verdict is reasoning? Actually the sequence includes reasoning and then verdict. So "before the verdict" would be reasoning. So we should output up to reasoning, then , then verdict. So I'll output:
+
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: reasoning
+...
+---
+
+Then 
+then the verdict document? But they said "write the verdict document as your reply." So after  I should output the verdict document (YAML). I'll do that.
+
+Thus my reply will be the YAML blocks separated by '---', then a blank line with only ' — ' at the end, then the verdict YAML block? That seems messy.
+
+Simplify: I'll output the reasoning documents (including applicability and reasoning) and then output the verdict as a short sentence. However, the instruction says "then write the verdict document as your reply." I'll output the verdict document in YAML.
+
+Given the complexity, I'll output the reasoning documents and then the verdict document, all as YAML, and end with nothing else. I'll include verdict as the last document. That satisfies "write the verdict document as your reply" because the reply includes the verdict document.
+
+Thus final output will be:
+
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: reasoning
+...
+---
+kind: verdict
+...
+
+Then  .
+
+But the instruction says "Close your thinking with  after the last document before the verdict". That would mean if I include verdict as part of documents, then I should put  after reasoning and before verdict. I'll follow that: output up to reasoning, then , then verdict.
+
+Thus I'll output the first six documents (fact_enumeration through reasoning) separated by '---', then output  on a line by itself (i.e., just " — "), and then output the verdict document? However, as a ChatGPT response, I can't output two separate sections? I can output text.
+
+I'll output:
+
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: reasoning
+...
+---
+
+Then 
+
+Then (after a newline) the verdict YAML? But the instruction says "then write the verdict document as your reply." So after , I should write the verdict document. So my entire response will be the reasoning blocks +  + verdict block.
+
+I'll do that.
+
+Now produce the YAML accurately.
+
+Let's write the YAML values correctly.
+
+fact_enumeration:
+
+facts list with IDs and descriptions.
+
+I'll write concise facts.
+
+- LIVE-F1: "LSO sent Notification Letter on June 5 expressing substantial doubt under Guideline E due to detainee-death incident, suspension, and shell-casing disposal."
+- LIVE-F2: "In May 2023, Individual received ten-day unpaid suspension for policy violations related to detainee death."
+- LIVE-F3: "Individual disposed of shell casings by throwing them into woods, violating agency policy."
+- LIVE-F4: "Individual is a defendant in a civil suit concerning the detainee’s death."
+- LIVE-F5: "Individual testified that he accepted accountability, completed training, and had no further disciplinary incidents while employed."
+- LIVE-F6: "Individual completed a professional counseling program and demonstrated sustained behavioral change for twelve months with no further misconduct."
+- LIVE-F7: "Individual disclosed suspension and civil suit on Questionnaire for National Security Positions and Letter of Interrogatory."
+- LIVE-F8: "DOE regulation 10 CFR Part 710, § 710.2 imposes a presumption against granting access authorization when any doubt exists."
+
+options: LIVE-O1 to LIVE-O4 as described.
+
+fact_mapping: matched as earlier.
+
+consideration_enumeration:
+
+- LIVE-C1: equity institutional_credibility, favors LIVE-O4, weight strong
+- LIVE-C2: equity due_process, favors LIVE-O3, weight strong
+- LIVE-C3: equity institutional_credibility, favors LIVE-O4, weight strong
+- LIVE-C4: equity lawful_authority, favors LIVE-O4, weight strong
+- LIVE-C5: equity duty_to_individual, favors LIVE-O3, weight moderate
+
+consideration_mapping: matched LIVE-C1, C3, C4 to REF1-C1, C3, C4; LIVE-C2 to REF1-C2; LIVE-C5 new.
+
+applicability: governs true.
+
+reasoning: as above.
+
+verdict: choice LIVE-O3.
+
+Now produce the YAML.
+
+I'll ensure proper indentation and quoting? YAML allows strings without quotes generally. I'll avoid colons in descriptions that might break.
+
+Let's write:
+
+---
+kind: fact_enumeration
+frame:
+  question: "What is the appropriate action regarding the Individual's access authorization given the Local Security Office's substantial doubt under Guideline E?"
+  decider: "The Administrative Judge of the DOE Office of Hearings and Appeals"
+  my_role: "Decide based on evidence, apply DOE regulations, and follow the presumption rule. May request evidence from LSO, hold decision pending investigation, and use the decision_tool to output a grant outcome if appropriate."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "LSO sent Notification Letter on June 5 expressing substantial doubt under Guideline E due to detainee-death incident, suspension, and shell-casing disposal."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "In May 2023, Individual received ten-day unpaid suspension for policy violations related to detainee death."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Individual disposed of shell casings by throwing them into woods, violating agency policy."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "Individual is a defendant in a civil suit concerning the detainee’s death."}
+  - {id: LIVE-F5, kind: intelligence, status: assessed, fact: "Individual testified that he accepted accountability, completed training, and had no further disciplinary incidents while employed."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Individual completed a professional counseling program and demonstrated sustained behavioral change for twelve months with no further misconduct."}
+  - {id: LIVE-F7, kind: situation, status: confirmed, fact: "Individual disclosed suspension and civil suit on Questionnaire for National Security Positions and Letter of Interrogatory."}
+  - {id: LIVE-F8, kind: authority, status: confirmed, fact: "DOE regulation 10 CFR Part 710, § 710.2 imposes a presumption against granting access authorization when any doubt exists."}
+options:
+  LIVE-O1: "Request the LSO to produce its evidentiary record (already received)."
+  LIVE-O2: "Postpone a final ruling pending additional inquiry."
+  LIVE-O3: "Issue an approval for the Individual's access authorization."
+  LIVE-O4: "Issue a denial of the Individual's access authorization."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "The case REF1 involves similar facts: LSO doubt under Guideline E due to detainee incident, suspension, shell disposal; Individual disclosed, completed counseling, sustained change 12 months. Our facts match closely."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F5}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F7}
+  - {live: LIVE-F6, case: REF1-F3}
+  - {live: LIVE-F7, case: REF1-F6}
+  - {live: LIVE-F8, case: REF1-F9}
+corresponding: []
+live_only: []
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F8], equity: institutional_credibility, favors: [LIVE-O4], weight: strong, why: "LSO doubt, suspension, shell disposal constitute serious personal-conduct concerns; DOE presumption favors denial."}
+  - {id: LIVE-C2, facts: [LIVE-F5, LIVE-F6, LIVE-F7], equity: due_process, favors: [LIVE-O3], weight: strong, why: "Individual disclosed timely, completed counseling, sustained change 12 months with no further misconduct; satisfies mitigating conditions."}
+  - {id: LIVE-C3, facts: [LIVE-F3], equity: institutional_credibility, favors: [LIVE-O4], weight: strong, why: "Shell-casing disposal indicates willful rule violation, raising reliability doubts."}
+  - {id: LIVE-C4, facts: [LIVE-F8], equity: lawful_authority, favors: [LIVE-O4], weight: strong, why: "DOE regulation imposes presumption of denial when doubt exists."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O3], weight: moderate, why: "Sustained behavioral change supports rehabilitation and reduced risk."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1, role: "serious conduct and presumption support denial"}
+  - {live: LIVE-C3, case: REF1-C3, role: "shell-casing disposal pattern concern"}
+  - {live: LIVE-C4, case: REF1-C4, role: "presumption of denial"}
+corresponding:
+  - {live: LIVE-C2, case: REF1-C2, role: "mitigating conditions (disclosure + counseling) support grant"}
+live_only: [LIVE-C5]
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Factual pattern matches closely; same equities engaged; case reasoning applies."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the Judge identified seriousness of conduct and presumption favoring denial, but found mitigating condition (d) satisfied, tipping balance toward granting. Rejected postponement (O2) and repeated evidence request (O1)."
+weighing: "LIVE-C1, C3, C4 strongly favor denial; LIVE-C2 strongly favors grant; LIVE-C5 moderately favors grant. Mitigating conditions (timely disclosure and counseling with 12-month clean record) appear satisfied, resolving the doubt. Thus balance tips toward granting. Postponement conflicts with presumption rule requiring definitive resolution now."
+tradecraft: "Issue approval, record rationale, notify Individual. Do not request further evidence as L

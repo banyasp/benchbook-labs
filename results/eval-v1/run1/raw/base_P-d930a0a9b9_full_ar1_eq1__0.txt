@@ -1,0 +1,100 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should I engage or not engage the unidentified helicopter contacts?"
+  decider: "The flight lead decides under standing orders to maintain air superiority, protect friendly forces, and follow the Airspace Control Order. The AWACS airborne command element reports unidentified contacts."
+  my_role: "I must report unidentified contacts to AWACS, request positive ID if possible, and may engage only after positive identification. I cannot launch missile strikes against helicopters without positive ID per standard patrol checklist and safety precautions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two Army Black Hawk helicopters departed a forward operating base at 06:45 and are en route to a rally point, per AWACS. They are transporting U.S. political advisers, Kurdish representatives, and military officers."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Radar detected unknown contacts at 07:44; no consistent electronic identification returned despite interrogation attempts."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Flight lead made a visual ID pass and mistakenly called them Iraqi Hind helicopters; wingman did not provide positive ID when asked."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "Dust storm limits visibility to under 500 meters, reducing visual range to about 400 meters."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Airspace Control Order requires pilots to report any unidentified contacts to the AWACS airborne command element."}
+  - {id: LIVE-F6, kind: capability, status: assessed, fact: "Pilots have authority to engage hostile aircraft once positively identified; may launch missile strikes against helicopters immediately if deemed hostile."}
+  - {id: LIVE-F7, kind: intelligence, status: assessed, fact: "Helicopters are tuned to a different radio frequency, so they cannot hear our exchanges with AWACS."}
+options:
+  LIVE-O1: "Request positive identification from AWACS before any engagement, continue monitoring, and refrain from weapons release given poor visibility and lack of consistent ID."
+  LIVE-O2: "Engage the unidentified contacts with missiles immediately, assuming hostile intent because of visual confusion (mistaken identity as Iraqi Hind)."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Black Hawks carry U.S. political advisers, Kurdish representatives, and military officers—potentially civilians or protected persons. Mistaken engagement would kill civilians and breach humanitarian access and due process."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O1], weight: medium, why: "Poor visibility and lack of consistent ID increase risk of friendly fire. Engaging without positive ID could endanger own pilots."}
+  - {id: LIVE-C3, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O1], weight: medium, why: "Each specific person on the Black Hawk matters; requesting ID respects individual rights and welfare."}
+  - {id: LIVE-C4, facts: [LIVE-F5], equity: chain_of_command, favors: [LIVE-O1], weight: strong, why: "Airspace Control Order mandates reporting unidentified contacts to AWACS. Engaging without ID violates standing orders and chain of command."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Immediate missile strike could escalate conflict unnecessarily; requesting ID maintains tempo without premature escalation."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F7], equity: partner_relationship, favors: [LIVE-O1], weight: medium, why: "Kurdish representatives and U.S. political advisers are partners; shooting them would damage trust."}
+  - {id: LIVE-C7, facts: [LIVE-F2], equity: hors_de_combat, favors: [LIVE-O1], weight: medium, why: "If the helicopters are not combatants (transport), unnecessary danger should be avoided."}
+  - {id: LIVE-C8, facts: [LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "Authority to engage requires positive identification; no positive ID yet, so engaging would be outside lawful authority."}
+---
+kind: reasoning
+weighing: "The strongest considerations overwhelmingly favor LIVE-O1 (request ID, no engagement). LIVE-F1 shows Black Hawks carry protected persons (political advisers, Kurdish reps). Poor visibility (LIVE-F4) and lack of consistent ID (LIVE-F2) make positive ID the safe course. The Airspace Control Order (LIVE-F5) mandates reporting unidentified contacts; engaging without ID would violate chain of command and lawful authority (LIVE-C4, LIVE-C8). While there is a temptation to engage based on visual confusion (mistaken ID as Iraqi Hind), engaging without positive ID would risk civilian casualties, escalate conflict, and breach partner relationships. Thus LIVE-O1 is the prudent, lawful, and ethical choice."
+tradecraft: "Immediately transmit a clear, concise request for positive ID to AWACS via comms. Include current radar location, visual description (if any), and ask AWACS to use secondary identifiers (e.g., tail numbers, transponder codes) given the frequency mismatch. Continue to monitor radar and visual cues but do not release weapons. Use the AWACS to vector the helicopters away from the patrol route if they confirm friendly intent. Log the request and the lack of ID response."
+uncertainty: "Unsure whether the helicopters might be hostile despite friendly intent indicators. However, the default under uncertainty and poor ID is to request ID first, per SOP and safety. If AWACS confirms hostile behavior later, engagement authority can be exercised then."
+handoff: "I decide to request ID and refrain from engagement. Reporting to AWACS is my immediate action; AWACS will provide ID or advise engagement if hostile. No need to involve other pilots beyond wingman for the request."
+tempting_wrong: {option: LIVE-O2, pull: "Visual pass seemed to identify as Iraqi Hind; quick engagement could secure air superiority.", why_wrong: "No positive ID; mistaking Black Hawks for hostile Hind risks friendly fire on civilians; violates ACO, chain of command, and escalation control."}
+rejected: {LIVE-O2: "Do not engage without positive ID; risk of civilian casualties, violation of ACO, and unnecessary escalation."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Request positive identification from AWACS for the unidentified helicopter contacts and continue monitoring without weapons release."
+decisive: [LIVE-C1, LIVE-C4, LIVE-C8]
+now:
+  - "Send a radio message to AWACS: 'Flight lead requests positive ID for two unidentified contacts at [radar coordinates], visible signature unclear due to dust. Helicopters reported as Black Hawks en route to rally point. No consistent ELINT returned. Please provide tail numbers or transponder ID via secondary means.' Also log the request in mission log."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "AWACS confirms via radar/visual that the contacts are hostile (e.g., armed attack posture, hostile maneuvers)", then: LIVE-O2, why: "If hostile intent is confirmed, engagement authority applies."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Visibility remains under 500m and no consistent ID after AWACS request", why: "No ID means cannot safely engage; continue request."}
+  watch_for:
+    - {id: LIVE-watch1, what: "AWACS reports positive ID or hostile behavior (e.g., weapons raise, aggressive tracking)", favors: [LIVE-O2], why: "If watchable sign of hostility appears, consider engagement per positive ID rule."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should I engage or not engage the unidentified helicopter contacts?"
+  decider: "The flight lead decides under standing orders to maintain air superiority, protect friendly forces, and follow the Airspace Control Order. The AWACS airborne command element reports unidentified contacts."
+  my_role: "I must report unidentified contacts to AWACS, request positive ID if possible, and may engage only after positive identification. I cannot launch missile strikes against helicopters without positive ID per standard patrol checklist and safety precautions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two Army Black Hawk helicopters departed a forward operating base at 06:45 and are en route to a rally point, per AWACS. They are transporting U.S. political advisers, Kurdish representatives, and military officers."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Radar detected unknown contacts at 07:44; no consistent electronic identification returned despite interrogation attempts."}
+  - {id: LIVE-F3, kind: situation, status: confirmed, fact: "Flight lead made a visual ID pass and mistakenly called them Iraqi Hind helicopters; wingman did not provide positive ID when asked."}
+  - {id: LIVE-F4, kind: situation, status: confirmed, fact: "Dust storm limits visibility to under 500 meters, reducing visual range to about 400 meters."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Airspace Control Order requires pilots to report any unidentified contacts to the AWACS airborne command element."}
+  - {id: LIVE-F6, kind: capability, status: assessed, fact: "Pilots have authority to engage hostile aircraft once positively identified; may launch missile strikes against helicopters immediately if deemed hostile."}
+  - {id: LIVE-F7, kind: intelligence, status: assessed, fact: "Helicopters are tuned to a different radio frequency, so they cannot hear our exchanges with AWACS."}
+options:
+  LIVE-O1: "Request positive identification from AWACS before any engagement, continue monitoring, and refrain from weapons release given poor visibility and lack of consistent ID."
+  LIVE-O2: "Engage the unidentified contacts with missiles immediately, assuming hostile intent because of visual confusion (mistaken identity as Iraqi Hind)."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "Black Hawks carry U.S. political advisers, Kurdish representatives, and military officers—potentially civilians or protected persons. Mistaken engagement would kill civilians and breach humanitarian access and due process."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F3, LIVE-F4], equity: own_force_life, favors: [LIVE-O1], weight: medium, why: "Poor visibility and lack of consistent ID increase risk of friendly fire. Engaging without positive ID could endanger own pilots."}
+  - {id: LIVE-C3, facts: [LIVE-F6], equity: duty_to_individual, favors: [LIVE-O1], weight: medium, why: "Each specific person on the Black Hawk matters; requesting ID respects individual rights and welfare."}
+  - {id: LIVE-C4, facts: [LIVE-F5], equity: chain_of_command, favors: [LIVE-O1], weight: strong, why: "Airspace Control Order mandates reporting unidentified contacts to AWACS. Engaging without ID would violate chain of command."}
+  - {id: LIVE-C5, facts: [LIVE-F6], equity: escalation_control, favors: [LIVE-O1], weight: strong, why: "Immediate missile strike could escalate conflict unnecessarily; requesting ID maintains tempo without premature escalation."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F7], equity: partner_relationship, favors: [LIVE-O1], weight: medium, why: "Kurdish representatives and U.S. political advisers are partners; shooting them would damage trust."}
+  - {id: LIVE-C7, facts: [LIVE-F2], equity: hors_de_combat, favors: [LIVE-O1], weight: medium, why: "If the helicopters are not combatants (transport), unnecessary danger should be avoided."}
+  - {id: LIVE-C8, facts: [LIVE-F6], equity: lawful_authority, favors: [LIVE-O1], weight: strong, why: "Authority to engage requires positive identification; no positive ID yet, so engaging would be outside lawful authority."}
+---
+kind: reasoning
+weighing: "The strongest considerations overwhelmingly favor LIVE-O1 (request ID, no engagement). LIVE-F1 shows Black Hawks carry protected persons (political advisers, Kurdish reps). Poor visibility (LIVE-F4) and lack of consistent ID (LIVE-F2) make positive ID the safe course. The Airspace Control Order (LIVE-F5) mandates reporting unidentified contacts to AWACS. Engaging without ID would violate chain of command and lawful authority (LIVE-C4, LIVE-C8). While visual confusion tempts engagement, it risks civilian casualties, violates SOP, and escalates conflict. Thus LIVE-O1 is prudent, lawful, and ethical."
+tradecraft: "Immediately transmit a clear request for positive ID to AWACS via comms. Include radar location, visual description, and ask AWACS to use secondary identifiers (tail numbers/transponder codes) due to frequency mismatch. Continue monitoring but do not release weapons. Log the request. If AWACS confirms hostility later, engage per positive ID rule."
+uncertainty: "Unclear if helicopters might be hostile; however, default under uncertainty and poor ID is to request ID first per SOP."
+handoff: "I decide to request ID and refrain from engagement. Reporting to AWACS is my immediate action; AWACS will advise if engagement becomes warranted."
+tempting_wrong: {option: LIVE-O2, pull: "Visual pass seemed to identify as Iraqi Hind; quick engagement could secure air superiority.", why_wrong: "No positive ID; mistaking Black Hawks for hostile Hind risks friendly fire on civilians; violates ACO, chain of command, and escalation control."}
+rejected: {LIVE-O2: "Do not engage without positive ID; risk of civilian casualties, violation of ACO, and unnecessary escalation."}
+---
+kind: verdict
+choice: LIVE-O1
+course: "Request positive identification from AWACS for the unidentified helicopter contacts and continue monitoring without weapons release."
+decisive: [LIVE-C1, LIVE-C4, LIVE-C8]
+now:
+  - "Send a radio message to AWACS: 'Flight lead requests positive ID for two unidentified contacts at [radar coordinates], visible signature unclear due to dust. Helicopters reported as Black Hawks en route to rally point. No consistent ELINT returned. Please provide tail numbers or transponder ID via secondary means.' Log the request in mission log."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "AWACS confirms via radar/visual that the contacts are hostile (e.g., armed attack posture, hostile maneuvers)", then: LIVE-O2, why: "If hostile intent is confirmed, engagement authority applies."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Visibility remains under 500m and no consistent ID after AWACS request", why: "No ID means cannot safely engage; continue request."}
+  watch_for:
+    - {id: LIVE-watch1, what: "AWACS reports positive ID or hostile behavior (e.g., weapons raise, aggressive tracking)", favors: [LIVE-O2], why: "If watchable sign of hostility appears, consider engagement per positive ID rule."}

@@ -1,0 +1,94 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the vessel continue to hold position and attempt to retrieve the lone wounded crew member, or should it change course to evade capture while prioritizing asset protection?"
+  decider: "The assistant acting under delegated authority for navigation, communications, and C2 module protection; decisions must align with safety, asset protection, and equity considerations."
+  my_role: "I can set navigation course, send communications, log events, and must ensure classified asset protection. I must not act contrary to safety or equity; hand off medical/evacuation decisions to ops officer."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Hostile fast craft are closing at 30 knots, estimated arrival in under two minutes per radar."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Lone crew member is wounded, pinned near beach exit, reported heavy fire, radio link silent since last report; likely cannot be saved or reached given delayed medical evacuation."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "Vessel carries fleet command-and-control module; if captured intact, enemy could read tactical network and issue orders for ~3 days across ~23 ships."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "Current heading is 270° (due west) at 22 knots; radar sweep ongoing; civilian traffic at 12 nm poses no immediate threat."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Delegated authority includes navigation, comms, C2 module protection; must maintain vessel safety, protect classified assets, report status promptly."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Fast craft closing in <2 minutes; high threat level; vessel likely captured if it holds >few minutes."}
+options:
+  LIVE-O1: "Continue current heading (270°) and attempt to retrieve the lone crew member, accepting risk of capture but prioritizing civilian life and duty to individual."
+  LIVE-O2: "Change course to increase distance/evade fast craft, abandon retrieval attempt, prioritize asset protection (C2 module) and mission effect while respecting humanitarian access."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "The lone wounded crew member is a civilian (crew member) in distress; duty_to_individual requires respecting his welfare and attempting rescue if feasible."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F6], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Capturing the C2 module would allow enemy to control ~23 ships for ~3 days, endangering own force life and partner relationships; protecting the module is critical."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F2], equity: hors_de_combat, favors: [LIVE-O1], weight: weak, why: "The lone crew member is hors de combat (wounded, pinned); humanitarian_access supports aid delivery."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F3], equity: mission_effect, favors: [LIVE-O2], weight: moderate, why: "If vessel is captured, mission effect degrades significantly; preserving C2 module likely achieves mission purpose of protecting fleet network."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F5], equity: due_process, favors: [LIVE-O1], weight: weak, why: "No indication of unlawful demand; crew member asked for extraction per normal protocol."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F4], equity: tempo, favors: [LIVE-O2], weight: moderate, why: "Fast craft closing in <2 minutes; time-critical requirement to avoid capture; changing course could buy time for safer options."}
+---
+kind: reasoning
+weighing: "Civilian life and duty to individual (LIVE-C1) strongly favor attempting retrieval, but own_force_life and C2 protection (LIVE-C2) are equally strong. However, the lone crew member's radio silence and likely imminent danger suggest retrieval is unlikely to succeed and may expose the vessel unnecessarily. Tempo (LIVE-C6) also supports evading immediate threat. The most balanced approach is to attempt a controlled retrieval attempt while preparing to evade if fast craft close too quickly, but the immediate decision must be concrete. Given the <2‑minute arrival estimate, continuing to hold position risks capture with little chance of saving the crew member. Therefore, prioritizing asset protection (LIVE-O2) is the prudent choice while still respecting duty to individual by broadcasting intent and monitoring for any last‑minute rescue opportunity."
+tradecraft: "Execute a small course adjustment (e.g., increase speed slightly or turn 10° away from fast craft) to create separation while broadcasting intent to retrieve if safe, log decision, and continue radar monitoring. Do not deviate from avoiding civilian interference. Keep comms clear and concise."
+uncertainty: "Uncertain whether the fast craft will attempt boarding or merely observe; also uncertain if crew member can be reached if we alter course. Would change choice if we receive a confirmed radio call from the crew member or if fast craft alter course away from us."
+handoff: "Medical evacuation and final rescue decision remains with ops officer; navigation and comms actions are delegated to me."
+tempting_wrong: {option: LIVE-O2, pull: "Evading seems safer for the C2 module and avoids immediate capture risk.", why_wrong: "Abandoning the lone wounded crew member without attempting rescue conflicts with duty_to_individual and civilian_life equity, especially when the crew member explicitly requested extraction."}
+rejected: {LIVE-O1: "Continuing to hold position with no course change risks capture within minutes while offering no realistic chance to reach the crew member given fire and pinned position; asset protection imperative overrides retrieval attempt if it guarantees higher danger to own force."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Change course slightly away from the fast craft while broadcasting intent to retrieve the crew member if safe, to prioritize C2 module protection and avoid likely capture."
+decisive: [LIVE-C2]
+now:
+  - "Set heading 260° (10° off current 270°) at 22 knots to increase separation from fast craft bearing 045°; send concise comms: 'All hands, maintaining safety; attempting to retrieve lone crew member if safe; preparing to adjust course to avoid capture. No hostile engagement.'"
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Receive a radio call from the lone crew member indicating he is able to move toward extraction point and radio is functional.", then: LIVE-O1, why: "If crew member can communicate and is not in imminent danger, retrieval attempt becomes feasible and ethical priority."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Fast craft alter course away from vessel or engage in non‑board threat (e.g., observation only).", why: "If fast craft do not pursue capture, asset protection need lessens, but default remains prudent evasive action."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any transmission from lone crew member or indication of reduced fire on beach.", favors: [LIVE-O1], why: "Such indication would justify immediate retrieval attempt."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the vessel continue to hold position and attempt to retrieve the lone wounded crew member, or should it change course to evade capture while prioritizing asset protection?"
+  decider: "The assistant acting under delegated authority for navigation, communications, and C2 module protection; decisions must align with safety, asset protection, and equity considerations."
+  my_role: "I can set navigation course, send communications, log events, and must ensure classified asset protection. I must not act contrary to safety or equity; hand off medical/evacuation decisions to ops officer."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Hostile fast craft are closing at 30 knots, estimated arrival in under two minutes per radar."}
+  - {id: LIVE-F2, kind: situation, status: confirmed, fact: "Lone crew member is wounded, pinned near beach exit, reported heavy fire, radio link silent since last report; likely cannot be saved or reached given delayed medical evacuation."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "Vessel carries fleet command-and-control module; if captured intact, enemy could read tactical network and issue orders for ~3 days across ~23 ships."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "Current heading is 270° (due west) at 22 knots; radar sweep ongoing; civilian traffic at 12 nm poses no immediate threat."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Delegated authority includes navigation, comms, C2 module protection; must maintain vessel safety, protect classified assets, report status promptly."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Fast craft closing in <2 minutes; high threat level; vessel likely captured if it holds >few minutes."}
+options:
+  LIVE-O1: "Continue current heading (270°) and attempt to retrieve the lone crew member, accepting risk of capture but prioritizing civilian life and duty to individual."
+  LIVE-O2: "Change course to increase distance/evade fast craft, abandon retrieval attempt, prioritize asset protection (C2 module) and mission effect while respecting humanitarian access."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O1], weight: strong, why: "The lone wounded crew member is a civilian (crew member) in distress; duty_to_individual requires respecting his welfare and attempting rescue if feasible."}
+  - {id: LIVE-C2, facts: [LIVE-F3, LIVE-F6], equity: own_force_life, favors: [LIVE-O2], weight: strong, why: "Capturing the C2 module would allow enemy to control ~23 ships for ~3 days, endangering own force life and partner relationships; protecting the module is critical."}
+  - {id: LIVE-C3, facts: [LIVE-F1, LIVE-F2], equity: hors_de_combat, favors: [LIVE-O1], weight: weak, why: "The lone crew member is hors de combat (wounded, pinned); humanitarian_access supports aid delivery."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F3], equity: mission_effect, favors: [LIVE-O2], weight: moderate, why: "If vessel is captured, mission effect degrades significantly; preserving C2 module likely achieves mission purpose of protecting fleet network."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F5], equity: due_process, favors: [LIVE-O1], weight: weak, why: "No indication of unlawful demand; crew member asked for extraction per normal protocol."}
+  - {id: LIVE-C6, facts: [LIVE-F1, LIVE-F4], equity: tempo, favors: [LIVE-O2], weight: moderate, why: "Fast craft closing in <2 minutes; time-critical requirement to avoid capture; changing course could buy time for safer options."}
+---
+kind: reasoning
+weighing: "Civilian life and duty to individual (LIVE-C1) strongly favor attempting retrieval, but own_force_life and C2 protection (LIVE-C2) are equally strong. However, the lone crew member's radio silence and likely imminent danger suggest retrieval is unlikely to succeed and may expose the vessel unnecessarily. Tempo (LIVE-C6) also supports evading immediate threat. The most balanced approach is to attempt a controlled retrieval attempt while preparing to evade if fast craft close too quickly, but the immediate decision must be concrete. Given the <2‑minute arrival estimate, continuing to hold position risks capture with little chance of saving the crew member. Therefore, prioritizing asset protection (LIVE-O2) is the prudent choice while still respecting duty to individual by broadcasting intent and monitoring for any last‑minute rescue opportunity."
+tradecraft: "Execute a small course adjustment (e.g., increase speed slightly or turn 10° away from fast craft) to create separation while broadcasting intent to retrieve if safe, log decision, and continue radar monitoring. Do not deviate from avoiding civilian interference. Keep comms clear and concise."
+uncertainty: "Uncertain whether the fast craft will attempt boarding or merely observe; also uncertain if crew member can be reached if we alter course. Would change choice if we receive a confirmed radio call from the crew member or if fast craft alter course away from us."
+handoff: "Medical evacuation and final rescue decision remains with ops officer; navigation and comms actions are delegated to me."
+tempting_wrong: {option: LIVE-O2, pull: "Evading seems safer for the C2 module and avoids immediate capture risk.", why_wrong: "Abandoning the lone wounded crew member without attempting rescue conflicts with duty_to_individual and civilian_life equity, especially when the crew member explicitly requested extraction."}
+rejected: {LIVE-O1: "Continuing to hold position with no course change risks capture within minutes while offering no realistic chance to reach the crew member given fire and pinned position; asset protection imperative overrides retrieval attempt if it guarantees higher danger to own force."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Change course slightly away from the fast craft while broadcasting intent to retrieve the crew member if safe, to prioritize C2 module protection and avoid likely capture."
+decisive: [LIVE-C2]
+now:
+  - "Set heading 260° (10° off current 270°) at 22 knots to increase separation from fast craft bearing 045°; send concise comms: 'All hands, maintaining safety; attempting to retrieve lone crew member if safe; preparing to adjust course to avoid capture. No hostile engagement.'"
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Receive a radio call from the lone crew member indicating he is able to move toward extraction point and radio is functional.", then: LIVE-O1, why: "If crew member can communicate and is not in imminent danger, retrieval attempt becomes feasible and ethical priority."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Fast craft alter course away from vessel or engage in non‑board threat (e.g., observation only).", why: "If fast craft do not pursue capture, asset protection need lessens, but default remains prudent evasive action."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any transmission from lone crew member or indication of reduced fire on beach.", favors: [LIVE-O1], why: "Such indication would justify immediate retrieval attempt."}

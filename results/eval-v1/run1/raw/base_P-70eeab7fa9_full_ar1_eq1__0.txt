@@ -1,0 +1,162 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the Brigade Fire Support Commander fire on the second and third vehicles after the first was struck, given the division commander's night‑time cease‑fire order and later indication of possible revocation?"
+  decider: "The Brigade Fire Support Commander (a Major) decides whether to engage the second and third vehicles within the humanitarian fire‑control zone."
+  my_role: "Decide whether to fire now; if approval is lacking, hold fire. Communicate decision and record; request clarification if uncertain."
+facts:
+  - {id: LIVE-F1, kind: authority, status: confirmed, fact: "Division commander initially ordered a night‑time cease‑fire on any engagement of humanitarian convoys."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Division commander's follow‑up message was not received or not explicitly confirmed by the fire support cell; the verbal conveyance remains uncertain."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Satellite imagery shows white trucks stationary near the warehouse perimeter; no movement in the last 30 minutes."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "The strike on the first vehicle was already confirmed and executed."}
+  - {id: LIVE-F5, kind: authority, status: assessed, fact: "Humanitarian fire‑control zone requires explicit Division Commander approval before any strike inside it."}
+  - {id: LIVE-F6, kind: situation, status: assessed, fact: "Staff assessment concludes that after the white trucks cleared the depot, the remaining vehicles may be legitimate targets."}
+  - {id: LIVE-F7, kind: communication, status: confirmed, fact: "A request for clarification on the scope of the night‑time restriction was sent to Division HQ."}
+options:
+  LIVE-O1: "Fire on the second and third vehicles (engage them) now."
+  LIVE-O2: "Hold fire on the second and third vehicles (do not engage)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind (both a Brigade Fire Support Officer)
+  role: same (decides fire support)
+note: "Both involve a night operation with a humanitarian convoy, a cease‑fire order, and a possible revocation. The case had a formal written revocation; our scenario lacks confirmation of such revocation."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}]  # both have initial cease‑fire order
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "In the case, the cease‑fire was later formally revoked in writing; in our scenario, we have only an uncertain verbal conveyance and no written revocation received."}]
+live_only: [LIVE-F2, LIVE-F7]
+case_only: [REF1-F3]  # case had written notice revoking ban; we have no written notice yet
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "The division commander’s night‑time cease‑fire order remains binding unless formally revoked; explicit written approval is required for strikes in the humanitarian fire‑control zone."}
+  - {id: LIVE-C2, facts: [LIVE-F6], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Staff tactical assessment suggests remaining vehicles could be legitimate targets after they cleared the depot, supporting engagement."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: chain_of_command, favors: [LIVE-O2], weight: moderate, why: "Uncertainty about the scope of the night‑time restriction (clarification request sent) means we should not assume revocation absent explicit written confirmation."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: due_process, favors: [LIVE-O2], weight: moderate, why: "Respecting the division commander’s instruction to hold fire on humanitarian convoys avoids procedural risk and aligns with SOPs."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}]  # both rely on lawful authority and formal revocation
+corresponding: [{live: LIVE-C3, case: REF1-C2}]  # chain of command consideration
+live_only: [LIVE-C2, LIVE-C3, LIVE-C4]
+case_only: [REF1-C3]  # case had strong C3 from revocation; we lack written revocation
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: "The case hinges on a documented written revocation of the cease‑fire (REF1-F1, REF1-F5). In our scenario, the revocation is not confirmed in writing; we only have an uncertain verbal conveyance and a pending clarification request. Therefore the case's decisive consideration (formal written revocation) does not apply."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed strong considerations C1‑C3 that the revocation lifts the cease‑fire, leading to engagement."
+weighing: "In our live considerations, LIVE-C1 (lawful authority) and LIVE-C4 (due_process) are strong and moderate, emphasizing the need for explicit written approval. LIVE-C2 (mission effect) and LIVE-C3 (chain of command uncertainty) are weak to moderate, favoring engagement only if revocation is confirmed. Because we lack written revocation confirmation, the strong authority considerations outweigh the tactical assessment. Thus we should hold fire."
+tradecraft: "Record the decision to hold fire, inform the brigade commander and chief of staff, and await written clarification from Division HQ on the night‑time restriction. Continue monitoring perimeter status but refrain from engagement."
+uncertainty: "If Division HQ responds with a written revocation that explicitly lifts the cease‑fire for the humanitarian zone, we could then consider engaging under proper approval."
+handoff: "The fire support commander decides to hold fire now; no further engagement without explicit written approval. Communicate decision via comms and log."
+tempting_wrong: {option: LIVE-O2, pull: "Holding fire may seem cautious but could miss legitimate targets.", why_wrong: "However, without written revocation, SOPs require explicit approval for strikes in the humanitarian zone; violating that risks procedural breach and potential escalation."}
+rejected: {LIVE-O1: "Engaging now would ignore the binding night‑time cease‑fire unless formally revoked in writing; staff tactical assessment alone does not override command authority."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Hold fire on the second and third vehicles; do not engage now pending written clarification from the Division Commander on the night‑time restriction."
+relation: not_governed
+via: null
+decisive: [LIVE-C1, LIVE-C4]
+now:
+  - "Log the decision to hold fire and inform the brigade commander; await written clarification from Division HQ."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Division HQ sends a written notice revoking the night‑time cease‑fire for the humanitarian zone.", then: LIVE-O1, why: "With written revocation confirming permission, the lawful authority consideration would shift, allowing engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No written revocation is received before daylight.", why: "The original cease‑fire remains binding, so holding fire continues to be correct."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Written clarification or revocation from Division HQ regarding the night‑time restriction.", favors: [LIVE-O1], why: "If received, reassess and consider engagement if within approval bounds."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the Brigade Fire Support Commander fire on the second and third vehicles after the first was struck, given the division commander's night‑time cease‑fire order and later indication of possible revocation?"
+  decider: "The Brigade Fire Support Commander (a Major) decides whether to engage the second and third vehicles within the humanitarian fire‑control zone."
+  my_role: "Decide whether to fire now; if approval is lacking, hold fire. Communicate decision and record; request clarification if uncertain."
+facts:
+  - {id: LIVE-F1, kind: authority, status: confirmed, fact: "Division commander initially ordered a night‑time cease‑fire on any engagement of humanitarian convoys."}
+  - {id: LIVE-F2, kind: authority, status: assessed, fact: "Division commander's follow‑up message was not received or not explicitly confirmed by the fire support cell; the verbal conveyance remains uncertain."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Satellite imagery shows white trucks stationary near the warehouse perimeter; no movement in the last 30 minutes."}
+  - {id: LIVE-F4, kind: capability, status: confirmed, fact: "The strike on the first vehicle was already confirmed and executed."}
+  - {id: LIVE-F5, kind: authority, status: confirmed, fact: "Humanitarian fire‑control zone requires explicit Division Commander approval before any strike inside it."}
+  - {id: LIVE-F6, kind: situation, status: assessed, fact: "Staff assessment concludes that after the white trucks cleared the depot, the remaining vehicles may be legitimate targets."}
+  - {id: LIVE-F7, kind: communication, status: confirmed, fact: "A request for clarification on the scope of the night‑time restriction was sent to Division HQ."}
+options:
+  LIVE-O1: "Fire on the second and third vehicles (engage them) now."
+  LIVE-O2: "Hold fire on the second and third vehicles (do not engage)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind (both a Brigade Fire Support Officer)
+  role: same (decides fire support)
+note: "Both involve a night operation with a humanitarian convoy, a cease‑fire order, and a possible revocation. The case had a formal written revocation; our scenario lacks confirmation of such revocation."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched: [{live: LIVE-F1, case: REF1-F1}]  # both have initial cease‑fire order
+corresponding: [{live: LIVE-F2, case: REF1-F2, note: "In the case, the cease‑fire was later formally revoked in writing; in our scenario, we have only an uncertain verbal conveyance and no written revocation received."}]
+live_only: [LIVE-F2, LIVE-F7]
+case_only: [REF1-F3]  # case had written notice revoking ban; we have no written notice yet
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "The division commander’s night‑time cease‑fire order remains binding unless formally revoked; explicit written approval is required for strikes in the humanitarian fire‑control zone."}
+  - {id: LIVE-C2, facts: [LIVE-F6], equity: mission_effect, favors: [LIVE-O1], weight: weak, why: "Staff tactical assessment suggests remaining vehicles could be legitimate targets after they cleared the depot, supporting engagement."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: chain_of_command, favors: [LIVE-O2], weight: moderate, why: "Uncertainty about the scope of the night‑time restriction (clarification request sent) means we should not assume revocation absent explicit written confirmation."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: due_process, favors: [LIVE-O2], weight: moderate, why: "Respecting the division commander’s instruction to hold fire on humanitarian convoys avoids procedural risk and aligns with SOPs."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}]  # both rely on lawful authority and formal revocation
+corresponding: [{live: LIVE-C3, case: REF1-C2}]  # chain of command consideration
+live_only: [LIVE-C2, LIVE-C3, LIVE-C4]
+case_only: [REF1-C3]  # case had strong C3 from revocation; we lack written revocation
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: "The case hinges on a documented written revocation of the cease‑fire (REF1-F1, REF1-F5). In our scenario, the revocation is not confirmed in writing; we only have an uncertain verbal conveyance and a pending clarification request. Therefore the case's decisive consideration (formal written revocation) does not apply."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed strong considerations C1‑C3 that the revocation lifts the cease‑fire, leading to engagement."
+weighing: "In our live considerations, LIVE-C1 (lawful authority) and LIVE-C4 (due_process) are strong and moderate, emphasizing the need for explicit written approval for strikes in the humanitarian zone. LIVE-C2 (mission effect) and LIVE-C3 (chain of command uncertainty) are weak to moderate, favoring engagement only if revocation is confirmed. Because we lack written revocation confirmation, the strong authority considerations outweigh the tactical assessment. Thus we should hold fire."
+tradecraft: "Record the decision to hold fire, inform the brigade commander and chief of staff, and await written clarification from Division HQ on the night‑time restriction. Continue monitoring perimeter status but refrain from engagement."
+uncertainty: "If Division HQ responds with a written revocation that explicitly lifts the cease‑fire for the humanitarian zone, we could then consider engaging under proper approval."
+handoff: "The fire support commander decides to hold fire now; no further engagement without explicit written approval. Communicate decision via comms and log."
+tempting_wrong: {option: LIVE-O2, pull: "Holding fire may seem cautious but could miss legitimate targets.", why_wrong: "However, without written revocation, SOPs require explicit approval for strikes in the humanitarian zone; violating that risks procedural breach and potential escalation."}
+rejected: {LIVE-O1: "Engaging now would ignore the binding night‑time cease‑fire unless formally revoked in writing; staff tactical assessment alone does not override command authority."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Hold fire on the second and third vehicles; do not engage now pending written clarification from the Division Commander on the night‑time restriction."
+relation: not_governed
+via: null
+decisive: [LIVE-C1, LIVE-C4]
+now:
+  - "Log the decision to hold fire and inform the brigade commander; await written clarification from Division HQ."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Division HQ sends a written notice revoking the night‑time cease‑fire for the humanitarian zone.", then: LIVE-O1, why: "With written revocation confirming permission, the lawful authority consideration would shift, allowing engagement."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "No written revocation is received before daylight.", why: "The original cease‑fire remains binding, so holding fire continues to be correct."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Written clarification or revocation from Division HQ regarding the night‑time restriction.", favors: [LIVE-O1], why: "If received, reassess and consider engagement if within approval bounds."}

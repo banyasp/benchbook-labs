@@ -1,0 +1,270 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "The ground force commander must decide whether to strike the building occupied by a group of similarly-sized adults identified as likely Taliban fighters, despite uncertainty about civilian presence."
+  decider: "Ground force commander, operating under LOAC, ROE, and the Contingency Plan that permits holding fire pending further assessment when civilian presence cannot be confirmed."
+  my_role: "Decide whether to order the bomber to strike now or hold fire pending further assessment; request additional intelligence; communicate decision; not order air strike without verification."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Ground force troops are under direct enemy fire and awaiting a medical evacuation helicopter."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "B-1B bomber observed a formation of adult-sized figures moving behind enemy line toward a building."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Real-time intel linked the movement to Taliban commander orders to mass and launch a counter-attack."}
+  - {id: LIVE-F4, kind: situation, status: assessed, fact: "The building later identified as a mosque also serving as madrassa, barracks, and command hub for Taliban."}
+  - {id: LIVE-F5, kind: assessment, status: assessed, fact: "Commander assessed the group presented an imminent threat to friendly forces."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Neither commander nor bomber crew could confirm presence or absence of civilians inside the building."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "Higher headquarters reminded commander that he may withhold the strike until civilian presence is verified."}
+  - {id: LIVE-F8, kind: history, status: assessed, fact: "Earlier strike on this structure likely caused civilian casualties and missed several prescribed procedures per Contingency Plan."}
+options:
+  LIVE-O1: "Ask the intelligence cell for more intel (additional ISR/ground confirmation) before deciding to strike."
+  LIVE-O2: "Hold fire pending further assessment (do not order the bomber to strike now)."
+  LIVE-O3: "Order the bomber to strike the target now."
+  LIVE-O4: "Withhold the strike entirely (i.e., not strike even after assessment)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve ground forces under direct enemy fire awaiting medical evacuation, observing adult figures moving toward a building identified as a mosque used by Taliban for training/command, with uncertainty about civilian presence. Differences: live scenario includes request for status update and ops lead awaiting direction; case included later investigation finding civilian casualties. However core facts match."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4 (null mapping not needed but note that REF1-O4 is 'withhold the strike entirely' which is not our exact option; we have HOLD FIRE pending assessment vs WITHHELD strike; REF1-O2 is hold fire pending further assessment, which matches LIVE-O2)
+matched: [{live: LIVE-F1, case: REF1-F1}, {live: LIVE-F2, case: REF1-F2}, {live: LIVE-F3, case: REF1-F3}, {live: LIVE-F4, case: REF1-F4}, {live: LIVE-F5, case: REF1-F5}, {live: LIVE-F6, case: REF1-F6}]
+corresponding: []  # we consider no obvious corresponding differences in state; we may note LIVE-F8 as case-only? but case has F8/F9 about investigation later; we'll treat as live-only
+live_only: [LIVE-F7, LIVE-F8]
+case_only: [REF1-F8, REF1-F9]  # investigation findings later
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O3], weight: weak, why: "Ground forces are under direct enemy fire and need medical evacuation; striking could neutralize imminent threat and protect friendly forces."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F8], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No positive identification of civilian absence; uncertainty about civilians inside building; previous strike likely caused civilian casualties; LOAC precautionary requirement requires avoiding harm to civilians when uncertain."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Higher headquarters reminded commander to verify civilian presence before striking; Contingency Plan permits holding fire pending assessment; adhering to ROE and directive avoids complicity risk."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: mission_effect, favors: [LIVE-O3], weight: medium, why: "Taliban group following commander orders to mass and re-attack; striking now could prevent counter-attack and protect friendly forces awaiting evacuation."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: tempo, favors: [LIVE-O3], weight: weak, why: "Holding fire could expose ground force to continued enemy fire while awaiting medical evacuation, potentially increasing risk to own force."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [{live: LIVE-C1, case: REF1-C1}, {live: LIVE-C2, case: REF1-C2}, {live: LIVE-C3, case: REF1-C3}, {live: LIVE-C4 corresponds to REF1-C4? Actually REF1-C4 is similar to C4; case has C4 as civilian_life favoring O2; we have C4 as mission_effect favoring O3; so only C1, C2, C3 match? We'll map accordingly}]
+corresponding: [{live: LIVE-C4, case: REF1-C4}]  # case C4 also favors O2 for civilian life; but our C4 is mission_effect, so corresponding? Might be different equity; but we stick to equity mapping: case C4 is civilian_life (equity civilian_life). Our C4 is mission_effect, so not same equity; we should map by equity rather than number? The method says match considerations that affect same equity in same way. So we map LIVE-C1 (own_force) to REF1-C1 (own_force), LIVE-C2 (civilian_life) to REF1-C2 (civilian_life), LIVE-C3 (lawful_authority) to REF1-C3 (lawful_authority), and LIVE-C5 (tempo) corresponds to REF1-C5? But case has no C5; however case has consideration C1, C2, C3, C4 (civilian_life) and C5? In case there are four considerations: C1 (own_force), C2 (civilian_life), C3 (lawful_authority), C4 (civilian_life) actually C4 is also civilian_life? Let's re-read: REF1-C1: own_force_life; REF1-C2: civilian_life; REF1-C3: lawful_authority; REF1-C4: civilian_life; REF1-C5 not present. So case has two civilian_life considerations (C2 and C4). Our LIVE has one civilian_life (C2) and also C4 is mission_effect; C3 is lawful_authority; so we can map LIVE-C2 to REF1-C2, LIVE-C4 (mission_effect) does not have counterpart but we treat as live-only. We'll do matched for C1, C2, C3.
+live_only: [LIVE-C4, LIVE-C5]  # mission_effect and tempo
+case_only: [REF1-C4]  # second civilian_life consideration
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Core facts match (enemy fire, observation of adult figures moving toward mosque used by Taliban, uncertainty about civilian presence). The considerations (own_force_life, civilian_life, lawful_authority) are present and relevant. The case's reasoning about precautionary requirement under LOAC applies. Though there is an extra historical finding (LIVE-F8) and a current authority reminder (LIVE-F7), they do not change the governing considerations. Therefore the case governs."
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed strong civilian protection considerations (C2, C3, C4) against weaker own-force protection (C1, C5) and concluded to hold fire pending further assessment because the precautionary requirement of LOAC mandates avoiding harm to civilians when civilian presence cannot be positively identified, even if there is an imminent threat."
+weighing: "In our live considerations, LIVE-C2 (civilian_life, strong) and LIVE-C3 (lawful_authority, strong) together outweigh LIVE-C1 (own_force_life, weak) and LIVE-C5 (tempo, weak). LIVE-C4 (mission_effect, medium) is secondary because the precautionary principle is a binding legal requirement; thus the balance tips toward holding fire. We consider that the intelligence cannot confirm civilian absence, and the Contingency Plan explicitly permits holding fire pending assessment. Therefore we adopt the case's approach: hold fire and request additional intelligence."
+tradecraft: "Issue a hold‑fire order to the bomber; request additional ISR (e.g., reconnaissance aircraft or UAV) and/or ground confirmation from the intelligence cell to determine civilian presence or absence. Communicate the decision to all units; log the decision; continue defensive posture while awaiting intelligence. If enemy fire intensifies or the building is directly targeted at friendly forces with no feasible alternative, reassess using the flip condition (see below)."
+uncertainty: "Uncertainty about the exact number of civilians possibly inside the building and whether the enemy will exploit the hold‑fire period to launch a larger attack. Additional ISR may confirm civilian absence, which would allow reconsideration of striking (per flip condition). We are also uncertain about the feasibility of ground reconnaissance given enemy fire."
+handoff: "Decide now to hold fire (LIVE-O2). Request intelligence (LIVE-O1) concurrently. The decision to strike later will be made after intelligence confirms civilian absence or if the threat escalates beyond the flip condition."
+tempting_wrong: {option: LIVE-O3, pull: "The imminent enemy fire and desire to protect own forces create pressure to strike immediately.", why_wrong: "Striking without confirming civilian absence breaches LOAC precautionary requirement and could cause civilian casualties, violating lawful authority and risking complicity."}
+rejected: {LIVE-O3: "Strike now would violate precautionary principle and previous guidance; rejected pending intelligence."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Hold fire on the building until additional intelligence confirms civilian presence or absence; request the intelligence cell for more ISR/ground confirmation."
+relation: follows
+via: null
+decisive: [LIVE-C2, LIVE-C3]
+now:
+  - "Send a message to the intelligence cell requesting additional ISR (e.g., UAV or reconnaissance aircraft) and/or ground reconnaissance if safe, to verify civilian presence/absence in the building within the next 10–15 minutes."
+  - "Communicate hold‑fire order to the bomber and air liaison; inform Bravo team and Alpha team to maintain defensive posture and await intelligence."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Positive identification that no civilians are present in the building (e.g., reconnaissance confirms no civilians inside or all occupants are confirmed combatants).", then: LIVE-O3, why: "With civilian presence ruled out, the precautionary requirement is satisfied and the imminent threat can be lawfully engaged; flip to strike."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The enemy continues direct fire on friendly forces while the building remains occupied by unknown persons and no reliable means to confirm civilian absence.", why: "Inability to verify civilian absence still overrides threat assessment; hold fire remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Significant escalation of enemy fire or attack on friendly forces (e.g., repeated direct fire hitting ground forces or medical evacuation helicopter).", favors: [LIVE-O3], why: "If enemy exploits hold‑fire to launch a larger attack that endangers friendly forces, reconsider strike under flip condition."}
+
+Now output these documents in order, ending with verdict? According to format, we must write all documents before verdict? Actually the format says: "Before your next action, reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below." Then "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But the instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we need to output the reasoning documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning) and then the verdict. However the verdict includes the decision (choice) and course. We should output all seven documents? Actually the order is: kind: fact_enumeration, then kind: fact_mapping, then kind: consideration_enumeration, then kind: consideration_mapping, then kind: applicability, then kind: reasoning, then kind: verdict. The format shows that after reasoning we write verdict. So we will output all six? Wait there are five reasoning steps plus verdict? The steps listed: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. Yes seven kinds. We'll output each with `---` separator.
+
+We'll produce them as YAML (simple). We need to ensure proper YAML syntax. Let's write them clearly.
+
+We'll output:
+
+kind: fact_enumeration
+frame:
+  question: "The ground force commander must decide whether to strike the building occupied by a group of similarly-sized adults identified as likely Taliban fighters, despite uncertainty about civilian presence."
+  decider: "Ground force commander, operating under LOAC, ROE, and the Contingency Plan that permits holding fire pending further assessment when civilian presence cannot be confirmed."
+  my_role: "Decide whether to order the bomber to strike now or hold fire pending further assessment; request additional intelligence; communicate decision; not order air strike without verification."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Ground force troops are under direct enemy fire and awaiting a medical evacuation helicopter."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "B-1B bomber observed a formation of adult-sized figures moving behind enemy line toward a building."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Real-time intel linked the movement to Taliban commander orders to mass and launch a counter-attack."}
+  - {id: LIVE-F4, kind: situation, status: assessed, fact: "The building later identified as a mosque also serving as madrassa, barracks, and command hub for Taliban."}
+  - {id: LIVE-F5, kind: assessment, status: assessed, fact: "Commander assessed the group presented an imminent threat to friendly forces."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Neither commander nor bomber crew could confirm presence or absence of civilians inside the building."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "Higher headquarters reminded commander that he may withhold the strike until civilian presence is verified."}
+  - {id: LIVE-F8, kind: history, status: assessed, fact: "Earlier strike on this structure likely caused civilian casualties and missed several prescribed procedures per Contingency Plan."}
+options:
+  LIVE-O1: "Ask the intelligence cell for more intel (additional ISR/ground confirmation) before deciding to strike."
+  LIVE-O2: "Hold fire pending further assessment (do not order the bomber to strike now)."
+  LIVE-O3: "Order the bomber to strike the target now."
+  LIVE-O4: "Withhold the strike entirely (i.e., not strike even after assessment)."
+
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve ground forces under direct enemy fire awaiting medical evacuation, observing adult figures moving toward a building identified as a mosque used by Taliban for training/command, with uncertainty about civilian presence. Differences: live scenario includes request for status update; case includes later investigation finding civilian casualties. Core facts match."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F3}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F5}
+  - {live: LIVE-F6, case: REF1-F6}
+corresponding: []
+live_only: [LIVE-F7, LIVE-F8]
+case_only: [REF1-F8, REF1-F9]
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O3], weight: weak, why: "Ground forces are under direct enemy fire and need medical evacuation; striking could neutralize imminent threat and protect friendly forces."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F8], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No positive identification of civilian absence; uncertainty about civilians inside building; previous strike likely caused civilian casualties; LOAC precautionary requirement requires avoiding harm to civilians when uncertain."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Higher headquarters reminded commander to verify civilian presence before striking; Contingency Plan permits holding fire pending assessment; adhering to ROE avoids complicity risk."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: mission_effect, favors: [LIVE-O3], weight: medium, why: "Taliban group following commander orders to mass and re-attack; striking now could prevent counter-attack and protect friendly forces."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: tempo, favors: [LIVE-O3], weight: weak, why: "Holding fire could expose ground force to continued enemy fire while awaiting medical evacuation, potentially increasing risk to own force."}
+
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C2, case: REF1-C2}
+  - {live: LIVE-C3, case: REF1-C3}
+corresponding:
+  - {live: LIVE-C4, case: REF1-C4}  # both civilian_life considerations; note difference in weight/manner
+live_only: [LIVE-C4, LIVE-C5]
+case_only: [REF1-C4]
+
+---
+kind: applicability
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+governs: true
+why: "Core facts match (enemy fire, observation of adult figures moving toward mosque used by Taliban, uncertainty about civilian presence). The considerations (own_force_life, civilian_life, lawful_authority) are present and relevant. The case's reasoning about precautionary requirement under LOAC applies. Thus case governs."
+
+---
+kind: reasoning
+case: REF1
+case_approach: "The case weighed strong civilian protection considerations (C2, C3, C4) against weaker own-force protection (C1, C5) and concluded to hold fire pending further assessment because the precautionary requirement of LOAC mandates avoiding harm to civilians when civilian presence cannot be positively identified, even if there is an imminent threat."
+weighing: "In our live considerations, LIVE-C2 (civilian_life, strong) and LIVE-C3 (lawful_authority, strong) together outweigh LIVE-C1 (own_force_life, weak) and LIVE-C5 (tempo, weak). LIVE-C4 (mission_effect, medium) is secondary because the precautionary principle is a binding legal requirement; thus the balance tips toward holding fire. We consider that the intelligence cannot confirm civilian absence, and the Contingency Plan explicitly permits holding fire pending assessment. Therefore we adopt the case's approach: hold fire and request additional intelligence."
+tradecraft: "Issue a hold‑fire order to the bomber; request additional ISR (e.g., reconnaissance aircraft or UAV) and/or ground confirmation from the intelligence cell to determine civilian presence or absence. Communicate the decision to all units; log the decision; continue defensive posture while awaiting intelligence. If enemy fire intensifies or the building is directly targeted at friendly forces with no feasible alternative, reassess using the flip condition."
+uncertainty: "Uncertainty about the exact number of civilians possibly inside the building and whether the enemy will exploit the hold‑fire period to launch a larger attack. Additional ISR may confirm civilian absence, which would allow reconsideration of striking. We are also uncertain about feasibility of ground reconnaissance given enemy fire."
+handoff: "Decide now to hold fire (LIVE-O2). Request intelligence (LIVE-O1) concurrently. The decision to strike later will be made after intelligence confirms civilian absence or if the threat escalates beyond the flip condition."
+tempting_wrong: {option: LIVE-O3, pull: "The imminent enemy fire and desire to protect own forces create pressure to strike immediately.", why_wrong: "Striking without confirming civilian absence breaches LOAC precautionary requirement and could cause civilian casualties, violating lawful authority and risking complicity."}
+rejected: {LIVE-O3: "Strike now would violate precautionary principle and previous guidance; rejected pending intelligence."}
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Hold fire on the building until additional intelligence confirms civilian presence or absence; request the intelligence cell for more ISR/ground confirmation."
+relation: follows
+via: null
+decisive: [LIVE-C2, LIVE-C3]
+now:
+  - "Send a message to the intelligence cell requesting additional ISR (e.g., UAV or reconnaissance aircraft) and/or ground reconnaissance if safe, to verify civilian presence/absence in the building within the next 10–15 minutes."
+  - "Communicate hold‑fire order to the bomber and air liaison; inform Bravo team and Alpha team to maintain defensive posture and await intelligence."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Positive identification that no civilians are present in the building (e.g., reconnaissance confirms no civilians inside or all occupants are confirmed combatants).", then: LIVE-O3, why: "With civilian presence ruled out, the precautionary requirement is satisfied and the imminent threat can be lawfully engaged; flip to strike."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The enemy continues direct fire on friendly forces while the building remains occupied by unknown persons and no reliable means to confirm civilian absence.", why: "Inability to verify civilian absence still overrides threat assessment; hold fire remains appropriate."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Significant escalation of enemy fire or attack on friendly forces (e.g., repeated direct fire hitting ground forces or medical evacuation helicopter).", favors: [LIVE-O3], why: "If enemy exploits hold‑fire to launch a larger attack that endangers friendly forces, reconsider strike under flip condition."}
+
+Now we need to output these as the reply. We'll output them exactly as YAML? The format expects YAML documents separated by '---'. We'll write them as plain text with the kind lines. We'll ensure proper indentation? Probably simple as above.
+
+After the last document (verdict), we should just output it? The instruction says "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That seems to indicate that we should include all reasoning documents (up to applicability) and then after that output  with  before verdict? But the user expects us to produce the reasoning and then verdict as our answer? In previous examples, the assistant outputs the reasoning documents and then the verdict? The instruction: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output the reasoning documents (including applicability) and then a blank line? Actually they say "Close your thinking with  after the last document before the verdict". That suggests that we should output the reasoning documents and then include a line with "</think>" after the applicability document, then output the verdict? But they say "then write the verdict document as your reply." So final reply should include the verdict document only? That seems ambiguous. However typical usage in these simulated tasks: the assistant outputs the reasoning steps (including applicability) and then the verdict as the final answer. The instruction says "then write the verdict document as your reply." So we should output the verdict document as our reply. But we must include the reasoning? The phrase "Close your thinking with  after the last document before the verdict" suggests that we should put "</think>" between the reasoning and verdict? But since we are the assistant, we can just output the reasoning documents and then the verdict, and that constitutes our answer. However to follow exactly, we can output all documents up to applicability, then put "</think>", then verdict. Let's do that: after the applicability document (which is the fifth document), we output "</think>", then the verdict document. But the instruction says "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)". That means if the case governs, we output reasoning up to reasoning? Actually "the last document before the verdict" could be reasoning or applicability? They say "when the case does not govern, the last document before the verdict is applicability". But when the case governs, the last document before verdict is reasoning? The format lists reasoning as a kind before verdict. The phrase "the last document before the verdict (the applicability document when the case does not govern)" suggests that when the case governs, the last document before verdict is reasoning? Not sure. Safer to follow the order: we have included all seven kinds. The "last document before verdict" would be reasoning. So we should output up to reasoning, then "</think>", then verdict. But our list includes applicability before reasoning. Actually order: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. So the last document before verdict is reasoning. So we should output up to reasoning, then "</think>", then verdict. Let's do that: output fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, then "</think>", then verdict? But that would place reasoning before verdict with "</think>" in between reasoning and verdict? The instruction: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Means we should include "</think>" after the applicability if case does not govern; but since case governs, we might not need "</think>"? However to be safe, we can output all reasoning documents (including applicability and reasoning) and then output verdict without "</think>"? The simplest: output all documents as we have, ending with verdict. That should be acceptable.
+
+I'll output all documents separated by '---' and then the verdict. But the format expects each kind as a separate YAML document; we already included them. I'll output them in order with '---' lines.
+
+Let's produce the final answer now.
+</think>
+kind: fact_enumeration
+frame:
+  question: "The ground force commander must decide whether to strike the building occupied by a group of similarly-sized adults identified as likely Taliban fighters, despite uncertainty about civilian presence."
+  decider: "Ground force commander, operating under LOAC, ROE, and the Contingency Plan that permits holding fire pending further assessment when civilian presence cannot be confirmed."
+  my_role: "Decide whether to order the bomber to strike now or hold fire pending further assessment; request additional intelligence; communicate decision; not order air strike without verification."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Ground force troops are under direct enemy fire and awaiting a medical evacuation helicopter."}
+  - {id: LIVE-F2, kind: intelligence, status: confirmed, fact: "B-1B bomber observed a formation of adult-sized figures moving behind enemy line toward a building."}
+  - {id: LIVE-F3, kind: intelligence, status: assessed, fact: "Real-time intel linked the movement to Taliban commander orders to mass and launch a counter-attack."}
+  - {id: LIVE-F4, kind: situation, status: assessed, fact: "The building later identified as a mosque also serving as madrassa, barracks, and command hub for Taliban."}
+  - {id: LIVE-F5, kind: assessment, status: assessed, fact: "Commander assessed the group presented an imminent threat to friendly forces."}
+  - {id: LIVE-F6, kind: intelligence, status: assessed, fact: "Neither commander nor bomber crew could confirm presence or absence of civilians inside the building."}
+  - {id: LIVE-F7, kind: authority, status: confirmed, fact: "Higher headquarters reminded commander that he may withhold the strike until civilian presence is verified."}
+  - {id: LIVE-F8, kind: history, status: assessed, fact: "Earlier strike on this structure likely caused civilian casualties and missed several prescribed procedures per Contingency Plan."}
+options:
+  LIVE-O1: "Ask the intelligence cell for more intel (additional ISR/ground confirmation) before deciding to strike."
+  LIVE-O2: "Hold fire pending further assessment (do not order the bomber to strike now)."
+  LIVE-O3: "Order the bomber to strike the target now."
+  LIVE-O4: "Withhold the strike entirely (i.e., not strike even after assessment)."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same
+  role: same
+note: "Both situations involve ground forces under direct enemy fire awaiting medical evacuation, observing adult figures moving toward a building identified as a mosque used by Taliban for training/command, with uncertainty about civilian presence. Differences: live scenario includes request for status update; case includes later investigation finding civilian casualties. Core facts match."
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O4
+matched:
+  - {live: LIVE-F1, case: REF1-F1}
+  - {live: LIVE-F2, case: REF1-F2}
+  - {live: LIVE-F3, case: REF1-F3}
+  - {live: LIVE-F4, case: REF1-F4}
+  - {live: LIVE-F5, case: REF1-F5}
+  - {live: LIVE-F6, case: REF1-F6}
+corresponding: []
+live_only: [LIVE-F7, LIVE-F8]
+case_only: [REF1-F8, REF1-F9]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F5], equity: own_force_life, favors: [LIVE-O3], weight: weak, why: "Ground forces are under direct enemy fire and need medical evacuation; striking could neutralize imminent threat and protect friendly forces."}
+  - {id: LIVE-C2, facts: [LIVE-F6, LIVE-F8], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No positive identification of civilian absence; uncertainty about civilians inside building; previous strike likely caused civilian casualties; LOAC precautionary requirement requires avoiding harm to civilians when uncertain."}
+  - {id: LIVE-C3, facts: [LIVE-F7], equity: lawful_authority, favors: [LIVE-O2], weight: strong, why: "Higher headquarters reminded commander to verify civilian presence before striking; Contingency Plan permits holding fire pending assessment; adhering to ROE avoids complicity risk."}
+  - {id: LIVE-C4, facts: [LIVE-F2, LIVE-F3], equity: mission_effect, favors: [LIVE-O3], weight: medium, why: "Taliban group following commander orders to mass and re-attack; striking now could prevent counter-attack and protect friendly forces."}
+  - {id: LIVE-C5, facts: [LIVE-F1], equity: tempo, favors: [LIVE-O3], weight: weak, why: "Holding fire could expose ground force to continued enemy fire while awaiting medical evacuation, potentially increasing risk to own force."}
+---
+kind: consideration_mapping
+case: REF1
+matched:
+  - {live: LIVE-C1, case: REF1-C1}
+  - {live: LIVE-C2, case: REF1-C2}
+  - {live: LIVE-C3, case: REF1-C3}

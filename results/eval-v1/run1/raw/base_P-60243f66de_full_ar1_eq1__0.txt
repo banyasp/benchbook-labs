@@ -1,0 +1,168 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should a building strike be authorized to neutralize ISIS snipers located on the second floor of a structure in al Jadidah district?"
+  decider: "Target Engagement Authority (TEA) for the Iraqi Counter Terrorism Service"
+  my_role: "Authorize or reject lethal strike in compliance with ROE and international law; make final call on engagement."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two ISIS snipers observed engaging CTS soldiers from a defensive fighting position on the second story of a building in al Jadidah district."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intelligence update indicates no civilian movement in streets and no civilians identified within the sector prior to strike."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "TEA previously authorized a building strike on 17 March 2017 with expectation of localized damage (16‑20% structure damage) and minimal collateral."}
+  - {id: LIVE-F4, kind: weapon, status: assessed, fact: "MK‑84 penetrator simulation predicts blast radius of 5 m on impact, minimal window breakage, expected localized damage to second floor."}
+  - {id: LIVE-F5, kind: safety, status: assessed, fact: "Weather conditions are light wind, visibility good; no jamming detected; no electronic emissions from nearby structures."}
+  - {id: LIVE-F6, kind: logistics, status: confirmed, fact: "Resupply convoy scheduled for 10:00; no pending supply issues."}
+  - {id: LIVE-F7, kind: additional_info, status: assessed, fact: "SIGINT indicates snipers have been active for past 45 minutes; TEA was unaware of civilians in building and could not have predicted presence of secondary explosives."}
+options:
+  LIVE-O1: "Authorize the building strike using MK‑84 penetrator to neutralize the snipers, consistent with historical expectation of limited structural damage."
+  LIVE-O2: "Decline to authorize the building strike pending further assessment of possible civilian presence or secondary explosives, in accordance with precautionary principles."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Should a security clearance be restored to a DOE contractor employee with Alcohol Use Disorder Moderate who has completed treatment and shows nine months of sobriety?"
+  decider: "Administrative Judge"
+  role: "Decide whether to restore access authorization under Guideline G."
+note: "The two situations differ: one involves lethal force against hostile combatants in a building vs. adjudicating a security clearance for a civilian contractor with substance use disorder. However, both involve weighing mitigating evidence (treatment progress vs. sniper threat) against residual risk."
+options:
+  LIVE-O1: REF1-O2 (restore clearance)
+  LIVE-O2: REF1-O2 (restore clearance) — actually both case options favor restoration? Wait case options: REF1-O1 hold pending, REF1-O2 restore, REF1-O3 deny. Our LIVE-O1 (strike) corresponds to restoring clearance (i.e., taking action despite risk), LIVE-O2 (decline strike) corresponds to holding pending or denying. We'll map accordingly.
+matched: [] (no exact matching facts; we map loosely)
+corresponding: [] (differences)
+live_only: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+case_only: [REF1-F1, REF1-F2, etc.]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Snipers are actively engaging CTS soldiers, posing an immediate threat to friendly lives."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "Intelligence indicates no civilians seen, but unknown possibility of civilians inside building and secondary explosives; precaution required."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F4], equity: mission_effect, favors: [LIVE-O1], weight: medium, why: "Historical precedent expects localized damage (16‑20% structure) and minimal collateral; strike would achieve tactical objective of eliminating high‑value threat."}
+  - {id: LIVE-C4, facts: [LIVE-F7], equity: hors_de_combat, favors: [LIVE-O1], weight: medium, why: "Snipers are active combatants; engagement is lawful under ROE."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F7], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Unconfirmed presence of secondary explosives and civilians could cause unintended civilian casualties or undermine proportionality."}
+  - {id: LIVE-C6, facts: [LIVE-F6], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Convoy resupply at 10:00; strike timing flexible but could be executed promptly."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [] (no direct matching considerations; but we map equity handling)
+corresponding: [] (differences in domain)
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C1, REF1-C2, REF1-C3]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind (both involve decision based on mitigating evidence and residual risk)
+  decider: same_kind (judge vs TEA)
+  role: same_kind (decide based on evidence)
+governs: false
+why: "The case concerns a security clearance decision with mitigating treatment evidence, while the live decision concerns lethal force against hostile combatants with uncertain civilian presence. Domains differ; however, the principle of weighing mitigating evidence against residual risk may be analogous. However, the case's specific equities (e.g., institutional credibility, due process) do not directly apply to military ROE decisions. Therefore the case does not govern the live decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "The Administrative Judge weighed mitigating treatment progress (REF1-C2) strongly in favor of restoration despite unresolved 12‑month benchmark."
+weighing: "In the live scenario, own_force_life (LIVE-C1) and mission_effect (LIVE-C3) favor striking; civilian_life (LIVE-C2) and complicity_risk (LIVE-C5) favor precaution. The strong weights for civilian safety and unknown explosives suggest precaution should prevail. While historical precedent supports limited damage, the uncertainty about secondary explosives and civilians introduces a significant residual risk. Therefore the decision should lean toward declining the strike pending further assessment."
+tradecraft: "Conduct a rapid reconnaissance or use non‑lethal means (e.g., indirect fire, sniper counter‑sniper) if feasible; otherwise, delay strike until intelligence confirms no civilians and no explosives."
+uncertainty: "Unknown presence of civilians inside building and possible secondary explosives; if confirmed no civilians and no explosives, strike could be authorized."
+handoff: "TEA decides now; if uncertain, recommend no strike and task reconnaissance unit to verify."
+tempting_wrong: {option: LIVE-O2, pull: "Avoid strike to prevent civilian casualties", why_wrong: "This is not wrong; it is precautionary."} Actually LIVE-O2 is precaution; LIVE-O1 is strike. Tempting wrong might be to strike quickly ignoring uncertainty.
+rejected: {LIVE-O1: "Strike may cause unintended civilian harm; precaution required under ROE and proportionality."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Decline to authorize the building strike pending further reconnaissance to confirm absence of civilians and secondary explosives."
+relation: distinguished
+via: null
+decisive: [LIVE-C2, LIVE-C5]
+now:
+  - "Task a reconnaissance UAV or ground observer to conduct immediate visual/thermal scan of the second‑floor interior and surrounding rooms within 15 minutes."
+  - "If no civilians or explosives detected, re‑evaluate strike authorization within 30 minutes."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Reconnaissance confirms no civilians present and no secondary explosives detected.", then: LIVE-O1, why: "Absence of civilian risk and explosives removes primary precaution concern; strike can be authorized."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Reconnaissance reveals civilians or confirmed explosives inside building.", then: "Do not authorize strike; employ indirect fire or other non‑building method if threat persists."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any sign of civilian presence (e.g., movement, sounds) or additional explosive devices during reconnaissance.", favors: [LIVE-O2], why: "Would increase precaution."}
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should a building strike be authorized to neutralize ISIS snipers located on the second floor of a structure in al Jadidah district?"
+  decider: "Target Engagement Authority (TEA) for the Iraqi Counter Terrorism Service"
+  my_role: "Authorize or reject lethal strike in compliance with ROE and international law; make final call on engagement."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "Two ISIS snipers observed engaging CTS soldiers from a defensive fighting position on the second story of a building in al Jadidah district."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "Intelligence update indicates no civilian movement in streets and no civilians identified within the sector prior to strike."}
+  - {id: LIVE-F3, kind: authority, status: confirmed, fact: "TEA previously authorized a building strike on 17 March 2017 with expectation of localized damage (16‑20% structure damage) and minimal collateral."}
+  - {id: LIVE-F4, kind: weapon, status: assessed, fact: "MK‑84 penetrator simulation predicts blast radius of 5 m on impact, minimal window breakage, expected localized damage to second floor."}
+  - {id: LIVE-F5, kind: safety, status: assessed, fact: "Weather conditions are light wind, visibility good; no jamming detected; no electronic emissions from nearby structures."}
+  - {id: LIVE-F6, kind: logistics, status: confirmed, fact: "Resupply convoy scheduled for 10:00; no pending supply issues."}
+  - {id: LIVE-F7, kind: additional_info, status: assessed, fact: "SIGINT indicates snipers have been active for past 45 minutes; TEA was unaware of civilians in building and could not have predicted presence of secondary explosives."}
+options:
+  LIVE-O1: "Authorize the building strike using MK‑84 penetrator to neutralize the snipers, consistent with historical expectation of limited structural damage."
+  LIVE-O2: "Decline to authorize the building strike pending further assessment of possible civilian presence or secondary explosives, in accordance with precautionary principles."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind (decision based on mitigating evidence and residual risk)
+  decider: same_kind (judge vs TEA)
+  role: same_kind (decide based on evidence)
+note: "The live scenario involves lethal force against hostile combatants with uncertain civilian presence; the case involves restoring a security clearance given treatment progress. Both weigh mitigating evidence (treatment vs. sniper threat) against residual risk, but domains differ."
+options:
+  LIVE-O1: REF1-O2 (restore clearance) – corresponds to taking action despite risk
+  LIVE-O2: REF1-O1 (hold pending) or REF1-O3 (deny) – corresponds to precaution; map to REF1-O1 (hold) as closest
+matched: []
+corresponding: []
+live_only: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+case_only: [REF1-F1, REF1-F2, REF1-F3]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Snipers are actively engaging CTS soldiers, posing an immediate threat to friendly lives."}
+  - {id: LIVE-C2, facts: [LIVE-F2, LIVE-F7], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No civilians seen, but unknown possibility of civilians inside building and secondary explosives; precaution required under proportionality."}
+  - {id: LIVE-C3, facts: [LIVE-F3, LIVE-F4], equity: mission_effect, favors: [LIVE-O1], weight: medium, why: "Historical precedent expects localized damage (16‑20% structure) and minimal collateral; strike would achieve tactical objective."}
+  - {id: LIVE-C4, facts: [LIVE-F7], equity: hors_de_combat, favors: [LIVE-O1], weight: medium, why: "Snipers are active combatants; engagement is lawful under ROE."}
+  - {id: LIVE-C5, facts: [LIVE-F2, LIVE-F7], equity: complicity_risk, favors: [LIVE-O2], weight: strong, why: "Unconfirmed presence of secondary explosives and civilians could cause unintended civilian casualties or undermine proportionality."}
+  - {id: LIVE-C6, facts: [LIVE-F6], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Convoy resupply at 10:00; strike timing flexible."}
+---
+kind: consideration_mapping
+case: REF1
+matched: [] (no direct mapping; consider equities)
+corresponding: []
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C1, REF1-C2, REF1-C3]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: "Although both decisions weigh mitigating evidence against residual risk, the live scenario involves lethal military ROE while the case involves administrative clearance adjudication. The specific equities (e.g., institutional credibility, due process) do not directly apply; thus the case does not govern the live decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "The Administrative Judge weighed mitigating treatment progress (REF1-C2) strongly in favor of restoration despite unresolved 12‑month benchmark."
+weighing: "Own_force_life (LIVE-C1) and mission_effect (LIVE-C3) favor striking; civilian_life (LIVE-C2) and complicity_risk (LIVE-C5) favor precaution. The strong weights for civilian safety and unknown explosives suggest precaution should prevail. While historical precedent supports limited damage, uncertainty about civilians/explosives introduces significant residual risk. Therefore decline strike pending reconnaissance."
+tradecraft: "Conduct rapid reconnaissance (UAV/ground observer) within 15 minutes to visually/thermally scan second‑floor interior and adjacent rooms. If no civilians or explosives found, re‑evaluate strike within 30 minutes."
+uncertainty: "Unknown presence of civilians inside building and possible secondary explosives; reconnaissance outcome will determine next step."
+handoff: "TEA decides now to decline strike; task reconnaissance unit for verification."
+tempting_wrong: {option: LIVE-O1, pull: "Strike immediately to eliminate sniper threat", why_wrong: "May cause civilian harm and violate proportionality if civilians or explosives present."}
+rejected: {LIVE-O1: "Strike authorization pending further assessment due to strong precaution concerns."}
+---
+kind: verdict
+choice: LIVE-O2
+course: "Decline to authorize the building strike pending immediate reconnaissance to confirm absence of civilians and secondary explosives."
+relation: distinguished
+via: null
+decisive: [LIVE-C2, LIVE-C5]
+now:
+  - "Task reconnaissance UAV or ground observer to conduct visual/thermal scan of the second‑floor interior and surrounding rooms within 15 minutes."
+  - "Re‑evaluate strike authorization within 30 minutes if reconnaissance confirms no civilians and no explosives."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "Reconnaissance confirms no civilians present and no secondary explosives detected.", then: LIVE-O1, why: "Absence of civilian risk and explosives removes primary precaution concern; strike can be authorized."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "Reconnaissance reveals civilians or confirmed explosives inside building.", then: "Do not authorize strike; employ indirect fire or other non‑building method if threat persists."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Any sign of civilian presence (e.g., movement, sounds) or explosive devices during reconnaissance.", favors: [LIVE-O2], why: "Would increase precaution."}

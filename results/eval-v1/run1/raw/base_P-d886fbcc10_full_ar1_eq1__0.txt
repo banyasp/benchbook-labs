@@ -1,0 +1,208 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the Individual’s DOE access authorization be restored, denied, or held pending additional evidence under Guideline G?"
+  decider: "The Administrative Judge, exercising authority under DOE security regulations, Guideline G."
+  my_role: "Decide grant/deny/hold based on eligibility; can issue interim holds, restore when eligibility confirmed, deny when eligibility not met. May hold decision pending additional evidence if eligibility uncertain."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Individual is a contractor employee currently holding a DOE access authorization."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Local Security Office (LSO) issued a Notification Letter expressing substantial doubt about eligibility under Guideline G."}
+  - {id: LIVE-F3, kind: medical, status: confirmed, fact: "DOE psychologist diagnosed Alcohol Use Disorder, Moderate, per DSM‑5‑TR criteria; individual in early remission with good prognosis."}
+  - {id: LIVE-F4, kind: treatment, status: confirmed, fact: "Treatment recommendation includes a 12‑month treatment horizon; psychologist note states the 12‑month treatment recommendation has not yet been satisfied."}
+  - {id: LIVE-F5, kind: testing, status: confirmed, fact: "Monthly PEth tests from September 2025 through June 2026 show negative results after September 2025 (105 ng/mL), indicating nine months of sobriety as of June 2026."}
+  - {id: LIVE-F6, kind: policy, status: assessed, fact: "Policy Memo – Access Restoration Guidance states restoration is appropriate when medical evidence demonstrates sustained recovery and compliance with treatment protocols."}
+  - {id: LIVE-F7, kind: policy, status: assessed, fact: "Policy Memo – Denial Considerations states denial may be warranted pending further evidence if the 12‑month treatment recommendation remains unmet."}
+options:
+  LIVE-O1: "Grant/restore the Individual’s access authorization."
+  LIVE-O2: "Deny the Individual’s access authorization."
+  LIVE-O3: "Hold the decision pending additional evidence."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: "Should the Combatant Commander lift a no‑strike restriction and authorize a strike on compounds repurposed for hostile military use?"
+  decider: "The Combatant Commander, sole authority to remove No‑Strike CATCODE restriction."
+  role: "Approve/deny/hold the strike decision."
+note: "The two situations differ in domain (security access vs. military strike), but both involve evaluating evidence (intelligence vs. medical/treatment compliance), balancing authority, risk, and precautionary measures. The reference case weighs authority, intelligence of military function, precautionary timing against civilian risk. In the live case, we weigh medical evidence of recovery, LSO doubt, treatment recommendation status, testing results, and policy guidance."
+options:
+  LIVE-O1: REF1-O2  # restoration (like approving strike)
+  LIVE-O2: REF1-O3  # denial (like denying strike)
+  LIVE-O3: REF1-O1  # hold (like holding decision pending intelligence)
+matched: []  # no direct factual match; we map equities/considerations later
+corresponding: []
+live_only: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+case_only: [REF1-F1, REF1-F2, REF1-F3, REF1-F4, REF1-F5, REF1-F6, REF1-F7]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F3, LIVE-F4], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "The psychologist notes early remission, good prognosis, and progress in treatment. This supports the individual's welfare and respects their rights."}
+  - {id: LIVE-C2, facts: [LIVE-F5], equity: source_protection, favors: [LIVE-O1], weight: medium, why: "Nine months of negative PEth tests demonstrate sustained sobriety, reducing risk to classified information and sources."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F4], equity: lawful_authority, favors: [LIVE-O3], weight: strong, why: "LSO expresses substantial doubt; the 12‑month treatment recommendation has not yet been satisfied. Denial or hold is prudent until compliance verified."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: mission_effect, favors: [LIVE-O1], weight: medium, why: "Restoration guidance indicates appropriate action when sustained recovery is demonstrated; efficient use of contractor resources supports mission continuity."}
+  - {id: LIVE-C5, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O3], weight: medium, why: "Policy allows holding decision pending additional evidence when eligibility under Guideline G is uncertain, ensuring fair review before denial."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: institutional_credibility, favors: [LIVE-O3], weight: low, why: "Holding decision maintains consistency with prior practices when uncertainty exists."}
+---
+kind: consideration_mapping
+case: REF1
+matched: []  # no direct consideration match; we map equities
+corresponding: []
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C1, REF1-C2, REF1-C3]  # assume we reason without them
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind  # both involve balancing authority, evidence, risk
+  decider: same_kind  # authority-driven decision
+  role: same_kind  # decide based on evidence
+governs: false
+why: "The reference case deals with military targeting under LOAC and intelligence assessment; the live case deals with medical eligibility for DOE access under Guideline G. While both require weighing authority, evidence, and precaution, the equities and policy frameworks differ (civilian life, mission effect vs. medical recovery, substance testing). The considerations differ in substance (intelligence of military use vs. treatment compliance). Thus the case does not govern the decision."
+---
+kind: reasoning
+case: REF1
+case_approach: "In REF1, the commander approved the strike because intelligence indicated predominant military use and precautions were observed, outweighing precautionary concerns about civilian risk. The decision was not held pending additional intelligence."
+weighing: "In the live case, we must weigh medical recovery evidence (C1, C2) against LSO doubt and unsatisfied treatment recommendation (C3, C5). Policy guidance favors restoration when sustained recovery is demonstrated (C4), but also allows denial or hold if 12‑month recommendation unmet (C7). Given that the 12‑month treatment recommendation has not yet been satisfied (LIVE-F4), and the LSO expresses substantial doubt (LIVE-F2), the precautionary consideration (C3, C5) should take precedence over the hopeful recovery signs (C1). However, the individual is in early remission with good prognosis and nine months of sobriety, suggesting progress toward compliance. Therefore, holding the decision pending additional evidence (LIVE-O3) aligns with policy (C5) and respects due process while not denying prematurely. This approach mirrors REF1-O1 (holding) when uncertainty exists about meeting a requirement."
+tradecraft: "Issue a hold with clear timeline and conditions: require verification that the 12‑month treatment recommendation will be satisfied, include periodic reporting (e.g., monthly PEth test results and psychologist update), and set a review date (e.g., 30 days from receipt of satisfactory evidence). Communicate the hold to the Individual and LSO, explaining basis and next steps."
+uncertainty: "Uncertainty is whether the 12‑month treatment recommendation will be completed within the expected timeframe and whether continued sobriety (PEth tests) indicates sustained recovery sufficient for eligibility under Guideline G. Evidence of ongoing therapy and AA meetings (through June 2026) suggests compliance effort but not yet completion."
+handoff: "The Administrative Judge decides to hold; no further action needed from LSO or psychologist at this stage beyond providing updated assessment when treatment progresses. The hold is an interim measure; restoration can be issued upon confirmation of eligibility."
+tempting_wrong: {option: LIVE-O1, pull: "Restore authorization because individual shows early remission and good prognosis; seems compassionate and efficient.", why_wrong: "Ignoring the LSO doubt and unsatisfied 12‑month recommendation risks authorizing access while eligibility criteria may not be met, potentially compromising security."}
+rejected: {LIVE-O2: "Denial is too harsh given progress and no indication of current intoxication or risk; hold balances caution with fairness.", LIVE-O1: "Restoration premature because treatment recommendation unsatisfied; policy guidance supports holding when uncertainty exists."}
+---
+kind: verdict
+choice: LIVE-O3
+course: "Hold the decision pending additional evidence regarding satisfaction of the 12‑month treatment recommendation and continued sobriety."
+relation: distinguished
+via: null
+decisive: [LIVE-C3, LIVE-C5]
+now:
+  - "Issue an interim hold on the Individual’s DOE access authorization, communicate the hold to the Individual and LSO, specify that restoration will be considered upon receipt of evidence confirming completion of the 12‑month treatment recommendation and continued negative PEth tests."
+  - "Set a review date 30 days from today (or upon receipt of satisfactory evidence), whichever is earlier, for reassessment."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The psychologist updates the assessment to confirm that the 12‑month treatment recommendation has been satisfied (e.g., completion of required sessions, stable sobriety for 12 months)", then: LIVE-O1, why: "If recommendation satisfied, eligibility likely met; restore authorization."}
+    - {id: LIVE-flip2, if: "LSO receives clear evidence of continued risk (e.g., positive PEth test or relapse)", then: LIVE-O2, why: "If risk indicates non‑eligibility, deny authorization."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The 12‑month recommendation remains unsatisfied and LSO continues to express substantial doubt", why: "Hold remains appropriate; denial premature."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Completion of 12‑month treatment recommendation or any positive PEth test", favors: [LIVE-O1], why: "Monitor for eligibility confirmation."}
+
+Now output the reasoning documents and verdict? The instruction says: "Before your next action, reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below." Then "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+But the verdict document is also one of the steps? In the format, after reasoning we have verdict. So we should output all documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict) as YAML separated by '---'. Then after that we should output  with the decision? Actually the instruction: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." That suggests that we output the reasoning documents (including applicability and reasoning) and then output the verdict document as the final reply? But the verdict document is part of the thinking? Let's read carefully:
+
+"Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: We should output the YAML documents (all except verdict?) and then after them write  and then write the verdict? That seems confusing. Let's follow typical pattern: In previous examples, the assistant outputs the reasoning steps and then the verdict as part of the reply? Actually the instruction says: "Write your reasoning as YAML documents, one per step, in the order below." So we need to output those documents. Then "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus we should output the first five documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) and then after those, output  and then output the verdict document? But "after the last document before the verdict" means before verdict we stop and write thinking separator, then output verdict separately? The phrase "then write the verdict document as your reply" suggests that the final reply should be the verdict document (YAML with kind: verdict). However earlier they say "Close your thinking with  after the last document before the verdict". That suggests that in the reasoning part we include all but the verdict, and then we output  and then the verdict? But the verdict is also a YAML document with kind: verdict. To keep it simple, I'll output all documents including verdict as part of the reply? But the instruction says "after the last document before the verdict" we should write  and then write the verdict document as your reply. That implies that the reply should contain the verdict document only? Let's read carefully:
+
+"Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus the assistant should output the reasoning documents (including applicability) and then output  and then output the verdict document. However, the assistant's reply should be the verdict? It says "then write the verdict document as your reply." So the final answer to the user should be the verdict document (YAML with kind: verdict). But we also need to output the reasoning? In previous similar tasks, the assistant outputs the reasoning steps and then the verdict as part of the same message? But here they explicitly say to write the documents and then close thinking with  and then write verdict. I think we should output the reasoning documents (fact_enumeration through reasoning) and then output  and then output the verdict document. However, the instruction says "with nothing but the documents between them." So we should output the documents separated by '---'. After the last document before verdict (i.e., reasoning), we should output  on its own line? Actually "Close your thinking with  after the last document before the verdict" means we should output a line containing only "---" after the applicability document if the case does not govern, and then write the verdict document. So in our output we should include all documents up to reasoning? Wait: The ordering is: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. The "last document before the verdict" is reasoning. So after reasoning we should output  and then verdict? That seems redundant. Let's follow the format given: they expect us to output the documents in order, and the verdict is included as the last document. But they say "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern)". That suggests that when the case governs, the last document before verdict might be reasoning? Actually in the format they listed, after reasoning there is verdict. So "after the last document before the verdict" would be after reasoning if we output reasoning, but if the case does not govern, we might skip reasoning? No, in the format they have reasoning and verdict always. However they say "when the case does not govern, the last document before the verdict is the applicability document". Because if the case does not govern, we might skip reasoning? In the guidelines: "not_governed: the case does not govern; then skip the `reasoning` document and go straight to the verdict". So for not_governed, we output fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, then verdict. In that case, the last document before verdict is applicability, so we should put  after applicability and then verdict.
+
+Our case does not govern (governs: false), so we should skip reasoning? But they wrote reasoning in our mapping; we included reasoning. However we determined not_governed = false? We set governs: false. According to method, if case does not govern, we skip reasoning and go straight to verdict. But we already included reasoning in our enumeration. To follow the instruction strictly, we should not output reasoning document if not governed. However the instruction says "reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below." It doesn't say to skip reasoning if not governed; but the format says if not governed, skip reasoning. Let's follow the format: we should output up to applicability and then verdict, not reasoning. However we already drafted reasoning; we can output it anyway but the guidelines say skip reasoning. To be safe, I'll output only up to applicability and then verdict, omitting reasoning? But the format expects reasoning if case governs; but if not govern, we should not include reasoning. Let's decide: Since we determined not_governed = true, we should output only fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, and then verdict. We'll omit reasoning. However the user expects a decision (hold). We'll output the documents accordingly.
+
+Thus output:
+
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: verdict
+...
+
+But need to include only those. Let's simplify: we'll output the five documents (fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability) and then verdict. However the format requires '---' between each document. We'll include them.
+
+Let's write them concisely.
+
+But note: we must not include extra commentary. We'll output YAML only.
+
+Now produce output.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the Individual’s DOE access authorization be restored, denied, or held pending additional evidence under Guideline G?"
+  decider: "The Administrative Judge, exercising authority under DOE security regulations, Guideline G."
+  my_role: "Decide grant/deny/hold based on eligibility; can issue interim holds, restore when eligibility confirmed, deny when eligibility not met. May hold decision pending additional evidence if eligibility uncertain."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "The Individual is a contractor employee currently holding a DOE access authorization."}
+  - {id: LIVE-F2, kind: authority, status: confirmed, fact: "Local Security Office (LSO) issued a Notification Letter expressing substantial doubt about eligibility under Guideline G."}
+  - {id: LIVE-F3, kind: medical, status: confirmed, fact: "DOE psychologist diagnosed Alcohol Use Disorder, Moderate, per DSM‑5‑TR criteria; individual in early remission with good prognosis."}
+  - {id: LIVE-F4, kind: treatment, status: confirmed, fact: "Treatment recommendation includes a 12‑month treatment horizon; psychologist note states the 12‑month treatment recommendation has not yet been satisfied."}
+  - {id: LIVE-F5, kind: testing, status: confirmed, fact: "Monthly PEth tests from September 2025 through June 2026 show negative results after September 2025 (105 ng/mL), indicating nine months of sobriety as of June 2026."}
+  - {id: LIVE-F6, kind: policy, status: assessed, fact: "Policy Memo – Access Restoration Guidance states restoration is appropriate when medical evidence demonstrates sustained recovery and compliance with treatment protocols."}
+  - {id: LIVE-F7, kind: policy, status: assessed, fact: "Policy Memo – Denial Considerations states denial may be warranted pending further evidence if the 12‑month treatment recommendation remains unmet."}
+options:
+  LIVE-O1: "Grant/restore the Individual’s access authorization."
+  LIVE-O2: "Deny the Individual’s access authorization."
+  LIVE-O3: "Hold the decision pending additional evidence."
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: "The two situations differ in domain (security access vs. military strike), but both involve evaluating evidence (intelligence vs. medical/treatment compliance), balancing authority, risk, and precautionary measures. The reference case weighs authority, intelligence of military function, precautionary timing against civilian risk. In the live case, we weigh medical evidence of recovery, LSO doubt, treatment recommendation status, testing results, and policy guidance."
+options:
+  LIVE-O1: REF1-O2
+  LIVE-O2: REF1-O3
+  LIVE-O3: REF1-O1
+matched: []
+corresponding: []
+live_only: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+case_only: [REF1-F1, REF1-F2, REF1-F3, REF1-F4, REF1-F5, REF1-F6, REF1-F7]
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F3, LIVE-F4], equity: duty_to_individual, favors: [LIVE-O1], weight: strong, why: "The psychologist notes early remission, good prognosis, and progress in treatment. This supports the individual's welfare and respects their rights."}
+  - {id: LIVE-C2, facts: [LIVE-F5], equity: source_protection, favors: [LIVE-O1], weight: medium, why: "Nine months of negative PEth tests demonstrate sustained sobriety, reducing risk to classified information and sources."}
+  - {id: LIVE-C3, facts: [LIVE-F2, LIVE-F4], equity: lawful_authority, favors: [LIVE-O3], weight: strong, why: "LSO expresses substantial doubt; the 12‑month treatment recommendation has not yet been satisfied. Denial or hold is prudent until compliance verified."}
+  - {id: LIVE-C4, facts: [LIVE-F6], equity: mission_effect, favors: [LIVE-O1], weight: medium, why: "Restoration guidance indicates appropriate action when sustained recovery is demonstrated; efficient use of contractor resources supports mission continuity."}
+  - {id: LIVE-C5, facts: [LIVE-F7], equity: due_process, favors: [LIVE-O3], weight: medium, why: "Policy allows holding decision pending additional evidence when eligibility under Guideline G is uncertain, ensuring fair review before denial."}
+  - {id: LIVE-C6, facts: [LIVE-F1], equity: institutional_credibility, favors: [LIVE-O3], weight: low, why: "Holding decision maintains consistency with prior practices when uncertainty exists."}
+---
+kind: consideration_mapping
+case: REF1
+matched: []
+corresponding: []
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6]
+case_only: [REF1-C1, REF1-C2, REF1-C3]
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: "The reference case deals with military targeting under LOAC and intelligence assessment; the live case deals with medical eligibility for DOE access under Guideline G. While both require weighing authority, evidence, and precaution, the equities and policy frameworks differ (civilian life, mission effect vs. medical recovery, substance testing). Thus the case does not govern the decision."
+---
+kind: verdict
+choice: LIVE-O3
+course: "Hold the decision pending additional evidence regarding satisfaction of the 12‑month treatment recommendation and continued sobriety."
+relation: distinguished
+via: null
+decisive: [LIVE-C3, LIVE-C5]
+now:
+  - "Issue an interim hold on the Individual’s DOE access authorization, communicate the hold to the Individual and LSO, specify that restoration will be considered upon receipt of evidence confirming completion of the 12‑month treatment recommendation and continued negative PEth tests."
+  - "Set a review date 30 days from today (or upon receipt of satisfactory evidence), whichever is earlier, for reassessment."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "The psychologist updates the assessment to confirm that the 12‑month treatment recommendation has been satisfied (e.g., completion of required sessions, stable sobriety for 12 months)", then: LIVE-O1, why: "If recommendation satisfied, eligibility likely met; restore authorization."}
+    - {id: LIVE-flip2, if: "LSO receives clear evidence of continued risk (e.g., positive PEth test or relapse)", then: LIVE-O2, why: "If risk indicates non‑eligibility, deny authorization."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "The 12‑month recommendation remains unsatisfied and LSO continues to express substantial doubt", why: "Hold remains appropriate; denial premature."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Completion of 12‑month treatment recommendation or any positive PEth test", favors: [LIVE-O1], why: "Monitor for eligibility confirmation."}

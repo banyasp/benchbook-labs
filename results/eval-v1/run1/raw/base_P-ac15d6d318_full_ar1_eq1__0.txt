@@ -1,0 +1,253 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the bomber strike the structure now or withhold the strike pending civilian presence verification?"
+  decider: "The ground force commander (you) with delegated authority to request verification and follow ROE/LOAC."
+  my_role: "You may request additional intel, direct air assets, and make the strike decision; you must verify civilian presence when feasible per ROE and LOAC; you must log actions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A formation of adult-sized figures (reported by B‑1B) is moving behind the enemy line toward a counter‑attack; the structure is identified as a mosque that also serves as a madrassa, barracks, and command hub for the Taliban."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "No confirmation has been received about civilians being inside the building; the B‑1B reported seeing the figures but did not confirm civilian presence."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "F‑16s are on standby for close air support; bomber (B‑1B) is available and can strike if threat assessment deems it necessary."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "HQ reminder: commander may order the bomber to withhold the strike until civilian presence is verified; ROE mandates verification of civilian presence when feasible."}
+  - {id: LIVE-F5, kind: operational, status: confirmed, fact: "Ground forces are under direct enemy fire; med‑evac chopper is queued; situation is fluid."}
+  - {id: LIVE-F6, kind: legal, status: assessed, fact: "Contingency plan permits holding fire pending further assessment when civilian presence cannot be confirmed; initial strike was deemed lawful under LOAC but later follow‑up strikes likely caused civilian harm."}
+options:
+  LIVE-O1: "Order the bomber to strike the structure now, given the perceived imminent counter‑attack by Taliban forces."
+  LIVE-O2: "Withhold the bomber strike pending further civilian presence verification (consistent with ROE, LOAC, and contingency plan)."
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No confirmed civilian presence inside the structure; striking without verification risks killing civilians (especially since the site functions as a mosque/madrassa), directly conflicting with civilian protection equity."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Taliban figures are moving toward a counter‑attack; ground forces are under fire; striking may prevent imminent enemy action and protect own forces."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: bar, why: "ROE and HQ reminder explicitly allow withholding strike until civilian verification; contingency plan supports holding fire when civilian presence cannot be confirmed. Using bomber without verification may violate LOAC and internal policy."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Each person inside cannot be assumed combatant; due process and individual rights favor verification before lethal action."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Situation is fluid; ground forces are under fire; striking quickly may reduce enemy pressure."}
+---
+kind: reasoning
+weighing: "The strongest considerations are civilian protection (LIVE-C1) and legal authority (LIVE-C3), both of which are bars (i.e., options that violate them are unacceptable). While own force safety (LIVE-C2) and tempo (LIVE-C5) favor striking, they are weaker because verification is feasible (ROE requires verification when feasible) and the intelligence lacks confirmation of civilians. The contingency plan explicitly permits holding fire. Therefore the lawful, ethical choice is to withhold the strike pending verification."
+tradecraft: "Request additional intelligence from the intelligence cell to verify civilian presence inside the structure (e.g., ground observation, local civilian reports, thermal/visual imagery). If verification cannot be completed within a short time (e.g., <15 minutes due to enemy movement), consider indirect means such as close air support to suppress enemy fire without striking the structure, or await higher HQ directive. Log the decision and reasoning. Do not order the bomber strike now."
+uncertainty: "Uncertainty lies in whether civilians are definitely inside the structure; the B‑1B observation did not confirm civilian presence. A rapid assessment (e.g., UAV visual/thermal scan, local civilian liaison) could resolve this within minutes. If verification confirms no civilians or only combatants, striking could be reconsidered."
+handoff: "You decide to withhold the strike and request verification; if verification confirms no civilians or only combatants inside, you may reconsider striking under ROE. Higher HQ retains final approval for strike if verification is inconclusive after reasonable effort."
+tempting_wrong: {option: LIVE-O2, pull: "Striking now seems quicker to stop the counter‑attack and protect own forces under pressure.", why_wrong: "Violates ROE requirement to verify civilian presence when feasible, risks civilian harm, contradicts contingency plan and HQ reminder; may constitute unlawful use of force under LOAC."}
+rejected: {LIVE-O2: "We reject withholding the strike as wrong."}  # Actually LIVE-O2 is the withhold option; we are rejecting LIVE-O1 (strike now). So: {LIVE-O1: "Why you set this option aside."} Let's correct: rejected should describe why LIVE-O1 is set aside.
+# Adjust: In reasoning block, rejected should explain why LIVE-O1 is rejected. So:
+rejected: {LIVE-O1: "Why you set this option aside."} Let's write properly.
+
+We need to output the reasoning YAML with rejected referring to LIVE-O1. Let's adjust:
+
+rejected: {LIVE-O1: "Why you set this option aside."} We'll write a sentence.
+
+But the template says:
+rejected: {LIVE-O2: "Why you set this option aside."} Actually in the template they wrote:
+
+rejected: {LIVE-O2: "Why you set this option aside."} but they defined tempting_wrong as {option: LIVE-O2, pull: "...", why_wrong: "..."} and then rejected: {LIVE-O2: "Why you set this option aside."}. It seems they want to reject the other option (LIVE-O2) if tempting_wrong is about LIVE-O2. But we should follow the pattern: we have two options, LIVE-O1 (strike) and LIVE-O2 (withhold). We have identified LIVE-O1 as tempting and wrong; so we reject LIVE-O1. So we set rejected: {LIVE-O1: "Why you set this option aside."}
+
+But the template says "rejected: {LIVE-O2: 'Why you set this option aside.'}" - that might be a placeholder. To be safe, we can follow the instruction: "rejected: {LIVE-O2: 'Why you set this option aside.'}" but that would reject LIVE-O2 which is the correct option. That would be wrong. Let's read carefully:
+
+In the template:
+
+tempting_wrong: {option: LIVE-O2, pull: "Why it tempts.", why_wrong: "Why it is wrong."}
+rejected: {LIVE-O2: "Why you set this option aside."}
+
+But they say "rejected: {LIVE-O2: 'Why you set this option aside.'}" which seems to indicate you reject LIVE-O2 if LIVE-O2 is the tempting wrong? That seems off. Actually they likely intend that you write why you reject the option that is not chosen (i.e., the alternative). In our case we will choose LIVE-O2 (withhold), so we reject LIVE-O1 (strike). However, to match the template, we should output rejected with the option we are rejecting (LIVE-O1). But the template says "rejected: {LIVE-O2: ...}". It might be that they want to specify the option you are rejecting (the one not chosen). Since they call it "rejected", it's ambiguous. To avoid confusion, I will output rejected as {LIVE-O1: "Why you set this option aside."} and note that in the reasoning we have "tempting_wrong: {option: LIVE-O1, pull: ..., why_wrong: ...}" if we consider LIVE-O1 as tempting. Let's re-evaluate: We think LIVE-O1 (strike now) is tempting and wrong. So we set tempting_wrong: {option: LIVE-O1, pull: "...", why_wrong: "..."} and rejected: {LIVE-O1: "..."} . But the template says "tempting_wrong: {option: LIVE-O2, pull: ...}" which suggests they assume LIVE-O2 is the tempting one. That might be because they think LIVE-O2 is withhold? Not necessarily. I think we should adapt: In our reasoning, we will state the tempting wrong option (LIVE-O1) and reject it. So we'll adjust the fields accordingly in our output? However, the instruction says "Write your reasoning as YAML documents, one per step, in the order below." and the format includes those fields exactly as shown. We must follow that format exactly as given? It says "Write real values: every '...' stands for a sentence you write". So we need to fill them with appropriate sentences. We can choose which option is LIVE-O1 and LIVE-O2 as defined in our fact_enumeration options (LIVE-O1 = strike now, LIVE-O2 = withhold). Then in reasoning we should set tempting_wrong to refer to LIVE-O1 (since it's tempting) and rejected to refer to LIVE-O1 (since we reject it). But the template says "tempting_wrong: {option: LIVE-O2, pull: ...}" which might be a placeholder we need to replace with the actual option that is tempting. However, the template is fixed; we must output exactly those keys: "tempting_wrong" with fields "option", "pull", "why_wrong"; and "rejected" with key LIVE-O2 (the option that is not chosen? Or the tempting one?). Actually reading: "tempting_wrong: {option: LIVE-O2, pull: \"Why it tempts.\", why_wrong: \"Why it is wrong.\"}" and "rejected: {LIVE-O2: \"Why you set this option aside.\"}". It seems they intend that LIVE-O2 is the tempting wrong option, and LIVE-O1 is the correct one. But we have defined LIVE-O1 as strike now and LIVE-O2 as withhold. So in our case, LIVE-O1 (strike) is tempting wrong, LIVE-O2 (withhold) is correct. That would mean we should set tempting_wrong: {option: LIVE-O1, pull: ..., why_wrong: ...} and rejected: {LIVE-O1: ...}. But the template says LIVE-O2 for both. To avoid breaking the format, perhaps we should follow the template exactly as written, but we can change the option id inside tempting_wrong? The instruction says "Write real values: every '...' stands for a sentence you write". It doesn't forbid changing the option id? The template includes "option: LIVE-O2" literally? It says "{option: LIVE-O2, pull: \"Why it tempts.\", why_wrong: \"Why it is wrong.\"}" but we should replace LIVE-O2 with the actual option id that is tempting? I think we should interpret "LIVE-O2" in the template as a placeholder for the option that is tempting (i.e., the option you might be tempted to choose but is wrong). Since we are free to define LIVE-O1 and LIVE-O2, we should set the templated fields accordingly. However, the harness likely expects the exact keys "tempting_wrong" with subkeys "option", "pull", "why_wrong", and "rejected" with key LIVE-O2. But LIVE-O2 is one of our options. To be safe, we will follow the pattern: set tempting_wrong.option to LIVE-O1 (since that's the tempting wrong), and rejected.LIVE-O1 to a sentence. But the template says "rejected: {LIVE-O2: ...}". I'll stick to the template as written but adjust the sentence; i.e., I'll output:
+
+tempting_wrong:
+  option: LIVE-O1
+  pull: "Striking now seems quicker to stop the counter‑attack and protect own forces under pressure."
+  why_wrong: "Violates ROE requirement to verify civilian presence when feasible, risks civilian harm, contradicts contingency plan and HQ reminder; may constitute unlawful use of force under LOAC."
+
+rejected:
+  LIVE-O1: "Why you set this option aside."
+
+But the template says "rejected: {LIVE-O2: ...}". However, I think it's okay because we are writing real values; we can choose which option to reject. The evaluation might check that we include both fields. I'll output as described.
+
+Let's construct the reasoning YAML accordingly.
+
+We'll write:
+
+reasoning:
+  weighing: "The strongest considerations are civilian protection (LIVE-C1) and legal authority (LIVE-C3), both of which are bars (i.e., options that violate them are unacceptable). While own force safety (LIVE-C2) and tempo (LIVE-C5) favor striking, they are weaker because verification is feasible (ROE requires verification when feasible) and the intelligence lacks confirmation of civilians. The contingency plan explicitly permits holding fire. Therefore the lawful, ethical choice is to withhold the strike pending verification."
+  tradecraft: "Request additional intelligence from the intelligence cell to verify civilian presence inside the structure (e.g., ground observation, local civilian reports, thermal/visual imagery). If verification cannot be completed within a short time (e.g., <15 minutes due to enemy movement), consider indirect means such as close air support to suppress enemy fire without striking the structure, or await higher HQ directive. Log the decision and reasoning. Do not order the bomber strike now."
+  uncertainty: "Uncertainty lies in whether civilians are definitely inside the structure; the B‑1B observation did not confirm civilian presence. A rapid assessment (e.g., UAV visual/thermal scan, local civilian liaison) could resolve this within minutes. If verification confirms no civilians or only combatants, striking could be reconsidered."
+  handoff: "You decide to withhold the strike and request verification; if verification confirms no civilians or only combatants inside, you may reconsider striking under ROE. Higher HQ retains final approval for strike if verification is inconclusive after reasonable effort."
+  tempting_wrong:
+    option: LIVE-O1
+    pull: "Striking now seems quicker to stop the counter‑attack and protect own forces under pressure."
+    why_wrong: "Violates ROE requirement to verify civilian presence when feasible, risks civilian harm, contradicts contingency plan and HQ reminder; may constitute unlawful use of force under LOAC."
+  rejected:
+    LIVE-O1: "Given the lack of confirmed civilian presence and the explicit ROE/contingency guidance to verify when feasible, ordering a strike now would likely cause civilian harm and breach legal and policy obligations."
+
+Now proceed to verdict.
+
+verdict:
+  choice: LIVE-O2
+  course: "Withhold the bomber strike pending civilian presence verification; request additional intel from the intelligence cell to assess whether civilians are inside the structure."
+  decisive: [LIVE-C1]
+  now:
+    - "Request intelligence cell for visual/thermal UAV scan or local civilian liaison to confirm civilian presence inside the mosque/madrassa structure within the next few minutes."
+  flip_conditions:
+    would_change:
+      - {id: LIVE-flip1, if: "If a rapid verification (e.g., UAV visual/thermal scan) confirms no civilians or only combatants inside the structure within 10 minutes.", then: LIVE-O1, why: "If verification shows no civilians, the strike could be reconsidered under ROE."}
+    would_not_change:
+      - {id: LIVE-noflip1, if: "If verification confirms civilians are inside or cannot be completed within a reasonable time due to ongoing enemy movement.", then: LIVE-O2, why: "Civilian presence confirmed or unverifiable keeps the strike withheld."}
+    watch_for:
+      - {id: LIVE-watch1, what: "Arrival of enemy forces or movement of figures toward the structure indicating imminent counter‑attack.", favors: [LIVE-O1], why: "If enemy massing accelerates and civilian verification remains uncertain, consider indirect suppression (e.g., close air support) rather than striking the structure."}
+
+Now output the documents in order: fact_enumeration, consideration_enumeration, reasoning, verdict.
+
+We must output only the YAML documents with proper separation by "---". No extra text. After the last document, we write "</think>". Let's construct each YAML carefully.
+
+First document:
+
+kind: fact_enumeration
+frame:
+  question: "Should the bomber strike the structure now or withhold the strike pending civilian presence verification?"
+  decider: "The ground force commander (you) with delegated authority to request verification and follow ROE/LOAC."
+  my_role: "You may request additional intel, direct air assets, and make the strike decision; you must verify civilian presence when feasible per ROE and LOAC; you must log actions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "One fact from the trace, in your own words."} Wait we need to write a fact in own words. Let's write concise facts:
+
+- {id: LIVE-F1, kind: situation, status: confirmed, fact: "A formation of adult-sized figures reported by B‑1B is moving behind enemy lines toward a counter‑attack."}
+- {id: LIVE-F2, kind: intelligence, status: assessed, fact: "No confirmed civilian presence inside the mosque/madrassa structure; intelligence only reports figures."}
+- {id: LIVE-F3, kind: capability, status: confirmed, fact: "F‑16s are on standby for close air support; bomber (B‑1B) is available."}
+- {id: LIVE-F4, kind: authority, status: confirmed, fact: "HQ reminder permits withholding the strike until civilian presence is verified; ROE requires verification when feasible."}
+- {id: LIVE-F5, kind: operational, status: confirmed, fact: "Ground forces are under direct enemy fire; med‑evac chopper is queued; situation is fluid."}
+- {id: LIVE-F6, kind: legal, status: assessed, fact: "Contingency plan permits holding fire when civilian presence cannot be confirmed; initial strike was deemed lawful but later strikes likely caused civilian harm."}
+
+But we must ensure each fact is in "your own words". Let's write them clearly.
+
+Now options:
+
+options:
+  LIVE-O1: "Order the bomber to strike the structure now, given the perceived imminent counter‑attack by Taliban forces."
+  LIVE-O2: "Withhold the bomber strike pending further civilian presence verification (consistent with ROE, LOAC, and contingency plan)."
+
+Now second document:
+
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No confirmed civilian presence inside the structure; striking without verification risks killing civilians, especially since the site functions as a mosque/madrassa."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Taliban figures are moving toward a counter‑attack; ground forces are under fire; striking may prevent imminent enemy action and protect own forces."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: bar, why: "ROE and HQ reminder explicitly allow withholding strike until civilian verification; contingency plan supports holding fire when civilian presence cannot be confirmed."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Each person inside cannot be assumed combatant; due process and individual rights favor verification before lethal action."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Situation is fluid; striking quickly may reduce enemy pressure."}
+
+Third document: reasoning as above.
+
+Fourth document: verdict.
+
+Now output with "---" between.
+
+Let's write each YAML precisely.
+
+We must ensure YAML syntax is correct. Use proper indentation? The format doesn't specify indentation style, but we can use simple style with dashes for lists. We'll output as plain YAML blocks.
+
+I'll write:
+
+kind: fact_enumeration
+frame:
+  question: "Should the bomber strike the structure now or withhold the strike pending civilian presence verification?"
+  decider: "The ground force commander (you) with delegated authority to request verification and follow ROE/LOAC."
+  my_role: "You may request additional intel, direct air assets, and make the strike decision; you must verify civilian presence when feasible per ROE and LOAC; you must log actions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A formation of adult-sized figures reported by B‑1B is moving behind enemy lines toward a counter‑attack."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "No confirmed civilian presence inside the mosque/madrassa structure; intelligence only reports figures."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "F‑16s are on standby for close air support; bomber (B‑1B) is available."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "HQ reminder permits withholding the strike until civilian presence is verified; ROE requires verification when feasible."}
+  - {id: LIVE-F5, kind: operational, status: confirmed, fact: "Ground forces are under direct enemy fire; med‑evac chopper is queued; situation is fluid."}
+  - {id: LIVE-F6, kind: legal, status: assessed, fact: "Contingency plan permits holding fire when civilian presence cannot be confirmed; initial strike was deemed lawful but later strikes likely caused civilian harm."}
+options:
+  LIVE-O1: "Order the bomber to strike the structure now, given the perceived imminent counter‑attack by Taliban forces."
+  LIVE-O2: "Withhold the bomber strike pending further civilian presence verification (consistent with ROE, LOAC, and contingency plan)."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No confirmed civilian presence inside the structure; striking without verification risks killing civilians, especially since the site functions as a mosque/madrassa."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Taliban figures are moving toward a counter‑attack; ground forces are under fire; striking may prevent imminent enemy action and protect own forces."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: bar, why: "ROE and HQ reminder explicitly allow withholding strike until civilian verification; contingency plan supports holding fire when civilian presence cannot be confirmed."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Each person inside cannot be assumed combatant; due process and individual rights favor verification before lethal action."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Situation is fluid; striking quickly may reduce enemy pressure."}
+
+---
+kind: reasoning
+weighing: "The strongest considerations are civilian protection (LIVE-C1) and legal authority (LIVE-C3), both of which are bars (i.e., options that violate them are unacceptable). While own force safety (LIVE-C2) and tempo (LIVE-C5) favor striking, they are weaker because verification is feasible (ROE requires verification when feasible) and the intelligence lacks confirmation of civilians. The contingency plan explicitly permits holding fire. Therefore the lawful, ethical choice is to withhold the strike pending verification."
+tradecraft: "Request additional intelligence from the intelligence cell to verify civilian presence inside the structure (e.g., ground observation, local civilian reports, thermal/visual imagery). If verification cannot be completed within a short time (e.g., <15 minutes due to enemy movement), consider indirect means such as close air support to suppress enemy fire without striking the structure, or await higher HQ directive. Log the decision and reasoning. Do not order the bomber strike now."
+uncertainty: "Uncertainty lies in whether civilians are definitely inside the structure; the B‑1B observation did not confirm civilian presence. A rapid assessment (e.g., UAV visual/thermal scan, local civilian liaison) could resolve this within minutes. If verification confirms no civilians or only combatants, striking could be reconsidered."
+handoff: "You decide to withhold the strike and request verification; if verification confirms no civilians or only combatants inside, you may reconsider striking under ROE. Higher HQ retains final approval for strike if verification is inconclusive after reasonable effort."
+tempting_wrong:
+  option: LIVE-O1
+  pull: "Striking now seems quicker to stop the counter‑attack and protect own forces under pressure."
+  why_wrong: "Violates ROE requirement to verify civilian presence when feasible, risks civilian harm, contradicts contingency plan and HQ reminder; may constitute unlawful use of force under LOAC."
+rejected:
+  LIVE-O1: "Given the lack of confirmed civilian presence and the explicit ROE/contingency guidance to verify when feasible, ordering a strike now would likely cause civilian harm and breach legal and policy obligations."
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Withhold the bomber strike pending civilian presence verification; request additional intel from the intelligence cell to assess whether civilians are inside the mosque/madrassa structure."
+decisive: [LIVE-C1]
+now:
+  - "Request intelligence cell for visual/thermal UAV scan or local civilian liaison to confirm civilian presence inside the structure within the next few minutes."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If a rapid verification (e.g., UAV visual/thermal scan) confirms no civilians or only combatants inside the structure within 10 minutes.", then: LIVE-O1, why: "If verification shows no civilians, the strike could be reconsidered under ROE."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If verification confirms civilians are inside or cannot be completed within a reasonable time due to ongoing enemy movement.", then: LIVE-O2, why: "Civilian presence confirmed or unverifiable keeps the strike withheld."}
+  watch_for:
+    - {id: LIVE-watch1, what: "Arrival of enemy forces or movement of figures toward the structure indicating imminent counter‑attack.", favors: [LIVE-O1], why: "If enemy massing accelerates and civilian verification remains uncertain, consider indirect suppression (e.g., close air support) rather than striking the structure."}
+
+Now after the last document we write "</think>". Ensure no extra text.
+
+Let's output exactly that.
+</think>
+kind: fact_enumeration
+frame:
+  question: "Should the bomber strike the structure now or withhold the strike pending civilian presence verification?"
+  decider: "The ground force commander (you) with delegated authority to request verification and follow ROE/LOAC."
+  my_role: "You may request additional intel, direct air assets, and make the strike decision; you must verify civilian presence when feasible per ROE and LOAC; you must log actions."
+facts:
+  - {id: LIVE-F1, kind: situation, status: confirmed, fact: "A formation of adult-sized figures reported by B‑1B is moving behind enemy lines toward a counter‑attack."}
+  - {id: LIVE-F2, kind: intelligence, status: assessed, fact: "No confirmed civilian presence inside the mosque/madrassa structure; intelligence only reports figures."}
+  - {id: LIVE-F3, kind: capability, status: confirmed, fact: "F‑16s are on standby for close air support; bomber (B‑1B) is available."}
+  - {id: LIVE-F4, kind: authority, status: confirmed, fact: "HQ reminder permits withholding the strike until civilian presence is verified; ROE requires verification when feasible."}
+  - {id: LIVE-F5, kind: operational, status: confirmed, fact: "Ground forces are under direct enemy fire; med‑evac chopper is queued; situation is fluid."}
+  - {id: LIVE-F6, kind: legal, status: assessed, fact: "Contingency plan permits holding fire when civilian presence cannot be confirmed; initial strike was deemed lawful but later strikes likely caused civilian harm."}
+options:
+  LIVE-O1: "Order the bomber to strike the structure now, given the perceived imminent counter‑attack by Taliban forces."
+  LIVE-O2: "Withhold the bomber strike pending further civilian presence verification (consistent with ROE, LOAC, and contingency plan)."
+
+---
+kind: consideration_enumeration
+considerations:
+  - {id: LIVE-C1, facts: [LIVE-F1, LIVE-F2], equity: civilian_life, favors: [LIVE-O2], weight: strong, why: "No confirmed civilian presence inside the structure; striking without verification risks killing civilians, especially since the site functions as a mosque/madrassa."}
+  - {id: LIVE-C2, facts: [LIVE-F1, LIVE-F3, LIVE-F5], equity: own_force_life, favors: [LIVE-O1], weight: strong, why: "Taliban figures are moving toward a counter‑attack; ground forces are under fire; striking may prevent imminent enemy action and protect own forces."}
+  - {id: LIVE-C3, facts: [LIVE-F4, LIVE-F6], equity: lawful_authority, favors: [LIVE-O2], weight: bar, why: "ROE and HQ reminder explicitly allow withholding strike until civilian verification; contingency plan supports holding fire when civilian presence cannot be confirmed."}
+  - {id: LIVE-C4, facts: [LIVE-F1, LIVE-F2], equity: duty_to_individual, favors: [LIVE-O2], weight: weak, why: "Each person inside cannot be assumed combatant; due process and individual rights favor verification before lethal action."}
+  - {id: LIVE-C5, facts: [LIVE-F5], equity: tempo, favors: [LIVE-O1], weight: weak, why: "Situation is fluid; striking quickly may reduce enemy pressure."}
+
+---
+kind: reasoning
+weighing: "The strongest considerations are civilian protection (LIVE-C1) and legal authority (LIVE-C3), both of which are bars (i.e., options that violate them are unacceptable). While own force safety (LIVE-C2) and tempo (LIVE-C5) favor striking, they are weaker because verification is feasible (ROE requires verification when feasible) and the intelligence lacks confirmation of civilians. The contingency plan explicitly permits holding fire. Therefore the lawful, ethical choice is to withhold the strike pending verification."
+tradecraft: "Request additional intelligence from the intelligence cell to verify civilian presence inside the structure (e.g., ground observation, local civilian reports, thermal/visual imagery). If verification cannot be completed within a short time (e.g., <15 minutes due to enemy movement), consider indirect means such as close air support to suppress enemy fire without striking the structure, or await higher HQ directive. Log the decision and reasoning. Do not order the bomber strike now."
+uncertainty: "Uncertainty lies in whether civilians are definitely inside the structure; the B‑1B observation did not confirm civilian presence. A rapid assessment (e.g., UAV visual/thermal scan, local civilian liaison) could resolve this within minutes. If verification confirms no civilians or only combatants, striking could be reconsidered."
+handoff: "You decide to withhold the strike and request verification; if verification confirms no civilians or only combatants inside, you may reconsider striking under ROE. Higher HQ retains final approval for strike if verification is inconclusive after reasonable effort."
+tempting_wrong:
+  option: LIVE-O1
+  pull: "Striking now seems quicker to stop the counter‑attack and protect own forces under pressure."
+  why_wrong: "Violates ROE requirement to verify civilian presence when feasible, risks civilian harm, contradicts contingency plan and HQ reminder; may constitute unlawful use of force under LOAC."
+rejected:
+  LIVE-O1: "Given the lack of confirmed civilian presence and the explicit ROE/contingency guidance to verify when feasible, ordering a strike now would likely cause civilian harm and breach legal and policy obligations."
+
+---
+kind: verdict
+choice: LIVE-O2
+course: "Withhold the bomber strike pending civilian presence verification; request additional intel from the intelligence cell to assess whether civilians are inside the mosque/madrassa structure."
+decisive: [LIVE-C1]
+now:
+  - "Request intelligence cell for visual/thermal UAV scan or local civilian liaison to confirm civilian presence inside the structure within the next few minutes."
+flip_conditions:
+  would_change:
+    - {id: LIVE-flip1, if: "If a rapid verification (e.g., UAV visual/thermal scan) confirms no civilians or only combatants inside the structure within 10 minutes.", then: LIVE-O1, why: "If verification shows no civilians, the strike could be reconsidered under ROE."}
+  would_not_change:
+    - {id: LIVE-noflip1, if: "If verification confirms civilians are inside or cannot
