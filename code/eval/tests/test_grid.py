@@ -165,3 +165,8 @@ def test_legacy_augmented_arm_loads_as_revised(tmp_path):
     with pytest.raises(ValueError):
         LiveScenario.model_validate({"id": "X", "family": "X", "trace": "t", "equities": "p", "perturbation": {"variant": "r", "source_case": "DR-X@v1"},
                                      "arms": {"augmented": {"served": ["DR-X@v1"], "key": "k"}, "revised": {"served": ["DR-X@v1"], "key": "k"}}})
+
+
+def test_grid_records_keep_augmented():
+    r = canon_record({"arm": "augmented", "cell": "core", "sample_id": "x|0"})
+    assert r["arm"] == "augmented"

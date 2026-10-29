@@ -179,8 +179,9 @@ def read_samples(path) -> list[dict]:
 
 
 def canon_record(r: dict) -> dict:
-    """Old Checkpoint 2 results used arm `augmented` for the revised card: load them as `revised`."""
-    if r.get("arm") in LEGACY_ARMS:
+    """Old Checkpoint 2 results used arm `augmented` for the revised card: load them as `revised`. Only legacy records
+    (no `cell`): in eval.grid records (v2.4) `augmented` is its own arm, the PDF flip arm, and must stay apart."""
+    if r.get("arm") in LEGACY_ARMS and "cell" not in r:
         r = {**r, "arm": LEGACY_ARMS[r["arm"]]}
         if isinstance(r.get("item_id"), str):
             r["item_id"] = r["item_id"].replace("|augmented|", "|revised|")

@@ -29,7 +29,8 @@ Four curves: base + none, base + relevant, SFT + none, SFT + relevant. AR prompt
 |---|---|
 | none | 38% [21-55] (n=48) |
 | relevant | 53% [36-70] (n=30) |
-| revised | 53% [36-71] (n=15) |
+| augmented | 17% [0-50] (n=6) |
+| revised | 78% [44-100] (n=9) |
 | decoy | 32% [15-52] (n=28) |
 | self | 59% [36-80] (n=17) |
 
@@ -40,7 +41,8 @@ A parsed choice that aligns to no gold option (counted wrong in every accuracy).
 |---|---|
 | none | 15% (n=48) |
 | relevant | 17% (n=30) |
-| revised | 7% (n=15) |
+| augmented | 17% (n=6) |
+| revised | 0% (n=9) |
 | decoy | 14% (n=28) |
 | self | 18% (n=17) |
 
@@ -50,7 +52,8 @@ A parsed choice that aligns to no gold option (counted wrong in every accuracy).
 |---|---|---|---|---|---|
 | none | 48 | n/a | 6% | 92% | 90% |
 | relevant | 30 | 63% | 3% | 97% | 97% |
-| revised | 15 | 60% | 20% | 60% | 60% |
+| augmented | 6 | 0% | 0% | 100% | 100% |
+| revised | 9 | 100% | 33% | 33% | 33% |
 | decoy | 28 | 0% | 14% | 79% | 71% |
 | self | 17 | 100% | 12% | 82% | 76% |
 
@@ -70,7 +73,8 @@ Majority disposition is leave-one-out inside each domain over the eval pairs sho
 |---|---|
 | none | 38% [21-55] (n=48) / 58% [37-76] (n=31) |
 | relevant | 53% [36-70] (n=30) / 64% [46-78] (n=25) |
-| revised | 53% [36-71] (n=15) / 57% [40-77] (n=14) |
+| augmented | 17% [0-50] (n=6) / 20% [0-60] (n=5) |
+| revised | 78% [44-100] (n=9) / 78% [44-100] (n=9) |
 | decoy | 32% [15-52] (n=28) / 56% [28-86] (n=16) |
 | self | 59% [36-80] (n=17) / 77% [55-93] (n=13) |
 
@@ -95,7 +99,8 @@ Negative = decoys mislead.
 |---|---|---|---|
 | base | none | 4% (n=48) | 10% (n=48) |
 | base | relevant | 3% (n=30) | 0% (n=30) |
-| base | revised | 20% (n=15) | 20% (n=15) |
+| base | augmented | 33% (n=6) | 0% (n=6) |
+| base | revised | 11% (n=9) | 33% (n=9) |
 | base | decoy | 4% (n=28) | 4% (n=28) |
 | base | self | 0% (n=17) | 12% (n=17) |
 
@@ -113,9 +118,10 @@ Incorrect irreversible = a wrong choice whose option is tagged irreversible (bac
 
 | arm | base |
 |---|---|
+| augmented | 17% [0-50] (n=6) |
 | decoy | 32% [15-52] (n=28) |
 | relevant | 53% [36-70] (n=30) |
-| revised | 53% [36-71] (n=15) |
+| revised | 78% [44-100] (n=9) |
 
 ### by intent
 
@@ -175,7 +181,8 @@ Incorrect irreversible = a wrong choice whose option is tagged irreversible (bac
 |---|---|
 | none | 50% [34-65] (n=52) |
 | relevant | 56% [45-66] (n=36) |
-| revised | 48% [29-64] (n=25) |
+| augmented | 33% [9-55] (n=12) |
+| revised | 62% [33-85] (n=13) |
 | decoy | 40% [14-67] (n=25) |
 | self | 81% [60-100] (n=16) |
 
