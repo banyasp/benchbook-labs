@@ -196,3 +196,23 @@ def test_trailing_comma_list_item_repaired():
     v = body(REPLY).split("\n---\n")[-1].replace('nothing about how we know."', 'nothing about how we know.",')
     p = parse_reply(v)
     assert "verdict" in p.models and any("trailing comma" in r for r in p.repairs["verdict"])
+
+
+def test_repairs_colon_values_and_col0_options():
+    from bench.schema import parse_reply
+    t = ("<think>\nkind: fact_enumeration\nframe:\n  question: Should I?\n  decider: Me.\n  my_role: Decide.\nfacts:\n"
+         "- id: LIVE-F1\n  kind: intelligence\n  status: assessed\n  fact: Intelligence update: the TEA has\n    new reports.\n"
+         "options:\nLIVE-O1: Do it.\nLIVE-O2: Do not.\n")
+    p = parse_reply(t)
+    fe = p.steps["fact_enumeration"]
+    assert fe["facts"][0]["fact"] == "Intelligence update: the TEA has new reports."
+    assert fe["options"] == {"LIVE-O1": "Do it.", "LIVE-O2": "Do not."}
+    assert set(p.repairs["fact_enumeration"]) == {"quoted plain values containing ': '", "folded top-level option ids into options"}
+
+
+def test_repairs_case_shaped_options():
+    from bench.schema import parse_reply
+    t = ("kind: fact_enumeration\nframe:\n  question: Q?\n  decider: D.\n  my_role: R.\nfacts: []\n"
+         "options:\nLIVE-O1:\n  do: Continue.\nLIVE-O2:\n  do: Recuse.\n")
+    fe = parse_reply(t).steps["fact_enumeration"]
+    assert fe["options"] == {"LIVE-O1": "Continue.", "LIVE-O2": "Recuse."}

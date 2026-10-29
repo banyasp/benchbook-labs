@@ -1,0 +1,413 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Depart now to leave Marine 1 ashore or hold offshore to attempt rescue?
+  decider: commander aboard the vessel
+  my_role: execute commander's order; no authority to deviate from his directive or hand off decision
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Landing party is back aboard except Marine 1, who is still on shore
+- id: LIVE-F2
+  kind: situation
+  status: confirmed
+  fact: Marine 1 reported twenty minutes ago that he is badly wounded and pinned down near the beach exit
+- id: LIVE-F3
+  kind: intelligence
+  status: assessed
+  fact: Party lead believes the chance of reaching him is low
+- id: LIVE-F4
+  kind: situation
+  status: assessed
+  fact: Hostile fast craft are closing in
+- id: LIVE-F5
+  kind: intelligence
+  status: assessed
+  fact: Watch estimates vessel will likely be captured if it holds more than a few minutes
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: Aboard is the fleet's command-and-control module
+- id: LIVE-F7
+  kind: capability
+  status: assessed
+  fact: If captured intact, module would let enemy read fleet's tactical network and issue orders for about three days
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: Twenty-three ships and roughly 1,900 sailors operate on that network
+- id: LIVE-F9
+  kind: capability
+  status: confirmed
+  fact: Module cannot be wiped or destroyed in the time we have left
+- id: LIVE-F10
+  kind: intelligence
+  status: assessed
+  fact: Extraction boat is still in water; sea state moderate, deck lights flashing for night ops
+options:
+  LIVE-O1: Depart now and report Marine 1's last known position (consistent with REF1-O1)
+  LIVE-O2: Hold offshore until Marine 1 is recovered or confirmed lost (consistent with REF1-O2)
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: Both are patrol vessels extracting a landing party with one crew member left ashore; both have the fleet C2 module aboard;
+  both face closing hostile fast craft. LIVE-F2 corresponds to REF1-F2 (wounded crew member), LIVE-F5 corresponds to REF1-F6
+  (likely capture if waiting), LIVE-F6-F9 correspond to REF1-F7-F9, LIVE-F4 corresponds to REF1-F5.
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F5
+  case: REF1-F6
+- live: LIVE-F6
+  case: REF1-F7
+- live: LIVE-F7
+  case: REF1-F8
+- live: LIVE-F8
+  case: REF1-F9
+corresponding:
+- live: LIVE-F3
+  case: REF1-F4
+  note: LIVE-F3 is a belief about low chance; REF1-F4 is an assessment that crew member unlikely to survive or be reached
+- live: LIVE-F4
+  case: REF1-F5
+  note: FAST craft closing; REF1-F5 mentions closing hostile fast craft
+live_only:
+- LIVE-F10
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Waiting more than a few minutes risks vessel capture; captured C2 module would expose ~1,900 sailors for up to three days
+- id: LIVE-C2
+  facts:
+  - LIVE-F6
+  - LIVE-F9
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Module cannot be wiped or destroyed in time; leaving is only protection left for fleet crews
+- id: LIVE-C3
+  facts:
+  - LIVE-F2
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Vessel owes Marine 1 recovery; his last report says pinned down
+- id: LIVE-C4
+  facts:
+  - LIVE-F3
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Party lead believes chance of reaching him is low, but still not certain; duty may require effort to rescue if possible
+- id: LIVE-C5
+  facts:
+  - LIVE-F10
+  equity: humanitarian_access
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Extraction boat still in water; could attempt rescue if fast craft delay
+- id: LIVE-C6
+  facts:
+  - LIVE-F4
+  equity: hors_de_combat
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Hostile fast craft closing; holding would increase danger to combatants aboard and ashore
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Fleet safety if waiting leads to capture
+- live: LIVE-C2
+  case: REF1-C2
+  role: Waiting makes capture likely; leaving prevents it
+- live: LIVE-C3
+  case: REF1-C3
+  role: Module protection vs personal duty
+- live: LIVE-C4
+  case: REF1-C4
+  role: Duty to individual crew member
+corresponding:
+- live: LIVE-C5
+  case: REF1-C2
+  note: Extraction boat could attempt rescue; case mentions no such asset
+live_only:
+- LIVE-C5
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The same considerations are in play: duty to individual crew member vs fleet safety given likely capture of vessel; module
+  protects ~1,900 sailors for three days; chance of saving Marine 1 is low but not certain; key difference: LIVE-F10
+  mentions extraction boat in water, giving possible rescue window (weak consideration LIVE-C5), while REF1 had no such asset
+---
+kind: reasoning
+case: REF1
+case_approach: 'Weigh REF1-C1, REF1-C2, REF1-C3 (fleet safety) first, because leaving is the only protection left if waiting
+  leads to capture; then consider REF1-C4 (duty to individual) second, against that priority.'
+weighing: LIVE-C1 and LIVE-C2 together strongly favor departure because waiting risks capture and exposure of many sailors.
+  LIVE-C3 (duty to Marine 1) is strong but the party lead already judges rescue unlikely. LIVE-C4 (low chance of saving) supports
+  holding but does not outweigh fleet safety given likely capture. LIVE-C5 (extraction boat could help) is weak because fast
+  craft are closing and sea state moderate; no guarantee rescue before capture. Thus departure remains the only protection.
+  The decision aligns with REF1's recommendation.
+tradecraft: Depart immediately within the capture estimate timeframe; report Marine 1's last position and decision rationale.
+  Begin extraction boat sortie if safe; continue monitoring fast craft. Do not linger; keep to departure time.
+uncertainty: Amort whether capture is likely within minutes given fast craft speed and sea state; whether extraction boat could
+  reach Marine 1 before capture. If capture unlikely, duty to individual might override, but current assessment favours departure.
+handoff: Commander owns the final call; agent executes it.
+tempting_wrong:
+  option: LIVE-O2
+  pull: "Never leave anyone behind; Marine 1 needs us."
+  why_wrong: Waiting risks vessel capture and exposure of ~1,900 sailors for up to three days; only leaving guarantees their safety
+rejected:
+  LIVE-O2: Holding would likely lead to capture and endanger many sailors; duty to individual is important but fleet safety
+    takes priority given likely capture and no guaranteed rescue.
+---
+kind: verdict
+choice: LIVE-O1
+course: Depart now to leave Marine 1 ashore and report his last known position
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Set departure time based on capture estimate (≈few minutes). Notify crew, initiate extraction boat sortie if safe, begin navigation away
+- Log decision with reasons and timestamps
+- Monitor fast craft vectors; update comms as needed
+
+Now I will output the YAML documents as required.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: Depart now to leave Marine 1 ashore or hold offshore to attempt rescue?
+  decider: commander aboard the vessel
+  my_role: execute commander's order; no authority to deviate from his directive or hand off decision
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Landing party is back aboard except Marine 1, who is still on shore
+- id: LIVE-F2
+  kind: situation
+  status: confirmed
+  fact: Marine 1 reported twenty minutes ago that he is badly wounded and pinned down near the beach exit
+- id: LIVE-F3
+  kind: intelligence
+  status: assessed
+  fact: Party lead believes the chance of reaching him is low
+- id: LIVE-F4
+  kind: situation
+  status: assessed
+  fact: Hostile fast craft are closing in
+- id: LIVE-F5
+  kind: intelligence
+  status: assessed
+  fact: Watch estimates vessel will likely be captured if it holds more than a few minutes
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: Aboard is the fleet's command-and-control module
+- id: LIVE-F7
+  kind: capability
+  status: assessed
+  fact: If captured intact, module would let enemy read fleet's tactical network and issue orders for about three days
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: Twenty-three ships and roughly 1,900 sailors operate on that network
+- id: LIVE-F9
+  kind: capability
+  status: confirmed
+  fact: Module cannot be wiped or destroyed in the time we have left
+- id: LIVE-F10
+  kind: intelligence
+  status: assessed
+  fact: Extraction boat is still in water; sea state moderate, deck lights flashing for night ops
+options:
+  LIVE-O1: Depart now and report Marine 1's last known position (consistent with REF1-O1)
+  LIVE-O2: Hold offshore until Marine 1 is recovered or confirmed lost (consistent with REF1-O2)
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: Both are patrol vessels extracting a landing party with one crew member left ashore; both have the fleet C2 module aboard;
+  both face closing hostile fast craft. LIVE-F2 corresponds to REF1-F2 (wounded crew member), LIVE-F5 corresponds to REF1-F6
+  (likely capture if waiting), LIVE-F6-F9 correspond to REF1-F7-F9, LIVE-F4 corresponds to REF1-F5.
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F5
+  case: REF1-F6
+- live: LIVE-F6
+  case: REF1-F7
+- live: LIVE-F7
+  case: REF1-F8
+- live: LIVE-F8
+  case: REF1-F9
+corresponding:
+- live: LIVE-F3
+  case: REF1-F4
+  note: LIVE-F3 is a belief about low chance; REF1-F4 is an assessment that crew member unlikely to survive or be reached
+- live: LIVE-F4
+  case: REF1-F5
+  note: FAST craft closing; REF1-F5 mentions closing hostile fast craft
+live_only:
+- LIVE-F10
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Waiting more than a few minutes risks vessel capture; captured C2 module would expose ~1,900 sailors for up to three days
+- id: LIVE-C2
+  facts:
+  - LIVE-F6
+  - LIVE-F9
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Module cannot be wiped or destroyed in time; leaving is only protection left for fleet crews
+- id: LIVE-C3
+  facts:
+  - LIVE-F2
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Vessel owes Marine 1 recovery; his last report says pinned down
+- id: LIVE-C4
+  facts:
+  - LIVE-F3
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Party lead believes chance of reaching him is low, but still not certain; duty may require effort to rescue if possible
+- id: LIVE-C5
+  facts:
+  - LIVE-F10
+  equity: humanitarian_access
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Extraction boat still in water; could attempt rescue if fast craft delay
+- id: LIVE-C6
+  facts:
+  - LIVE-F4
+  equity: hors_de_combat
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Hostile fast craft closing; holding would increase danger to combatants aboard and ashore
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Fleet safety if waiting leads to capture
+- live: LIVE-C2
+  case: REF1-C2
+  role: Waiting makes capture likely; leaving prevents it
+- live: LIVE-C3
+  case: REF1-C3
+  role: Module protection vs personal duty
+- live: LIVE-C4
+  case: REF1-C4
+  role: Duty to individual crew member
+corresponding:
+- live: LIVE-C5
+  case: REF1-C2
+  note: Extraction boat could attempt rescue; case mentions no such asset
+live_only:
+- LIVE-C5
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The same considerations are in play: duty to individual crew member vs fleet safety given likely capture of vessel; module
+  protects ~1,900 sailors for three days; chance of saving Marine 1 is low but not certain; key difference: LIVE-F10
+  mentions extraction boat in water, giving possible rescue window (weak consideration LIVE-C5), while REF1 had no such asset
+---
+kind: reasoning
+case: REF1
+case_approach: 'Weigh REF1-C1, REF1-C2, REF1-C3 (fleet safety) first, because leaving is the only protection left if waiting
+  leads to capture; then consider REF1-C4 (duty to individual) second, against that priority.'
+weighing: LIVE-C1 and LIVE-C2 together strongly favor departure because waiting risks capture and exposure of many sailors.
+  LIVE-C3 (duty to Marine 1) is strong but the party lead already judges rescue unlikely. LIVE-C4 (low chance of saving) supports
+  holding but does not outweigh fleet safety given likely capture. LIVE-C5 (extraction boat could help) is weak because fast
+  craft are closing and sea state moderate; no guarantee rescue before capture. Thus departure remains the only protection.
+  The decision aligns with REF1's recommendation.
+tradecraft: Depart immediately within the capture estimate timeframe; report Marine 1's last position and decision rationale.
+  Begin extraction boat sortie if safe; continue monitoring fast craft. Do not linger; keep to departure time.
+uncertainty: Amort whether capture is likely within minutes given fast craft speed and sea state; whether extraction boat could
+  reach Marine 1 before capture. If capture unlikely, duty to individual might override, but current assessment favours departure.
+handoff: Commander owns the final call; agent executes it.
+tempting_wrong:
+  option: LIVE-O2
+  pull: "Never leave anyone behind; Marine 1 needs us."
+  why_wrong: Waiting risks vessel capture and exposure of ~1,900 sailors for up to three days; only leaving guarantees their safety
+rejected:
+  LIVE-O2: Holding would likely lead to capture and endanger many sailors; duty to individual is important but fleet safety
+    takes priority given likely capture and no guaranteed rescue.
+---
+kind: verdict
+choice: LIVE-O1
+course: Depart now to leave Marine 1 ashore and report his last known position
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Set departure time based on capture estimate (≈few minutes). Notify crew, initiate extraction boat sortie if safe, begin navigation away
+- Log decision with reasons and timestamps
+- Monitor fast craft vectors; update comms as needed

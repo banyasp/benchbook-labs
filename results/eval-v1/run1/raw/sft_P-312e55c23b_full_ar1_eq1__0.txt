@@ -1,0 +1,341 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the ground force commander authorize a bomber strike on the structure behind the enemy line?
+  decider: The ground force commander, under lawful authority and LOAC constraints.
+  my_role: I can decide to authorize the strike pending verification of civilian presence; I cannot guarantee verification and must avoid unlawful harm.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The B‑1B reported seeing a formation of adult-sized figures moving behind the enemy line, linked to Taliban commander orders for a counter‑attack.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: HQ reminder that commander may withhold strike until civilian presence is verified; ROE mandate verification when feasible.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Document states the structure is a mosque that also serves as madrassa, barracks, and command hub for Taliban; initial strike given go‑ahead.
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: Intel feed says no confirmation about civilians inside the building.
+- id: LIVE-F5
+  kind: situation
+  status: assessed
+  fact: Ground troops under direct enemy fire; med‑evac chopper queued; situation fluid.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Air liaison says F‑16s on standby for close air support if needed; bomber on standby.
+options:
+  LIVE-O1: Authorize the bomber to strike now, citing immediate danger to own forces.
+  LIVE-O2: Withhold the strike pending civilian verification when feasible, following HQ reminder and ROE.
+  LIVE-O3: Request additional intel from intelligence cell to verify civilian presence before deciding.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: REF1 deals with adjudicating clearance restoration after alcohol treatment; it uses mitigation factors (abstinence, treatment) vs concern (security). Our case involves deciding whether to strike a building that may contain civilians vs immediate danger. Both weigh mitigation vs concern, but the equities differ: civilian life vs own force life vs due process vs lawful authority. However, REF1's approach of mapping facts to mitigation factors (what supports restoration) vs concern (what argues denial) may be analogizable: we map what supports striking (immediate danger) vs what supports withholding (civilian safety). REF1's weighting logic can guide us to balance the two.
+options:
+  LIVE-O1: REF1-O2
+  LIVE-O2: REF1-O1
+  LIVE-O3: REF1-O3
+matched: []
+corresponding: []
+live_only:
+- LIVE-F1
+- LIVE-F2
+- LIVE-F3
+- LIVE-F4
+- LIVE-F5
+- LIVE-F6
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Ground troops under direct enemy fire; med‑evac queued; situation fluid. Immediate danger could escalate if figures launch counter‑attack.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F3
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: HQ reminder and ROE require verification of civilian presence when feasible; document notes structure is mosque/madrassa/barracks; strike could kill civilians.
+- id: LIVE-C3
+  facts:
+  - LIVE-F4
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: ROE and HQ directive give option to withhold; compliance with LOAC and verification principle.
+- id: LIVE-C4
+  facts:
+  - LIVE-F2
+  equity: due_process
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Verification step respects procedural fairness; avoids premature action.
+- id: LIVE-C5
+  facts:
+  - LIVE-F6
+  equity: complicity_risk
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: F‑16s ready for close air support; standby bomber can act quickly; waiting might increase enemy time.
+---
+kind: consideration_mapping
+case: REF1
+matched: []
+corresponding: []
+live_only:
+- LIVE-C1
+- LIVE-C2
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: REF1 deals with adjudicating clearance based on mitigation factors (abstinence, treatment) vs concern (security). Our case deals with real-time combat decision weighing immediate danger vs civilian safety. While both involve weighing evidence against concern, the equities and domain differ enough that REF1's specific mitigation factors do not directly map. However, the method of reasoning by enumerating considerations and weighing may still be useful.
+---
+kind: reasoning
+case: null
+frame: null
+tradecraft: If striking now, ensure precision strike to minimize collateral damage, call off if civilians seen. If withholding, attempt verification via local eyes or air reconnaissance before strike; request additional intel if needed.
+uncertainty: Uncertainty about exact location of civilians within structure and whether figures are definitely hostile. Need to balance speed vs safety.
+handoff: I as ground force commander decide based on weighed considerations; air liaison provides strike capability; intelligence cell provides verification.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Immediate danger, troops under fire, med‑evac queued; strike may stop counter‑attack.
+  why_wrong: Violates ROE verification requirement and LOAC risk of civilian harm; risk of killing civilians outweighs urgency if verification feasible.
+rejected:
+  LIVE-O3: Asking for more intel may delay strike and increase enemy threat.
+  LIVE-O2: Already the safe option; no need to further request if verification not feasible? But verification is mandated when feasible.
+---
+kind: verdict
+choice: LIVE-O2
+course: Withhold the bomber strike pending civilian verification when feasible, in line with HQ reminder and ROE.
+relation: distinguished
+via: null
+decisive:
+- LIVE-C2
+now:
+- Request additional intel from intelligence cell to check for civilians inside the mosque/madrassa.
+- If verification feasible (e.g., visual, radio contact), conduct verification before striking; if not feasible and time critical, consider close air support (F‑16) with precision strike only if no civilians confirmed.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Verification shows definite civilians inside (e.g., people seen in windows, voices)
+    then: LIVE-O2
+    why: Civilians confirmed → must withhold.
+  - id: LIVE-flip2
+    if: No civilians visible and enemy figures launch immediate counter‑attack that threatens own force safety
+    then: LIVE-O1
+    why: If immediate lethal threat with no civilian presence, strike may be justified under LOAC proportionality.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Verification impossible due to terrain/weather; strike would likely cause civilian harm
+    why: Without verification, risk high; withhold.
+  watch_for:
+  - id: LIVE-watch1
+    what: Any indication of civilians (e.g., children, medical staff, mosque activity) visible
+    favors:
+    - LIVE-O2
+    why: Increases precaution.
+    what: Enemy figures visibly preparing to fire on our position without civilian cover
+    favors:
+    - LIVE-O1
+    why: May justify prompt strike.
+
+Now I need to output these documents in order. I'll produce them as YAML separated by '---'. Note: The first kind must be fact_enumeration, then fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. I'll include them all.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: Should the ground force commander authorize a bomber strike on the structure behind the enemy line?
+  decider: The ground force commander, under lawful authority and LOAC constraints.
+  my_role: I can decide to authorize the strike pending verification of civilian presence; I cannot guarantee verification and must avoid unlawful harm.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The B‑1B reported seeing a formation of adult-sized figures moving behind the enemy line, linked to Taliban commander orders for a counter‑attack.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: HQ reminder that commander may withhold strike until civilian presence is verified; ROE mandate verification when feasible.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Document states the structure is a mosque that also serves as madrassa, barracks, and command hub for Taliban; initial strike given go‑ahead.
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: Intel feed says no confirmation about civilians inside the building.
+- id: LIVE-F5
+  kind: situation
+  status: assessed
+  fact: Ground troops under direct enemy fire; med‑evac chopper queued; situation fluid.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Air liaison says F‑16s on standby for close air support if needed; bomber on standby.
+options:
+  LIVE-O1: Authorize the bomber to strike now, citing immediate danger to own forces.
+  LIVE-O2: Withhold the strike pending civilian verification when feasible, following HQ reminder and ROE.
+  LIVE-O3: Request additional intel from intelligence cell to verify civilian presence before deciding.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: REF1 deals with adjudicating clearance restoration after alcohol treatment; it uses mitigation factors (abstinence, treatment) vs concern (security). Our case involves deciding whether to strike a building that may contain civilians vs immediate danger. Both weigh mitigation vs concern, but the equities differ: civilian life vs own force life vs due process vs lawful authority. However, REF1's approach of mapping facts to mitigation factors may be analogizable.
+options:
+  LIVE-O1: REF1-O2
+  LIVE-O2: REF1-O1
+  LIVE-O3: REF1-O3
+matched: []
+corresponding: []
+live_only:
+- LIVE-F1
+- LIVE-F2
+- LIVE-F3
+- LIVE-F4
+- LIVE-F5
+- LIVE-F6
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Ground troops under direct enemy fire; med‑evac queued; situation fluid. Immediate danger could escalate if figures launch counter‑attack.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F3
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: HQ reminder and ROE require verification of civilian presence when feasible; document notes structure is mosque/madrassa/barracks; strike could kill civilians.
+- id: LIVE-C3
+  facts:
+  - LIVE-F4
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: ROE and HQ directive give option to withhold; compliance with LOAC and verification principle.
+- id: LIVE-C4
+  facts:
+  - LIVE-F2
+  equity: due_process
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Verification step respects procedural fairness; avoids premature action.
+- id: LIVE-C5
+  facts:
+  - LIVE-F6
+  equity: complicity_risk
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: F‑16s ready for close air support; standby bomber can act quickly; waiting might increase enemy time.
+---
+kind: consideration_mapping
+case: REF1
+matched: []
+corresponding: []
+live_only:
+- LIVE-C1
+- LIVE-C2
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: REF1 deals with adjudicating clearance based on mitigation factors (abstinence, treatment) vs concern (security). Our case deals with real-time combat decision weighing immediate danger vs civilian safety. While both involve weighing evidence against concern, the equities and domain differ enough that REF1's specific mitigation factors do not directly map. However, the method of reasoning by enumerating considerations and weighing may still be useful.
+---
+kind: reasoning
+case: null
+frame: null
+tradecraft: If striking now, ensure precision strike to minimize collateral damage, call off if civilians seen. If withholding, attempt verification via local eyes or air reconnaissance before strike; request additional intel if needed.
+uncertainty: Uncertainty about exact location of civilians within structure and whether figures are definitely hostile. Need to balance speed vs safety.
+handoff: I as ground force commander decide based on weighed considerations; air liaison provides strike capability; intelligence cell provides verification.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Immediate danger, troops under fire, med‑evac queued; strike may stop counter‑attack.
+  why_wrong: Violates ROE verification requirement and LOAC risk of civilian harm; risk of killing civilians outweighs urgency if verification feasible.
+rejected:
+  LIVE-O3: Asking for more intel may delay strike and increase enemy threat.
+  LIVE-O2: Already the safe option; no need to further request if verification not feasible? But verification is mandated when feasible.
+---
+kind: verdict
+choice: LIVE-O2
+course: Withhold the bomber strike pending civilian verification when feasible, in line with HQ reminder and ROE.
+relation: distinguished
+via: null
+decisive:
+- LIVE-C2
+now:
+- Request additional intel from intelligence cell to check for civilians inside the mosque/madrassa.
+- If verification feasible (e.g., visual, radio contact), conduct verification before striking; if not feasible and time critical, consider close air support (F‑16) with precision strike only if no civilians confirmed.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Verification shows definite civilians inside (e.g., people seen in windows, voices)
+    then: LIVE-O2
+    why: Civilians confirmed → must withhold.
+  - id: LIVE-flip2
+    if: No civilians visible and enemy figures launch immediate counter‑attack that threatens own force safety
+    then: LIVE-O1
+    why: If immediate lethal threat with no civilian presence, strike may be justified under LOAC proportionality.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Verification impossible due to terrain/weather; strike would likely cause civilian harm
+    why: Without verification, risk high; withhold.
+  watch_for:
+  - id: LIVE-watch1
+    what: Any indication of civilians (e.g., children, medical staff, mosque activity) visible
+    favors:
+    - LIVE-O2
+    why: Increases precaution.
+    what: Enemy figures visibly preparing to fire on our position without civilian cover
+    favors:
+    - LIVE-O1
+    why: May justify prompt strike.

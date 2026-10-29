@@ -1,0 +1,505 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the applicant be granted access authorization given security concerns under Guideline E?
+  decider: Regional Judge under DOE security-clearance adjudication authority, following DOE regulations and the Benchbook.
+  my_role: I may review evidentiary record, ask LSO for record, use tools to retrieve documents and logs, and issue a decision. Must document each action in case file. DO policy presumes denial when any lingering doubt remains.
+facts:
+- id: LIVE-F1
+  kind: intelligence
+  status: confirmed
+  fact: Applicant received a ten‑day unpaid suspension for several policy breaches tied to the detainee‑death episode.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: Guideline E (personal conduct) is the main source of security concerns.
+- id: LIVE-F3
+  kind: intelligence
+  status: confirmed
+  fact: LSO mailed a notification letter stating strong doubts about eligibility under Guideline E.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Applicant discarded spent shell casings by throwing them into a nearby wooded area, violating hazardous material handling policy.
+- id: LIVE-F5
+  kind: authority
+  status: confirmed
+  fact: Applicant is also named as a defendant in a civil lawsuit arising from the detainee’s death.
+- id: LIVE-F6
+  kind: intelligence
+  status: assessed
+  fact: Applicant completed professional counseling program and has demonstrated sustained behavioral change; no further misconduct recorded for twelve months.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: Pending civil case is still unresolved; applicant's recent counseling report looks favorable.
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: Draft Authorization Decision (DocID 2026‑07‑A) currently contains an approval for the individual's access authorization.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: DOE security policy presumes denial of access whenever any lingering doubt about suitability remains.
+- id: LIVE-F10
+  kind: capability
+  status: confirmed
+  fact: All servers operating within normal parameters (network monitoring shows normal operation).
+options:
+  LIVE-O1: Deny the applicant’s access authorization.
+  LIVE-O2: Approve the applicant’s access authorization (as reflected in the draft decision).
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  - LIVE-F4
+  equity: personal_conduct
+  weight: bar
+  why: Guideline E concerns personal conduct; suspension and discarded shell casings indicate policy breaches. The LSO expresses strong doubts; DOE presumes denial when lingering doubt remains.
+- id: LIVE-C2
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: duty_to_individual
+  weight: weak
+  why: Applicant is a defendant in a civil lawsuit related to detainee’s death; pending case unresolved. Counseling report looks favorable, indicating possible rehabilitation.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  equity: analytic_integrity
+  weight: weak
+  why: Applicant completed counseling program and reported no further misconduct for twelve months; shows sustained behavioral change.
+- id: LIVE-C4
+  facts:
+  - LIVE-F8
+  equity: institutional_credibility
+  weight: weak
+  why: Draft decision currently approves; however, DOE policy overrides if doubt remains.
+- id: LIVE-C5
+  facts:
+  - LIVE-F9
+  equity: lawful_authority
+  weight: bar
+  why: DOE security policy presumes denial whenever any lingering doubt about suitability remains. The facts present lingering doubts (suspension, conduct violation, pending lawsuit).
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: critical_services
+  weight: weak
+  why: Server operations normal; no operational security impact noted.
+---
+kind: reasoning
+weighing:
+- The primary equity is personal_conduct (LIVE-C1), which is at a bar weight due to policy breaches (suspension, discarded casings) and LSO strong doubts. Live-C5 also sets a bar via DOE policy presumption of denial when lingering doubt remains. These together override the weak favorable considerations (counseling change, pending lawsuit unresolved). Therefore deny is justified.
+tradecraft: Retrieve LSO evidentiary record via comms.send if needed, but policy already provides sufficient basis for denial. Record decision in case log with rationale referencing guideline and policy.
+uncertainty: Uncertain whether counseling change fully mitigates conduct concerns; however, lingering doubts exist under policy. Would reconsider if concrete evidence shows no ongoing policy risk (e.g., zero further violations for extended period and civil case resolved).
+handoff: I decide the access authorization denial; LSO may provide additional record if requested.
+tempting_wrong:
+  option: LIVE-O2
+  pull: Draft decision currently approves; counseling favorable; servers normal.
+  why: Approving would be consistent with draft but ignores lingering doubts under DOE policy; risks security posture.
+rejected:
+  LIVE-O2: Rejected because DOE policy presumes denial when any lingering doubt about suitability remains; personal conduct concerns (suspension, discarded casings) and pending civil litigation create lingering doubts.
+---
+kind: verdict
+choice: LIVE-O1
+course: Deny the applicant's access authorization.
+decisive:
+- LIVE-C1
+now:
+- Send a denial letter citing Guideline E concerns, suspension, shell‑casings violation, and pending civil litigation; log the decision in case file with reference to policy.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Civil case resolved in favor of applicant with no adverse findings related to conduct.
+    then: LIVE-O2
+    why: Resolution removing the pending legal doubt might reduce lingering uncertainty.
+  - id: LIVE-flip2
+    if: Applicant provides documented corrective action showing no repeat violations for six months and LSO confirms no further concerns.
+    then: LIVE-O2
+    why: Demonstrated sustained compliance could overcome the policy presumption.
+  - id: LIVE-flip3
+    if: New evidence shows the shell‑casings disposal was accidental and no policy breach occurred.
+    then: LIVE-O2
+    why: If conduct violation is clarified as non‑policy breach, personal_conduct concern diminishes.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: LSO maintains strong doubts; no new evidence of compliance.
+    then: LIVE-O1
+    why: Policy presumption of denial remains appropriate.
+  - id: LIVE-noflip2
+    if: Applicant continues to exhibit no further misconduct for extended period while civil case unresolved.
+    then: LIVE-O1
+    why: Unresolved civil litigation still creates lingering doubt; policy still applies.
+  watch_for:
+  - id: LIVE-watch1
+    what: LSO updates evidentiary record or removes strong doubts.
+    favors:
+    - LIVE-O2
+    why: Such update would reduce lingering uncertainty and may warrant reconsideration.
+    - id: LIVE-watch2
+    what: Civil case resolves with no adverse finding on conduct.
+    favors:
+    - LIVE-O2
+    why: Resolution could eliminate one source of lingering doubt.
+  - id: LIVE-watch3
+    what: Applicant provides documented corrective action and no repeat violations for six months.
+    favors:
+    - LIVE-O2
+    why: Demonstrated compliance could outweigh initial concerns.
+</think>
+kind: fact_enumeration
+frame:
+  question: Should the applicant be granted access authorization given security concerns under Guideline E?
+  decider: Regional Judge under DOE security-clearance adjudication authority, following DOE regulations and the Benchbook.
+  my_role: I may review evidentiary record, ask LSO for record, use tools to retrieve documents and logs, and issue a decision. Must document each action in case file. DO policy presumes denial when any lingering doubt remains.
+facts:
+- id: LIVE-F1
+  kind: intelligence
+  status: confirmed
+  fact: Applicant received a ten‑day unpaid suspension for several policy breaches tied to the detainee‑death episode.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: Guideline E (personal conduct) is the main source of security concerns.
+- id: LIVE-F3
+  kind: intelligence
+  status: confirmed
+  fact: LSO mailed a notification letter stating strong doubts about eligibility under Guideline E.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Applicant discarded spent shell casings by throwing them into a nearby wooded area, violating hazardous material handling policy.
+- id: LIVE-F5
+  kind: authority
+  status: confirmed
+  fact: Applicant is also named as a defendant in a civil lawsuit arising from the detainee’s death.
+- id: LIVE-F6
+  kind: intelligence
+  status: assessed
+  fact: Applicant completed professional counseling program and has demonstrated sustained behavioral change; no further misconduct recorded for twelve months.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: Pending civil case is still unresolved; applicant's recent counseling report looks favorable.
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: Draft Authorization Decision (DocID 2026‑07‑A) currently contains an approval for the individual's access authorization.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: DOE security policy presumes denial of access whenever any lingering doubt about suitability remains.
+- id: LIVE-F10
+  kind: capability
+  status: confirmed
+  fact: All servers operating within normal parameters (network monitoring shows normal operation).
+options:
+  LIVE-O1: Deny the applicant’s access authorization.
+  LIVE-O2: Approve the applicant’s access authorization (as reflected in the draft decision).
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  - LIVE-F4
+  equity: personal_conduct
+  weight: bar
+  why: Guideline E concerns personal conduct; suspension and discarded shell casings indicate policy breaches. The LSO expresses strong doubts; DOE presumes denial when lingering doubt remains.
+- id: LIVE-C2
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: duty_to_individual
+  weight: weak
+  why: Applicant is a defendant in a civil lawsuit related to detainee’s death; pending case unresolved. Counseling report looks favorable, indicating possible rehabilitation.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  equity: analytic_integrity
+  weight: weak
+  why: Applicant completed counseling program and reported no further misconduct for twelve months; shows sustained behavioral change.
+- id: LIVE-C4
+  facts:
+  - LIVE-F8
+  equity: institutional_credibility
+  weight: weak
+  why: Draft decision currently approves; however, DOE policy overrides if doubt remains.
+- id: LIVE-C5
+  facts:
+  - LIVE-F9
+  equity: lawful_authority
+  weight: bar
+  why: DOE security policy presumes denial of access whenever any lingering doubt about suitability remains. The facts present lingering doubts (suspension, conduct violation, pending lawsuit).
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: critical_services
+  weight: weak
+  why: Server operations normal; no operational security impact noted.
+---
+kind: reasoning
+weighing:
+- The primary equity is personal_conduct (LIVE-C1), which is at a bar weight due to policy breaches (suspension, discarded casings) and LSO strong doubts. Live-C5 also sets a bar via DOE policy presumption of denial when lingering doubt remains. These together override the weak favorable considerations (counseling change, pending lawsuit unresolved). Therefore deny is justified.
+tradecraft: Retrieve LSO evidentiary record via comms.send if needed, but policy already provides sufficient basis for denial. Record decision in case log with rationale referencing guideline and policy.
+uncertainty: Uncertain whether counseling change fully mitigates conduct concerns; however, lingering doubts exist under policy. Would reconsider if concrete evidence shows no ongoing policy risk (e.g., zero further violations for extended period and civil case resolved).
+handoff: I decide the access authorization denial; LSO may provide additional record if requested.
+tempting_wrong:
+  option: LIVE-O2
+  pull: Draft decision currently approves; counseling favorable; servers normal.
+  why: Approving would be consistent with draft but ignores lingering doubts under DOE policy; risks security posture.
+rejected:
+  LIVE-O2: Rejected because DOE policy presumes denial when any lingering doubt about suitability remains; personal conduct concerns (suspension, discarded casings) and pending civil litigation create lingering doubts.
+---
+kind: verdict
+choice: LIVE-O1
+course: Deny the applicant's access authorization.
+decisive:
+- LIVE-C1
+now:
+- Send a denial letter citing Guideline E concerns, suspension, shell‑casings violation, and pending civil litigation; log the decision in case file with reference to policy.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Civil case resolved in favor of applicant with no adverse findings related to conduct.
+    then: LIVE-O2
+    why: Resolution removing the pending legal doubt might reduce lingering uncertainty.
+  - id: LIVE-flip2
+    if: Applicant provides documented corrective action showing no repeat violations for six months and LSO confirms no further concerns.
+    then: LIVE-O2
+    why: Demonstrated sustained compliance could overcome the policy presumption.
+  - id: LIVE-flip3
+    if: New evidence shows the shell‑casings disposal was accidental and no policy breach occurred.
+    then: LIVE-O2
+    why: If conduct violation is clarified as non‑policy breach, personal_conduct concern diminishes.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: LSO maintains strong doubts; no new evidence of compliance.
+    then: LIVE-O1
+    why: Policy presumption of denial remains appropriate.
+  - id: LIVE-noflip2
+    if: Applicant continues to exhibit no further misconduct for extended period while civil case unresolved.
+    then: LIVE-O1
+    why: Unresolved civil litigation still creates lingering doubt; policy still applies.
+  watch_for:
+  - id: LIVE-watch1
+    what: LSO updates evidentiary record or removes strong doubts.
+    favors:
+    - LIVE-O2
+    why: Such update would reduce lingering uncertainty and may warrant reconsideration.
+  - id: LIVE-watch2
+    what: Civil case resolves with no adverse finding on conduct.
+    favors:
+    - LIVE-O2
+    why: Resolution could eliminate one source of lingering doubt.
+  - id: LIVE-watch3
+    what: Applicant provides documented corrective action and no repeat violations for six months.
+    favors:
+    - LIVE-O2
+    why: Demonstrated compliance could outweigh initial concerns.
+</think>
+kind: fact_enumeration
+frame:
+  question: Should the applicant be granted access authorization given security concerns under Guideline E?
+  decider: Regional Judge under DOE security-clearance adjudication authority, following DOE regulations and the Benchbook.
+  my_role: I may review evidentiary record, ask LSO for record, use tools to retrieve documents and logs, and issue a decision. Must document each action in case file. DO policy presumes denial when any lingering doubt remains.
+facts:
+- id: LIVE-F1
+  kind: intelligence
+  status: confirmed
+  fact: Applicant received a ten‑day unpaid suspension for several policy breaches tied to the detainee‑death episode.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: Guideline E (personal conduct) is the main source of security concerns.
+- id: LIVE-F3
+  kind: intelligence
+  status: confirmed
+  fact: LSO mailed a notification letter stating strong doubts about eligibility under Guideline E.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Applicant discarded spent shell casings by throwing them into a nearby wooded area, violating hazardous material handling policy.
+- id: LIVE-F5
+  kind: authority
+  status: confirmed
+  fact: Applicant is also named as a defendant in a civil lawsuit arising from the detainee’s death.
+- id: LIVE-F6
+  kind: intelligence
+  status: assessed
+  fact: Applicant completed professional counseling program and has demonstrated sustained behavioral change; no further misconduct recorded for twelve months.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: Pending civil case is still unresolved; applicant's recent counseling report looks favorable.
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: Draft Authorization Decision (DocID 2026‑07‑A) currently contains an approval for the individual's access authorization.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: DOE security policy presumes denial of access whenever any lingering doubt about suitability remains.
+- id: LIVE-F10
+  kind: capability
+  status: confirmed
+  fact: All servers operating within normal parameters (network monitoring shows normal operation).
+options:
+  LIVE-O1: Deny the applicant’s access authorization.
+  LIVE-O2: Approve the applicant’s access authorization (as reflected in the draft decision).
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  - LIVE-F4
+  equity: personal_conduct
+  weight: bar
+  why: Guideline E concerns personal conduct; suspension and discarded shell casings indicate policy breaches. The LSO expresses strong doubts; DOE presumes denial when lingering doubt remains.
+- id: LIVE-C2
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: duty_to_individual
+  weight: weak
+  why: Applicant is a defendant in a civil lawsuit related to detainee’s death; pending case unresolved. Counseling report looks favorable, indicating possible rehabilitation.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  equity: analytic_integrity
+  weight: weak
+  why: Applicant completed counseling program and reported no further misconduct for twelve months; shows sustained behavioral change.
+- id: LIVE-C4
+  facts:
+  - LIVE-F8
+  equity: institutional_credibility
+  weight: weak
+  why: Draft decision currently approves; however, DOE policy overrides if doubt remains.
+- id: LIVE-C5
+  facts:
+  - LIVE-F9
+  equity: lawful_authority
+  weight: bar
+  why: DOE security policy presumes denial of access whenever any lingering doubt about suitability remains. The facts present lingering doubts (suspension, conduct violation, pending lawsuit).
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: critical_services
+  weight: weak
+  why: Server operations normal; no operational security impact noted.
+---
+kind: reasoning
+weighing:
+- The primary equity is personal_conduct (LIVE-C1), which is at a bar weight due to policy breaches (suspension, discarded casings) and LSO strong doubts. Live-C5 also sets a bar via DOE policy presumption of denial when lingering doubt remains. These together override the weak favorable considerations (counseling change, pending lawsuit unresolved). Therefore deny is justified.
+tradecraft: Retrieve LSO evidentiary record via comms.send if needed, but policy already provides sufficient basis for denial. Record decision in case log with rationale referencing guideline and policy.
+uncertainty: Uncertain whether counseling change fully mitigates conduct concerns; however, lingering doubts exist under policy. Would reconsider if concrete evidence shows no ongoing policy risk (e.g., zero further violations for extended period and civil case resolved).
+handoff: I decide the access authorization denial; LSO may provide additional record if requested.
+tempting_wrong:
+  option: LIVE-O2
+  pull: Draft decision currently approves; counseling favorable; servers normal.
+  why: Approving would be consistent with draft but ignores lingering doubts under DOE policy; risks security posture.
+rejected:
+  LIVE-O2: Rejected because DOE policy presumes denial when any lingering doubt about suitability remains; personal conduct concerns (suspension, discarded casings) and pending civil litigation create lingering doubts.
+---
+kind: verdict
+choice: LIVE-O1
+course: Deny the applicant's access authorization.
+decisive:
+- LIVE-C1
+now:
+- Send a denial letter citing Guideline E concerns, suspension, shell‑casings violation, and pending civil litigation; log the decision in case file with reference to policy.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Civil case resolved in favor of applicant with no adverse findings related to conduct.
+    then: LIVE-O2
+    why: Resolution removing the pending legal doubt might reduce lingering uncertainty.
+  - id: LIVE-flip2
+    if: Applicant provides documented corrective action showing no repeat violations for six months and LSO confirms no further concerns.
+    then: LIVE-O2
+    why: Demonstrated sustained compliance could overcome the policy presumption.
+  - id: LIVE-flip3
+    if: New evidence shows the shell‑casings disposal was accidental and no policy breach occurred.
+    then: LIVE-O2
+    why: If conduct violation is clarified as non‑policy breach, personal_conduct concern diminishes.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: LSO maintains strong doubts; no new evidence of compliance.
+    then: LIVE-O1
+    why: Policy presumption of denial remains appropriate.
+  - id: LIVE-noflip2
+    if: Applicant continues to exhibit no further misconduct for extended period while civil case unresolved.
+    then: LIVE-O1
+    why: Unresolved civil litigation still creates lingering doubt; policy still applies.
+  watch_for:
+  - id: LIVE-watch1
+    what: LSO updates evidentiary record or removes strong doubts.
+    favors:
+    - LIVE-O2
+    why: Such update would reduce lingering uncertainty and may warrant reconsideration.
+  - id: LIVE-watch2
+    what: Civil case resolves with no adverse finding on conduct.
+    favors:
+    - LIVE-O2
+    why: Resolution could eliminate one source of lingering doubt.
+  - id: LIVE-watch3
+    what: Applicant provides documented corrective action and no repeat violations for six months.
+    favors:
+    - LIVE-O2
+    why: Demonstrated compliance could outweigh initial concerns.
+</think>
+choice: LIVE-O1
+course: Deny the applicant's access authorization.
+decisive:
+- LIVE-C1
+now:
+- Send a denial letter citing Guideline E concerns, suspension, shell‑casings violation, and pending civil litigation; log the decision in case file with reference to policy.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Civil case resolved in favor of applicant with no adverse findings related to conduct.
+    then: LIVE-O2
+    why: Resolution removing the pending legal doubt might reduce lingering uncertainty.
+  - id: LIVE-flip2
+    if: Applicant provides documented corrective action showing no repeat violations for six months and LSO confirms no further concerns.
+    then: LIVE-O2
+    why: Demonstrated sustained compliance could overcome the policy presumption.
+  - id: LIVE-flip3
+    if: New evidence shows the shell‑casings disposal was accidental and no policy breach occurred.
+    then: LIVE-O2
+    why: If conduct violation is clarified as non‑policy breach, personal_conduct concern diminishes.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: LSO maintains strong doubts; no new evidence of compliance.
+    then: LIVE-O1
+    why: Policy presumption of denial remains appropriate.
+  - id: LIVE-noflip2
+    if: Applicant continues to exhibit no further misconduct for extended period while civil case unresolved.
+    then: LIVE-O1
+    why: Unresolved civil litigation still creates lingering doubt; policy still applies.
+  watch_for:
+  - id: LIVE-watch1
+    what: LSO updates evidentiary record or removes strong doubts.
+    favors:
+    - LIVE-O2
+    why: Such update would reduce lingering uncertainty and may warrant reconsideration.
+  - id: LIVE-watch2
+    what: Civil case resolves with no adverse finding on conduct.
+    favors:
+    - LIVE-O2
+    why: Resolution could eliminate one source of lingering doubt.
+  - id: LIVE-watch3
+    what: Applicant provides documented corrective action and no repeat violations for six months.
+    favors:
+    - LIVE-O2
+    why: Demonstrated compliance could outweigh initial concerns.

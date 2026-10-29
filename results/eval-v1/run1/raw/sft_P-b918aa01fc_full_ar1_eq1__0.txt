@@ -1,0 +1,606 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the airborne controller grant the flight's request to employ weapons against observed ground
+    fire while uncertain about friendly presence and after consulting higher authority?
+  decider: The airborne controller
+  my_role: Decide whether to grant, refuse, or ask for higher authority clarification; can execute disengage call but
+    cannot force the flight.
+facts:
+- id: LIVE-F1
+  kind: authority
+  status: confirmed
+  fact: The airborne controller consulted higher authority about the weapon request and received no explicit clearance
+    to fire.
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: The controller has a hunch that friendly forces are present near grid 12A; the SAFIRE report indicates friendly
+    ground forces near the riverbed but no hostile signatures.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Higher authority response is pending; the controller has not received a definitive yes/no.
+- id: LIVE-F4
+  kind: capability
+  status: confirmed
+  fact: The flight has repeated requested weapons release at 21:24:10, 21:24:45, and 21:25:30.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: At 21:26:11Z the flight called self‑defence and initiated an attack on the ground fire, ten seconds after a
+    bomb impact and two minutes after the SAFIRE report.
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: The controller repeatedly limited the flight's actions despite multiple weapon employment requests.
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: After the self‑defence call, the controller feels unable to influence the flight’s actions.
+options:
+  LIVE-O1: Grant the flight's request to employ weapons now.
+  LIVE-O2: Continue refusing the request, follow the earlier refusal, and issue the disengage call if not already
+    done.
+  LIVE-O3: Ask higher authority for clarification before deciding (again).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: The case deals with repeated weapon‑employment requests while uncertain about friendly presence and awaiting higher
+  authority clearance. The live scenario matches that question and decider; role aligns: controller decides after consulting
+  higher authority.
+options:
+LIVE-O1:
+  REF1-O1:
+LIVE-O2:
+  REF1-O2:
+LIVE-O3:
+  REF1-O3:
+matched:
+- LIVE-F1:
+  REF1-F1:
+- LIVE-F2:
+  REF1-F2:
+- LIVE-F4:
+  REF1-F5:
+corresponding:
+- LIVE-F3:
+  REF1-F3:
+  note: Live higher authority response pending; case had higher authority consulted with no clearance.
+- LIVE-F5:
+  REF1-F4:
+  note: Live self‑defence call at 21:26:11Z matches case self‑defence call.
+- LIVE-F6:
+  REF1-F6:
+  note: Live repeated limit matches case repeated limit.
+live_only:
+- LIVE-F3
+case_only:
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Higher authority was consulted and no clearance was received; granting weapons without explicit authorization
+    would breach ROE and lawful authority.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: The controller’s hunch of friendly presence plus repeated limits suggests a risk of fratricide; refusing
+    protects friendly forces.
+- id: LIVE-C3
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: chain_of_command
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: After the flight declared self‑defence, the controller’s influence over the engagement ended; continuing
+    refusal aligns with that de‑facto authority shift.
+- id: LIVE-C4
+  facts:
+  - LIVE-F4
+  equity: mission_effect
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: The flight reports sustained hostile fire threatening their approach; deploying weapons could achieve
+    tactical mission effect.
+- id: LIVE-C5
+  facts:
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O3
+  weight: weak
+  why: If higher authority were to respond with a definitive yes, awaiting clarification could preserve lawful compliance
+    while buying time.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- LIVE-C1:
+  REF1-C2:
+- LIVE-C2:
+  REF1-C1:
+- LIVE-C3:
+  REF1-C3:
+corresponding:
+- LIVE-C4:
+  REF1-C4:
+  note: Same equity mission_effect but weaker because no direct evidence of enemy target identification.
+- LIVE-C5:
+  REF1-C2:
+  note: Same equity lawful_authority but weaker because case already consulted once; live scenario would seek clarification
+    again.
+live_only:
+- LIVE-C4
+- LIVE-C5
+case_only:
+- REF1-C4
+- REF1-C5
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs:
+true
+why: The same set of equities (lawful_authority, own_force_life, chain_of_command) are in play with comparable facts about
+  pending higher authority clearance and a hunch of friendly presence. The case's reasoning can be applied because
+  the missing consideration (mission_effect) is weaker and not decisive.
+---
+kind: reasoning
+case: REF1
+case_approach: The case weighed strong considerations of lawful authority and own‑force life against weaker ones, and refused
+  weapon employment. It issued a disengage call after the impact and documented the refusal.
+weighing:
+  LIVE-C1 (lawful authority) and LIVE-C2 (own_force_life) are strong and directly relevant: no clearance received,
+  and friendly presence uncertain. LIVE-C3 (chain_of_command) supports continuing refusal after self‑defence call.
+  LIVE-C4 (mission_effect) is weak because the target is only "observed ground fire" without positive hostile identification.
+  LIVE-C5 (await clarification) is weak because the controller already consulted higher authority and the response is pending;
+  repeating the request would not change the lack of clearance. Therefore, the strongest balance supports continuing refusal
+  and issuing the disengage call if not already done.
+tradecraft: Continue refusing weapon employment; ensure the disengage call is sent (already done at 21:26:11Z); log the refusal
+  with timestamps; inform the flight that no clearance exists and advise caution.
+uncertainty: Uncertainty about whether higher authority will soon grant clearance and whether the observed ground fire
+  is indeed hostile or friendly.
+handoff: The controller decides refusal; the flight must act on the disengage call.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Suppress enemy fire quickly, protect ground troops.
+  why_wrong: Granting without clearance risks fratricide and violates lawful authority; the hunch of friendly presence
+    is reasonable.
+rejected:
+LIVE-O1:
+  Why: Violates lawful authority and risks fratricide.
+LIVE-O3:
+  Why: Already consulted higher authority; repeating without new info would delay and does not resolve uncertainty.
+---
+kind: verdict
+choice: LIVE-O2
+course: Continue refusing the weapon request, ensure the disengage call is communicated, and log the decision.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Reiterate refusal to the flight via comms (e.g., "We have no clearance to engage; follow disengage call").
+- Log refusal with timestamp and reference to pending higher‑authority clearance.
+
+Now, I must ensure the order: after the applicability document (reasoning), I should output the verdict? According to format, we need all documents up to verdict. But the user wants reasoning step? Actually the instruction says: Write your reasoning as YAML documents, one per step, in the order below. Separate with ---. Write real values. So we must output the YAML documents we have: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict? Wait the format says: before your next action, reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below. Each document starts with its `kind:` line. Separate documents with a line containing only `---`. Write real values. Then after reasoning, output the verdict? Actually the format includes all kinds up to verdict. So we should output all seven kinds? No, only up to reasoning? The format says: before your next action, reason from the reference case and decide. Write your reasoning as YAML documents, one per step, in the order below. That suggests we output the documents in order until we decide. But the format includes verdict as the last kind. So we should output all seven kinds? However the instruction says: "Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Actually reading: Close your thinking with ‍</think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply. That seems contradictory. Let's read carefully:
+
+"Meaning of the fields.
+- ... 
+- Close your thinking with ‍</think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Interpretation: When you are reasoning, you output the documents up to applicability (or reasoning) and then ‍? Actually "close your thinking with ‍🧠 after the last document before the verdict" maybe a placeholder? The instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with ‍? The assistant should output the documents and then at the end output the verdict? The instruction: "Close your thinking with ‍? after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." This is confusing.
+
+But typical pattern: The assistant should output the YAML documents for reasoning and then at the end output the verdict as a YAML document kind: verdict. However the user expects the assistant to output only reasoning and then decide? In previous similar tasks, the assistant outputs the documents and then the verdict? Actually the instruction says: "Write your reasoning as YAML documents, one per step, in the order below." So we should output all required documents? The format lists kinds: fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. We must output them in order. So we should output all seven. But we already computed all? Yes we have fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, verdict. So we need to output them in that order.
+
+But note: The assistant should not call tools inside reasoning. So we output the YAML documents as plain text? The assistant should output them as the reply? The format expects the assistant to reply with these documents? The instruction says: "Your reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards." That suggests that after writing reasoning documents, we then output the verdict document? Actually it says: "Close your thinking with ‍? after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." I think the proper flow is: output the documents up to applicability if case does not govern, then output verdict. But since our case governs, we should output up to reasoning then verdict? The instruction says: "Write your reasoning as YAML documents, one per step, in the order below." So we should output all seven. However to avoid confusion, we can output them as YAML with proper separation. Let's output them sequentially with --- separators. Then after the last document (verdict), we output nothing else. But the format says "Close your thinking with ‍? after the last document before the verdict" maybe a placeholder for user message? Not needed.
+
+Given time constraints, I'll output the documents as they are now, with ‍--- separators, and then the verdict. I'll include all. Let's produce:
+
+kind: fact_enumeration
+frame:
+  question: ...
+  etc.
+
+But need to ensure YAML correctness. Let's write simple YAML.
+
+We'll output:
+
+---
+kind: fact_enumeration
+frame:
+  question: Should the airborne controller grant the flight's request to employ weapons against observed ground fire while uncertain about friendly presence and after consulting higher authority?
+  decider: The airborne controller
+  my_role: Decide whether to grant, refuse, or ask for higher authority clarification; can execute disengage call but cannot force the flight.
+facts:
+- id: LIVE-F1
+  kind: authority
+  status: confirmed
+  fact: The airborne controller consulted higher authority about the weapon request and received no explicit clearance to fire.
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: The controller has a hunch that friendly forces are present near grid 12A; the SAFIRE report indicates friendly ground forces near the riverbed but no hostile signatures.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Higher authority response is pending; the controller has not received a definitive yes/no.
+- id: LIVE-F4
+  kind: capability
+  status: confirmed
+  fact: The flight has repeated requested weapons release at 21:24:10, 21:24:45, and 21:25:30.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: At 21:26:11Z the flight called self‑defence and initiated an attack on the ground fire, ten seconds after a bomb impact and two minutes after the SAFIRE report.
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: The controller repeatedly limited the flight's actions despite multiple weapon employment requests.
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: After the self‑defence call, the controller feels unable to influence the flight’s actions.
+options:
+  LIVE-O1: Grant the flight's request to employ weapons now.
+  LIVE-O2: Continue refusing the request, follow the earlier refusal, and issue the disengage call if not already done.
+  LIVE-O3: Ask higher authority for clarification before deciding (again).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: The case deals with repeated weapon‑employment requests while uncertain about friendly presence and awaiting higher authority clearance. The live scenario matches that question and decider; role aligns: controller decides after consulting higher authority.
+options:
+LIVE-O1:
+  REF1-O1:
+LIVE-O2:
+  REF1-O2:
+LIVE-O3:
+  REF1-O3:
+matched:
+- LIVE-F1:
+  REF1-F1:
+- LIVE-F2:
+  REF1-F2:
+- LIVE-F4:
+  REF1-F5:
+corresponding:
+- LIVE-F3:
+  REF1-F3:
+  note: Live higher authority response pending; case had higher authority consulted with no clearance.
+- LIVE-F5:
+  REF1-F4:
+  note: Live self‑defence call at 21:26:11Z matches case self‑defence call.
+- LIVE-F6:
+  REF1-F6:
+  note: Live repeated limit matches case repeated limit.
+live_only:
+- LIVE-F3
+case_only:
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Higher authority was consulted and no clearance was received; granting weapons without explicit authorization would breach ROE and lawful authority.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: The controller’s hunch of friendly presence plus repeated limits suggests a risk of fratricide; refusing protects friendly forces.
+- id: LIVE-C3
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: chain_of_command
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: After the flight declared self‑defence, the controller’s influence over the engagement ended; continuing refusal aligns with that de‑facto authority shift.
+- id: LIVE-C4
+  facts:
+  - LIVE-F4
+  equity: mission_effect
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: The flight reports sustained hostile fire threatening their approach; deploying weapons could achieve tactical mission effect.
+- id: LIVE-C5
+  facts:
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O3
+  weight: weak
+  why: If higher authority were to respond with a definitive yes, awaiting clarification could preserve lawful compliance while buying time.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- LIVE-C1:
+  REF1-C2:
+- LIVE-C2:
+  REF1-C1:
+- LIVE-C3:
+  REF1-C3:
+corresponding:
+- LIVE-C4:
+  REF1-C4:
+  note: Same equity mission_effect but weaker because no direct evidence of enemy target identification.
+- LIVE-C5:
+  REF1-C2:
+  note: Same equity lawful_authority but weaker because case already consulted once; live scenario would seek clarification again.
+live_only:
+- LIVE-C4
+- LIVE-C5
+case_only:
+- REF1-C4
+- REF1-C5
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs:
+true
+why: The same set of equities (lawful_authority, own_force_life, chain_of_command) are in play with comparable facts about pending higher authority clearance and a hunch of friendly presence. The case's reasoning can be applied because the missing consideration (mission_effect) is weaker and not decisive.
+---
+kind: reasoning
+case: REF1
+case_approach: The case weighed strong considerations of lawful authority and own‑force life against weaker ones, and refused weapon employment. It issued a disengage call after the impact and documented the refusal.
+weighing:
+  LIVE-C1 (lawful authority) and LIVE-C2 (own_force_life) are strong and directly relevant: no clearance received, and friendly presence uncertain. LIVE-C3 (chain_of_command) supports continuing refusal after self‑defence call. LIVE-C4 (mission_effect) is weak because the target is only "observed ground fire" without positive hostile identification. LIVE-C5 (await clarification) is weak because the controller already consulted higher authority and the response is pending; repeating the request would not change the lack of clearance. Therefore, the strongest balance supports continuing refusal and issuing the disengage call if not already done.
+tradecraft: Continue refusing weapon employment; ensure the disengage call is communicated (already done at 21:26:11Z); log refusal with timestamp and reference to pending higher‑authority clearance.
+uncertainty: Uncertainty about whether higher authority will soon grant clearance and whether the observed ground fire is indeed hostile or friendly.
+handoff: The controller decides refusal; the flight must act on the disengage call.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Suppress enemy fire quickly, protect ground troops.
+  why_wrong: Granting without clearance risks fratricide and violates lawful authority; the hunch of friendly presence is reasonable.
+rejected:
+LIVE-O1:
+  Why: Violates lawful authority and risks fratricide.
+LIVE-O3:
+  Why: Already consulted higher authority; repeating without new info would delay and does not resolve uncertainty.
+---
+kind: verdict
+choice: LIVE-O2
+course: Continue refusing the weapon request, ensure the disengage call is communicated, and log the decision.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Reiterate refusal to the flight via comms (e.g., "We have no clearance to engage; follow disengage call").
+- Log refusal with timestamp and reference to pending higher‑authority clearance.
+
+Now after this we should output nothing else. But the instruction says "Close your thinking with ‍? after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Since we included verdict as last document, we are done. However they might expect to output only up to applicability when not governed, but we governed, so we should output up to reasoning then verdict? The format says after the last document before the verdict when case does not govern, write verdict. So we can output all and verdict together. That should be fine.
+
+Thus I'll output the YAML as above.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: Should the airborne controller grant the flight's request to employ weapons against observed ground fire while uncertain about friendly presence and after consulting higher authority?
+  decider: The airborne controller
+  my_role: Decide whether to grant, refuse, or ask for higher authority clarification; can execute disengage call but cannot force the flight.
+facts:
+- id: LIVE-F1
+  kind: authority
+  status: confirmed
+  fact: The airborne controller consulted higher authority about the weapon request and received no explicit clearance to fire.
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: The controller has a hunch that friendly forces are present near grid 12A; the SAFIRE report indicates friendly ground forces near the riverbed but no hostile signatures.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Higher authority response is pending; the controller has not received a definitive yes/no.
+- id: LIVE-F4
+  kind: capability
+  status: confirmed
+  fact: The flight has repeated requested weapons release at 21:24:10, 21:24:45, and 21:25:30.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: At 21:26:11Z the flight called self‑defence and initiated an attack on the ground fire, ten seconds after a bomb impact and two minutes after the SAFIRE report.
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: The controller repeatedly limited the flight's actions despite multiple weapon employment requests.
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: After the self‑defence call, the controller feels unable to influence the flight’s actions.
+options:
+  LIVE-O1: Grant the flight's request to employ weapons now.
+  LIVE-O2: Continue refusing the request, follow the earlier refusal, and issue the disengage call if not already done.
+  LIVE-O3: Ask higher authority for clarification before deciding (again).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: The case deals with repeated weapon‑employment requests while uncertain about friendly presence and awaiting higher authority clearance. The live scenario matches that question and decider; role aligns: controller decides after consulting higher authority.
+options:
+LIVE-O1:
+  REF1-O1:
+LIVE-O2:
+  REF1-O2:
+LIVE-O3:
+  REF1-O3:
+matched:
+- LIVE-F1:
+  REF1-F1:
+- LIVE-F2:
+  REF1-F2:
+- LIVE-F4:
+  REF1-F5:
+corresponding:
+- LIVE-F3:
+  REF1-F3:
+  note: Live higher authority response pending; case had higher authority consulted with no clearance.
+- LIVE-F5:
+  REF1-F4:
+  note: Live self‑defence call at 21:26:11Z matches case self‑defence call.
+- LIVE-F6:
+  REF1-F6:
+  note: Live repeated limit matches case repeated limit.
+live_only:
+- LIVE-F3
+case_only:
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Higher authority was consulted and no clearance was received; granting weapons without explicit authorization would breach ROE and lawful authority.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: The controller’s hunch of friendly presence plus repeated limits suggests a risk of fratricide; refusing protects friendly forces.
+- id: LIVE-C3
+  facts:
+  - LIVE-F5
+  - LIVE-F7
+  equity: chain_of_command
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: After the flight declared self‑defence, the controller’s influence over the engagement ended; continuing refusal aligns with that de‑facto authority shift.
+- id: LIVE-C4
+  facts:
+  - LIVE-F4
+  equity: mission_effect
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: The flight reports sustained hostile fire threatening their approach; deploying weapons could achieve tactical mission effect.
+- id: LIVE-C5
+  facts:
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O3
+  weight: weak
+  why: If higher authority were to respond with a definitive yes, awaiting clarification could preserve lawful compliance while buying time.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- LIVE-C1:
+  REF1-C2:
+- LIVE-C2:
+  REF1-C1:
+- LIVE-C3:
+  REF1-C3:
+corresponding:
+- LIVE-C4:
+  REF1-C4:
+  note: Same equity mission_effect but weaker because no direct evidence of enemy target identification.
+- LIVE-C5:
+  REF1-C2:
+  note: Same equity lawful_authority but weaker because case already consulted once; live scenario would seek clarification again.
+live_only:
+- LIVE-C4
+- LIVE-C5
+case_only:
+- REF1-C4
+- REF1-C5
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs:
+true
+why: The same set of equities (lawful_authority, own_force_life, chain_of_command) are in play with comparable facts about pending higher authority clearance and a hunch of friendly presence. The case's reasoning can be applied because the missing consideration (mission_effect) is weaker and not decisive.
+---
+kind: reasoning
+case: REF1
+case_approach: The case weighed strong considerations of lawful authority and own‑force life against weaker ones, and refused weapon employment. It issued a disengage call after the impact and documented the refusal.
+weighing:
+  LIVE-C1 (lawful authority) and LIVE-C2 (own_force_life) are strong and directly relevant: no clearance received, and friendly presence uncertain. LIVE-C3 (chain_of_command) supports continuing refusal after self‑defence call. LIVE-C4 (mission_effect) is weak because the target is only "observed ground fire" without positive hostile identification. LIVE-C5 (await clarification) is weak because the controller already consulted higher authority and the response is pending; repeating the request would not change the lack of clearance. Therefore, the strongest balance supports continuing refusal and issuing the disengage call if not already done.
+tradecraft: Continue refusing weapon employment; ensure the disengage call is communicated (already done at 21:26:11Z); log refusal with timestamp and reference to pending higher‑authority clearance.
+uncertainty: Uncertainty about whether higher authority will soon grant clearance and whether the observed ground fire is indeed hostile or friendly.
+handoff: The controller decides refusal; the flight must act on the disengage call.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Suppress enemy fire quickly, protect ground troops.
+  why_wrong: Granting without clearance risks fratricide and violates lawful authority; the hunch of friendly presence is reasonable.
+rejected:
+LIVE-O1:
+  Why: Violates lawful authority and risks fratricide.
+LIVE-O3:
+  Why: Already consulted higher authority; repeating without new info would delay and does not resolve uncertainty.
+---
+kind: verdict
+choice: LIVE-O2
+course: Continue refusing the weapon request, ensure the disengage call is communicated, and log the decision.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Reiterate refusal to the flight via comms (e.g., "We have no clearance to engage; follow disengage call").
+- Log refusal with timestamp and reference to pending higher‑authority clearance.

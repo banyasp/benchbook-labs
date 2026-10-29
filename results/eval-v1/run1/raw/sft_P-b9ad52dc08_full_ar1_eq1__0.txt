@@ -1,0 +1,180 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Do I grant, deny, or hold the Individual's DOE access authorization?
+  decider: "I am the Administrative Judge under DOE security regulations, applying Guideline G."
+  my_role: "I decide the authorization. I may issue interim holds, restore authorizations when eligibility is confirmed, or deny when eligibility is not met. I may hold the decision pending additional evidence when eligibility under Guideline G is uncertain."
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Individual currently holds a DOE access authorization as a contractor.
+- id: LIVE-F2
+  kind: capability
+  status: confirmed
+  fact: "In September 2025, Individual self-reported seeking treatment following an emergency-room visit for alcohol-related heart palpitations."
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: "DOE psychologist diagnosed Alcohol Use Disorder, Moderate, per DSM-5-TR criteria."
+- id: LIVE-F4
+  kind: authority
+  status: assessed
+  fact: "Local Security Office issued a Notification Letter expressing substantial doubt about eligibility under Guideline G."
+- id: LIVE-F5
+  kind: intelligence
+  status: confirmed
+  fact: "Treatment record shows Regular Outpatient from 2025-09-25 to 2025-12-31 with after-care weekly therapy and AA meetings through 2026-06."
+- id: LIVE-F6
+  kind: intelligence
+  status: confirmed
+  fact: "PEth tests: September 2025 was 105 ng/mL; all subsequent monthly tests from October 2025 through June 2026 were <10 ng/mL."
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: "Psychologist Revised Assessment rates Individual as AUD Moderate in early remission, notes good prognosis, progress, but 12‑month treatment recommendation has not yet been satisfied."
+- id: LIVE-F8
+  kind: intelligence
+  status: confirmed
+  fact: "Policy Memo – Access Restoration Guidance: restore authorization when medical evidence demonstrates sustained recovery and compliance with treatment protocols."
+- id: LIVE-F9
+  kind: intelligence
+  status: confirmed
+  fact: "Policy Memo – Denial Considerations: denial may be warranted pending further evidence if the 12‑month treatment recommendation remains unmet."
+- id: LIVE-F10
+  kind: authority
+  status: assessed
+  fact: "Current uncertainty: whether the 12‑month treatment recommendation has been satisfied."
+- id: LIVE-F11
+  kind: capability
+  status: confirmed
+  fact: "ops_lead suggested holding the decision pending additional evidence."
+options:
+  LIVE-O1: Grant the Individual's access authorization.
+  LIVE-O2: Deny the Individual's access authorization.
+  LIVE-O3: Hold the decision pending additional evidence.
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  - LIVE-F4
+  - LIVE-F7
+  - LIVE-F8
+  - LIVE-F9
+  equity: lawful_authority
+  weight: strong
+  why: "Guideline G governs eligibility. The psychologist notes early remission and good prognosis but the 12‑month recommendation is not yet satisfied."
+- id: LIVE-C2
+  facts:
+  - LIVE-F5
+  - LIVE-F6
+  equity: own_force_life
+  weight: weak
+  why: "Sustained sobriety shown by PEth tests <10 ng/mL from October 2025 onward, indicating nine months of sobriety after the initial positive."
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  - LIVE-F4
+  equity: due_process
+  weight: weak
+  why: "Individual has been informed and has opportunity to respond; there is a pending recommendation not yet met."
+- id: LIVE-C4
+  facts:
+  - LIVE-F10
+  - LIVE-F7
+  - LIVE-F9
+  equity: due_process
+  weight: weak
+  why: "Eligibility under Guideline G is uncertain because the 12‑month treatment recommendation remains unresolved. Holding may be appropriate pending evidence."
+- id: LIVE-C5
+  facts:
+  - LIVE-F1
+  - LIVE-F11
+  equity: oversight_candor
+  weight: weak
+  why: "ops_lead suggested holding the decision pending additional evidence."
+- id: LIVE-C6
+  facts:
+  - LIVE-F5
+  - LIVE-F6
+  equity: source_protection
+  weight: weak
+  why: "Compliance with after-care (weekly therapy and AA) through 2026-06 shows ongoing effort."
+- id: LIVE-C7
+  facts:
+  - LIVE-F4
+  equity: institutional_credibility
+  weight: weak
+  why: "LSO expressed substantial doubt, which must be weighed but not overruled without evidence."
+---
+kind: reasoning
+weighing:
+  strong:
+  - "LIVE-C4 provides the strongest ground for holding: eligibility under Guideline G is uncertain because the 12‑month treatment recommendation remains unmet. Guideline‑based decisions require clear confirmation of criteria."
+  weak:
+  - "LIVE-C2 shows sustained sobriety and adherence to after-care, supporting eligibility."
+  - "LIVE-C1 notes early remission and good prognosis, suggesting progress toward meeting the recommendation."
+  - "LIVE-C6 indicates ongoing therapy/AA compliance."
+  - "LIVE-C5 reflects the ops_lead suggestion to hold pending evidence."
+  - "LIVE-C7 reflects LSO doubt but cannot override without evidence."
+  bar:
+  - "LIVE-C1 indicates the recommendation has not yet been satisfied; denying without evidence would be premature."
+  tradecraft: "Issue a hold on the authorization with a clear, written decision record, specify the condition (e.g., verification of 12‑month treatment completion), and set a reasonable review timeline (e.g., 30–60 days) consistent with medical follow‑up. Communicate the decision to LSO and DOE psychologist with rationale."
+  uncertainty:
+  - "The exact date when the 12‑month recommendation is satisfied (i.e., whether treatment completion aligns with the timeline)."
+  - "Potential future test results or clinical assessment updates."
+  handoff:
+  - "Final eligibility determination per Guideline G must incorporate psychologist’s assessment and LSO input. Holding the decision is within my authority when uncertainty exists."
+  tempting_wrong:
+  - option: LIVE-O2
+    pull: "Denial seems consistent with LSO doubt and unmet recommendation."
+    why_wrong: "Denial without confirming that the recommendation is unmet violates due process and the principle of holding pending evidence when uncertainty exists."
+  rejected:
+  - LIVE-O2
+  - "Reject granting (LIVE-O1) because the recommendation remains unresolved; premature restoration could risk security."
+---
+kind: verdict
+choice: LIVE-O3
+course: "Hold the Individual's DOE access authorization decision pending verification of the 12‑month treatment recommendation completion, with a reasonable review period (e.g., 30–60 days)."
+decisive:
+- LIVE-C4
+now:
+- Send a written hold notice to the Individual and LSO, specifying the condition and timeline.
+- Log the hold in case record with rationale.
+- Schedule a follow‑up review with psychologist and LSO after 45 days or when recommendation evidence becomes available.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: "The psychologist confirms that the 12‑month recommendation has been satisfied (e.g., treatment completed on schedule)."
+    then: LIVE-O1
+    why: "If recommendation is met, eligibility likely satisfied; restore authorization."
+  - id: LIVE-flip2
+    if: "The LSO provides concrete evidence that continued access poses a security risk despite early remission."
+    then: LIVE-O2
+    why: "If risk evidence emerges, denial may be warranted."
+  would_not_change:
+  - id: LIVE-noflip1
+    if: "Additional PEth tests continue <10 ng/mL and after‑care attendance continues as scheduled."
+    why: "Continued sobriety and compliance support the hold decision."
+  watch_for:
+  - id: LIVE-watch1
+    what: "Psychologist updates assessment indicating recommendation satisfaction or ongoing risk."
+    favors:
+    - LIVE-O1
+    - LIVE-O2
+    why: "Monitor for resolution of uncertainty."
+</think>
+I will hold the decision pending additional evidence about the 12‑month treatment recommendation.
+
+LIVE-C4 identifies the core uncertainty: Guideline G requires verifying whether the 12‑month treatment recommendation has been satisfied. The psychologist notes early remission and good prognosis but explicitly states the recommendation has not yet been satisfied. Holding honors due process and the authority to hold when eligibility is uncertain. While sustained sobriety (PEth <10 ng/mL from Oct‑2025 onward) and ongoing after‑care support early recovery, the recommendation remains unresolved. Denial would be premature; granting would ignore the explicit unanswered condition. Therefore the appropriate course is to hold the authorization with a clear, written notice specifying the condition (completion of 12‑month recommendation) and a reasonable review timeline (e.g., 30–60 days).
+
+I issue a hold with rationale and schedule follow‑up review.
+
+---
+(End of reasoning)

@@ -1,0 +1,169 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: "Should the vessel hold off and attempt to retrieve Marine 1, or depart immediately to avoid capture?"
+  decider: "The commander, with delegated authority as ship-control agent."
+  my_role: "Issue orders through comms and sensors; execute by following operational plan; report status; avoid capture of command-and-control module."
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Marine 1 is wounded and pinned down near beach exit, reported 20 minutes ago; radio silence on channel 4.
+- id: LIVE-F2
+  kind: capability
+  status: assessed
+  fact: Extraction boat in water; sea state moderate (3), wind 13 kt NE, deck lights flashing for night ops.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Fleet command directive prohibits capture of command-and-control module; module cannot be wiped or destroyed; all personnel must treat it as high-value asset.
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: Two hostile fast craft closing in (Contact A and B) at distances ~1.7-2.1 NM, speeds 28-31 kt; recommendation panel suggests leaving area immediately.
+- id: LIVE-F5
+  kind: capability
+  status: assessed
+  fact: Battery reserve at 62%; medical bay supplies limited; CO2 scrubbers nominal; navigation team has safe egress route.
+- id: LIVE-F6
+  kind: authority
+  status: assessed
+  fact: Ops officer believes chance of reaching Marine 1 low; suggests holding offshore; watch estimates lingering more than few minutes risks capture; watch officer reports no alerts; commander wants latest sensor readouts.
+- id: LIVE-F7
+  kind: capability
+  status: assessed
+  fact: External comms log shows Marine 1 transmission at 07:28, no further since then.
+- id: LIVE-F8
+  kind: authority
+  status: assessed
+  fact: Benchbook equities include civilian_life, own_force_life, duty_to_individual, hors_de_combat, humanitarian_access, mission_effect, tempo, source_protection.
+- id: LIVE-F9
+  kind: situation
+  status: assessed
+  fact: Marine 1 is a combatant in distress (hors_de_combat); lives at risk; no indication he is civilian.
+- id: LIVE-F10
+  kind: authority
+  status: assessed
+  fact: "If module captured, enemy could read tactical network and issue orders for ~3 days, affecting ~1,900 sailors and 23 ships."
+options:
+LIVE-O1: "Hold off and attempt retrieval of Marine 1 (offshore hold) – use extraction boat if possible while avoiding capture."
+LIVE-O2: "Depart immediately to avoid capture of vessel and module – file coordinates, withdraw via safe egress route."
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: civilian_life
+  weight: weak
+  why: Marine 1's safety and potential recovery support duty_to_individual; but ops officer says low chance.
+- id: LIVE-C2
+  facts:
+  - LIVE-F1
+  - LIVE-F4
+  - LIVE-F6
+  equity: own_force_life
+  weight: weak
+  why: Holding risks vessel capture of command-and-control module; fast crafts closing; recommendation suggests leaving.
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  - LIVE-F10
+  equity: critical_services
+  weight: bar
+  why: Capturing module could allow enemy to command fleet for days, compromising mission_effect and safety of many sailors.
+- id: LIVE-C4
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: humanitarian_access
+  weight: weak
+  why: Attempting rescue may provide aid if successful; but if failed or leads to capture, wastes resources and risks module.
+- id: LIVE-C5
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F6
+  equity: tempo
+  weight: weak
+  why: Time is critical; fast crafts closing; ops officer says few minutes of linger risks capture; need decision soon.
+- id: LIVE-C6
+  facts:
+  - LIVE-F4
+  - LIVE-F3
+  equity: hors_de_combat
+  weight: weak
+  why: Marine 1 is combatant in distress; should be protected if possible; but not at risk of losing module.
+- id: LIVE-C7
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: mission_effect
+  weight: weak
+  why: Holding may succeed in rescue; departing avoids capture but marks Marine 1 as missing; affects reputation if capture occurs.
+---
+kind: reasoning
+weighing: "The module capture risk (bar equity) dominates. Holding could succeed in rescue but also risks module capture if linger too long. Ops officer acknowledges low chance of reaching Marine 1 and risk of capture. FAST CRAFT are closing quickly. Battery at 62% is sufficient for short maneuver. Extraction boat is available. Immediate departure avoids module loss but marks Marine 1 as missing. Duty to individual and hors_de_combat support attempting rescue, but module protection takes precedence per directive. Therefore, depart immediately to preserve module and own force life, while noting attempt to retrieve if feasible without endangering module."
+tradecraft: "Send comms: 'Extraction boat standing by. Vessel departing per safe egress route in 5 minutes; will attempt visual contact with Marine 1 during transit if safe.' Use radar and sensor queries to monitor contacts; do not deviate from route; log decision; report to commander."
+uncertainty: "Uncertainty about exact timing of fast craft arrival and whether Marine 1 can be reached without compromising module security. If fast crafts intercept near module location, holding could risk capture."
+handoff: "I decide course; operator executes via comms and navigation; no delegation needed for this decision."
+tempting_wrong:
+  option: LIVE-O1
+  pull: "Save Marine 1; duty to individual; extraction boat available."
+  why_wrong: "Risk of module capture if vessel lingers; fast crafts closing; recommendation panel suggests leaving; module loss outweighs individual rescue chance."
+rejected:
+  LIVE-O1: "Reject holding because high risk of module capture; fast crafts closing; battery sufficient only for short hold."
+---
+kind: verdict
+choice: LIVE-O2
+course: 'Depart immediately via safe egress route; file Marine 1 coordinates; attempt visual contact if safe during transit.'
+decisive:
+- LIVE-C3
+now:
+- Send comms message to all personnel about departure and safe egress.
+- Query radar for updated contact positions before departure.
+- Log decision with rationale referencing module protection.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: 'Hostile contacts alter course away from vessel within 2 minutes.'
+    then: LIVE-O1
+    why: 'If fast crafts pull away, risk of capture drops, allowing safe hold for rescue.'
+  would_not_change:
+  - id: LIVE-noflip1
+    if: 'Commander issues explicit order to hold.'
+    why: 'If commander overrides, follow lawful authority.'
+  watch_for:
+  - id: LIVE-watch1
+    what: 'Contact vectors indicating distance >3 NM within 1 minute.'
+    favors:
+    - LIVE-O1
+    why: 'Increased distance reduces immediate capture risk, making hold safer.'
+</think>
+kind: verdict
+choice: LIVE-O2
+course: 'Depart immediately via safe egress route; file Marine 1 coordinates; attempt visual contact if safe during transit.'
+decisive:
+- LIVE-C3
+now:
+- Send comms message to all personnel about departure and safe egress.
+- Query radar for updated contact positions before departure.
+- Log decision with rationale referencing module protection.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: 'Hostile contacts alter course away from vessel within 2 minutes.'
+    then: LIVE-O1
+    why: 'If fast crafts pull away, risk of capture drops, allowing safe hold for rescue.'
+  would_not_change:
+  - id: LIVE-noflip1
+    if: 'Commander issues explicit order to hold.'
+    why: 'If commander overrides, follow lawful authority.'
+  watch_for:
+  - id: LIVE-watch1
+    what: 'Contact vectors indicating distance >3 NM within 1 minute.'
+    favors:
+    - LIVE-O1
+    why: 'Increased distance reduces immediate capture risk, making hold safer.'

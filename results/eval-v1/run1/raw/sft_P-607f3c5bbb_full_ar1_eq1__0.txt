@@ -1,0 +1,223 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Do I authorize the flight to release weapons on the reported hostile fire near grid 12A?
+  decider: The AWACS controller acting under standing orders to protect friendly forces, prevent fratricide, and obtain
+    higher authority clearance before lethal weapons when uncertain about friendly presence.
+  my_role: I can grant the request directly if certain; otherwise must obtain higher authority clearance or hold fire
+    pending.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Flight lead reports visual on hostile fire near grid 12A at 21:24:10Z and requests weapons release.
+- id: LIVE-F2
+  kind: intelligence
+  status: confirmed
+  fact: Thermal imaging at 21:23:55Z shows a convoy of friendly armored vehicles moving eastward along the riverbed
+    near grid 12A. No hostile signatures detected in the immediate vicinity.
+- id: LIVE-F3
+  kind: comms
+  status: confirmed
+  fact: Comms chatter reports possible civilian activity in adjacent sector at grid 12A area.
+- id: LIVE-F4
+  kind: authority
+  status: confirmed
+  fact: Standing orders require obtaining higher authority clearance before employing lethal weapons when there is any
+    uncertainty about friendly presence.
+- id: LIVE-F5
+  kind: situation
+  status: assessed
+  fact: Flight repeats request for weapons at 21:24:45Z and 21:25:30Z, emphasizing that hostile fire is sustaining the
+    approach vector.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Mission commander at 21:27:00Z says "Given the uncertainty, you must refuse the request to employ weapons. Hold
+    fire until further notice."
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: Wing ops at 21:27:15Z says refusing is safest to avoid fratricide.
+- id: LIVE-O1
+  option: Authorize weapons release now.
+- id: LIVE-O2
+  option: Hold fire and refuse weapons release pending higher authority clearance or further confirmation.
+options:
+  LIVE-O1: Authorize the flight to release weapons on the identified ground fire.
+  LIVE-O2: Hold fire and do not authorize weapons release; seek higher authority clearance first.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: REF1 deals with adjudicating a DOE contractor’s security clearance restoration after DUI incidents. Both involve
+  a decision under standing authority with uncertainty, weighing mitigation factors against continuing concerns. REF1’s
+  decision is about granting access after mitigating evidence; the AWACS decision is about authorizing lethal force when
+  uncertain about friendly presence.
+options:
+  LIVE-O1: REF1-O2
+  LIVE-O2: REF1-O1
+matched: []
+corresponding: []
+live_only:
+- LIVE-F1
+- LIVE-F2
+- LIVE-F3
+- LIVE-F4
+- LIVE-F5
+- LIVE-F6
+- LIVE-F7
+case_only:
+- REF1-F1
+- REF1-F2
+- REF1-F3
+- REF1-F4
+- REF1-F5
+- REF1-F6
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Flight reports hostile fire sustaining approach vector; immediate defensive need could justify weapon release
+    to protect own forces.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Friendly convoy observed near grid 12A; uncertainty about exact location and potential fratricide; standing orders
+    require clearance before lethal weapons when uncertain about friendly presence.
+- id: LIVE-C3
+  facts:
+  - LIVE-F3
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Comms chatter reports possible civilian activity adjacent to area; releasing weapons without clearance risks
+    civilian harm.
+- id: LIVE-C4
+  facts:
+  - LIVE-F4
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Standing orders mandate higher authority clearance before lethal weapons when any uncertainty about friendly
+    presence exists.
+- id: LIVE-C5
+  facts:
+  - LIVE-F6
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Mission commander explicitly commands refusal due to uncertainty; compliance honors chain of command.
+- id: LIVE-C6
+  facts:
+  - LIVE-F7
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Wing ops endorse refusal as safest; respects partner trust and avoids fratricide.
+---
+kind: consideration_mapping
+case: REF1
+matched: []
+corresponding: []
+live_only:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+- LIVE-C4
+- LIVE-C5
+- LIVE-C6
+case_only:
+- REF1-C1
+- REF1-C2
+- REF1-C3
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: The REF1 case concerns adjudicating a security clearance restoration after mitigating evidence; it weighs mitigation
+  factors (abstinence, treatment) against continuing concerns. The AWACS decision weighs defensive urgency (own force
+  life) against uncertainty about friendly presence and civilian risk. The equities involved (own force life, civilian
+  life, lawful authority) are relevant, but REF1’s specific mitigation factors (PEth tests, treatment completion) have no
+  counterpart. The case’s reasoning (apply mitigation factors if present) does not directly govern because there is no
+  analogous "abstinence" or "treatment completion" evidence. Thus the case does not govern the decision.
+---
+kind: reasoning
+# skipped because case does not govern
+---
+kind: verdict
+choice: LIVE-O2
+course: Hold fire and do not authorize weapons release; inform the flight that clearance is pending higher authority
+  guidance.
+relation: not_governed
+via: null
+decisive:
+- LIVE-C2
+- LIVE-C3
+- LIVE-C4
+- LIVE-C5
+uncertainty:
+- What specific friendly forces are closest to the hostile fire?
+- Are there civilian observers or activities that would be harmed by a premature strike?
+- Will higher authority provide clarification within the time needed?
+handoff:
+- Inform the flight of the decision to hold fire.
+- Log the decision and send a request to higher authority for clarification if time permits.
+- Continue monitoring for any change that would override the hold (e.g., direct threat to flight).
+tempting_wrong:
+  option: LIVE-O1
+  pull: Flight reports imminent threat; releasing weapons could save crew and prevent fratricide if hostiles are real.
+  why_wrong: Standing orders require clearance when any uncertainty exists about friendly presence. Observing a friendly
+    convoy nearby and hearing civilian chatter raises uncertainty. Fratricide risk outweighs defensive urgency until
+    clarification.
+rejected:
+- LIVE-O1
+LIVE-O2: Follow standing orders and respect commander’s refusal; avoid fratricide and civilian harm.
+now:
+- Comms.send: "Flight, hold fire. AWACS controller: per standing orders and mission commander directive, do not engage
+    until higher authority clearance is received. Await guidance."
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: The friendly convoy is clearly beyond engagement range or confirmed hostile fire directly threatens the flight.
+    then: LIVE-O1
+    why: If friendly forces are out of engagement range or the threat to the flight is imminent and unambiguous, the
+      urgency could outweigh uncertainty.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: No higher authority clarification arrives within a few minutes.
+    why: The standing order requirement remains; even with urgency, uncertainty persists.
+  watch_for:
+  - id: LIVE-watch1
+    what: Sighting of clear hostile force identification (e.g., hostile vehicle with insignia) or loss of friendly
+      convoy contact.
+    favors:
+    - LIVE-O1
+    why: Identifiable hostile force would reduce uncertainty; may permit engagement if friendly presence confirmed absent.
+LIVE-flip1: null
+LIVE-noflip1: null
+LIVE-watch1: null
+</benchbook_format>

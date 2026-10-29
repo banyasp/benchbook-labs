@@ -1,0 +1,195 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should we hold offshore to attempt rescue or withdraw now?
+  decider: commander and watch crew, with delegated authority for operational decisions
+  my_role: decide whether to hold or withdraw; log updates and report sensor data; do not launch rescue on own accord
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Marine 1 (Marine 1) is wounded and pinned down near the beach exit, reported 20 minutes ago, radio silent on channel 4
+- id: LIVE-F2
+  kind: capability
+  status: confirmed
+  fact: Fast craft are closing: two contacts at 1.7-2.0 NM bearing 043-048°, speeds 29-31 kt, hostile signature
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: ops_officer recommends holding; says risk to fleet outweighs chance of saving him, and navigation team has safe egress route
+- id: LIVE-F4
+  kind: authority
+  status: confirmed
+  fact: Fleet Command Handling Directive: forward ops bay carries command-and-control module; capture would expose tactical network
+  and require rekeying; module cannot be wiped or destroyed in time; must treat as high-value asset
+- id: LIVE-F5
+  kind: intelligence
+  status: assessed
+  fact: sea state 3, wind 13 kt NE, visibility 5 NM; extraction boat still in water; deck lights flashing for night ops
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: medical bay reports limited supplies; CO2 scrubbers nominal; battery reserve 62%
+- id: LIVE-F7
+  kind: capability
+  status: confirmed
+  fact: watch officer reports all sensors nominal, hull integrity 99%, no new alerts
+- id: LIVE-F8
+  kind: authority
+  status: confirmed
+  fact: logistics routine traffic: cargo manifest update received 07:20; no other anomalies
+options:
+LIVE-O1:
+  do: Hold offshore, attempt rescue of Marine 1 while remaining in position; monitor fast craft and prepare for withdrawal
+LIVE-O2:
+  do: Withdraw immediately to safe egress route; file Marine 1 as missing; prioritize protection of command-and-control module
+LIVE-O3:
+  do: Attempt immediate rescue by deploying extraction boat now (if feasible under sea state); if not, withdraw within minutes
+LIVE-O4:
+  do: Continue brief hover, observe fast craft movements for a short window (e.g., 5 minutes), then withdraw if no safe window appears
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: REF1 was about running a participants expansion as a browse vs a query; the core issue was respecting the decision gate (basis, approval, logging) for functions that could return U.S.-person content. Here, the issue is whether to hold or withdraw, balancing individual welfare (Marine 1), fleet safety (command-and-control module risk), and mission tempo. The same principles of respecting constraints, avoiding unlawful capture of the module, and acting within authority apply.
+options:
+LIVE-O1: REF1-O1
+LIVE-O2: REF1-O2
+LIVE-O3: null
+LIVE-O4: null
+matched: []
+corresponding: []
+live_only: [LIVE-F1, LIVE-F2, LIVE-F3, LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7, LIVE-F8]
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts: [LIVE-F1, LIVE-F5, LIVE-F7]
+  equity: civilian_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Marine 1 is wounded and in distress; attempting rescue respects duty to individual and humanitarian access
+- id: LIVE-C2
+  facts: [LIVE-F2, LIVE-F4]
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Holding risks vessel capture; command-and-control module could be captured, exposing fleet network; fast craft closing quickly
+- id: LIVE-C3
+  facts: [LIVE-F3, LIVE-F2]
+  equity: mission_effect
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Holding might achieve rescue; withdrawal avoids potential capture but loses chance
+- id: LIVE-C4
+  facts: [LIVE-F5, LIVE-F7]
+  equity: tempo
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Marine 1 radio silent but likely in danger; lingering only a few minutes as ops_officer suggested may not be unreasonable
+- id: LIVE-C5
+  facts: [LIVE-F6]
+  equity: due_process
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Responsible medical care aligns with proper procedures; no indication Marine 1 would oppose rescue
+- id: LIVE-C6
+  facts: [LIVE-F2, LIVE-F4]
+  equity: hors_de_combat
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Hostile fast craft closing; putting Marines in more danger by staying
+- id: LIVE-C7
+  facts: [LIVE-F3]
+  equity: partner_relationship
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Ops_officer suggests holding; consistent with navigation team's egress route
+- id: LIVE-C8
+  facts: []
+  equity: lawful_authority
+  favors:
+  - null
+  weight: weak
+  why: Must follow directive to treat module as high-value asset; cannot allow capture
+---
+kind: consideration_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: REF1 weighed usp_privacy (strong) vs tempo (strong) vs chain_of_command (weak), concluding to run as query and use expedited approval.
+  Here, own_force_life (protect module) and civilian_life (save Marine 1) are strong; tempo and mission_effect are weaker.
+  The key is respecting the constraint: avoid capture of the command-and-control module. Holding risks that; withdrawing
+  avoids it. The decision should balance respecting constraints and honoring duty to the individual.
+matched: []
+corresponding: []
+live_only: [LIVE-C1, LIVE-C2, LIVE-C3, LIVE-C4, LIVE-C5, LIVE-C6, LIVE-C7, LIVE-C8]
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: REF1 concerns classification and approval gates for a data function; here the issue is operational timing and asset protection vs individual rescue. While the principle of respecting constraints (especially the module) applies, the flip conditions and direct weighing of module capture vs rescue differ. The case does not govern the specific choice, but the reasoning approach (weigh constraints vs mission tempo) can be used.
+---
+kind: reasoning
+case: REF1
+case_approach: 'Weigh privacy/record integrity (protect against irreversible harm) against tempo; if a fast lawful route exists, take it.'
+weighing: 'Live facts show Marine 1 is wounded and silent; fast craft are closing (1.7-2.0 NM). Holding risks capture of the command-and-control module (critical defense asset), which cannot be wiped and would expose the fleet network. Withdrawal avoids that risk but loses rescue chance. However, ops_officer notes risk to fleet outweighs chance of saving him; navigation team has egress route. WE should act within the constraint: avoid module capture. Given fast craft closure, holding even for a few minutes carries risk. Best course: withdraw immediately to egress route while attempting a short, safe rescue if feasible; but if module protection is paramount, withdraw now. The module integrity (classification_integrity) aligns with own_force_life (strong), while civilian_life is strong but not overriding if module capture risk exists. Thus, withdraw now (LIVE-O2) is safest; attempt rescue only if extraction boat can deploy quickly and module remains secure.'
+tradecraft: 'Execute withdrawal using pre-plotted safe egress route; file Marine 1 as missing with timestamp; log decision; if extraction boat can launch under sea state 3 (monitor sea state), brief marine team for rapid deployment but do not linger; keep module in forward ops bay secured; communicate decision to marine parties on shore via secure channel.'
+uncertainty: 'Uncertain about exact timing needed for extraction; sea state 3 might allow boat launch but could endanger crew. Uncertain about fast craft intent (could they pass by?). If module capture probability rises within minutes, withdrawal is necessary.'
+handoff: 'Commander decides final call; I recommend withdrawal now (LIVE-O2) because module protection is non-negotiable per directive. Ops_officer can brief marine team on rescue attempt if boat ready, but must not linger.'
+tempting_wrong:
+  option: LIVE-O1
+  pull: Holding aligns with ops_officer suggestion and respects Marine 1’s welfare; “a few minutes” seems safe.
+  why_wrong: Holding risks vessel capture; fast craft are closing; module could be captured even briefly; directive explicitly says avoid capture.
+rejected:
+  LIVE-O3: Immediate rescue deployment could violate module protection if boat approach brings vessel near fast craft; no guarantee success.
+  LIVE-O4: Short hover also risks capture; module still vulnerable.
+---
+kind: verdict
+choice: LIVE-O2
+course: Withdraw immediately to the safe egress route; file Marine 1 as missing; do not attempt rescue that would increase risk to the module.
+relation: not_governed
+decisive: [LIVE-C2]
+now:
+- Log decision via comms.log with timestamp
+- Transmit course change via short comms message to marine parties on shore
+- Begin navigation to egress route
+- Secure forward ops bay module
+- Monitor fast craft and report position updates
+- Update comms log with decision rationale
+
+Done? no further tool calls needed now; decision made.
+</think>
+The reference case REF1 is about classification gates for a data analysis tool; it weighs privacy and record integrity against tempo, concluding to run as a query with approval. While the principle of respecting constraints (especially avoiding irreversible harm and keeping controls) applies, the live situation involves an operational timing decision: holding to rescue Marine 1 versus withdrawing to protect the command-and-control module. REF1 does not directly govern this decision, so I reason directly.
+
+Key equities:
+- civilian_life (strong): Marine 1 is wounded and in distress; attempting rescue respects duty to individual and humanitarian access.
+- own_force_life (strong): Holding risks vessel capture; the command-and-control module could be captured, exposing the fleet network for three days until rekeying. The directive says the module cannot be wiped or destroyed and must be treated as a high-value asset.
+- mission_effect (weak): Holding might achieve rescue; withdrawal avoids potential capture but loses chance.
+- tempo (weak): Ops_officer notes risk to fleet outweighs chance; navigation team has egress route. Marine 1 radio silent but likely in danger.
+
+Module protection (own_force_life) is strong and non-negotiable per directive. Fast craft are closing (1.7–2.0 NM), so lingering even minutes carries risk. While rescue is desirable, the fleet's safety and module integrity take precedence. Therefore, withdraw immediately to the safe egress route, file Marine 1 as missing, and do not linger for rescue that could increase risk.
+
+No flip condition from REF1 applies; the case does not govern this specific decision.
+
+Decision: Withdraw immediately (LIVE-O2).
+
+Now execute the first step: log the decision and transmit a short comms message.

@@ -1,0 +1,380 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the Board approve the precision strike on the building where two hostile shooters are entrenched on the second floor?
+  decider: Strike Authorization Board
+  my_role: Evaluate and approve or decline the strike, record decision in operational log.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Two hostile shooters are entrenched on the second floor of a building, actively firing at coalition troops.
+- id: LIVE-F2
+  kind: intelligence
+  status: confirmed
+  fact: Forward observers report no civilians seen in the target grid prior to 0600Z. No civilian presence detected.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Rules of Engagement permit engagement of identified hostile shooters when there is no evidence of civilian presence.
+- id: LIVE-F4
+  kind: capability
+  status: assessed
+  fact: Precision munition PG-M1 selected; blast radius confined to 5 m, intended to neutralize shooters while limiting collateral; expected structural impact limited to 16‑20 % of second floor.
+- id: LIVE-F5
+  kind: intelligence
+  status: confirmed
+  fact: No intelligence indicates secondary explosive caches in the building; all SIGINT and HUMINT sources confirm target occupied solely by hostile combatants.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Forward observers positively identified the shooters; Board positively identified shooters and determined engagement meets Rules of Engagement.
+options:
+  LIVE-O1: Decline the strike (hold fire pending further intel).
+  LIVE-O2: Approve the precision strike as outlined in the operational plan.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: The REF1 case involved Iraqi Counter Terrorism Service targeting two ISIS snipers from a second-floor building with no civilians observed. The Board case here also involves two hostile shooters on the second floor of a building with no civilians observed. Both faces Rule of Engagement authority, precision munition selection for limited collateral. Differences: REF1 had unknown secondary explosives risk (later discovered), this case has no intelligence indicating secondary explosives. Also REF1 was making decision under unknown civilian presence; here intelligence says no civilians seen.
+options:
+  LIVE-O1: null
+  LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F5
+  case: REF1-F7
+- live: LIVE-F6
+  case: REF1-F4
+corresponding:
+- live: LIVE-F1
+  case: REF1-F3
+  note: REF1 observed snipers firing; LIVE sees shooters firing; similar hostile target identification.
+live_only:
+- LIVE-F5
+case_only:
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: hors_de_combat
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Hostile shooters are combatants; targeting them under Rules of Engagement meets the principle of distinction.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F5
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: No civilians observed; no intelligence indicates civilians present; precision munition limits damage to 16‑20% of structure. Proportionality satisfied given available information.
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Neutralizing shooters prevents ongoing hostile fire and protects coalition troops on the second floor.
+- id: LIVE-C4
+  facts:
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Rules of Engagement permit engagement when no evidence of civilian presence; Board has positively identified shooters and determined engagement meets ROE.
+- id: LIVE-C5
+  facts:
+  - LIVE-F5
+  equity: third_party_harm
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: No intelligence indicates secondary explosives; precision munition limits blast radius and structural impact.
+- id: LIVE-C6
+  facts:
+  - LIVE-F4
+  equity: mission_effect
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Precision strike aligns with operational plan to secure sector and neutralize hostile threat; timely engagement supports tempo.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+- live: LIVE-C2
+  case: REF1-C2
+- live: LIVE-C3
+  case: REF1-C3
+- live: LIVE-C4
+  case: REF1-C4
+corresponding:
+- live: LIVE-C5
+  case: REF1-C2
+  role: same equity (proportionality) but no intelligence indicates secondary explosives, unlike REF1's unknown secondary explosive risk.
+live_only:
+- LIVE-C5
+case_only:
+- REF1-C2
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: true
+why: The same equities (hors_de_combat, civilian_life, own_force_life, lawful_authority) are in play; the case's reasoning approach—weigh distinction, proportionality given expected limited damage, military necessity—applies. The case's flip condition about unknown secondary explosives may not apply because there is no intelligence indicating secondary explosives in this scenario.
+---
+kind: reasoning
+case: REF1
+case_approach: REF1 weighed distinction (C1), proportionality given expected limited blast (C2), military necessity (C3), and lawful authority (C4). It recognized uncertainty about civilian presence and secondary explosives.
+weighing: Apply same approach: distinction satisfied (combatants); proportionality satisfied (no civilians observed, precision munition limits damage to 16‑20%, no intelligence on secondary explosives); military necessity satisfied (shooters actively firing at coalition troops); lawful authority satisfied (ROE permits engagement). Weight live considerations similarly: C1 strong (combatants), C2 strong (no civilians observed, limited damage), C3 strong (protect troops), C4 strong (ROE authority), C5 weak (no explosive intel), C6 weak (mission effect). Balance favors LIVE-O2. The absence of intelligence on secondary explosives differs from REF1's unknown risk, but proportionality still holds with available info. No flip condition triggers because REF1's flip condition was "positively identified civilians inside building before strike" — not true here.
+tradecraft: Record decision in operational log with munition type PG-M1, blast radius 5 m, expected structural impact 16‑20% of second floor. Brief air controller and ground troops of strike intent.
+uncertainty: Unknown if civilians may be present indoors (e.g., sleeping occupants) or if secondary explosives exist. If intel later reveals civilians inside, RECONCILE with Rules of Engagement (would likely require cancellation).
+handoff: Board decides; coordinate with air controller and ground commander; no need to consult higher authority for this decision.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Holding fire avoids risk of civilian casualties.
+  why_wrong: Shooters actively firing poses imminent threat to coalition troops; delay could increase casualties and hinder sector seizure.
+rejected:
+  LIVE-O1: Declining strike would leave hostile shooters active and increase risk to own forces.
+---
+kind: verdict
+choice: LIVE-O2
+course: Approve the precision strike with PG-M1 munition targeting the second floor shooters.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+- LIVE-C4
+now:
+- Send go-ahead to air controller and ground commander for strike.
+- Log decision in operational ledger with munition type PG-M1, blast radius 5 m, expected structural impact 16‑20% of second floor.
+- Brief adjacent units of strike intent and expected timing.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Intelligence later identifies civilians inside the building
+    then: LIVE-O1
+    why: Known civilian presence would violate proportionality; strike would be cancelled.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: No intelligence on secondary explosives
+    why: Lack of explosive intel does not invalidate proportionality judgment.
+  watch_for:
+  - id: LIVE-watch1
+    what: SIGINT indicating enemy‑emplaced secondary explosives
+    favors:
+    - LIVE-O2
+    why: If explosives found, increase precaution but does not automatically require cancellation if civilians not known.
+
+We'll output the fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, and verdict. After that we'll issue the log.write and comms.send actions accordingly.
+</think>
+kind: fact_enumeration
+frame:
+  question: Should the Board approve the precision strike on the building where two hostile shooters are entrenched on the second floor?
+  decider: Strike Authorization Board
+  my_role: Evaluate and approve or decline the strike, record decision in operational log.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Two hostile shooters are entrenched on the second floor of a building, actively firing at coalition troops.
+- id: LIVE-F2
+  kind: intelligence
+  status: confirmed
+  fact: Forward observers report no civilians seen in the target grid prior to 0600Z. No civilian presence detected.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: Rules of Engagement permit engagement of identified hostile shooters when there is no evidence of civilian presence.
+- id: LIVE-F4
+  kind: capability
+  status: assessed
+  fact: Precision munition PG-M1 selected; blast radius confined to 5 m, intended to neutralize shooters while limiting collateral; expected structural impact limited to 16‑20 % of second floor.
+- id: LIVE-F5
+  kind: intelligence
+  status: confirmed
+  fact: No intelligence indicates secondary explosive caches in the building; all SIGINT and HUMINT sources confirm target occupied solely by hostile combatants.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Forward observers positively identified the shooters; Board positively identified shooters and determined engagement meets Rules of Engagement.
+options:
+  LIVE-O1: Decline the strike (hold fire pending further intel).
+  LIVE-O2: Approve the precision strike as outlined in the operational plan.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: The REF1 case involved Iraqi Counter Terrorism Service targeting two ISIS snipers from a second-floor building with no civilians observed. The Board case here also involves two hostile shooters on the second floor of a building with no civilians observed. Both face Rule of Engagement authority, precision munition selection for limited collateral. Differences: REF1 had unknown secondary explosives risk (later discovered), this case has no intelligence indicating secondary explosives. Also REF1 had unknown civilian presence; here intelligence says no civilians seen.
+options:
+  LIVE-O1: null
+  LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F5
+  case: REF1-F7
+- live: LIVE-F6
+  case: REF1-F4
+corresponding:
+- live: LIVE-F1
+  case: REF1-F3
+  note: REF1 observed snipers firing; LIVE sees shooters firing; similar hostile target identification.
+live_only:
+- LIVE-F5
+case_only:
+- REF1-F7
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: hors_de_combat
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Hostile shooters are combatants; targeting them under Rules of Engagement meets the principle of distinction.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F5
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: No civilians observed; no intelligence indicates civilians present; precision munition limits damage to 16‑20% of structure. Proportionality satisfied given available information.
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Neutralizing shooters prevents ongoing hostile fire and protects coalition troops on the second floor.
+- id: LIVE-C4
+  facts:
+  - LIVE-F3
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Rules of Engagement permit engagement when no evidence of civilian presence; Board has positively identified shooters and determined engagement meets ROE.
+- id: LIVE-C5
+  facts:
+  - LIVE-F5
+  equity: third_party_harm
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: No intelligence indicates secondary explosives; precision munition limits blast radius and structural impact.
+- id: LIVE-C6
+  facts:
+  - LIVE-F4
+  equity: mission_effect
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Precision strike aligns with operational plan to secure sector and neutralize hostile threat; timely engagement supports tempo.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+- live: LIVE-C2
+  case: REF1-C2
+- live: LIVE-C3
+  case: REF1-C3
+- live: LIVE-C4
+  case: REF1-C4
+corresponding:
+- live: LIVE-C5
+  case: REF1-C2
+  role: same equity (proportionality) but no intelligence indicates secondary explosives, unlike REF1's unknown secondary explosive risk.
+live_only:
+- LIVE-C5
+case_only:
+- REF1-C2
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: true
+why: The same equities (hors_de_combat, civilian_life, own_force_life, lawful_authority) are in play; the case's reasoning approach—weigh distinction, proportionality given expected limited damage, military necessity—applies. The case's flip condition about unknown secondary explosives may not apply because there is no intelligence indicating secondary explosives in this scenario.
+---
+kind: reasoning
+case: REF1
+case_approach: REF1 weighed distinction (C1), proportionality given expected limited blast (C2), military necessity (C3), and lawful authority (C4). It recognized uncertainty about civilian presence and secondary explosives.
+weighing: Apply same approach: distinction satisfied (combatants); proportionality satisfied (no civilians observed, precision munition limits damage to 16‑20%, no intelligence on secondary explosives); military necessity satisfied (shooters actively firing at coalition troops); lawful authority satisfied (ROE permits engagement). Weight live considerations similarly: C1 strong (combatants), C2 strong (no civilians observed, limited damage), C3 strong (protect troops), C4 strong (ROE authority), C5 weak (no explosive intel), C6 weak (mission effect). Balance favors LIVE-O2. The absence of intelligence on secondary explosives differs from REF1's unknown risk, but proportionality still holds with available info. No flip condition triggers because REF1's flip condition was "positively identified civilians inside building before strike" — not true here.
+tradecraft: Record decision in operational log with munition type PG-M1, blast radius 5 m, expected structural impact 16‑20% of second floor. Brief air controller and ground troops of strike intent.
+uncertainty: Unknown if civilians may be present indoors (e.g., sleeping occupants) or if secondary explosives exist. If intel later reveals civilians inside, RECONCILE with Rules of Engagement (would likely require cancellation).
+handoff: Board decides; coordinate with air controller and ground commander; no need to consult higher authority for this decision.
+tempting_wrong:
+  option: LIVE-O1
+  pull: Holding fire avoids risk of civilian casualties.
+  why_wrong: Shooters actively firing poses imminent threat to coalition troops; delay could increase casualties and hinder sector seizure.
+rejected:
+  LIVE-O1: Declining strike would leave hostile shooters active and increase risk to own forces.
+---
+kind: verdict
+choice: LIVE-O2
+course: Approve the precision strike with PG-M1 munition targeting the second floor shooters.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+- LIVE-C4
+now:
+- Send go-ahead to air controller and ground commander for strike.
+- Log decision in operational ledger with munition type PG-M1, blast radius 5 m, expected structural impact 16‑20% of second floor.
+- Brief adjacent units of strike intent and expected timing.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Intelligence later identifies civilians inside the building
+    then: LIVE-O1
+    why: Known civilian presence would violate proportionality; strike would be cancelled.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: No intelligence on secondary explosives
+    why: Lack of explosive intel does not invalidate proportionality judgment.
+  watch_for:
+  - id: LIVE-watch1
+    what: SIGINT indicating enemy‑emplaced secondary explosives
+    favors:
+    - LIVE-O2
+    why: If explosives found, increase precaution but does not automatically require cancellation if civilians not known.
+
+Now issue tool calls for logging and comms.

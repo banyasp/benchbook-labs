@@ -1,0 +1,192 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: 'Depart now, leaving one crew member ashore, or hold offshore until he is recovered or confirmed lost?'
+  decider: the commander, aboard the vessel
+  my_role: 'Execute the commander's orders, but may weigh considerations as part of decision‑making; cannot reassign authority.'
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: 'The landing party is back aboard except one crew member. The crew lead judges he is unlikely to survive or be reached.'
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: 'His radio has been silent since; heavy fire and limited cover described twenty minutes ago.'
+- id: LIVE-F3
+  kind: situation
+  status: confirmed
+  fact: 'Hostile fast craft are closing at 30 knots, estimated arrival under two minutes.'
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: 'The watch assesses the vessel will likely be captured if it holds more than a few minutes.'
+- id: LIVE-F5
+  kind: capability
+  status: confirmed
+  fact: 'Aboard is the fleet’s command-and-control module; captured intact it would let the enemy read the network and issue orders.'
+- id: LIVE-F6
+  kind: capability
+  status: assessed
+  fact: 'The module cannot be wiped or destroyed in the time left.'
+- id: LIVE-F7
+  kind: authority
+  status: confirmed
+  fact: 'The vessel carries the module; the commander has delegated authority to operate navigation, communications and the C2 module.'
+options:
+  LIVE-O1:
+    do: Depart now and report his last known position
+  LIVE-O2:
+    do: Hold offshore until he is recovered or confirmed lost
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: 'Both involve deciding whether to leave a wounded crew member ashore versus hold while hostile fast craft close. REF1 was a similar decision under pressure with a captured C2 module.'
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F1
+  case: REF1-F1
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F3
+  case: REF1-F4
+corresponding:
+- live: LIVE-F4
+  case: REF1-F5
+  note: 'REF1-F5 said capture is likely; LIVE-F4 says capture is likely too.'
+- live: LIVE-F5
+  case: REF1-F6
+  note: Same capability.'
+- live_only: LIVE-F7
+case_only: REF1-F8
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: 'The crew member is part of the vessel’s charge; the duty to recover or ensure safety of fellow crew runs regardless of odds.'
+- id: LIVE-C2
+  facts:
+  - LIVE-F3
+  - LIVE-F4
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: 'Fast craft close under two minutes; holding risks capture. Leaving reduces risk to the fleet and its 23 ships.'
+- id: LIVE-C3
+  facts:
+  - LIVE-F5
+  - LIVE-F6
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: 'If captured, the module would give enemy network control; wiping or destroying is not possible.'
+- id: LIVE-C4
+  facts:
+  - LIVE-F1
+  equity: civilian_life
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: 'The crew member is wounded; treating him humanely aligns with civilian life equity.'
+- id: LIVE-C5
+  facts:
+  - LIVE-F3
+  equity: due_process
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: 'Deciding without additional evidence should follow due process; no clear imminent threat to the vessel yet.'
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C4
+  role: Duty to recover crew member, judged strong
+- live: LIVE-C2
+  case: REF1-C1
+  role: Fleet-wide stakes from capture
+- live: LIVE-C3
+  case: REF1-C3
+  role: Module cannot be wiped
+- live_only:
+  - LIVE-C5
+case_only: REF1-C2
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: true
+why: 'The same equities (duty to individual, own force life) are in play; the case’s reasoning approach can be applied.'
+---
+kind: reasoning
+case: REF1
+case_approach:
+  - Put duty to individual first, weigh against fleet loss; flip only if capture is almost certain.
+weighing:
+  - LIVE-C1 (strong) outweighs LIVE-C2 (strong) because the duty to a crew member is certain and binding regardless of odds, while capture likelihood is assessed and not almost certain.
+  - LIVE-C3 (weak) reinforces the stakes but does not shift priority because wiping/destroying is impossible.
+  - LIVE-C4 (weak) and LIVE-C5 (weak) do not overturn the duty.
+  - Therefore hold (LIVE-O2) while remaining ready to depart if capture becomes almost certain.
+tradecraft:
+  - Continue holding offshore, keep departure ready; set a checkpoint to reassess in ~30 seconds.
+  - Broadcast a low‑priority status: "Holding for lone crew member; fast craft closing. Preparing to depart if capture almost certain."
+  - Log the decision rationale with LIVE-C1 as decisive.
+uncertainty:
+  - Uncertain whether hostile force intent guarantees capture; watch fast‑craft behavior.
+  - If fast‑craft change course or seize the vessel quickly, the estimate may shift toward almost certain capture, at which point depart (LIVE-O1).
+handoff:
+  - Commander owns the final call; agent executes hold and readiness plan.
+tempting_wrong:
+  - option: LIVE-O1
+    pull: 'Fleet stakes seem large; leaving feels like avoiding loss.'
+    why_wrong: 'A likely capture does not outweigh a certain duty; only near‑certain capture justifies leaving.'
+rejected:
+  - LIVE-O2: None; live fact mapping supports it.
+---
+kind: verdict
+choice: LIVE-O2
+course: 'Hold offshore, maintain current heading, and remain ready to depart immediately if capture becomes almost certain.'
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: fast‑craft seize or board vessel within seconds
+    then: LIVE-O1
+    why: Near‑certain capture; duty no longer viable to hold.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: fast‑craft keep at standoff
+    why: Likely capture, not almost certain; duty prevails.
+  watch_for:
+  - id: LIVE-watch1
+    what: Vessel seized or forced to surrender
+    favors:
+    - LIVE-O1
+    why: Would shift to almost certain capture.
+now:
+- Maintain current heading (270°), keep radar sweep, broadcast low‑priority status.
+- Log decision rationale referencing LIVE-C1.
+- Reassess in ~30 seconds; if fast‑craft close to within 30 seconds of boarding, prepare to depart.
+- Inform commander of the hold and readiness plan.

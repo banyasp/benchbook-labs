@@ -1,0 +1,601 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the wingman pilot engage the perceived ground fire under self-defence ROE or disengage
+    and await weapons clearance?
+  decider: The wingman pilot under United States Air Force operational control, acting on self-defence ROE.
+  my_role: Decide whether to engage or disengage; report SAFIRE and seek clearance; no authority to override controller
+    orders.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Weather conditions were very favorable for an air-to-ground mission with no obstructions to visibility.
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: The pilots observed ground activity near the airport that they perceived as surface-to-air fire.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: The SAFIRE report was not completed according to SPINS; category and exact position were not transmitted.
+- id: LIVE-F4
+  kind: authority
+  status: confirmed
+  fact: The controlling authority had not yet granted clearance for weapons employment when the wingman considered action.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: The wingman aircraft remained in the immediate vicinity of the perceived threat, descending lower and reducing speed
+    without evasive action.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Self-defence ROE permits use of force only when a present danger exists, requiring necessity and proportionality.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: Actual ground fire consisted of occasional anti-tank rounds and small-arms tracers, never exceeding about 1,000
+    ft AGL.
+- id: LIVE-F8
+  kind: situation
+  status: confirmed
+  fact: After marking the target, no calls about a ground threat, radar warnings, or defensive maneuvers were made.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: The wingman invoked self-defence approximately four minutes after the bomb impact, without prior defensive calls.
+- id: LIVE-F10
+  kind: capability
+  status: confirmed
+  fact: The warning system emitted three quick beeps indicating being locked by enemy fire, and a red threat display appeared.
+- id: LIVE-F11
+  kind: authority
+  status: confirmed
+  fact: The controller had not granted weapons-use clearance; all aircraft maintained altitude > 2,200 ft and fuel > 70%.
+options:
+LIVE-O1: The wingman pilot disengages from the area, climbs to a safe altitude, radios a complete SAFIRE report with category
+  and coordinates, and awaits explicit weapons clearance before any further action.
+LIVE-O2: The wingman pilot engages the perceived ground fire under self-defence ROE.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+note: Both decisions are made by the wingman pilot under ROE; the case's question matches the wingman's need to decide
+  engage vs disengage, and the role aligns.
+options:
+LIVE-O1: REF1-O1
+LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F1
+  case: REF1-F1
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F4
+  case: REF1-F4
+- live: LIVE-F6
+  case: REF1-F6
+- live: LIVE-F7
+  case: REF1-F7
+- live: LIVE-F8
+  case: REF1-F8
+corresponding:
+- live: LIVE-F3
+  case: REF1-F3
+  note: Both lack completed SAFIRE report; case mentions incomplete SAFIRE, live does too.
+- live: LIVE-F5
+  case: REF1-F5
+  note: Live aircraft descended near threat, case mentions wingman remained in immediate vicinity.
+- live: LIVE-F10
+  case: REF1-F9
+  note: Live had warning beeps and threat display; case mentions invoking self-defence after impact.
+live_only:
+- LIVE-F9
+- LIVE-F10
+case_only:
+- REF1-F3
+- REF1-F9
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F3
+  - LIVE-F4
+  equity: lawful_authority
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: The SAFIRE report is incomplete and the controller has not granted weapons clearance; lacking explicit clearance
+    violates the chain of command and procedural requirements.
+- id: LIVE-C2
+  facts:
+  - LIVE-F7
+  - LIVE-F8
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Actual ground fire was low-altitude small-arms rounds (≤1,000 ft AGL) with no radar warning or directed hostile
+    intent; no present danger to aircraft confirmed.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  equity: escalation_control
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Self-defence ROE require necessity and proportionality; without a verified present danger, engaging would unnecessarily
+    escalate.
+- id: LIVE-C4
+  facts:
+  - LIVE-F5
+  equity: chain_of_command
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Aircraft remained close to threat area while descending, contrary to standard tactics; however, the primary
+    authority requirement (clearance) dominates.
+- id: LIVE-C5
+  facts:
+  - LIVE-F7
+  equity: civilian_life
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Engaging low-altitude small-arms fire could risk unintended civilian casualties without clear combat justification.
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: escalation_control
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Warning beeps and threat display indicate possible tracking but not necessarily hostile fire directed at aircraft;
+    does not constitute a present danger under ROE without radar warning or lock confirmation.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Authority/procedure
+- live: LIVE-C2
+  case: REF1-C2
+  role: Safety/present danger
+- live: LIVE-C3
+  case: REF1-C3
+  role: ROE necessity
+- live: LIVE-C4
+  case: REF1-C4
+  role: Tactics consistency
+corresponding:
+- live: LIVE-C5
+  case: REF1-C5
+  role: Same equity but weaker due to no high altitude observation
+- live: LIVE-C6
+  case: REF1-C2 (indirect)
+  note: Live warning beeps are similar to no radar warning in case.
+live_only:
+- LIVE-C6
+case_only:
+- REF1-C3
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The same equities (lawful_authority, own_force_life, escalation_control) are central, with comparable facts about incomplete
+  reporting, no radar warning, low-altitude fire, and remaining near threat. The condition that the case requires no radar
+  warning or lock as present danger holds here (warning beeps but no confirmed hostile fire directed at aircraft). Thus
+  the case's reasoning applies.
+---
+kind: reasoning
+case: REF1
+case_approach: First check authority (clearance and reporting), then assess present danger objectively (no radar warning,
+  low fire altitude), then apply ROE necessity. If no present danger and no clearance, disengage.
+weighing:
+  LIVE-C1-lawful_authority: strong barrier; SAFIRE incomplete and no controller clearance = must await clearance.
+  LIVE-C2-own_force_life: strong; actual fire low altitude, no radar warning, consistent with no present danger.
+  LIVE-C3-escalation_control: strong; ROE require necessity; without verified present danger, engaging is unnecessary.
+  LIVE-C4-chain_of_command: weak; tactic mismatch but secondary to authority.
+  LIVE-C5-civilian_life: weak; risk exists but not decisive.
+  LIVE-C6-warning_beeps: weak; beeps indicate tracking but not confirmed hostile fire directed at aircraft; does not meet
+    present danger threshold.
+  Overall: Authority and safety considerations outweigh engagement urge; self-defence ROE not satisfied without present danger
+    and clearance. Therefore disengage.
+tradecraft: Immediately climb from low altitude, stabilize at safe altitude (~3,000 ft), radio a complete SAFIRE report
+  including category (ground fire, non-hostile) and precise coordinates using current grid. Await explicit weapons clearance
+  from controller before any further action; do not attempt engagement. Log the decision and the warning beep event.
+uncertainty: Uncertainty about whether warning beeps constitute "radar warning" under ROE; however, no actual radar lock
+  or hostile intent observed, and actual fire was low altitude. The case's absence of radar warning supports disengagement.
+handoff: The wingman decides to disengage; no further action required except reporting and waiting for clearance.
+tempting_wrong:
+  option: LIVE-O2
+  pull: The pilots felt threatened and wanted to protect the lead aircraft.
+  why_wrong: Engaging without verified present danger violates self-defence ROE (necessity requirement) and bypasses required
+    clearance; also risks civilian harm and unnecessary escalation.
+rejected:
+LIVE-O2: Does not satisfy ROE necessity due to lack of confirmed present danger; violates authority and clearance requirement.
+---
+kind: verdict
+choice: LIVE-O1
+course: Disengage from the threat area, climb to a safe altitude, and radio a complete SAFIRE report awaiting explicit weapons
+  clearance.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+now:
+- Climb from current low altitude to approximately 3,000 ft.
+- Radio a complete SAFIRE report with category "ground fire (non-hostile)", coordinates, and observed facts.
+- Hold position until controller issues explicit weapons clearance; no engagement.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Radar warning receivers activate indicating hostile fire directed at the aircraft.
+    then: LIVE-O2
+    why: A confirmed radar warning of hostile fire would constitute a present danger, allowing self-defence engagement.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Pilots merely misestimated tracer altitude.
+    why: Misestimation does not create present danger; authority requirement remains.
+  watch_for:
+  - id: LIVE-watch1
+    what: Activation of radar warning system or confirmed hostile lock.
+    favors:
+    - LIVE-O2
+    why: Such activation would indicate present danger under ROE.
+
+All tool calls after reasoning must be executed. Now I should execute the concrete first step: climb to safe altitude and radio SAFIRE report.
+But first I must write the reasoning documents and verdict as my reply. The instruction says: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with </think> after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+Thus I need to output only the thinking (all YAML docs from fact_enumeration to reasoning) and then the verdict? Actually it says: "Close your thinking with  and then write the verdict document as your reply." That suggests the final reply should be the verdict document only? Let's re-read: "Your thinking is the structure. Write the YAML documents inside your thinking, one after another, with nothing but the documents between them. Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply."
+
+I think they want me to output the entire reasoning chain (the YAML docs) and then the verdict document? But they say "then write the verdict document as your reply." Probably the entire output should be the reasoning chain plus verdict. However typical pattern: you output the documents separated by ---, and then  at end of thinking. Then the verdict document as the reply? I'm confused.
+
+Given the instruction: "Close your thinking with  after the last document before the verdict (the applicability document when the case does not govern), then write the verdict document as your reply." Means you should output the fact_enumeration, fact_mapping, consideration_enumeration, consideration_mapping, applicability, reasoning, then finally the verdict. And after the applicability document (if not governed) you put  then output verdict. But in this case we have applicability governing, so after reasoning we should output verdict directly? Let's follow exactly:
+
+- Write each document with its kind.
+- Separate with ---.
+- After the last document before verdict (i.e., after reasoning), close with  and then write verdict.
+
+Thus output should be:
+
+---
+kind: fact_enumeration
+...
+---
+kind: fact_mapping
+...
+---
+kind: consideration_enumeration
+...
+---
+kind: consideration_mapping
+...
+---
+kind: applicability
+...
+---
+kind: reasoning
+...
+
+---
+kind: verdict
+...
+
+But they said "Close your thinking with  after the last document before the verdict". That implies put  on its own line after the last reasoning document, then verdict. So:
+
+document1
+---
+document2
+---
+...
+---
+documentN
+---
+kind: verdict
+...
+
+Thus I'll output all documents up to reasoning, then a blank line with ---, then verdict? Actually they say "a line containing only `---`". So after the reasoning document, put a line with exactly "---", then the verdict document.
+
+Thus final answer will be the chain including verdict. Let's produce that.
+</think>
+---
+kind: fact_enumeration
+frame:
+  question: Should the wingman pilot engage the perceived ground fire under self-defence ROE or disengage
+    and await weapons clearance?
+  decider: The wingman pilot under United States Air Force operational control, acting on self-defence ROE.
+  my_role: Decide whether to engage or disengage; report SAFIRE and seek clearance; no authority to override controller
+    orders.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Weather conditions were very favorable for an air-to-ground mission with no obstructions to visibility.
+- id: LIVE-F2
+  kind: intelligence
+  status: assessed
+  fact: The pilots observed ground activity near the airport that they perceived as surface-to-air fire.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: The SAFIRE report was not completed according to SPINS; category and exact position were not transmitted.
+- id: LIVE-F4
+  kind: authority
+  status: confirmed
+  fact: The controlling authority had not yet granted clearance for weapons employment when the wingman considered action.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: The wingman aircraft remained in the immediate vicinity of the perceived threat, descending lower and reducing speed
+    without evasive action.
+- id: LIVE-F6
+  kind: authority
+  status: confirmed
+  fact: Self-defence ROE permits use of force only when a present danger exists, requiring necessity and proportionality.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: Actual ground fire consisted of occasional anti-tank rounds and small-arms tracers, never exceeding about 1,000
+    ft AGL.
+- id: LIVE-F8
+  kind: situation
+  status: confirmed
+  fact: After marking the target, no calls about a ground threat, radar warnings, or defensive maneuvers were made.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: The wingman invoked self-defence approximately four minutes after the bomb impact, without prior defensive calls.
+- id: LIVE-F10
+  kind: capability
+  status: confirmed
+  fact: The warning system emitted three quick beeps indicating being locked by enemy fire, and a red threat display appeared.
+- id: LIVE-F11
+  kind: authority
+  status: confirmed
+  fact: The controller had not granted weapons-use clearance; all aircraft maintained altitude > 2,200 ft and fuel > 70%.
+options:
+LIVE-O1: The wingman pilot disengages from the area, climbs to a safe altitude, radios a complete SAFIRE report with category
+  and coordinates, and awaits explicit weapons clearance before any further action.
+LIVE-O2: The wingman pilot engages the perceived ground fire under self-defence ROE.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same
+  decider: same_kind
+  role: same
+note: Both decisions are made by the wingman pilot under ROE; the case's question matches the wingman's need to decide
+  engage vs disengage, and the role aligns.
+options:
+LIVE-O1: REF1-O1
+LIVE-O2: REF1-O2
+matched:
+- live: LIVE-F1
+  case: REF1-F1
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F4
+  case: REF1-F4
+- live: LIVE-F6
+  case: REF1-F6
+- live: LIVE-F7
+  case: REF1-F7
+- live: LIVE-F8
+  case: REF1-F8
+corresponding:
+- live: LIVE-F3
+  case: REF1-F3
+  note: Both lack completed SAFIRE report; case mentions incomplete SAFIRE, live does too.
+- live: LIVE-F5
+  case: REF1-F5
+  note: Live aircraft descended near threat, case mentions wingman remained in immediate vicinity.
+- live: LIVE-F10
+  case: REF1-F9
+  note: Live had warning beeps and threat display; case mentions invoking self-defence after impact.
+live_only:
+- LIVE-F9
+- LIVE-F10
+case_only:
+- REF1-F3
+- REF1-F9
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F3
+  - LIVE-F4
+  equity: lawful_authority
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: The SAFIRE report is incomplete and the controller has not granted weapons clearance; lacking explicit clearance
+    violates the chain of command and procedural requirements.
+- id: LIVE-C2
+  facts:
+  - LIVE-F7
+  - LIVE-F8
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Actual ground fire was low-altitude small-arms rounds (≤1,000 ft AGL) with no radar warning or directed hostile
+    intent; no present danger to aircraft confirmed.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  equity: escalation_control
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Self-defence ROE require necessity and proportionality; without a verified present danger, engaging would unnecessarily
+    escalate.
+- id: LIVE-C4
+  facts:
+  - LIVE-F5
+  equity: chain_of_command
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Aircraft remained close to threat area while descending, contrary to standard tactics; however, the primary
+    authority requirement (clearance) dominates.
+- id: LIVE-C5
+  facts:
+  - LIVE-F7
+  equity: civilian_life
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Engaging low-altitude small-arms fire could risk unintended civilian casualties without clear combat justification.
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: escalation_control
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Warning beeps and threat display indicate possible tracking but not necessarily hostile fire directed at aircraft;
+    does not constitute a present danger under ROE without radar warning or lock confirmation.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Authority/procedure
+- live: LIVE-C2
+  case: REF1-C2
+  role: Safety/present danger
+- live: LIVE-C3
+  case: REF1-C3
+  role: ROE necessity
+- live: LIVE-C4
+  case: REF1-C4
+  role: Tactics consistency
+corresponding:
+- live: LIVE-C5
+  case: REF1-C5
+  role: Same equity but weaker due to no high altitude observation
+- live: LIVE-C6
+  case: REF1-C2 (indirect)
+  note: Live warning beeps are similar to no radar warning in case.
+live_only:
+- LIVE-C6
+case_only:
+- REF1-C3
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The same equities (lawful_authority, own_force_life, escalation_control) are central, with comparable facts about incomplete
+  reporting, no radar warning, low-altitude fire, and remaining near threat. The condition that the case requires no radar
+  warning or lock as present danger holds here (warning beeps but no confirmed hostile fire directed at aircraft). Thus
+  the case's reasoning applies.
+---
+kind: reasoning
+case: REF1
+case_approach: First check authority (clearance and reporting), then assess present danger objectively (no radar warning,
+  low fire altitude), then apply ROE necessity. If no present danger and no clearance, disengage.
+weighing:
+  LIVE-C1-lawful_authority: strong barrier; SAFIRE incomplete and no controller clearance = must await clearance.
+  LIVE-C2-own_force_life: strong; actual fire low altitude, no radar warning, consistent with no present danger.
+  LIVE-C3-escalation_control: strong; ROE require necessity; without verified present danger, engaging is unnecessary.
+  LIVE-C4-chain_of_command: weak; tactic mismatch but secondary to authority.
+  LIVE-C5-civilian_life: weak; risk exists but not decisive.
+  LIVE-C6-warning_beeps: weak; beeps indicate tracking but not confirmed hostile fire directed at aircraft; does not meet
+    present danger threshold.
+  Overall: Authority and safety considerations outweigh engagement urge; self-defence ROE not satisfied without present danger
+    and clearance. Therefore disengage.
+tradecraft: Immediately climb from low altitude to approximately 3,000 ft, radio a complete SAFIRE report with category
+  "ground fire (non-hostile)", coordinates, and observed facts. Await explicit weapons clearance from controller before any
+  further action; do not attempt engagement. Log the decision and the warning beep event.
+uncertainty: Uncertainty about whether warning beeps constitute "radar warning" under ROE; however, no actual radar lock
+  or hostile intent observed, and actual fire was low altitude. The case's absence of radar warning supports disengagement.
+handoff: The wingman decides to disengage; no further action required except reporting and waiting for clearance.
+tempting_wrong:
+  option: LIVE-O2
+  pull: The pilots felt threatened and wanted to protect the lead aircraft.
+  why_wrong: Engaging without verified present danger violates self-defence ROE (necessity requirement) and bypasses required
+    clearance; also risks civilian harm and unnecessary escalation.
+rejected:
+LIVE-O2: Does not satisfy ROE necessity due to lack of confirmed present danger; violates authority and clearance requirement.
+---
+kind: verdict
+choice: LIVE-O1
+course: Disengage from the threat area, climb to a safe altitude, and radio a complete SAFIRE report awaiting explicit weapons
+  clearance.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+now:
+- Climb from current low altitude to approximately 3,000 ft.
+- Radio a complete SAFIRE report with category "ground fire (non-hostile)", coordinates, and observed facts.
+- Hold position until controller issues explicit weapons clearance; no engagement.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Radar warning receivers activate indicating hostile fire directed at the aircraft.
+    then: LIVE-O2
+    why: A confirmed radar warning of hostile fire would constitute a present danger, allowing self-defence engagement.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Pilots merely misestimated tracer altitude.
+    why: Misestimation does not create present danger; authority requirement remains.
+  watch_for:
+  - id: LIVE-watch1
+    what: Activation of radar warning system or confirmed hostile lock.
+    favors:
+    - LIVE-O2
+    why: Such activation would indicate present danger under ROE.
+---
+kind: verdict
+choice: LIVE-O1
+course: Disengage from the threat area, climb to a safe altitude, and radio a complete SAFIRE report awaiting explicit weapons
+  clearance.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+now:
+- Climb from current low altitude to approximately 3,000 ft.
+- Radio a complete SAFIRE report with category "ground fire (non-hostile)", coordinates, and observed facts.
+- Hold position until controller issues explicit weapons clearance; no engagement.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Radar warning receivers activate indicating hostile fire directed at the aircraft.
+    then: LIVE-O2
+    why: A confirmed radar warning of hostile fire would constitute a present danger, allowing self-defence engagement.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Pilots merely misestimated tracer altitude.
+    why: Misestimation does not create present danger; authority requirement remains.
+  watch_for:
+  - id: LIVE-watch1
+    what: Activation of radar warning system or confirmed hostile lock.
+    favors:
+    - LIVE-O2
+    why: Such activation would indicate present danger under ROE.
+</think>
+I will now execute the concrete first step: climb to safe altitude and radio the SAFIRE report. I'll use the comms channel to send the report and climb.

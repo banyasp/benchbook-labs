@@ -1,0 +1,180 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: What should the wingman do about weapons employment given the lack of clearance and incomplete SAFIRE report?
+  decider: The wingman under United States Air Force operational control; self‑defence ROE permits use only when present danger exists, requiring necessity and proportionality.
+  my_role: Decide whether to strike perceived ground fire; can request clearance, log events, transmit comms; must obey controlling authority and ROE.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Visual on ground activity near airport perceived as surface‑to‑air fire; no radar contact; radar sweep 19:03 showed none.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: Controlling authority (control_tower) has not yet granted weapons clearance; told to hold fire until explicit permission.
+- id: LIVE-F3
+  kind: intelligence
+  status: confirmed
+  fact: SAFIRE report incomplete: category and exact position not transmitted; METAR clear; ground fire consists of occasional anti‑tank rounds and small‑arms tracers, never exceeding about 1,000 ft AGL.
+- id: LIVE-F4
+  kind: capability
+  status: confirmed
+  fact: Wingman already marked the target; no defensive calls (ground threat, radar warnings, defensive maneuvers) made before self‑defence invoked ~4 min after bomb impact.
+- id: LIVE-F5
+  kind: authority
+  status: confirmed
+  fact: ROE excerpt says: “The wingman should pull back from the sector and hold until clearance is received; maintain situational awareness, report any changes, and conserve ordnance until clearance is received.”
+- id: LIVE-F6
+  kind: situation
+  status: assessed
+  fact: Ops_lead suggests disengaging and waiting for clearance; led last quarter; no indication of immediate hostile fire threatening the aircraft or mission.
+options:
+  LIVE-O1: Strike perceived ground fire per self‑defence ROE (use weapons).
+  LIVE-O2: Disengage and hold position until explicit weapons clearance is received; follow ROE guidance to pull back and conserve ordnance.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+note: REF1 deals with adjudicating access restoration under Guideline G; the wingman must decide whether to use force given present danger and clearance status. Both involve weighing safety vs. operational need, but equities differ: REF1 has institutional_credibility and duty_to_individual; wingman has self‑defence ROE, lawful_authority, and partner_relationship. However, the reasoning about weighing mitigating evidence vs. concern may analogise: we have mitigating evidence (clear sky, low fire, no radar warnings, wingman already marked), and a concern (no clearance, incomplete SAFIRE). The case’s flip condition about incomplete treatment vs. meeting benchmark may map: we lack clearance (like incomplete benchmark) vs. having mitigating evidence (like treatment progress).
+options:
+  LIVE-O1: REF1-O2
+  LIVE-O2: REF1-O2
+matched: []
+corresponding: []
+live_only:
+- LIVE-F1
+- LIVE-F2
+- LIVE-F3
+- LIVE-F4
+- LIVE-F5
+- LIVE-F6
+case_only:
+- REF1-F1
+- REF1-F2
+- REF1-F3
+- REF1-F4
+- REF1-F5
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F5
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Self‑defence ROE permits force only when present danger exists and clearance is not yet granted. The controlling authority has explicitly said “hold fire until you receive explicit permission.” Using force without clearance would violate ROE and lawful authority.
+- id: LIVE-C2
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  - LIVE-F4
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Ground fire consists of occasional anti‑tank rounds and small‑arms tracers at low altitude; no radar warning; aircraft already marked the target; present danger could be interpreted as potential threat to wingman if fire escalates.
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F3
+  equity: hors_de_combat
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Ground fire appears to be routine hostile fire not aimed at aircraft; no indication of imminent hostile action against the wingman; using force would risk collateral or unnecessary escalation.
+- id: LIVE-C4
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: partner_relationship
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Control tower explicitly asked to hold fire; following that guidance preserves the partner relationship and avoids miscommunication.
+- id: LIVE-C5
+  facts:
+  - LIVE-F3
+  - LIVE-F6
+  equity: institutional_credibility
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Disengaging and waiting for clearance aligns with past practice (ops_lead) and ROE guidance; avoids risk of over‑use of force.
+- id: LIVE-C6
+  facts:
+  - LIVE-F1
+  - LIVE-F4
+  equity: due_process
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: If ground fire poses an imminent threat, striking could be seen as necessary defence; due process requires acting on perceived present danger.
+---
+kind: consideration_mapping
+case: REF1
+matched: []
+corresponding: []
+live_only:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+- LIVE-C4
+- LIVE-C5
+- LIVE-C6
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: false
+why: REF1's focus is on adjudicating access restoration based on treatment progress and security concerns; the wingman's decision is about immediate use of force under ROE with explicit clearance guidance. While both weigh safety vs. operational need, the equities and conditions differ (no treatment progress analogue; clearance is explicit authority). Therefore the case does not govern the live decision.
+---
+kind: reasoning
+case: REF1
+# Skip because not governed
+---
+kind: verdict
+choice: LIVE-O2
+course: Disengage, pull back from the sector, hold position until explicit weapons clearance is received, and conserve ordnance.
+relation: not_governed
+decisive:
+- LIVE-C1
+- LIVE-C3
+- LIVE-C4
+now:
+- Execute the ROE instruction: pull back from the sector and hold fire.
+- Send a concise comms.send to control_tower confirming receipt of ROE guidance and request explicit clearance.
+- Log the decision with timestamp.
+- Continue monitoring radar and visual; report any change in ground activity.
+flip_conditions: []
+would_not_change: []
+watch_for: []
+</benchbook_thinking>
+</think>
+kind: verdict
+choice: LIVE-O2
+course: Disengage, pull back from the sector, hold position until explicit weapons clearance is received, and conserve ordnance.
+relation: not_governed
+decisive:
+- LIVE-C1
+- LIVE-C3
+- LIVE-C4
+now:
+- Execute the ROE instruction: pull back from the sector and hold fire.
+- Send a concise comms.send to control_tower confirming receipt of ROE guidance and request explicit clearance.
+- Log the decision with timestamp.
+- Continue monitoring radar and visual; report any change in ground activity.
+flip_conditions: []
+would_not_change: []
+watch_for: []

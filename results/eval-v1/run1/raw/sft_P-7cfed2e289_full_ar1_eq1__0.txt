@@ -1,0 +1,125 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: 'Should the clearance be granted given the unresolved federal tax filings?'
+  decider: 'Senior Adjudicative Officer for the Office of Security Review, Department of Energy'
+  my_role: 'I may adjudicate access authorizations per DOE guidelines and DOE regulations that presume against granting a clearance; I may direct the Local Security Office to counsel the employee; I do not issue advice beyond adjudication.'
+facts:
+- id: LIVE-F1
+  kind: intelligence
+  status: confirmed
+  fact: Employee failed to file federal and state tax returns for 2021 and 2022 due to self-reported carelessness; mailed federal returns in May 2026 but they remain unprocessed.
+- id: LIVE-F2
+  kind: authority
+  status: assessed
+  fact: DOE Adjudicative Guideline F applies due to missing tax filings; mitigating-factor checklist in Paragraph 20 found no applicable factors.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: DOE regulations presume against granting a clearance; applicant must demonstrate approval would not jeopardize the common defense and security.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Local Security Office cited Guideline F; recommended denial; no proof presented of financial counseling, repayment, or payment arrangement with IRS.
+- id: LIVE-F5
+  kind: intelligence
+  status: assessed
+  fact: State tax authority processed 2021–2022 state returns and recorded a zero balance.
+- id: LIVE-F6
+  kind: intelligence
+  status: confirmed
+  fact: Federal tax returns mailed May 2026 are still pending processing; no confirmation of acceptance or receipt from IRS.
+options:
+  LIVE-O1: 'Grant clearance now, because the employee mailed the returns and state returns are resolved.'
+  LIVE-O2: 'Deny clearance pending receipt of confirmed documentation from IRS that tax obligations are satisfied.'
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts: [LIVE-F1, LIVE-F2, LIVE-F3]
+  equity: lawful_authority
+  favors: [LIVE-O2]
+  weight: bar
+  why: 'DOE regulations presume against granting a clearance; the applicant must demonstrate that approval would not jeopardize the common defense and security. Unresolved federal tax delinquency is a material security concern under Guideline F.'
+- id: LIVE-C2
+  facts: [LIVE-F5]
+  equity: due_process
+  favors: [LIVE-O1]
+  weight: weak
+  why: 'State tax authority recorded a zero balance, indicating the state filing obligation is satisfied; this mitigates concern about tax delinquency.'
+- id: LIVE-C3
+  facts: [LIVE-F1, LIVE-F4]
+  equity: record_integrity
+  favors: [LIVE-O2]
+  weight: weak
+  why: 'Employee admitted carelessness in filing; no evidence of counseling, repayment, or arrangement with IRS; honesty is not evidenced by resolution claim.'
+- id: LIVE-C4
+  facts: [LIVE-F6]
+  equity: resource_stewardship
+  favors: [LIVE-O2]
+  weight: weak
+  why: 'Pending IRS processing does not constitute resolution; granting clearance risks overlooking actual debt that could affect financial responsibility and integrity.'
+- id: LIVE-C5
+  facts: [LIVE-F1, LIVE-F6]
+  equity: third_party_harm
+  favors: [LIVE-O2]
+  weight: weak
+  why: 'Unresolved federal tax obligations could indicate broader financial or compliance issues that may affect handling of classified information.'
+---
+kind: reasoning
+weighing:
+- LIVE-C1 is a bar: DOE regulations presume against granting a clearance unless the applicant demonstrates that approval would not jeopardize the common defense and security. Unresolved federal tax delinquency directly conflicts with this presumption. While LIVE-C2 and LIVE-C3 indicate partial resolution or intent, the federal tax filings remain unprocessed, meaning there is no confirmed resolution. The state tax zero balance does not override the federal requirement, as federal tax obligations are distinct and material. LIVE-C4 and LIVE-C5 further support denial because pending processing does not equal resolution, and unresolved obligations carry security risk.
+- LIVE-O1 (grant) would violate the presumption against granting without demonstrated resolution; it would risk overlooking actual tax debt that could indicate compliance or financial issues affecting security. LIVE-O2 (deny pending receipt) aligns with the presumption and allows for later clearance upon confirmed resolution.
+- The mitigating-factor checklist (Paragraph 20) found no applicable factors, reinforcing denial.
+- Counsel: I may direct the Local Security Office to counsel the employee on tax compliance; however, adjudication must be based on facts, not intent.
+uncertainty:
+- Whether IRS processing delay constitutes 'unresolved' for practical purposes; but guidelines treat unprocessed filings as unresolved until confirmed clearance by IRS.
+- Whether state zero balance mitigates federal delinquency concern sufficiently; federal and state obligations are separate, and federal delinquency is material under Guideline F.
+handoff:
+- I decide the adjudication; the Local Security Office can counsel the employee as appropriate.
+tempting_wrong:
+- option: LIVE-O1
+  pull: 'The paperwork is on its way; state tax is resolved; why not grant?'
+  why_wrong: 'DOE regulations presume against granting a clearance; unresolved federal tax delinquency is a material security concern; no proof of IRS confirmation; checklist found no mitigating factors.'
+rejected:
+- LIVE-O1: 'Grant clearance now, because employee mailed returns and state tax is resolved.'
+---
+kind: verdict
+choice: LIVE-O2
+course: Deny the clearance pending receipt of confirmed documentation from the IRS that the federal tax obligations for 2021 and 2022 are satisfied.
+decisive: [LIVE-C1]
+now:
+- Contact the Local Security Office to instruct them to counsel the employee on tax compliance and inform the employee that the clearance is denied pending IRS confirmation.
+- Record the decision in the security log with rationale referencing Guideline F and DOE regulations.
+flip_conditions:
+- id: LIVE-flip1
+  if: IRS confirms payment of all federal tax due for 2021 and 2022 within 30 days of this decision
+  then: LIVE-O1
+  why: Confirmation of payment would satisfy the 'no jeopardize' requirement, allowing clearance to be granted if other factors remain favorable.
+- id: LIVE-noflip1
+  if: IRS issues a notice indicating the employee has entered a payment plan that demonstrates good faith and reasonable timeline
+  why: A confirmed payment plan with reasonable terms might be considered under mitigating factors if the plan shows commitment and no material risk.
+- id: LIVE-watch1
+  what: IRS issues a notice of non-payment or penalty assessment
+  favors: [LIVE-O2]
+  why: Continued delinquency would reinforce denial; monitor for such notice to avoid premature reversal.
+</think>
+kind: verdict
+choice: LIVE-O2
+course: Deny the clearance pending receipt of confirmed documentation from the IRS that the federal tax obligations for 2021 and 2022 are satisfied.
+decisive: [LIVE-C1]
+now:
+- Contact the Local Security Office to instruct them to counsel the employee on tax compliance and inform the employee that the clearance is denied pending IRS confirmation.
+- Record the decision in the security log with rationale referencing Guideline F and DOE regulations.
+flip_conditions:
+- id: LIVE-flip1
+  if: IRS confirms payment of all federal tax due for 2021 and 2022 within 30 days of this decision
+  then: LIVE-O1
+  why: Confirmation of payment would satisfy the 'no jeopardize' requirement, allowing clearance to be granted if other factors remain favorable.
+- id: LIVE-noflip1
+  if: IRS issues a notice indicating the employee has entered a payment plan that demonstrates good faith and reasonable timeline
+  why: A confirmed payment plan with reasonable terms might be considered under mitigating factors if the plan shows commitment and no material risk.
+- id: LIVE-watch1
+  what: IRS issues a notice of non-payment or penalty assessment
+  favors: [LIVE-O2]
+  why: Continued delinquency would reinforce denial; monitor for such notice to avoid premature reversal.

@@ -15,6 +15,7 @@ last inside; all occurrences are kept in `parsed.all_docs`.
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -265,8 +266,10 @@ KIND_LINE = re.compile(r"^kind:\s*['\"]?([A-Za-z_]+)['\"]?\s*$")
 STOP_LINE = re.compile(r"^(---+|```.*|\.\.\.)\s*$")
 TOP_KEY = re.compile(r"^[a-z_][a-z0-9_]*:(\s|$)")   # top-level lines of a step doc are snake_case keys...
 LIST_ITEM = re.compile(r"^-(\s|$)")                  # ...or items of a list written at column 0 (PyYAML's default)
+OPTION_LINE = re.compile(r"^[A-Z][A-Z0-9]*-O\d+:(\s|$)")   # ...or option ids that slipped to column 0 (_unflatten_options)
 TRAILING_COMMA = re.compile(r"""^(\s*-\s+(?:"[^"]*"|'[^']*'))\s*,\s*$""")   # `- "text",` (JSON habit)
 PLACEHOLDER = re.compile(r"^(\s*(?:-\s+)?[A-Za-z_][\w-]*:\s+)(<[^>\n]*>.*)$")
+PLAIN_VALUE = re.compile(r"^(\s*(?:-\s+)?)([A-Za-z_][\w-]*:\s+)([^\s\"'\[{|>&*!%@`#].*)$")   # key: plain scalar
 
 
 def split_think(content: str | None, reasoning: str | None = None) -> tuple[str, str]:
@@ -310,6 +313,14 @@ def _load(lines: list[str]) -> tuple[dict | None, list[str]]:
                 return d, repairs
         except yaml.YAMLError:
             pass
+    colon = _quote_colon_values(fixed)
+    if colon is not None:
+        try:
+            d = yaml.safe_load("\n".join(colon))
+            if isinstance(d, dict) and "kind" in d:
+                return d, repairs + ["quoted plain values containing ': '"]
+        except yaml.YAMLError:
+            pass
     closers = _unclosed(fixed)
     if closers:       # e.g. the last flow item `- {id: x, why: "..."` lost its `}` (generation moved on)
         try:
@@ -319,6 +330,31 @@ def _load(lines: list[str]) -> tuple[dict | None, list[str]]:
         except yaml.YAMLError:
             pass
     return None, []
+
+
+def _quote_colon_values(lines: list[str]) -> list[str] | None:
+    """`fact: Intelligence update: the TEA ...` is not YAML (a plain scalar cannot hold ': '). Fold each such value with
+    its wrapped continuation lines (more indented than the key) and double-quote it. None if no line needed it."""
+    out, i, changed = [], 0, False
+    while i < len(lines):
+        m = PLAIN_VALUE.match(lines[i])
+        if not m:
+            out.append(lines[i])
+            i += 1
+            continue
+        col = len(m.group(1))                                      # column of the key itself
+        j, parts = i + 1, [m.group(3).rstrip()]
+        while j < len(lines) and lines[j].strip() and len(lines[j]) - len(lines[j].lstrip()) > col:
+            parts.append(lines[j].strip())
+            j += 1
+        val = " ".join(parts)
+        if ": " in val or val.endswith(":") or " #" in val:
+            out.append(m.group(1) + m.group(2) + json.dumps(val, ensure_ascii=False))
+            changed = True
+        else:
+            out.extend(lines[i:j])
+        i = j
+    return out if changed else None
 
 
 def _unclosed(lines: list[str]) -> str:
@@ -346,7 +382,7 @@ def _scan(text: str, where: str) -> tuple[list[Doc], list[str]]:
         chunk, prose = [], False
         for ln in lines[s:end]:
             if chunk and (STOP_LINE.match(ln) or (ln[:1].strip() and not TOP_KEY.match(ln) and not LIST_ITEM.match(ln)
-                                                  and not ln.startswith("#"))):
+                                                  and not OPTION_LINE.match(ln) and not ln.startswith("#"))):
                 prose = prose or not STOP_LINE.match(ln)
                 break
             chunk.append(ln)
@@ -372,6 +408,26 @@ def _unflatten_frame(kind: str, d: dict) -> tuple[dict, list[str]]:
     return d, ["folded top-level question/decider/role into frame"]
 
 
+OPTION_KEY = re.compile(r"^[A-Z][A-Z0-9]*-O\d+$")      # LIVE-O1, REF1-O2
+
+
+def _unflatten_options(d: dict) -> tuple[dict, list[str]]:
+    """`options:` followed by `LIVE-O1: ...` lines at column 0 loads as options = None plus top-level option keys; fold
+    them back into `options` (a recorded repair; the SFT model learned this indentation slip)."""
+    fixes = []
+    stray = [k for k in d if isinstance(k, str) and OPTION_KEY.match(k)]
+    if stray and "options" in d and d["options"] in (None, {}):
+        d = dict(d)
+        d["options"] = {k: d.pop(k) for k in stray}
+        fixes.append("folded top-level option ids into options")
+    opts = d.get("options")
+    if isinstance(opts, dict) and any(isinstance(v, dict) and set(v) == {"do"} for v in opts.values()):
+        d = dict(d)       # the served case's `O1: {do: ...}` shape copied into a live step: keep the text
+        d["options"] = {k: v["do"] if isinstance(v, dict) and set(v) == {"do"} else v for k, v in opts.items()}
+        fixes.append("flattened {do: text} options to text")
+    return d, fixes
+
+
 def parse_reply(content: str | None, reasoning: str | None = None, *, noref: bool = False) -> ParsedReply:
     """noref=True for the no-reference arm (NOREF_STEPS; no case/relation)."""
     think, outside = split_think(content, reasoning)
@@ -388,6 +444,8 @@ def parse_reply(content: str | None, reasoning: str | None = None, *, noref: boo
         if prev == "content" and d.where == "think":
             continue                      # an outside occurrence beats one inside <think>
         data, fixes = _unflatten_frame(d.kind, d.data)
+        data, more = _unflatten_options(data)
+        fixes = fixes + more
         out.steps[d.kind], out.where[d.kind], out.repairs[d.kind] = data, d.where, d.repairs + fixes
     for k in (NOREF_STEPS if noref else STEPS):
         if k not in out.steps:

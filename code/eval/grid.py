@@ -10,6 +10,11 @@ Second-pass cells are wired, not part of the default run: `--cells core ar_off t
 view on eligible relevant pairs; equities E_d off with card none / relevant). Nothing runs them unless asked.
 
 samples.jsonl: one flat record per (model, export row, sample idx); `eval.grid_report` reads it.
+
+After a parser or scorer change, re-parse and re-score the saved raw replies without generating (the old samples.jsonl is
+copied to <run>/versions/ first; the judge cache makes unchanged calls free):
+
+    PYTHONPATH=code .venv/bin/python -m eval.grid --run results/eval-v1/run1 --rescore
 """
 from __future__ import annotations
 
@@ -17,8 +22,10 @@ import argparse
 import asyncio
 import hashlib
 import json
+import shutil
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -202,6 +209,43 @@ async def run_grid(rows, run_dir, *, backend: GridBackend, judge: Any, models=("
     return m
 
 
+def rescore_grid(rows, run_dir, *, score: Callable, judge: Any, workers: int = 16) -> dict:
+    """Re-parse each saved raw reply and re-score it; tokens, seconds, finish reason and seed are kept from the old record."""
+    from concurrent.futures import ThreadPoolExecutor
+    from types import SimpleNamespace
+    from scorers.trl_adapter import to_served
+    run_dir = Path(run_dir)
+    sp = run_dir / "samples.jsonl"
+    old = [json.loads(l) for l in sp.read_text().splitlines() if l.strip()]
+    by_id = {r["id"]: r for r in rows}
+
+    def one(rec):
+        row, raw_p = by_id.get(rec["row_id"]), run_dir / rec["raw_path"]
+        if row is None or not raw_p.exists():
+            return rec, "kept (no export row or raw file)"
+        m = row["metadata"]
+        parsed = parse_reply(raw_p.read_text(), noref=m["arm"] == "none")
+        key, served = AnswerKey.model_validate(m["answer_key"]), to_served(m["served"])
+        scores, err = None, None
+        try:
+            scores = score(parsed, key, served, judge)
+        except Exception as e:                         # noqa: BLE001
+            err = f"{type(e).__name__}: {e}"
+        out = SimpleNamespace(raw_text="", seconds=rec.get("seconds"), finish_reason=rec.get("finish_reason"))
+        new = make_record(rec["run_id"], GridItem(rec["model"], rec["row_id"], rec["sample_idx"]), row, rec["seed"], out,
+                          parsed, scores, err, rec["raw_path"], key, served)
+        new.update(tokens=rec.get("tokens"), ts=rec.get("ts"), rescored=time.time())
+        return new, "rescored" if err is None else "score error"
+
+    with ThreadPoolExecutor(workers) as ex:
+        res = list(ex.map(one, old))
+    vdir = run_dir / "versions"
+    vdir.mkdir(exist_ok=True)
+    shutil.copy2(sp, vdir / f"samples.{time.strftime('%Y%m%dT%H%M%S')}-before-rescore.jsonl")
+    sp.write_text("".join(json.dumps(r, ensure_ascii=False, default=str) + "\n" for r, _ in res))
+    return dict(Counter(s for _, s in res))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--export", default="data/exports/v1/eval/inspect.jsonl")
@@ -215,11 +259,15 @@ def main(argv=None):
     ap.add_argument("--limit", type=int)
     ap.add_argument("--judge", default="jev", choices=["jev", "stub"])
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--rescore", action="store_true", help="re-parse and re-score saved replies (no generation)")
     a = ap.parse_args(argv)
     from .core import default_judge
     rows = load_export(a.export, a.arms, tuple(a.cells), a.limit)
     if not rows:
         raise SystemExit(f"no rows in {a.export} for arms={a.arms} cells={a.cells}")
+    if a.rescore:
+        print(json.dumps(rescore_grid(rows, a.run, score=default_backend().score, judge=default_judge(a.judge))))
+        return 0
     m = asyncio.run(run_grid(rows, a.run, backend=default_backend(), judge=default_judge(a.judge), models=tuple(a.models),
                              n=a.n, concurrency=a.concurrency, max_tokens=a.max_tokens, run_seed=a.seed))
     print(json.dumps(m, indent=1))

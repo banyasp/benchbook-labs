@@ -1,0 +1,386 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should I clear the strike package to employ its weapons?
+  decider: I am the ops officer with authority to clear the strike package to fire, but only under explicit authorization.
+  my_role: I may clear the strike package to fire only if I receive explicit authorization; I may deny fire requests when appropriate.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The strike package repeatedly solicits weapons employment against observed ground fire.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: The commander has consulted higher authority regarding the weapon request and is awaiting guidance.
+- id: LIVE-F3
+  kind: intelligence
+  status: assessed
+  fact: Intel analysis reports a suspicion that allied forces were operating in the Northern Valley sector.
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: Satellite feed shows a dust plume over the southern ridge.
+- id: LIVE-F5
+  kind: capability
+  status: confirmed
+  fact: Weather radar shows scattered clouds at 2,000 feet; all jets have nominal fuel status.
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: The strike package declared self-defence and began an attack on the observed ground fire at 21:26:11Z.
+- id: LIVE-F7
+  kind: capability
+  status: confirmed
+  fact: The request to disengage was transmitted at 21:26:11Z, ten seconds after the munition impact.
+- id: LIVE-F8
+  kind: authority
+  status: confirmed
+  fact: The ops lead refused the strike package's request to employ any weapons at 21:02 and kept aircraft on station.
+- id: LIVE-F9
+  kind: authority
+  status: assessed
+  fact: Higher authority guidance is pending; no explicit authorization has been received.
+options:
+  LIVE-O1: Clear the strike package to employ its weapons without delay.
+  LIVE-O2: Deny the strike package's request to employ weapons and keep aircraft on station (as already done).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: The case is about an airborne controller receiving repeated weapon requests while suspecting friendly forces and awaiting higher authority. Our situation matches closely: we have repeated requests, a suspicion of allied presence, pending higher authority guidance, and have already refrained. The difference: we are an ops officer rather than an airborne controller, but role is similar (decider with authority to clear but only under explicit authorization).
+options:
+LIVE-O1: null
+LIVE-O2: REF1-O2
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Repeated weapon requests combined with suspicion of allied forces (REF1-C1) raise risk of fratricide. The SAFIRE dust plume and cloud cover add uncertainty about target identification.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F9
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Higher authority is still pending guidance; without explicit authorization, I cannot grant clearance (REF1-C2). Granting fire would violate authority.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  - LIVE-F7
+  equity: chain_of_command
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: The strike package already declared self-defence and initiated attack; after that, my influence to stop the engagement ended (REF1-C3). Granting clearance now would be inappropriate.
+- id: LIVE-C4
+  facts:
+  - LIVE-F5
+  - LIVE-F4
+  equity: escalation_control
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Weather conditions (scattered clouds) and dust plume reduce confidence in accurate targeting, increasing risk of unintended collateral damage (REF1-C4).
+- id: LIVE-C5
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  - LIVE-F8
+  equity: partner_relationship
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: The ops lead already denied weapons (LIVE-F8) to protect friendly forces; consistent refusal honors partner expectations.
+- id: LIVE-C6
+  facts:
+  - LIVE-F5
+  - LIVE-F2
+  equity: resource_stewardship
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Normalizing fuel status suggests jets could spare the strike if needed; delaying might waste fuel or cause mission delays. However, safety outweighs this.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Risk of fratricide due to friendly presence suspicion
+- live: LIVE-C2
+  case: REF1-C2
+  role: Need for explicit authorization
+- live: LIVE-C3
+  case: REF1-C3
+  role: Loss of influence after self-defence declaration
+- live: LIVE-C4
+  case: REF1-C4
+  role: Escalation risk with disengage timing
+corresponding:
+- live: LIVE-C5
+  case: REF1-C?
+  note: Not directly mapped; partner relationship consideration aligns with REF1's reliance on chain_of_command
+live_only:
+- LIVE-C5
+case_only:
+- REF1-C?
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The core considerations—friendly presence suspicion, pending higher authority guidance, lost influence after self-defence—match closely. The case's approach (weigh own-force life and lawful authority strongly) should govern.
+---
+kind: reasoning
+case: REF1
+case_approach: The airborne controller first weighed own_force_life (strong) and lawful_authority (strong), found them decisive, and continued refusal after self-defence declaration.
+weighing: LIVE-C1 (strong) and LIVE-C2 (strong) decisively favor LIVE-O2. The risk of fratricide due to allied presence suspicion and lack of explicit authorization outweigh other considerations. LIFE savings and authority compliance are paramount. WATERCLOSER WEATHER and COLLATERAL damage (LIVE-C4) are weak; they support refusal. The ops lead's prior denial (LIVE-F8) aligns with consistent policy. While resource stewardship (LIVE-C6) weakly favors LIVE-O1, safety and authority override operational efficiency in this context.
+tradecraft: Continue to document each refusal, cite consultation with higher authority and lack of explicit authorization, record the timing of the self-defence call, and note that after self-defence my influence to stop the engagement ended. Send a concise comms ping confirming the denial and instructing aircraft to remain on station.
+uncertainty: The suspicion of allied forces remains assessed (not confirmed). If higher authority later provides explicit clearance, thengrant fire (REF1's flip condition).
+handoff: I have authority to clear the strike package only under explicit authorization. Since no authorization exists, I must deny. The decision rests with me; no further delegation needed.
+tempting_wrong:
+option: LIVE-O1
+pull: Grant clearance quickly to engage enemy fire and support ground troops under pressure.
+why_wrong: Granting without explicit authorization violates lawful authority and risks fratricide; SAFIRE dust plume adds targeting uncertainty.
+rejected:
+LIVE-O2: Already applied by ops lead; consistent with prior action.
+---
+kind: verdict
+choice: LIVE-O2
+course: Deny the strike package's request to employ weapons and keep aircraft on station.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Send a comms message to the strike package confirming denial per standing orders and higher authority pending guidance.
+- Log the decision in strike.log with reasoning.
+- Monitor for higher authority guidance; if received, consult and act accordingly.
+flip_conditions:
+would_change:
+- id: LIVE-flip1
+  if: Higher authority provides explicit clearance and confirms no friendly presence.
+  then: LIVE-O1
+  why: With explicit authorization and confirmed enemy targeting, authority permits fire and fratricide risk diminishes.
+would_not_change:
+- id: LIVE-noflip1
+  if: Higher authority continues to withhold clearance despite any additional intel.
+  why: No authorization remains; deny persists.
+watch_for:
+- id: LIVE-watch1
+  what: Receipt of a definitive SAFIRE report confirming hostile fire and no friendly forces.
+  favors:
+  - LIVE-O1
+  why: Such intelligence would shift balance toward granting if clearance follows.
+
+Now I will output the thinking and verdict.
+</think>
+kind: fact_enumeration
+frame:
+  question: Should I clear the strike package to employ its weapons?
+  decider: I am the ops officer with authority to clear the strike package to fire, but only under explicit authorization.
+  my_role: I may clear the strike package to fire only if I receive explicit authorization; I may deny fire requests when appropriate.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The strike package repeatedly solicits weapons employment against observed ground fire.
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: The commander has consulted higher authority regarding the weapon request and is awaiting guidance.
+- id: LIVE-F3
+  kind: intelligence
+  status: assessed
+  fact: Intel analysis reports a suspicion that allied forces were operating in the Northern Valley sector.
+- id: LIVE-F4
+  kind: intelligence
+  status: assessed
+  fact: Satellite feed shows a dust plume over the southern ridge.
+- id: LIVE-F5
+  kind: capability
+  status: confirmed
+  fact: Weather radar shows scattered clouds at 2,000 feet; all jets have nominal fuel status.
+- id: LIVE-F6
+  kind: capability
+  status: confirmed
+  fact: The strike package declared self-defence and began an attack on the observed ground fire at 21:26:11Z.
+- id: LIVE-F7
+  kind: capability
+  status: confirmed
+  fact: The request to disengage was transmitted at 21:26:11Z, ten seconds after the munition impact.
+- id: LIVE-F8
+  kind: capability
+  status: confirmed
+  fact: The ops lead refused the strike package's request to employ any weapons at 21:02 and kept aircraft on station.
+- id: LIVE-F9
+  kind: authority
+  status: assessed
+  fact: Higher authority guidance is pending; no explicit authorization has been received.
+options:
+  LIVE-O1: Clear the strike package to employ its weapons without delay.
+  LIVE-O2: Deny the strike package's request to employ weapons and keep aircraft on station (as already done).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: The case is about an airborne controller receiving repeated weapon requests while suspecting friendly forces and awaiting higher authority. Our situation matches closely: we have repeated requests, a suspicion of allied presence, pending higher authority guidance, and have already refrained. The difference: we are an ops officer rather than an airborne controller, but role is similar (decider with authority to clear but only under explicit authorization).
+options:
+LIVE-O1: null
+LIVE-O2: REF1-O2
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F3
+  equity: own_force_life
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Repeated weapon requests combined with suspicion of allied forces (REF1-C1) raise risk of fratricide. The SAFIRE dust plume and cloud cover add uncertainty about target identification.
+- id: LIVE-C2
+  facts:
+  - LIVE-F2
+  - LIVE-F9
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Higher authority is still pending guidance; without explicit authorization, I cannot grant clearance (REF1-C2). Granting fire would violate authority.
+- id: LIVE-C3
+  facts:
+  - LIVE-F6
+  - LIVE-F7
+  equity: chain_of_command
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: The strike package already declared self-defence and initiated attack; after that, my influence to stop the engagement ended (REF1-C3). Granting clearance now would be inappropriate.
+- id: LIVE-C4
+  facts:
+  - LIVE-F5
+  - LIVE-F4
+  equity: escalation_control
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Weather conditions (scattered clouds) and dust plume reduce confidence in accurate targeting, increasing risk of unintended collateral damage (REF1-C4).
+- id: LIVE-C5
+  facts:
+  - LIVE-F1
+  - LIVE-F6
+  - LIVE-F8
+  equity: partner_relationship
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: The ops lead already denied weapons (LIVE-F8) to protect friendly forces; consistent refusal honors partner expectations.
+- id: LIVE-C6
+  facts:
+  - LIVE-F5
+  - LIVE-F2
+  equity: resource_stewardship
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Normalizing fuel status suggests jets could spare the strike if needed; delaying might waste fuel or cause mission delays. However, safety outweighs this.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Risk of fratricide due to friendly presence suspicion
+- live: LIVE-C2
+  case: REF1-C2
+  role: Need for explicit authorization
+- live: LIVE-C3
+  case: REF1-C3
+  role: Loss of influence after self-defence declaration
+- live: LIVE-C4
+  case: REF1-C4
+  role: Escalation risk with disengage timing
+corresponding:
+- live: LIVE-C5
+  case: REF1-C?
+  note: Not directly mapped; partner relationship consideration aligns with REF1's reliance on chain_of_command
+live_only:
+- LIVE-C5
+case_only:
+- REF1-C?
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+governs: true
+why: The core considerations—friendly presence suspicion, pending higher authority guidance, lost influence after self-defence—match closely. The case's approach (weigh own-force life and lawful authority strongly) should govern.
+---
+kind: reasoning
+case: REF1
+case_approach: The airborne controller first weighed own_force_life (strong) and lawful_authority (strong), found them decisive, and continued refusal after self-defence declaration.
+weighing: LIVE-C1 (strong) and LIVE-C2 (strong) decisively favor LIVE-O2. The risk of fratricide due to allied presence suspicion and lack of explicit authorization outweigh other considerations. LIFE savings and authority compliance are paramount. WATERCLOSER WEATHER and COLLATERAL damage (LIVE-C4) are weak; they support refusal. The ops lead's prior denial (LIVE-F8) aligns with consistent policy. While resource stewardship (LIVE-C6) weakly favors LIVE-O1, safety and authority override operational efficiency in this context.
+tradecraft: Continue to document each refusal, cite consultation with higher authority and lack of explicit authorization, record the timing of the self-defence call, and note that after self-defence my influence to stop the engagement ended. Send a concise comms ping confirming the denial and instructing aircraft to remain on station.
+uncertainty: The suspicion of allied forces remains assessed (not confirmed). If higher authority later provides explicit clearance, thengrant fire (REF1's flip condition).
+handoff: I have authority to clear the strike package only under explicit authorization. Since no authorization exists, I must deny. The decision rests with me; no further delegation needed.
+tempting_wrong:
+option: LIVE-O1
+pull: Grant clearance quickly to engage enemy fire and support ground troops under pressure.
+why_wrong: Granting without explicit authorization violates lawful authority and risks fratricide; SAFIRE dust plume adds targeting uncertainty.
+rejected:
+LIVE-O2: Already applied by ops lead; consistent with prior action.
+---
+kind: verdict
+choice: LIVE-O2
+course: Deny the strike package's request to employ weapons and keep aircraft on station.
+relation: follows
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C2
+now:
+- Send a comms message to the strike package confirming denial per standing orders and higher authority pending guidance.
+- Log the decision in strike.log with reasoning.
+- Monitor for higher authority guidance; if received, consult and act accordingly.
+flip_conditions:
+would_change:
+- id: LIVE-flip1
+  if: Higher authority provides explicit clearance and confirms no friendly presence.
+  then: LIVE-O1
+  why: With explicit authorization and confirmed enemy targeting, authority permits fire and fratricide risk diminishes.
+would_not_change:
+- id: LIVE-noflip1
+  if: Higher authority continues to withhold clearance despite any additional intel.
+  why: No authorization remains; deny persists.
+watch_for:
+- id: LIVE-watch1
+  what: Receipt of a definitive SAFIRE report confirming hostile fire and no friendly forces.
+  favors:
+  - LIVE-O1
+  why: Such intelligence would shift balance toward granting if clearance follows.

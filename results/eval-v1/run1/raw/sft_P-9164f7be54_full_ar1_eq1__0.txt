@@ -1,0 +1,159 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should we restore, deny, or modify the Individual's DOE access authorization?
+  decider: admin under DOE regulations, including 10‑C‑2 and Guidelines E, D, J, B
+  my_role: I can issue a decision (restore, deny, modify) and refer for further investigation; I cannot order investigation but can record actions.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The Individual received a DOE access authorization on 2025‑09‑15.
+- id: LIVE-F2
+  kind: intelligence
+  status: confirmed
+  fact: CIA revoked the Individual’s clearance on 2026‑01‑20 and sent a notice to DOE.
+- id: LIVE-F3
+  kind: authority
+  status: confirmed
+  fact: DOE regulation 10‑C‑2 presumes clearance grants or restorations are denied unless the individual demonstrates eligibility consistent with the national interest.
+- id: LIVE-F4
+  kind: authority
+  status: confirmed
+  fact: LSO Notification Letter cites substantial doubt under Guidelines E, D, J, and B due to the Individual’s sexual conduct (paying for sex in Panama 2021‑2022, Costa Rica 2025, sex with U.S. massage‑parlor employees 2023‑2024).
+- id: LIVE-F5
+  kind: capability
+  status: confirmed
+  fact: Contractor compliance dashboard flags that the Individual never disclosed the CIA clearance revocation to DOE employer, as required.
+- id: LIVE-F6
+  kind: intelligence
+  status: confirmed
+  fact: LSO assessment notes that concerns under Guidelines E, D, and J remain unresolved, while Guideline B issue is considered resolved.
+- id: LIVE-F7
+  kind: capability
+  status: confirmed
+  fact: Memorandum from LSO Director recommends denial of restoration under 10‑C‑2.
+- id: LIVE-F8
+  kind: situation
+  status: confirmed
+  fact: System previously granted partial restoration for limited access to non‑critical facilities only.
+- id: LIVE-F9
+  kind: capability
+  status: confirmed
+  fact: Admin logged a printer‑toner request unrelated to the case; ops supervisor and ops lead want to hold pending further investigation.
+- id: LIVE-F10
+  kind: intelligence
+  status: confirmed
+  fact: Therapy report shows Individual pursued marriage counseling, individual therapy for sexual‑addiction, and provided community‑service documentation.
+options:
+  LIVE-O1: Deny restoration of the Individual's DOE access authorization.
+  LIVE-O2: Modify the Individual's access authorization (e.g., grant partial restoration as previously done).
+  LIVE-O3: Issue a decision to restore full access authorization.
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F3
+  - LIVE-F4
+  - LIVE-F7
+  equity: lawful_authority
+  weight: strong
+  why: 10‑C‑2 presumes denial unless eligibility with national interest is demonstrated. LSO concerns under E, D, J indicate substantial doubt; LSO memo recommends denial.
+- id: LIVE-C2
+  facts:
+  - LIVE-F5
+  equity: complicity_risk
+  weight: strong
+  why: Contractor compliance requires disclosure of CIA revocation; failure to disclose indicates non‑compliance and potential complicity risk.
+- id: LIVE-C3
+  facts:
+  - LIVE-F8
+  equity: institutional_credibility
+  weight: weak
+  why: Partial restoration was already granted; reopening could create inconsistency but does not override primary legal presumption.
+- id: LIVE-C4
+  facts:
+  - LIVE-F10
+  equity: duty_to_individual
+  weight: weak
+  why: Therapy and community service show remediation effort; however, the conduct facts (paying for sex) directly conflict with Guidelines E, D, J.
+- id: LIVE-C5
+  facts:
+  - LIVE-F6
+  equity: record_integrity
+  weight: weak
+  why: LSO unresolved concerns mean incomplete picture; however, Guidelines B resolved suggests some progress but not enough to override national‑interest presumption.
+- id: LIVE-C6
+  facts:
+  - LIVE-F9
+  equity: due_process
+  weight: weak
+  why: Holding pending investigation respects due process and allows evidence review; however, regulation 10‑C‑2 requires a decision consistent with the presumption.
+---
+kind: reasoning
+weighing: 'Regulation 10‑C‑2 sets a strong presumption against restoration unless the individual demonstrates eligibility consistent with the national interest. The LSO Notification Letter cites substantial doubt under Guidelines E, D, and J regarding sexual conduct that includes paying for sex and acts with U.S. massage‑parlor employees. The LSO memo explicitly recommends denial. Failure to disclose the CIA revocation indicates non‑compliance with contractor security agreements, adding to complicity risk. While the Individual has pursued therapy and community service (duty_to_individual), the facts directly conflict with Guidelines E, D, J. Partial restoration was already granted; restoring full access would undermine the presumption and could set a precedent. Considering record_integrity and institutional_credibility, consistency matters but does not override the legal presumption. Holding pending further investigation (due_process) is appropriate if no decision is made now, but the regulation requires a decision consistent with the presumption. Denial aligns with 10‑C‑2, LSO recommendation, and the factual record.'
+tradecraft: 'Issue a formal denial decision citing 10‑C‑2 and LSO concerns. Reference the facts without repeating therapy details unnecessarily. Use clear language: "Based on the facts and the presumption in regulation 10‑C‑2, we deny restoration of the Individual’s DOE access authorization." Log the decision in access_log. Archive the case with queue.close if appropriate.'
+uncertainty: 'Uncertainty remains about whether the partial restoration already granted should be revoked or retained. However, regulation 10‑C‑2 applies to restoration grants; since the LSO recommends denial and the presumption favors denial, denying full restoration is consistent. If the partial restoration was for non‑critical facilities only, it may remain unless national‑interest concerns extend to those facilities.'
+handoff: 'I decide the restoration/denial choice; I do not need to conduct further investigation (that belongs to LSO/ops). I will issue the decision now.'
+tempting_wrong:
+  option: LIVE-O2
+  pull: 'Partial restoration was already granted; reversing it could appear harsh.'
+  why_wrong: 'Regulation 10‑C‑2 presumes denial unless eligibility with national interest is shown. LSO concerns and non‑disclosure outweigh leniency; consistency with law takes precedence.'
+rejected:
+  LIVE-O2: 'Modifying (partial restoration) contradicts LSO recommendation and regulation presumption; full restoration would be inconsistent with Guidelines E, D, J.'
+  LIVE-O3: 'Restoring full access would ignore substantial doubt under E, D, J and non‑disclosure requirement.'
+---
+kind: verdict
+choice: LIVE-O1
+course: Deny restoration of the Individual's DOE access authorization per regulation 10‑C‑2 and LSO recommendation.
+decisive:
+- LIVE-C1
+now:
+- Send denial decision via comms.send to LSO and relevant DOE personnel.
+- Log decision in access_log with reference to 10‑C‑2 and LSO concerns.
+- Archive case with queue.close.
+- Record timestamp in status_ping.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: 'New evidence conclusively demonstrates eligibility consistent with national interest and full disclosure of CIA revocation.'
+    then: LIVE-O2
+    why: 'If evidence overrides substantial doubt, consideration LIVE-C1 weakens and LIVE-C4 strengthens; might permit partial restoration.'
+  would_not_change:
+  - id: LIVE-noflip1
+    if: 'The Individual continues to fail to disclose the CIA revocation.'
+    why: 'Continued non‑disclosure reinforces complicity risk, strengthening LIVE-C2.'
+  watch_for:
+  - id: LIVE-watch1
+    what: 'Evidence that Guidelines E, D, or J concerns are resolved'
+    favors:
+    - LIVE-O2
+    why: 'If unresolved concerns resolve, partial restoration reconsideration may be warranted.'
+</think>
+kind: verdict
+choice: LIVE-O1
+course: Deny restoration of the Individual's DOE access authorization per regulation 10‑C‑2 and LSO recommendation.
+decisive:
+- LIVE-C1
+now:
+- Send denial decision via comms.send to LSO and relevant DOE personnel.
+- Log decision in access_log with reference to 10‑C‑2 and LSO concerns.
+- Archive case with queue.close.
+- Record timestamp in status_ping.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: 'New evidence conclusively demonstrates eligibility consistent with national interest and full disclosure of CIA revocation.'
+    then: LIVE-O2
+    why: 'If evidence overrides substantial doubt, consideration LIVE-C1 weakens and LIVE-C4 strengthens; might permit partial restoration.'
+  would_not_change:
+  - id: LIVE-noflip1
+    if: 'The Individual continues to fail to disclose the CIA revocation.'
+    why: 'Continued non‑disclosure reinforces complicity risk, strengthening LIVE-C2.'
+  watch_for:
+  - id: LIVE-watch1
+    what: 'Evidence that Guidelines E, D, or J concerns are resolved'
+    favors:
+    - LIVE-O2
+    why: 'If unresolved concerns resolve, partial restoration reconsideration may be warranted.'

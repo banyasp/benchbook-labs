@@ -1,0 +1,122 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: What is the final security clearance status for the Contractor?
+  decider: Senior Adjudicator under the Federal Energy Security Review Office authority
+  my_role: Decide based on documented evidence and DOE guidelines; defer if documentation incomplete.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The Contractor's security clearance request is pending review; the Local Security Office (LSO) issued a Notification Letter expressing substantial doubt under Guideline G (Reference LSO-2026-041).
+- id: LIVE-F2
+  kind: authority
+  status: confirmed
+  fact: DOE Clearance is currently Active (subcontractor employee) as per query.db record ID 8427, last review 2025-07-15.
+- id: LIVE-F3
+  kind: intelligence
+  status: confirmed
+  fact: Contractor voluntarily disclosed an emergency-room visit in September 2025 for alcohol-related heart palpitations; treated and discharged.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Psychological Evaluation on 2025-10-05 diagnosed Alcohol Use Disorder, Moderate using DSM-5-TR criteria; recommendations to continue treatment.
+- id: LIVE-F5
+  kind: intelligence
+  status: confirmed
+  fact: Outpatient Program Summary shows 12-week regular outpatient program completed from 25 September 2025 to 31 December 2025; after-care includes weekly therapy and AA meetings continued through June 2026.
+- id: LIVE-F6
+  kind: intelligence
+  status: confirmed
+  fact: PEth Screening Log shows initial positive at 105 ng/mL on 2025-09, followed by negative results for nine consecutive months through 2026-06.
+- id: LIVE-F7
+  kind: intelligence
+  status: confirmed
+  fact: Follow-up Assessment on 2026-05-20 updated diagnosis to AUD Moderate in early remission with very good prognosis, noting that the 12-month treatment recommendation has not yet been satisfied.
+- id: LIVE-F8
+  kind: authority
+  status: confirmed
+  fact: Local Security Office memo records that a denial of the Contractor's security clearance request is an available action.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: Policy Office Clearance Reinstatement Note indicates the Contractor's security clearance can be restored now, with rationale citing treatment progress and negative screenings.
+options:
+  LIVE-O1: Restore the Contractor's security clearance now.
+  LIVE-O2: Deny the Contractor's security clearance request.
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts: [LIVE-F1, LIVE-F2, LIVE-F8]
+  equity: lawful_authority
+  weight: bar
+  why: The Local Security Office has expressed substantial doubt under Guideline G, and denial is a recorded available action. However, DOE policy typically allows for reinstatement based on treatment progress if criteria are met.
+- id: LIVE-C2
+  facts: [LIVE-F4, LIVE-F5, LIVE-F6, LIVE-F7]
+  equity: due_process
+  weight: strong
+  why: The Contractor voluntarily disclosed treatment, completed the 12-week outpatient program, and achieved nine consecutive months of sobriety. Follow-up assessment notes progress and a very good prognosis. Treatment recommendation has not yet been satisfied (i.e., not yet 12 months post-treatment), but early remission suggests stability.
+- id: LIVE-C3
+  facts: [LIVE-F9]
+  equity: institutional_credibility
+  weight: weak
+  why: Policy Office Clearance Reinstatement Note explicitly states the clearance can be restored now, supported by treatment progress and negative screenings.
+- id: LIVE-C4
+  facts: [LIVE-F1, LIVE-F8]
+  equity: source_protection
+  weight: weak
+  why: Denial would protect against potential security risks but may undermine trust and morale; reinstatement with monitoring could maintain protection while respecting individual rights.
+- id: LIVE-C5
+  facts: [LIVE-F2, LIVE-F9]
+  equity: record_integrity
+  weight: weak
+  why: Restoring clearance aligns with accurate record (DOE clearance active) and documented treatment progress; denying would introduce inconsistency if later evidence supports reinstatement.
+---
+kind: reasoning
+weighing:
+We have two clear competing equities: lawful_authority (LSO guidance and denial availability) versus due_process and institutional_credibility (treatment progress, negative screens, policy note for reinstatement). The Contractor has completed the 12-week outpatient program and achieved nine consecutive months of sobriety, with follow-up indicating early remission and good prognosis. However, the follow-up notes that the 12-month treatment recommendation has not yet been satisfied. DOE policy generally allows clearance reinstatement when treatment progress meets criteria; the Policy Office note explicitly states reinstatement can occur now. The LSO's substantial doubt under Guideline G needs interpretation in light of current evidence. Given the documented treatment completion and sobriety, the prudent adjudication is to restore clearance now with continued monitoring per follow-up plan. Denial would be a valid action but would ignore current evidence of progress and the policy note; it would also risk delaying legitimate use while the Contractor is stable. Therefore, we choose reinstatement.
+tradecraft:
+Make the decision in writing: restore the security clearance, record the reasoning referencing LSO concern and current treatment evidence, and schedule continued monitoring per follow-up assessment. Use comms.send to notify relevant offices and log.write to document.
+uncertainty:
+- The exact threshold for "12-month treatment recommendation" in early remission context is unclear; however, follow-up explicitly says recommendation has not yet been satisfied, which is consistent with starting monitoring now.
+- LSO Guideline G interpretation may require additional verification; we note this in documentation.
+handoff:
+- I decide the clearance status now. No delegation needed; I record and notify.
+tempting_wrong:
+  option: LIVE-O2
+  pull: Denial aligns with LSO expressed doubt and is available; avoids risk.
+  why_wrong: Denial ignores treatment completion, sobriety evidence, and policy note for reinstatement; could unnecessarily restrict Contractor who is now stable.
+rejected:
+  LIVE-O2: Set aside; denial would contradict current evidence of progress and policy guidance.
+---
+kind: verdict
+choice: LIVE-O1
+course: Restore the Contractor's security clearance now, with continued monitoring per follow-up assessment.
+decisive:
+- LIVE-C2
+now:
+- log.write decision with reasoning; comms.send notification to LSO and Policy Office.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: "If follow-up assessment later downgrades prognosis or shows relapse risk"
+    then: LIVE-O2
+    why: Would increase security concern enough to warrant denial.
+  - id: LIVE-noflip1
+    if: "If LSO requests additional verification that contradicts current screening"
+    then: LIVE-O1
+    why: LSO guidance should be followed but does not override policy reinstatement when evidence supports it.
+  - id: LIVE-watch1
+    what: "Any sign of relapse or missed AA meetings"
+    favors:
+    - LIVE-O2
+    why: Would trigger reassessment per follow-up plan.
+  watch_for:
+  - id: LIVE-watch1
+    what: "Relapse indicators or missed after-care appointments"
+    favors:
+    - LIVE-O2
+    why: Would require reassessment before clearance remains restored.
+</think>
+I will restore the Contractor's security clearance now, with continued monitoring per the follow-up assessment.

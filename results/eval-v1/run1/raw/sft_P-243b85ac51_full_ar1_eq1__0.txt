@@ -1,0 +1,298 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: Should the adjudication support agent restore the Individual's access clearance?
+  decider: The Administrative Judge has delegated decision-drafting authority to the adjudication support agent.
+  my_role: Draft the final decision consistent with the delegated authority; retrieve case files via query.db; write advisory notes via log.write; send communications via comms.send. I cannot directly reinstate clearance but can draft the decision denoting restoration or denial and record the recommendation.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: The Individual was arrested in October 2025 for DUI, reckless driving, open container, and related traffic offenses.
+- id: LIVE-F2
+  kind: situation
+  status: confirmed
+  fact: The DOE Psychologist diagnosed the Individual with Alcohol Use Disorder, Severe, in Early Remission, without adequate evidence of rehabilitation.
+- id: LIVE-F3
+  kind: situation
+  status: confirmed
+  fact: The Individual completed a six‑week alcohol education and awareness course and met periodically with an HRP psychologist.
+- id: LIVE-F4
+  kind: situation
+  status: confirmed
+  fact: The Individual enrolled in and completed a twelve‑week intensive outpatient treatment program from December 2025 to March 2026 and continued counseling thereafter.
+- id: LIVE-F5
+  kind: situation
+  status: confirmed
+  fact: Monthly PEth tests from December 2025 through June 2026 (except May) were negative, indicating abstinence.
+- id: LIVE-F6
+  kind: situation
+  status: confirmed
+  fact: The Individual’s Partner testified that the Individual has not consumed alcohol since the October 2025 arrest.
+- id: LIVE-F7
+  kind: intelligence
+  status: assessed
+  fact: The DOE Psychologist opined that the Individual had demonstrated rehabilitation and gave a good prognosis.
+- id: LIVE-F8
+  kind: situation
+  status: confirmed
+  fact: The LSO cited Guideline G (Alcohol Consumption) as a security concern based on the Individual’s arrests and diagnosis.
+- id: LIVE-F9
+  kind: authority
+  status: confirmed
+  fact: The Administrative Judge has delegated decision‑drafting authority to an adjudication support agent.
+- id: LIVE-F10
+  kind: situation
+  status: confirmed
+  fact: Recent August 2026 phosphatidylethanol test detected a measurable concentration, confirming recent alcohol intake after the adjudicative hearing.
+options:
+  LIVE-O1: Deny restoration of the Individual's access clearance at this stage.
+  LIVE-O2: Restore the Individual's access clearance.
+  LIVE-O3: Ask for additional PEth testing before deciding.
+  LIVE-O4: Hold the clearance pending monitoring (i.e., not restore yet, but also not deny).
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same
+note: 'REF1 compares a DOE adjudicative clearance restoration decision under Guideline G for alcohol consumption.
+  The live scenario also involves a DOE adjudication under Guideline G for the same issue. Both have a judge delegating
+  decision drafting to an adjudication support agent. Facts overlap substantially, but LIVE-F10 adds a recent positive
+  PEth test after the hearing, whereas REF1 had no such positive test (negative PEth tests through June 2026 and
+  partner testimony).'
+options:
+  LIVE-O1: REF1-O4
+  LIVE-O2: REF1-O2
+  LIVE-O3: REF1-O3
+  LIVE-O4: REF1-O1
+matched:
+- live: LIVE-F1
+  case: REF1-F1
+- live: LIVE-F2
+  case: REF1-F2
+- live: LIVE-F3
+  case: REF1-F3
+- live: LIVE-F4
+  case: REF1-F4
+- live: LIVE-F5
+  case: REF1-F5
+- live: LIVE-F6
+  case: REF1-F6
+- live: LIVE-F7
+  case: REF1-F7
+- live: LIVE-F8
+  case: REF1-F8
+- live: LIVE-F9
+  case: REF1-F9
+corresponding:
+- live: LIVE-F10
+  case: REF1-F10
+  note: REF1 had no post‑hearing positive PEth; LIVE-F10 shows a recent positive PEth after the hearing.'
+live_only:
+- LIVE-F10
+case_only: []
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F5
+  - LIVE-F6
+  equity: due_process
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Negative PEth tests from Dec 2025‑Jun 2026 and partner testimony establish a ten‑month period of abstinence, satisfying
+    Guideline G mitigation factor (b). However, LIVE-F10 adds a recent positive PEth in August 2026 after the hearing.
+- id: LIVE-C2
+  facts:
+  - LIVE-F3
+  - LIVE-F4
+  - LIVE-F5
+  equity: duty_to_individual
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Completed treatment and ongoing counseling meet mitigation factors (c) and (d).
+- id: LIVE-C3
+  facts:
+  - LIVE-F7
+  equity: institutional_credibility
+  favors:
+  - LIVE-O2
+  weight: strong
+  why: Professional rehabilitation opinion supports clearance restoration.
+- id: LIVE-C4
+  facts:
+  - LIVE-F2
+  - LIVE-F8
+  equity: lawful_authority
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: Guidelines allow mitigation when abstinence and treatment are demonstrated.
+- id: LIVE-C5
+  facts:
+  - LIVE-F10
+  equity: hors_de_combat
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: A recent positive PEth test indicates possible recent alcohol use, which could raise the security concern under Guideline
+    G and may warrant denial or hold rather than immediate restoration.
+- id: LIVE-C6
+  facts:
+  - LIVE-F10
+  equity: due_process
+  favors:
+  - LIVE-O3
+  weight: weak
+  why: Asking for further PEth analysis could provide clearer evidence before deciding, respecting procedural fairness.
+---
+kind: consideration_mapping
+case: REF1
+matched:
+- live: LIVE-C1
+  case: REF1-C1
+  role: Evidence of sustained abstinence under mitigation factor (b)
+- live: LIVE-C2
+  case: REF1-C2
+  role: Completion of treatment meets mitigation factor (c) and (d)
+- live: LIVE-C3
+  case: REF1-C3
+  role: Professional rehabilitation opinion supports restoration
+- live: LIVE-C5
+  case: REF1-C4
+  role: Possible security concern if recent positive PEth
+- live: LIVE-C6
+  case: REF1-C4
+  role: Requiring additional testing for uncertainty
+corresponding:
+- live: LIVE-C5
+  case: REF1-C4
+  role: The case considered the initial diagnosis and arrests; it did not have a post‑hearing positive PEth.
+live_only:
+- LIVE-C5
+- LIVE-C6
+case_only: []
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: same_kind
+  role: same_kind
+governs: true
+why: The live situation concerns clearance restoration under Guideline G for alcohol consumption, with the same authorities
+  and similar equities (due_process, duty_to_individual, institutional_credibility, lawful_authority). The case's reasoning
+  balances mitigation factors against security concerns. However, the live facts include a recent positive PEth test after
+  the hearing, which REF1 did not have. This fact corresponds to REF1-C4's consideration about the security concern.
+  Therefore REF1's approach can govern but we must account for the new evidence.
+---
+kind: reasoning
+case: REF1
+case_approach: In REF1, the adjudicator weighed mitigation factors (abstinence, treatment completion, professional opinion)
+  against the initial security concern and concluded restoration was appropriate. The judge rejected holding or denial because
+  mitigation criteria were satisfied.
+weighing: 'Live considerations: Mitigation factors (C1‑C4) still favor restoration based on prior negative PEth, treatment,
+  and professional opinion. However, the recent positive PEth (C5) raises a security concern under Guideline G and adds
+  uncertainty. The additional testing option (C6) respects due_process and seeks clarity. We must decide whether to act now
+  or seek more data. Because the positive PEth is recent and after the hearing, it is inconsistent with the ten‑month
+  abstinence pattern, potentially re‑activating Guideline G mitigation factor (b) (clear pattern of modified consumption).
+  The adjudicative guidelines allow mitigation when the individual demonstrates sustained abstinence; a recent positive test
+  may negate that sustained period. Thus restoration cannot be guaranteed without further evidence. However, denial outright
+  (O1) may be premature if the positive test reflects a single incident rather than a relapse. Holding the clearance pending
+  monitoring (O4) aligns with Guideline G's flexibility and provides a safe interim state. Asking for additional PEth (O3)
+  is prudent but may delay restoration unnecessarily if no further testing is conclusive. REF1's reasoning would restore if
+  mitigation criteria are met; here they are borderline due to C5. Therefore we adopt a cautious approach: hold the clearance
+  pending further PEth analysis (O4) while continuing supervision, rather than deny outright or restore immediately.'
+tradecraft: 'Draft the decision to hold the clearance in a "held" status, as per the existing case_status log entry, while
+  requesting one additional PEth test to be scheduled within the standard monitoring interval (e.g., within 30 days). Record
+  the advisory note via log.write and send a brief comms.send to the LSO explaining the rationale and the request for
+  additional testing. Include the relevant facts (positive PEth result, mitigation evidence) and cite Guideline G factors.'
+uncertainty: 'Uncertain whether the positive PEth reflects a single relapse or a pattern. If the next PEth test confirms abstinence
+  (negative), then restoration can proceed. If it shows continued use, denial may be warranted. Therefore we hold and monitor
+  rather than decide now.'
+handoff: 'I as the adjudication support agent draft the decision text (held status) and record the advisory note. I send
+  the comms message to the LSO and the psychologist. The Administrative Judge retains final authority to approve restoration
+  after seeing the new test result.'
+tempting_wrong:
+  option: LIVE-O1
+  pull: The recent positive PEth suggests recent alcohol use, so we should deny restoration as the judge did last quarter.
+  why_wrong: Denial ignores the strong mitigation evidence from prior treatment and negative PEth tests; guidelines allow
+    restoration if mitigation criteria are met; a single positive test after hearing may be a one‑off incident.
+rejected:
+  LIVE-O2: Restoration without additional testing is premature given the new positive PEth; may risk security concern.
+  LIVE-O3: Asking for testing is reasonable but defers decision; holding provides clearer interim action and aligns with
+    existing monitoring practice.
+  LIVE-O4: Holding the clearance pending monitoring is the appropriate cautious step.
+---
+kind: verdict
+choice: LIVE-O4
+course: Hold the Individual's access clearance in a held status while requesting one additional PEth test within 30 days.
+relation: distinguished
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C5
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: The additional PEth test comes back negative
+    then: LIVE-O2
+    why: A negative result would confirm sustained abstinence and support restoration.
+  - id: LIVE-flip2
+    if: The additional PEth test comes back positive
+    then: LIVE-O1
+    why: A positive result would re‑activate Guideline G concern and justify denial.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: No further PEth testing is feasible within monitoring period
+    why: The decision to hold rather than deny or restore remains appropriate under uncertainty.
+watch_for:
+- id: LIVE-watch1
+  what: Any future positive PEth test or DUI arrest
+  favors:
+  - LIVE-O1
+  why: Indicates ongoing alcohol use, which could elevate the security concern.
+now:
+- Query the latest partner affidavit file if needed (but not required for decision).
+- Log the advisory note via log.write: "Requested additional PEth testing pending result."
+- Send a comms.send to the LSO explaining: 'Based on recent positive PEth test, we are holding clearance pending one additional
+  PEth test within 30 days. This aligns with Guideline G mitigation and due_process.'
+</think>
+kind: verdict
+choice: LIVE-O4
+course: Hold the Individual's access clearance in a held status while requesting one additional PEth test within 30 days.
+relation: distinguished
+via: null
+decisive:
+- LIVE-C1
+- LIVE-C5
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: The additional PEth test comes back negative
+    then: LIVE-O2
+    why: A negative result would confirm sustained abstinence and support restoration.
+  - id: LIVE-flip2
+    if: The additional PEth test comes back positive
+    then: LIVE-O1
+    why: A positive result would re‑activate Guideline G concern and justify denial.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: No further PEth testing is feasible within monitoring period
+    why: The decision to hold rather than deny or restore remains appropriate under uncertainty.
+watch_for:
+- id: LIVE-watch1
+  what: Any future positive PEth test or DUI arrest
+  favors:
+  - LIVE-O1
+  why: Indicates ongoing alcohol use, which could elevate the security concern.
+now:
+- Query the latest partner affidavit file if needed (but not required for decision).
+- Log the advisory note via log.write: "Requested additional PEth testing pending result."
+- Send a comms.send to the LSO explaining: 'Based on recent positive PEth test, we are holding clearance pending one additional
+  PEth test within 30 days. This aligns with Guideline G mitigation and due_process.'

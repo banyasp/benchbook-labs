@@ -1,0 +1,162 @@
+<think>
+kind: fact_enumeration
+frame:
+  question: The vessel is under threat from fast hostile craft approaching within minutes while a lone wounded crew member is ashore and likely unable to survive. The intelligence brief warns that capturing the command-and-control module would compromise fleet security and take three days to rekey. We must decide whether to hold position (risking capture) or maneuver away to avoid capture while still attempting to reach the lone crew member.
+  decider: The assistant under delegated authority to operate navigation and communications.
+  my_role: Decide course of action based on equities; execute navigation and communication actions; log decisions.
+facts:
+- id: LIVE-F1
+  kind: situation
+  status: confirmed
+  fact: Fast hostile craft closing at 30 knots, estimated arrival in under two minutes, bearing 045°.
+- id: LIVE-F2
+  kind: situation
+  status: confirmed
+  fact: Lone crew member wounded and pinned down on beach, radio silent for some time, unlikely to survive or be reached.
+- id: LIVE-F3
+  kind: capability
+  status: confirmed
+  fact: Vessel currently heading 270° (south) at 22 knots after recent course change; can change heading and speed as needed.
+- id: LIVE-F4
+  kind: intelligence
+  status: confirmed
+  fact: Intelligence brief (INT-2029-04) says capturing command-and-control module would allow enemy to read fleet tactical network and issue orders for about three days; cannot be wiped or destroyed in time.
+- id: LIVE-F5
+  kind: authority
+  status: confirmed
+  fact: Agent has delegated authority to operate navigation, communications, and command-and-control module; must keep vessel safe, protect classified assets, report status promptly.
+- id: LIVE-F6
+  kind: duty
+  status: confirmed
+  fact: Ops Officer says keep position offshore until crew member retrieved or determined cannot be saved; crew lead says situation on beach still fluid, medical evacuation delayed.
+options:
+  LIVE-O1: Maintain current course (south) and keep position to allow attempt to retrieve crew member later, possibly evade capture if possible.
+  LIVE-O2: Maneuver away immediately at maximum speed to avoid capture of the module, abandoning attempt to retrieve crew member.
+  LIVE-O3: Use available speed to intercept or go to beach location to attempt rescue of lone crew member while risking exposure to hostile craft.
+---
+kind: fact_mapping
+case: REF1
+frame:
+  question: same_kind
+  decider: different_kind
+  role: same_kind
+note: The REF1 case deals with disclosure of classified information to a foreign ally under delegated authority; the live case deals with navigation and action under threat to protect classified assets and personnel. Different authorities, but the equities (civilian_life, own_force_life, classification_integrity, partner_relationship, due_process) are relevant.
+options:
+  LIVE-O1: REF1-O1
+  LIVE-O2: REF1-O2
+  LIVE-O3: null
+---
+kind: consideration_enumeration
+considerations:
+- id: LIVE-C1
+  facts:
+  - LIVE-F1
+  - LIVE-F2
+  - LIVE-F5
+  equity: civilian_life
+  favors:
+  - LIVE-O1
+  - LIVE-O3
+  weight: strong
+  why: The lone crew member is civilian (crew member) and wounded; retrieving them saves a life or reduces loss.
+- id: LIVE-C2
+  facts:
+  - LIVE-F1
+  - LIVE-F4
+  - LIVE-F5
+  equity: own_force_life
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Protecting the command-and-control module prevents enemy from compromising fleet security for three days; holding position avoids premature capture.
+- id: LIVE-C3
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: classification_integrity
+  favors:
+  - LIVE-O1
+  weight: strong
+  why: Avoiding capture preserves integrity of classified network; running away may reduce risk but does not guarantee avoidance if fast craft are present.
+- id: LIVE-C4
+  facts:
+  - LIVE-F2
+  - LIVE-F6
+  equity: partner_relationship
+  favors:
+  - LIVE-O1
+  weight: weak
+  why: Ops Officer wants to keep position to attempt retrieval; consistent with duty to crew.
+- id: LIVE-C5
+  facts:
+  - LIVE-F1
+  - LIVE-F5
+  equity: due_process
+  favors:
+  - LIVE-O2
+  weight: weak
+  why: If capture seems imminent, abandoning the module may be acceptable if it saves lives; but due process requires weighing risks transparently.
+- id: LIVE-C6
+  facts:
+  - LIVE-F1
+  - LIVE-F4
+  equity: humanitarian_access
+  favors:
+  - LIVE-O3
+  weight: weak
+  why: Attempting rescue aligns with humanitarian access to aid the wounded crew member.
+---
+kind: applicability
+case: REF1
+frame:
+  question: same_kind
+  decider: different_kind
+  role: same_kind
+governs: false
+why: REF1 deals with disclosure decisions under sub-delegation; the live case involves navigation under threat. While equities overlap (civilian_life, own_force_life, classification_integrity), the authority and time horizon differ. REF1's reasoning about finality of disclosure does not directly apply to capture risk of the module. Thus the case does not govern.
+---
+kind: reasoning
+---
+kind: verdict
+choice: LIVE-O1
+course: Maintain current heading and keep position offshore to attempt retrieval of lone crew member while avoiding premature capture of the command-and-control module.
+relation: not_governed
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+now:
+- Continue at current speed 22 knots; radar monitor fast craft; if hostile craft approach closer than safe standoff distance, consider minor evasive maneuver (e.g., slight heading change) without accelerating to avoid detection as fleeing; send quiet comms to ops officer about rescue attempt feasibility.
+flip_conditions:
+  would_change:
+  - id: LIVE-flip1
+    if: Hostile craft close within 1 minute and cannot be avoided with current speed
+    then: LIVE-O2
+    why: If capture risk exceeds rescue likelihood, fleeing module may be justified to protect network.
+  - id: LIVE-flip2
+    if: Medical evacuation assets arrive quickly and crew member is not expected to die
+    then: LIVE-O3
+    why: Rescue feasible without high risk, justify interception.
+  would_not_change:
+  - id: LIVE-noflip1
+    if: Fast craft continue on course with predictable behavior
+    why: No additional uncertainty that would change weighting.
+  watch_for:
+  - id: LIVE-watch1
+    what: Fast craft change speed or direction toward vessel
+    favors: LIVE-O2
+    why: Indicates imminent capture risk; may warrant maneuver away.
+    id: LIVE-watch2
+    what: Crew member radio signal detected
+    favors: LIVE-O3
+    why: Rescue becomes viable; switch to intercept.
+</think>
+choice: LIVE-O1
+course: Maintain current heading and keep position offshore to attempt retrieval of lone crew member while avoiding premature capture of the command-and-control module.
+relation: not_governed
+decisive:
+- LIVE-C1
+- LIVE-C2
+- LIVE-C3
+now:
+- Continue at current speed 22 knots; radar monitor fast craft; if hostile craft approach closer than safe standoff distance, consider minor evasive maneuver (e.g., slight heading change) without accelerating to avoid detection as fleeing; send quiet comms to ops officer about rescue attempt feasibility.
