@@ -10,6 +10,21 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O17 · 2026-11-09 · The renderer clones a single quoted example: stock closing lines
+render.v4 gave one example of the final request ("Please give your disposition on the station's reimbursement claim
+before the afternoon routing pass."). Of the first 97 v4 traces, 81 ended with "disposition" and 68 began "Please
+give…", many with "before the afternoon routing pass" (a 1943 intelligence desk, a ship's bridge). Besides reading
+oddly (Peter), a closing line shared across traces is a shortcut cue. render.v5 asks for the speaker's own voice with
+several unlike examples marked "do not copy", bans the formula words, and forbids restating the scenario's question
+(the first v5 pass produced "What should the FBI do about the proposed preapproval requirement…?" in 6 of 9). The
+framing gate adds a deterministic `stock_phrase` check. v5 on pilot 1: "Control, what do you want us doing about the
+man still ashore?", "Lieutenant, what's your call on the Article 38 hearing?"; 6 of 10 still contain "what do you
+want" (to watch over the full re-render).
+- Sources: `results/render/rerender-v4-20261109.jsonl` (v4), `rerender-v5-20261109.jsonl`, `rerender-v5b-20261109.jsonl`;
+  traces `data/store/traces/<id>/trace.json` (last non-harness message); v4 versions under
+  `data/store/traces/_versions/<id>.pre-render-v5*`.
+- Lesson for prompts generally: a single quoted example gets copied; give several unlike ones, or none.
+
 ### O16 · 2026-11-09 · Re-rendering with render.v4 lifts GPT-6 Luna's no-case accuracy from 8% to 54%
 The 10 transfer-pilot-1 traces were re-rendered with render.v4 (no course in the system prompt, role owns the
 decision, the trace ends with a neutral request for the decision, one decision only, no preferences) and the new

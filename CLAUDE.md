@@ -106,6 +106,8 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   framing gate (`pipeline.render.framing_check`) and answer-leak gate are on by default in `render_one`; never switch
   them off for real renders. When a new rendering failure is found, add it to the "Lessons from earlier renders"
   section of the render prompt (and `code/datagen/prompts/_rendering_rules.md`) and, if checkable, to the framing gate.
+  Prompt-writing lesson (O17): a single quoted example gets cloned into most outputs; give several unlike examples
+  marked "do not copy", or none.
 - **Data pipeline rulings (design v2.4, Peter's walkthrough 2026-10-26/27)** — the design file has the details:
   the model should faithfully extend the served case's reasoning (R\*), not out-guess the oracle (a disagreement is
   a library gap); v1 serves one case; perturb changes only F or Q, never the reasoning; skeleton `conditions` are

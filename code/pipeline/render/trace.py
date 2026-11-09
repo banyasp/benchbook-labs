@@ -30,8 +30,10 @@ from .util import extract_json, make_step, prompt_ref
 
 # render.v4 (2026-11-09, R93/O14-O15): no course in the system prompt, role owns the decision, the trace ends with a
 # request for the decision, one decision only, and a "lessons" section. render.v3.md is kept for old provenance.
-PROMPT3 = Path(__file__).parent / "prompts" / "render.v4.md"
-PROMPT_NAME = "render.v4"
+# render.v5 (same day): the final request in the speaker's own voice, no stock formula (v4 made 81 of 97 traces end
+# "Please give your disposition ... before the afternoon routing pass").
+PROMPT3 = Path(__file__).parent / "prompts" / "render.v5.md"
+PROMPT_NAME = "render.v5"
 MAX_RETRIES = 2                      # re-render tries after the first render (design §8.4)
 LLM_TRIES = 4                        # transport-level attempts per call (backoff)
 DEFAULT_SEED = 20261027

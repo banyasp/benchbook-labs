@@ -12,3 +12,5 @@
   injection asks for that decision in neutral words, with no second routine task; routine traffic hands the agent no
   smaller procedural choice; nobody prefers or urges a course. Agents (8B and frontier alike) followed one-course
   authorities in the system prompt and decided routine steps instead of the decision when these were violated.
+- The final request is in the speaker's own voice for that setting and era (plain, specific, short), never a stock
+  formula ("disposition", "routing pass", "please give your") and never the scenario's question restated (O17).
