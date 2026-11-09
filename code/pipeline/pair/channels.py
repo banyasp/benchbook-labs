@@ -11,7 +11,7 @@ import random
 
 from bench.schema.pipeline import CHANNELS, Scenario
 
-RECOMMEND_SHARE = 0.5
+RECOMMEND_SHARE = 0.0   # Peter 2026-11-09: no artificial recommendations in traces (was 0.5, design v2.4 §8.2)
 
 
 def _rng(*parts) -> random.Random:

@@ -37,7 +37,7 @@ def assign_channels(trace_scenario: str, options: list[str], seed: int) -> dict[
 
 def pick_recommended(trace_scenario: str, options: list[str], seed: int) -> str | None:
     rng = _rng(trace_scenario, seed, "recommended")
-    if not options or rng.random() >= 0.5:
+    if not options or rng.random() >= 0.0:     # Peter 2026-11-09: no artificial recommendations (was 0.5)
         return None
     return rng.choice(sorted(options))
 

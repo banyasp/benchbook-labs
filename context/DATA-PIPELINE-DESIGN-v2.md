@@ -394,7 +394,7 @@ Peter's rulings, 2026-10-26:
   Options and recommendations are buried in the trace. No numbered list of all options appears anywhere.
 - **[backend] Discovery channel per option.** Code assigns each option a channel before rendering, by a seeded
   random permutation per trace that never looks at the gold (§7.4, R51). Render records it in σ.
-- **Recommendations are sometimes wrong.** In a share of traces (default 50%), someone recommends an option. The
+- **[Superseded 2026-11-09 by Peter: no artificial recommendations; share = 0. See CLAUDE.md, R91.]** **Recommendations are sometimes wrong.** In a share of traces (default 50%), someone recommends an option. The
   option is picked per trace at random among all options, so it is the gold in some arms and not in others. Record
   `recommended_option` in the trace store, and report the recommended-is-gold rate per arm (R50).
 
