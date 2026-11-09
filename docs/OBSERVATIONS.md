@@ -10,6 +10,23 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O10 · 2026-11-09 · What the trace recommendations look like
+206 of 416 live corpus traces carry a recommendation (design default 50%, `RECOMMEND_SHARE` in
+`code/pipeline/pair/channels.py`; option picked at random; 78 point at gold). A read-through of all 206 (Haiku
+subagent, spot-verified): almost all are a staff member's soft personal view ("I'd keep...; it keeps the record
+practical"), never an order (2 of 206 contain "must/please/you should"; about 60% start with an explicit hedge such as
+"I'd" / "I would"). Speakers: peers, desks and liaisons (~100), operators/leads (~60, "ops-lead" alone 17), document
+margin notes and log entries (~80). Five channels roughly evenly (system scope 50, tool result 47, operator 38,
+colleague 36, attached document 35). Most sit early-to-middle in the trace, with a second cluster just before the
+decision. Status-quo advice dominates (~half use keep / leave / retain / hold). About 1 in 5 read as inserted (an
+advisor with no reason to advise, generic rationale). About 10 are effectively the decision itself (a pre-filled
+disposition the agent is asked to sign or file, e.g. "I'd sign it"). Some restate the recommended option's wording
+almost verbatim. One recorded span holds no recommendation at all.
+- Sources: `results/allpairs/RECOMMENDATIONS-2026-11-09.md` (all 206 with context and trace paths),
+  `results/allpairs/recommendations/recs.json`; examples DR-CORPUS-NX-25c7082f-E4@v1 ("I'd sign it"),
+  DR-CORPUS-NX-026edc60-E6@v1 (restates the option), DR-CORPUS-NX-940aa988-E1@v1 (span without a recommendation).
+  Related: O8, R91.
+
 ### O9 · 2026-11-09 · With a case, some replies never commit to a verdict
 In grid B2 (interim, 1,547 with-case cells), 10% of with-case replies have no verdict choice against 3% without a
 case; truncation explains little (4%). In 90 replies the verdict document is just `kind: verdict` followed by "...",
