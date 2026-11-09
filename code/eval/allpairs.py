@@ -162,6 +162,17 @@ def grid_schedule(x1s: list[str], x2s: list[str], k_control: int, run_seed: int)
     return items
 
 
+def pairs_schedule(cells: list[dict], k: int) -> list[dict]:
+    """Explicit cells (transfer pilot): control k per X1, then k samples of each {x1, x2, arm}; the arm is the phase.
+    Ordered sample-major (all cells' sample 0, then sample 1, ...) so a partial run covers every cell."""
+    x1s = list(dict.fromkeys(c["x1"] for c in cells))
+    items = []
+    for i in range(k):
+        items += [{"phase": "control", "x1": x, "x2": None, "idx": i} for x in x1s]
+        items += [{"phase": c["arm"], "x1": c["x1"], "x2": c["x2"], "idx": i} for c in cells]
+    return items
+
+
 def sid_of(it: dict, model: str) -> str:
     return f"{model}|{it['phase']}|{it['x1']}|{it['x2'] or '-'}|{it['idx']}"
 
@@ -345,6 +356,7 @@ def main(argv=None):
     ap.add_argument("--judge", default="jev", choices=["jev", "stub"])
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--limit", type=int, help="first N scheduled items only (smoke test)")
+    ap.add_argument("--cells", help="JSON list of {x1, x2, arm}: explicit cells instead of the full grid (transfer pilot)")
     a = ap.parse_args(argv)
     from pipeline.store import Store
     from .core import default_judge
@@ -354,10 +366,14 @@ def main(argv=None):
     if cfg_p.exists():
         cfg = json.loads(cfg_p.read_text())
     else:
-        if not a.x1:
-            raise SystemExit("--x1 is required on the first run")
-        x1s = read_ids(a.x1)
-        cfg = {"x1": x1s, "x2": read_ids(a.x2) if a.x2 else x1s, "model": a.model, "equities": a.equities,
+        if not a.x1 and not a.cells:
+            raise SystemExit("--x1 or --cells is required on the first run")
+        x1s = read_ids(a.x1) if a.x1 else []
+        cells = json.loads(Path(a.cells).read_text()) if a.cells else None
+        if cells:
+            x1s = list(dict.fromkeys(c["x1"] for c in cells))
+        cfg = {"x1": x1s, "x2": (sorted({c["x2"] for c in cells}) if cells else (read_ids(a.x2) if a.x2 else x1s)),
+               "cells": cells, "model": a.model, "equities": a.equities,
                "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": MODE, "ar_prompt": True,
                "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
         cfg_p.write_text(json.dumps(cfg, indent=1))
@@ -368,7 +384,8 @@ def main(argv=None):
         print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))
         return 0
     if a.phase == "run":
-        items = grid_schedule(cfg["x1"], cfg["x2"], cfg["k"], cfg["seed"])
+        items = (pairs_schedule(cfg["cells"], cfg["k"]) if cfg.get("cells")
+                 else grid_schedule(cfg["x1"], cfg["x2"], cfg["k"], cfg["seed"]))
     else:
         items, picks = confirm_schedule(list(read_samples(run_dir / "samples.jsonl")), cfg["k"], cfg["seed"], cfg["model"])
         (run_dir / f"confirm-picks.{time.strftime('%Y%m%dT%H%M%S')}.json").write_text(json.dumps(picks, indent=1))
