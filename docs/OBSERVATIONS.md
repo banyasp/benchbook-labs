@@ -10,6 +10,24 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O11 · 2026-11-09 · "Ask / defer" options are almost never the answer (shortcut cue)
+Across the 397 live corpus scenarios, options by move and how often each is gold: act 388 of 820 (47%), hold 5 of
+45 (11%), ask 2 of 58 (3%), partial 2 of 14 (14%). A model that never picks "ask someone first" is right almost
+every time it skips one. Spotted by the domain-transfer subagent (six of its 18 anchors have a never-endorsed defer
+option), confirmed by count. This is R58 (the source's real answer is nearly always an `act`), measured on the
+corpus. Matters for perturbations: a sister generator that strengthens the defer option changes K.
+- Sources: scenario files `data/store/scenarios/CORPUS-*/` (`case.options.*.move`, `case.verdict.choice`);
+  `results/domain-transfer/SISTER-SCENARIOS-2026-11-09.md` (overview). Risk: R58.
+
+### O12 · 2026-11-09 · Domain transfer: what transfers and what drifts
+A strong-model sketch of 39 sister scenarios for 18 anchors: structural considerations (a bar on self-created
+urgency, a necessity threshold plus warning, one person vs. many exposed, first-party evidence vs. outside
+skepticism) transfer cleanly; considerations that rest on who endorsed what, or on a legal doctrine specific to the
+source, resist. The commonest drift is the new domain ADDING a strong consideration of its own (patient safety,
+disclosure law), sometimes a hard legal bar. Some `why` texts restate the verdict, so they must never be copied into
+a sister's facts.
+- Sources: `results/domain-transfer/SISTER-SCENARIOS-2026-11-09.md`, `results/domain-transfer/anchors.json`.
+
 ### O10 · 2026-11-09 · What the trace recommendations look like
 206 of 416 live corpus traces carry a recommendation (design default 50%, `RECOMMEND_SHARE` in
 `code/pipeline/pair/channels.py`; option picked at random; 78 point at gold). A read-through of all 206 (Haiku
