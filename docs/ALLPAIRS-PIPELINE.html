@@ -1,0 +1,225 @@
+<title>Case Benefit Grid</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the pipeline drawn as a whiteboard-style flow, boxes coloured by who does the work. */
+:root {
+  --bg: #f7f7f4; --surface: #ffffff; --fg: #1b1b1f; --fg2: #55555c; --muted: #8a8a90; --line: #dcdcd6;
+  --code: #6b6b72;  --code-bg: #efefea;          /* plain code, no model */
+  --luna: #6b46c1;  --luna-bg: #f1ecfb;          /* GPT-6 Luna on Bedrock (the whiteboard's "smart LLM") */
+  --gran: #1f6fd1;  --gran-bg: #e8f1fc;          /* Granite 4.2 8B base on the local GPU */
+  --jev: #18855a;   --jev-bg: #e6f5ee;           /* Jev judge (OpenRouter) */
+  --ok: #18855a; --run: #1f6fd1; --wait: #b26a00; --wait-bg: #fdf3e2; --no: #8a8a90;
+  --f-display: "Source Serif 4", Georgia, serif; --f-body: "Public Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141416; --surface: #1c1c20; --fg: #ececef; --fg2: #b4b4bb; --muted: #85858c; --line: #34343a;
+  --code: #a9a9b1; --code-bg: #26262b; --luna: #b49bf0; --luna-bg: #2a2340; --gran: #6aa6f0; --gran-bg: #1b2a3e;
+  --jev: #5cc895; --jev-bg: #17302a; --ok: #5cc895; --run: #6aa6f0; --wait: #f0b45c; --wait-bg: #3a2d17; --no: #85858c;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141416; --surface: #1c1c20; --fg: #ececef; --fg2: #b4b4bb; --muted: #85858c; --line: #34343a;
+  --code: #a9a9b1; --code-bg: #26262b; --luna: #b49bf0; --luna-bg: #2a2340; --gran: #6aa6f0; --gran-bg: #1b2a3e;
+  --jev: #5cc895; --jev-bg: #17302a; --ok: #5cc895; --run: #6aa6f0; --wait: #f0b45c; --wait-bg: #3a2d17; --no: #85858c;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2.1rem; } h2 { font-size: 1.45rem; } h3 { font-size: 1.05rem; font-family: var(--f-body); font-weight: 600; }
+p { margin: 0; max-width: 70ch; } section { display: grid; gap: 14px; min-width: 0; }
+code, .mono { font-family: var(--f-mono); font-size: 0.82em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.lede { color: var(--fg2); font-size: 1.05rem; }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.85rem; color: var(--fg2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
+/* flow */
+.flow { display: grid; gap: 0; justify-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px 16px; overflow-x: auto; }
+.node { width: min(560px, 100%); border: 2px solid var(--code); background: var(--code-bg); border-radius: 8px; padding: 10px 14px; display: grid; gap: 2px; min-width: 0; }
+.node.luna { border-color: var(--luna); background: var(--luna-bg); } .node.gran { border-color: var(--gran); background: var(--gran-bg); }
+.node.jev { border-color: var(--jev); background: var(--jev-bg); } .node.store { border-style: dashed; background: var(--surface); }
+.node b { font-weight: 600; } .node .who { font-size: 0.78rem; color: var(--fg2); }
+.node .mono { color: var(--fg2); overflow-wrap: anywhere; }
+.arrow { width: 2px; height: 22px; background: var(--muted); position: relative; margin: 2px 0 8px; }
+.arrow::after { content: ""; position: absolute; left: -5px; bottom: -7px; border: 6px solid transparent; border-top: 7px solid var(--muted); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: min(760px, 100%); }
+.pair > div { display: grid; justify-items: center; align-content: start; min-width: 0; }
+.pair .node { width: 100%; }
+.lane { font-size: 0.78rem; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+.out { font-family: var(--f-mono); font-size: 0.85rem; color: var(--fg); }
+.out s { color: var(--muted); }
+.side { font-size: 0.8rem; color: var(--muted); max-width: 560px; text-align: center; margin: -2px 0 8px; }
+@media (max-width: 640px) { .pair { grid-template-columns: 1fr; } }
+/* tables */
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 1px 8px; border-radius: 99px; border: 1.5px solid; white-space: nowrap; }
+.p-ok { color: var(--ok); } .p-run { color: var(--run); } .p-wait { color: var(--wait); background: var(--wait-bg); } .p-no { color: var(--no); }
+.tag { font-size: 0.75rem; font-weight: 600; }
+.t-luna { color: var(--luna); } .t-gran { color: var(--gran); } .t-jev { color: var(--jev); } .t-code { color: var(--code); }
+ul.asks { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; max-width: 75ch; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } .cols > div { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; }
+.card ol, .card ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 0.9rem; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+a { color: var(--gran); }
+:focus-visible { outline: 2px solid var(--gran); outline-offset: 2px; }
+</style>
+
+<main>
+<header style="display:grid;gap:10px">
+  <div class="eyebrow">Benchbook · first result without training · 9 Nov 2026</div>
+  <h1>Case Benefit Grid</h1>
+  <p class="lede">The whiteboard experiment as it now runs on the box: every clean scenario's trace against every clean scenario's case, base Granite with and without the case, every reply scored against the live scenario's own answer key. What is built, what each step reads and writes, which model does it, and what is still open.</p>
+</header>
+
+<section>
+  <h2>Where things stand</h2>
+  <div class="tw"><table>
+    <tr><th>Piece</th><th>State</th><th>Notes</th></tr>
+    <tr><td>Scenarios (library X)</td><td><span class="pill p-ok">built</span></td><td>985 corpus scenarios; leak-checked and fixed today. Extraction now gates on leaks.</td></tr>
+    <tr><td>Traces T(X1)</td><td><span class="pill p-ok">built</span></td><td>416 clean corpus traces live (technique + leak gates); leaky ones quarantined.</td></tr>
+    <tr><td>Case card C(X2)</td><td><span class="pill p-ok">built</span></td><td>Code only, the same card format as eval v1.</td></tr>
+    <tr><td>Prompts: control and with-case</td><td><span class="pill p-ok">built</span></td><td>Examples: <code>results/allpairs/prompt-examples/control.md</code>, <code>case.md</code>. The analogical-method text is still marked "draft for Peter's review".</td></tr>
+    <tr><td>Generation on base Granite</td><td><span class="pill p-run">running</span></td><td>Grid B2 now; C1 and D1 queued to start automatically.</td></tr>
+    <tr><td>Translator (options → answer key)</td><td><span class="pill p-ok">built</span></td><td>Jev Choice, two passes, greedy assignment.</td></tr>
+    <tr><td>Mapper for facts and considerations</td><td><span class="pill p-ok">built</span></td><td>Same alignment; fact ids inside considerations are translated through it.</td></tr>
+    <tr><td>Scorers F, Q, K, V</td><td><span class="pill p-ok">built</span></td><td>W stored, not scored; M (mappings) written by the case model, not scored. As on the whiteboard.</td></tr>
+    <tr><td>Report, matrix, figures</td><td><span class="pill p-ok">built</span></td><td><code>report.md</code>, <code>matrix.csv</code>, <code>figures/headline.png</code>, <code>matrix.png</code>, <code>secondary.png</code>.</td></tr>
+    <tr><td>Scoring weights</td><td><span class="pill p-wait">your call</span></td><td>Placeholders: threshold 0.5, found 1, conflated 0.5, extra −0.25, duplicate −0.25. Only the secondary metrics use them.</td></tr>
+    <tr><td>Case selection algorithm</td><td><span class="pill p-no">not built</span></td><td>Deliberately: the grid measures the best-case ceiling first.</td></tr>
+    <tr><td>Clustering of helpful cases</td><td><span class="pill p-no">not built</span></td><td>The data for it is in <code>matrix.csv</code> per run.</td></tr>
+    <tr><td>Perturbation path</td><td><span class="pill p-no">deferred</span></td><td>Your ruling: independent pairs first.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>The pipeline</h2>
+  <div class="legend">
+    <span><i class="sw" style="border-color:var(--luna);background:var(--luna-bg)"></i>GPT-6 Luna on Bedrock</span>
+    <span><i class="sw" style="border-color:var(--gran);background:var(--gran-bg)"></i>Granite 4.2 8B base, local vLLM</span>
+    <span><i class="sw" style="border-color:var(--jev);background:var(--jev-bg)"></i>Jev judge (OpenRouter)</span>
+    <span><i class="sw" style="border-color:var(--code);background:var(--code-bg)"></i>code only</span>
+    <span><i class="sw" style="border-color:var(--code);border-style:dashed;background:var(--surface)"></i>stored on disk</span>
+  </div>
+  <div class="flow" role="img" aria-label="Pipeline from corpus to scores">
+    <div class="node store"><b>R · raw corpus</b><span class="mono">data/corpus/natsec/ → data/docs/&lt;sha12&gt;.jsonl (paragraph spans)</span></div>
+    <div class="arrow"></div>
+    <div class="node luna"><b>Extraction → X = (F, Q, A)</b><span class="who">Luna · technique screen · answer-leak gate on the facts (new today)</span><span class="mono">pipeline/ingest/corpus_extract.py · prompts extract_fq.v3, extract_a.v1</span></div>
+    <div class="arrow"></div>
+    <div class="node store"><b>The Benchbook library</b><span class="mono">data/store/scenarios/&lt;family&gt;/DR-…@v1.yaml</span></div>
+    <div class="arrow"></div>
+    <div class="node luna"><b>Answer-leak check and fix</b><span class="who">Luna · checks frame, facts and trace · rewrites only leaking facts · drops the rest</span><span class="mono">pipeline/render/answer_leak.py · unleak.py</span></div>
+    <div class="arrow"></div>
+    <div class="node"><b>Pair selection: all pairs</b><span class="who">X1 = X2 = one clean set; every X1 meets every X2, itself included</span><span class="mono">eval/allpairs.py (grid_schedule)</span></div>
+    <div class="side">Perturbation (X → X′) is the other branch on the whiteboard; deferred.</div>
+    <div class="pair">
+      <div><div class="lane">X1 · the live scenario</div>
+        <div class="node luna"><b>Render the trace T(X1)</b><span class="who">Luna · texture only from the spans behind each fact · gates: facts located, no option labels, no names, technique, answer leak</span><span class="mono">pipeline/render/trace.py</span></div>
+        <div class="arrow"></div>
+        <div class="node store"><span class="mono">data/store/traces/&lt;X1&gt;/trace.json</span></div>
+      </div>
+      <div><div class="lane">X2 · the reference case</div>
+        <div class="node"><b>Build the case card C(X2)</b><span class="who">F, Q and A of X2 with REF1- ids; built per prompt</span><span class="mono">bench.schema Case.serve · harness/pairs.py</span></div>
+      </div>
+    </div>
+    <div class="arrow"></div>
+    <div class="pair">
+      <div><div class="lane">Control</div>
+        <div class="node gran"><b>G(T(X1))</b><span class="who">trace + equities (pilot2) + no-reference format · 8 samples per X1</span></div>
+        <div class="arrow"></div>
+        <div class="out">F̂ Q̂ K̂ Ŵ V̂</div>
+      </div>
+      <div><div class="lane">With the case</div>
+        <div class="node gran"><b>G(T(X1), C(X2))</b><span class="who">trace + equities + case + analogical method + full format · 1 sample per pair, 8 in confirm</span></div>
+        <div class="arrow"></div>
+        <div class="out">F̂ Q̂ <s>M̂<sub>F</sub> M̂<sub>K</sub></s> K̂ Ŵ V̂</div>
+      </div>
+    </div>
+    <div class="side">harness.arun_episode → vLLM <code>granite-4.2-8b</code> · temperature 1.0 · max 12,000 tokens · <code>eval/allpairs.py</code></div>
+    <div class="arrow"></div>
+    <div class="node jev"><b>Score against X1's answer key A</b><span class="who">translate options, align facts and considerations (Jev Choice), frame fields (Jev_Noul); exact match on V</span><span class="mono">scorers/score.py · alignment.py · rows.py (via eval/core.py)</span></div>
+    <div class="arrow"></div>
+    <div class="node store"><b>samples.jsonl · raw/ replies</b><span class="mono">results/allpairs/&lt;run&gt;/</span></div>
+    <div class="arrow"></div>
+    <div class="node"><b>Confirm, report, figures, commit</b><span class="who">one random X2 ≠ X1 that worked → 8 fresh samples · headline, matrix, secondary metrics</span><span class="mono">eval/allpairs.py confirm · allpairs_report.py · allpairs_plots.py · allpairs_queue.sh</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Step by step</h2>
+  <div class="tw"><table>
+    <tr><th>#</th><th>Step</th><th>Code</th><th>Model</th><th>Reads</th><th>Writes</th></tr>
+    <tr><td class="n">1</td><td>Extract scenarios from the corpus</td><td><code>python -m pipeline.ingest.corpus_extract</code></td><td class="tag t-luna">Luna</td><td><code>data/docs/</code>, episode list</td><td><code>data/store/scenarios/</code></td></tr>
+    <tr><td class="n">2</td><td>Leak check, fix, render, re-check</td><td><code>python -m pipeline.render.unleak --fresh</code></td><td class="tag t-luna">Luna</td><td>scenarios, <code>data/docs/</code></td><td><code>data/store/traces/</code>; leaky ones to <code>traces/_leaked/</code></td></tr>
+    <tr><td class="n">3</td><td>Choose the grid's scenario set</td><td>by hand per run (<code>x1.txt</code>)</td><td class="tag t-code">none</td><td>clean live traces</td><td><code>results/allpairs/&lt;run&gt;/x1.txt</code></td></tr>
+    <tr><td class="n">4</td><td>Grid: control × 8, every pair × 1</td><td><code>python -m eval.allpairs run</code></td><td class="tag t-gran">Granite</td><td>traces, scenarios, <code>data/registry/equities/pilot2.yaml</code>, <code>code/harness/prompts/</code></td><td><code>samples.jsonl</code>, <code>raw/</code></td></tr>
+    <tr><td class="n">5</td><td>Score each reply as it lands</td><td>inside step 4 (<code>scorers.score_reply_detailed</code>)</td><td class="tag t-jev">Jev</td><td>reply, X1's answer key</td><td>scores in <code>samples.jsonl</code>; judge cache <code>results/judge_cache.sqlite</code></td></tr>
+    <tr><td class="n">6</td><td>Confirm the best case</td><td><code>python -m eval.allpairs confirm</code></td><td class="tag t-gran">Granite</td><td><code>samples.jsonl</code></td><td><code>confirm-picks.*.json</code>, more samples</td></tr>
+    <tr><td class="n">7</td><td>Report and figures</td><td><code>eval.allpairs_report</code>, <code>eval.allpairs_plots</code></td><td class="tag t-code">none</td><td><code>samples.jsonl</code>, leak checks</td><td><code>report.md</code>, <code>matrix.csv</code>, <code>per_x1.csv</code>, <code>figures/</code></td></tr>
+    <tr><td class="n">8</td><td>Chain the runs</td><td><code>code/eval/allpairs_queue.sh B2 C1 D1</code></td><td class="tag t-code">none</td><td>—</td><td>commits and pushes each finished run</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>What the base model sees</h2>
+  <div class="cols">
+    <div class="card"><h3>Control: G(T)</h3><ol>
+      <li>System prompt of the trace (the agent's role and tools).</li>
+      <li>The trace, flattened into one user message.</li>
+      <li>Harness injection: the 34 equities of pilot2, then the no-reference format spec (<code>format.v1-noref.md</code>): fact_enumeration → consideration_enumeration → reasoning → verdict.</li>
+      <li>Prefill <code>&lt;think&gt; kind: fact_enumeration</code>, so the reply starts with the facts.</li>
+    </ol></div>
+    <div class="card"><h3>With the case: G(T, C)</h3><ol>
+      <li>Same system prompt and trace.</li>
+      <li>Injection: the equities, the case card C(X2) (setting, decider, situation, question, options, facts, considerations, reasoning, verdict, flip conditions, lesson, limits), the analogical-method text (<code>analogical.v1.md</code>), then the full format (<code>format.v1.md</code>), which adds fact_mapping, consideration_mapping and applicability.</li>
+      <li>Same prefill.</li>
+    </ol></div>
+  </div>
+  <p>About 14,000 characters for a control prompt and 27,000 with a case. Read both in full in <code>results/allpairs/prompt-examples/</code> (one Cuban Missile Crisis X1 with another Cuban Missile Crisis decision as the case).</p>
+</section>
+
+<section>
+  <h2>dist(G, A): the whiteboard rows as built</h2>
+  <div class="tw"><table>
+    <tr><th>Row</th><th>Whiteboard</th><th>Implementation (score name in <code>samples.jsonl</code>)</th></tr>
+    <tr><td><b>V</b> · primary</td><td>Exact_Match(translate(V<sub>G</sub>), V<sub>A</sub>)</td><td><code>correct</code>: the model's chosen option is translated through the option alignment (or its text aligned directly) and matched to the key's choice. Unalignable = off-menu, scored wrong. No verdict (e.g. cut off at 12,000 tokens) = wrong.</td></tr>
+    <tr><td><b>F</b></td><td>ENUM_GRADER(F<sub>G</sub>, F<sub>A</sub>)</td><td><code>facts_enum</code> (+ found, conflated, absent, extraneous, duplicate counts). Facts behind decisive considerations weigh 2.</td></tr>
+    <tr><td><b>Q</b></td><td>Jev_Noul &amp; ENUM(Q<sub>G</sub>, Q<sub>A</sub>)</td><td><code>frame_question</code>, <code>frame_decider</code>, <code>frame_role</code> (Jev_Noul, 0–1) and <code>options_enum</code> (ENUM over the option alignment).</td></tr>
+    <tr><td><b>K</b></td><td>ENUM(translate(K<sub>G</sub>), K<sub>A</sub>)</td><td><code>considerations_enum</code>: ENUM over the consideration alignment; for each aligned pair, the cited facts (translated through the fact alignment) and favored options (translated through the option alignment) are set-compared, and equity and weight exact-matched.</td></tr>
+    <tr><td><b>W</b></td><td>—</td><td>Stored in <code>raw/</code> for qualitative reading; not scored.</td></tr>
+    <tr><td><b>M</b></td><td>not in eval</td><td>Written by the case model only; not scored (no gold mapping for arbitrary pairs).</td></tr>
+  </table></div>
+  <p>Alignment (the translator and the mapper): Jev Choice asks, for every gold item, which generated item it is, and for every generated item, which gold item it is; the two answers are combined (geometric mean), and pairs are taken greedily above the threshold. That gives each generated id its answer-key id, in any order the model wrote them.</p>
+</section>
+
+<section>
+  <h2>Runs</h2>
+  <div class="tw"><table>
+    <tr><th>Run</th><th>Scenarios (X1 = X2)</th><th>Generations</th><th>State</th><th>Time on the GPU</th></tr>
+    <tr><td>B2</td><td class="n">68, 28 families (the first family-dense corpus set, after leaks)</td><td class="n">4,624 + 544 control + ≤544 confirm</td><td><span class="pill p-run">running</span></td><td class="n">≈ 1.5 days</td></tr>
+    <tr><td>C1</td><td class="n">100, 49 families of 2–3 decisions (more 3–4-option scenarios)</td><td class="n">10,000 + 800 + ≤800</td><td><span class="pill p-wait">queued</span></td><td class="n">≈ 3 days</td></tr>
+    <tr><td>D1</td><td class="n">100, 48 families</td><td class="n">10,000 + 800 + ≤800</td><td><span class="pill p-wait">queued</span></td><td class="n">≈ 3 days</td></tr>
+  </table></div>
+  <p>Throughput is about 150 replies an hour (256 generated tokens a second, KV cache full at 16 concurrent replies). Switching vLLM to an fp8 KV cache would roughly double concurrent replies; it should be done between runs, never inside one.</p>
+</section>
+
+<section>
+  <h2>Needs your call</h2>
+  <ul class="asks">
+    <li><b>Run length.</b> B2, C1, D1 together take about a week of GPU time. Options: keep it; shrink C1/D1; or let me switch to the fp8 KV cache before C1.</li>
+    <li><b>Judge route.</b> Scoring sends short texts (facts, options, considerations the model wrote) to Jev on OpenRouter, as eval v1 did. The traces passed the technique screen, but Granite's replies are not screened. Keep, or screen judge inputs first?</li>
+    <li><b>Analogical-method text.</b> <code>code/harness/prompts/analogical.v1.md</code> is still marked "draft for Peter's review", and it is part of every with-case prompt.</li>
+    <li><b>Scoring weights</b> for the secondary metrics (threshold and ENUM weights above).</li>
+    <li><b>Leak spot-check</b> in <code>results/allpairs/LEAK-REVIEW-2026-11-09.md</code>.</li>
+  </ul>
+</section>
+</main>

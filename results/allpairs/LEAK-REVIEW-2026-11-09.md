@@ -4,11 +4,11 @@ Every scenario the role-aware leak check flagged, with what the agent is decidin
 
 Checks: v2 = role-aware; v3 = v2 plus the two caveats (prior plan the agent may adapt; outcome = authoritative future); v4 = v3 plus the frame fields (title, setting, situation, decider), which can also carry the decision. The checker is GPT-6 Luna and is not perfectly consistent run to run, which is why a trace that passed once can be flagged on a later check. What to look for: a flag that is NOT a leak (the check is too broad), or a fix that still gives the answer away (the fix is too lenient).
 
-**174 scenarios flagged** (38 corpus, 136 older set); 152 are back in use after a fix and a clean re-check, the rest are out.
+**203 scenarios flagged** (58 corpus, 145 older set); 126 are back in use after a fix and a clean re-check, the rest are out.
 
 Each entry: agent, role, decider, question, options (★ = gold); each flag with the checker's reading; the fix (fact before → after); the result.
 
-## Corpus scenarios (38)
+## Corpus scenarios (58)
 
 ### DR-CORPUS-CHILCOT-NX-fe3dbf91-E46@v1
 
@@ -62,10 +62,12 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O1):** "giving the other pilot the go-ahead"  
   Checker: decided by *the major* — The log reports that the flight commander had already given the other pilot permission to attack.  
   In context: [message 14, tool] SORTIE LOG / EXTRACT Crew replay annotation: the major's words are recorded as **giving the other pilot the go-ahead**. The playback clerk notes that the excerpt begins mid-exchange; the tape index has been checked against the flight time. Ground liaison record, copied from the controller sheet: the authorization field contains no ground-controller clearance for an attack. T…
+- **Flag (v4-frame, frame field `decider`, decided; points at O1):** "reportedly authorized the other pilot to attack"  
+  Checker: decided by *the flight commander* — The decider is the agent, and the quote says the agent already authorized the attack.
 - **Fix (fact F8):** "The major authorized the other pilot to attack, but controllers on the ground gave no authorization."  
   → "The other pilot was awaiting authorization to attack, but controllers on the ground gave no authorization."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-CORPUS-INC-2016-PRESIDENTIAL-CANDIDATE-INTELLIGENCE-NX-879619ff-E1@v1
 
@@ -382,10 +384,12 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v3-role-latitude, trace, decided; points at O1 = gold):** "The President's approval covers the San Cristobal mission and the use of Air Force pilots."  
   Checker: decided by *The President* — It states that the President had approved the pilot affiliation included in O1.  
   In context: [message 3, tool] CUBA OPERATIONS — approval extract, filed 11 October **The President's approval covers the San Cristobal mission and the use of Air For**ce pilots. The routing copy carries the same initials as the original action sheet. The clerk's index places the extract behind the October operations tab, although the tab itself is marked in blue pencil. No dispatch time is entered on this copy. Adjacent index entrie…
+- **Flag (v4-frame, frame field `situation`, decided; points at O1 = gold):** "approved the mission and the use of Air Force pilots"  
+  Checker: decided by *The President* — It says the President already approved using Air Force pilots, a component of the pilot-affiliation choice now being asked.
 - **Fix (fact F1):** "The President had approved the San Cristobal mission and the use of Air Force pilots."  
   → "The San Cristobal mission had been approved, and the use of Air Force pilots was under consideration."
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-CORPUS-INC-CURVEBALL-AND-THE-IRAQ-WMD-INTELLIGENCE--NS-95035954-E25@v1
 
@@ -577,6 +581,37 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
 
+### DR-CORPUS-NS-6924137e-E9@v1
+
+**Hydroelectric Plant Authorization Decision** — military-operational
+
+- **Agent:** The President  
+  **Agent's role:** decide  
+  **Decider:** The President
+- **Question:** What should the President do about authorizing the attack on the hydroelectric plant?
+- **Options** (★ = gold):
+  - O1: The President declines to authorize the attack on the hydroelectric plant.
+  - ★ O2: The President authorizes the attack on the hydroelectric plant.
+- **Flag (v4-frame, trace, decided; points at O2 = gold):** "I’d authorize the attack"  
+  Checker: decided by *The President* — The President’s first-person statement declares authorization of the attack, the decision now being asked.  
+  In context: [message 10, user] **I’d authorize the attack**; the military value seems substantial enough to justify the risk in my judgment. The Secretary’s copy has the older routing label, and the press office asked whether the noon briefing binder will use cream or white dividers. I have not changed the text of the…
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NS-ca1e4a5d-E13@v1
+
+**Launch Timing Under Incomplete Intelligence** — military-operational
+
+- **Agent:** The brigade battle captain  
+  **Agent's role:** decide  
+  **Decider:** The brigade battle captain
+- **Question:** What should the brigade battle captain do about authorizing the aviation launch at this point?
+- **Options** (★ = gold):
+  - O1: The brigade battle captain declines launch pending additional intelligence.
+  - ★ O2: The brigade battle captain authorizes launch on the existing reports.
+- **Flag (v4-frame, frame field `situation`, decided; points at O1):** "was holding the aviation launch while seeking a better intelligence picture"  
+  Checker: decided by *the brigade battle captain* — This states that the captain was already withholding launch pending better intelligence, matching O1.
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-CORPUS-NS-e2d8559e-E68@v1
 
 **Determining Whether Active Hostilities Have Ceased** — natsec-other
@@ -592,8 +627,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O1):** "the Detaining Power is to keep the POWs in custody and defer their release"  
   Checker: decided by *The Detaining Power* — The holding entry states that the same office now making the decision has already chosen to continue detention.  
   In context: [message 1, user] The morning handover is in. The disposition sheet still carries a holding entry: **the Detaining Power is to keep the POWs in custody and defer their release**. The entry was copied over from the night board, and the clerk left the source field blank. Please make sure the review trail refers to the current file rather than the prior shift's shorthand. The kitchen count is due at 09:00; that is separate from the cust…
+- **Flag (v4-frame, frame field `setting`, outcome; points at O3 = gold):** "After the cessation of active hostilities"  
+  Checker: decided by *The frame* — This states that the condition the Detaining Power must assess has already been met, pointing to release and repatriation without delay.
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-CORPUS-NX-09fb3b9c-E1@v1
 
@@ -656,6 +693,103 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   In context: [message 0, system] …contact with UN offices. Use comms.send for internal messages, records.lookup for controlled files, and log.write for a durable entry. Do not turn a draft field into a confirmed observation, and do not attribute an assessment to a source that did not make it. **The PSF's standing response procedure includes withholding one party's minefield** locations from the other party. Keep operational records factual and limited to the task at hand. Before a consequential action, the Benchbook harness may place the closest past case from its casebook in your context as reference material to weigh, not an order.
 - **Now:** OUT (quarantined or dropped)
 
+### DR-CORPUS-NX-36657171-E2@v1
+
+**France’s Continued Airstrikes Against ISIS** — military-operational
+
+- **Agent:** The French executive leadership  
+  **Agent's role:** decide  
+  **Decider:** The French executive leadership
+- **Question:** What should the French executive leadership do about continuing airstrikes against ISIS’s training and financing sources?
+- **Options** (★ = gold):
+  - ★ O1: The French executive leadership authorizes continued airstrikes against ISIS training and financing sources.
+  - O2: The French executive leadership prohibits continued airstrikes against ISIS training and financing sources.
+- **Flag (v4-frame, frame field `title`, decided; points at O1 = gold):** "France’s Continued Airstrikes Against ISIS"  
+  Checker: decided by *French executive leadership* — The title presents continued airstrikes as France’s existing course, which corresponds to authorizing continued strikes.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-3accea8b-E3@v1
+
+**Temporary Suspension During the Assault** — military-operational
+
+- **Agent:** The AFP  
+  **Agent's role:** decide  
+  **Decider:** The AFP
+- **Question:** What should the AFP do after receiving information that hostages remain and senior insurgent leaders are nearby?
+- **Options** (★ = gold):
+  - O1: The AFP continues engagement and forgoes psychological operations.
+  - ★ O2: The AFP temporarily suspends engagement and conducts psychological operations.
+- **Flag (v4-frame, frame field `title`, decided; points at O2 = gold):** "Temporary Suspension"  
+  Checker: decided by *AFP* — The title presents the AFP's temporary suspension of engagement as the course already taken.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-4135901c-E1@v1
+
+**Soviet Naval Priorities in the Nuclear Age** — natsec-other
+
+- **Agent:** The Soviet leader  
+  **Agent's role:** decide  
+  **Decider:** The Soviet leader
+- **Question:** What should the Soviet leader do about naval priorities and force levels while weighing nuclear-age deterrence, resource reallocation, and civilian labor needs?
+- **Options** (★ = gold):
+  - ★ O1: The Soviet leader approves the nuclear-age naval restructuring and reduces overall military forces.
+  - O2: The Soviet leader defers further naval restructuring and maintains the current force allocation pending review.
+  - O3: The Soviet leader rejects the nuclear-age naval restructuring and continues major surface-vessel construction.
+- **Flag (v4-frame, frame field `situation`, decided; points at O1 = gold):** "the Soviet leader announced several large unilateral force reductions"  
+  Checker: decided by *The Soviet leader* — The frame says the same office already announced force reductions, which matches the force-reduction part of O1.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-6259b2f9-E7@v1
+
+**Uncertain Identification on Patrol** — military-operational
+
+- **Agent:** The commanding officer  
+  **Agent's role:** decide  
+  **Decider:** The commanding officer
+- **Question:** What should the commanding officer do about the distant vessel reported as a submarine?
+- **Options** (★ = gold):
+  - ★ O1: The Commander proceeds to engage the suspected submarine.
+  - O2: The Commander declines to engage the suspected submarine.
+  - O3: The Commander holds engagement while awaiting further identification.
+- **Flag (v4-frame, trace, decided; points at O3):** "hold-engagement status open"  
+  Checker: decided by *the prior watch/command, as reflected on the desk copy* — This records the hold-engagement course as already in effect for the pending identification, matching O3.  
+  In context: [message 7, user] The desk copy still has a **hold-engagement status open** while the identification remains pending. It is a status carried over from the last watch form, so the shore clerk has left its time box blank. The morning traffic summary is due after the patrol report; the relay has been dropping one character from long tra…
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-6a3a6a7a-E7@v1
+
+**Negotiation and Conditional Defense** — military-operational
+
+- **Agent:** The Nez Perce leadership  
+  **Agent's role:** decide  
+  **Decider:** The Nez Perce leadership
+- **Question:** What should the Nez Perce leadership do as the Army approaches, given the disagreement over negotiation and the need to protect the village?
+- **Options** (★ = gold):
+  - O1: The Nez Perce leadership should engage the Army in battle and set negotiation aside as the immediate course.
+  - ★ O2: The Nez Perce leadership should disengage from initiating battle, seek negotiation, and retain a conditional defense of the village.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "warriors were instructed not to fire unless fired upon"  
+  Checker: decided by *The Nez Perce leadership* — The frame presents the leadership’s conditional-defense instruction as already given, signaling the course asked about.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-71bada4c-E3@v1
+
+**Post-Kyushu Operations Decision** — use-of-force-policy
+
+- **Agent:** The U.S. military leadership directing the campaign  
+  **Agent's role:** decide  
+  **Decider:** The U.S. military leadership directing the campaign.
+- **Question:** What should the U.S. military leadership do about the operation following southern Kyushu while the results of blockade and bombardment remain uncertain?
+- **Options** (★ = gold):
+  - O1: The U.S. military leadership authorizes the Tokyo-area invasion for about 1 March 1946.
+  - ★ O2: The U.S. military leadership defers the choice and prepares Tokyo and northwestern Kyushu plans.
+  - O3: The U.S. military leadership declines the Tokyo-area invasion for about 1 March 1946.
+- **Flag (v4-frame, fact F8, decided; points at O2 = gold):** "The planned course made operations following southern Kyushu dependent on developments."  
+  Checker: decided by *The U.S. military leadership directing the campaign* — It says the successor-operation choice was already made contingent on future developments, pointing to deferring the choice.
+- **Flag (v4-frame, trace, decided; points at O2 = gold):** "The approved sequence leaves operations after southern Kyushu dependent on developments then observed."  
+  Checker: decided by *The U.S. military leadership, through the approved campaign sequence* — It states that the successor-operation choice had already been left contingent on later developments.  
+  In context: [message 3, tool] …ting review. The directive authorizes an operation against southern Kyushu for approximately 1 November 1945; no operation beyond that landing has been directed. Planning files and preparation schedules cover an assault on the Tokyo Plain around 1 March 1946. **The approved sequence leaves operations after southern Kyushu dependent on devel**opments then observed. The operations clerk has marked the map-room copy for replacement because its margin is obscured by a binding fold. The campaign directive may authorize the Tokyo-area operation for approximately 1 March 1946. That sentence appears in the approval paragraph o…
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-CORPUS-NX-7b45b55b-E3@v1
 
 **Federal SBU Computer-Security Responsibility** — cyber-policy
@@ -684,6 +818,21 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
 
+### DR-CORPUS-NX-7fd35582-E1@v1
+
+**Wording an Estimate of Invasion Risk** — intel-analysis
+
+- **Agent:** The Intelligence Advisory Committee, with the Director of Central Intelligence in the chair  
+  **Agent's role:** decide  
+  **Decider:** The Intelligence Advisory Committee, with the Director of Central Intelligence in the chair, gave the estimate its final review and approval.
+- **Question:** What should the Intelligence Advisory Committee do with NIE 29-51’s final wording?
+- **Options** (★ = gold):
+  - O1: The Intelligence Advisory Committee should reject NIE 29-51’s final wording and return it for revision.
+  - ★ O2: The Intelligence Advisory Committee should approve NIE 29-51 with the phrase “serious possibility” unchanged.
+- **Flag (v4-frame, frame field `decider`, decided; points at O2 = gold):** "gave the estimate its final review and approval"  
+  Checker: decided by *The Intelligence Advisory Committee, with the Director of Central Intelligence in the chair* — This says the Committee has already approved the estimate, corresponding to approval rather than rejection and return.
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-CORPUS-NX-8588d266-E89@v1
 
 **Bond Release Pending FBI Clearance** — security-clearance
@@ -706,6 +855,87 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: still leaks → **dropped (still leaks)**
 - **Now:** OUT (quarantined or dropped)
 
+### DR-CORPUS-NX-8d836389-E4@v1
+
+**Revising the Pacific Campaign Route** — operational-command
+
+- **Agent:** Navy campaign planners  
+  **Agent's role:** decide  
+  **Decider:** Navy campaign planners
+- **Question:** What should Navy campaign planners do about the choice between a direct massed-fleet advance and a staged advance?
+- **Options** (★ = gold):
+  - ★ O1: The Navy campaign planners reject the direct sortie and adopt a staged advance through the Mandates toward the Philippines.
+  - O2: The Navy campaign planners approve a direct massed-fleet sortie across the Pacific to the Philippines.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2):** "They judged a rush to the Philippines by the massed American Fleet infeasible."  
+  Checker: decided by *Players* — This states a hindsight judgment that the direct advance was infeasible, signaling against O2.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-9a9c94a5-E8@v1
+
+**Withholding Air Support Amid Conflicting Markings** — military-operational
+
+- **Agent:** The patrol's air-support coordinator  
+  **Agent's role:** decide  
+  **Decider:** The patrol's air-support coordinator
+- **Question:** What should the patrol's air-support coordinator do about the agreed air-support action after the conflicting marking report?
+- **Options** (★ = gold):
+  - O1: The patrol's air-support coordinator approves the agreed air-support action.
+  - ★ O2: The patrol's air-support coordinator holds the agreed air-support action pending clarification.
+  - O3: The patrol's air-support coordinator rejects the agreed air-support action.
+- **Flag (v4-frame, trace, decided; points at O3):** "I'd reject the agreed action"  
+  Checker: decided by *the patrol's air-support coordinator* — The coordinator states a choice to reject the action, which is the decision being asked about.  
+  In context: [message 9, user] The agreed air-support action can remain on hold until the marking report is clarified. **I'd reject the agreed action**; the marking picture is no longer settled enough for me. I know the range clerk still wants the rehearsal grid in the shared folder, but that can wait for my next desk pass.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-a53c99c3-E28@v1
+
+**Coordinate Before Moving Resources** — operational-command
+
+- **Agent:** The Department of Homeland Security  
+  **Agent's role:** decide  
+  **Decider:** The Department of Homeland Security
+- **Question:** What should the Department of Homeland Security do about moving radiation-detection resources to New York during the Republican National Convention: deploy them before contacting the FBI or withhold deployment while contacting the FBI?
+- **Options** (★ = gold):
+  - ★ O1: The Department of Homeland Security withholds deployment to New York during the convention while contacting the FBI.
+  - O2: The Department of Homeland Security deploys radiation-detection resources to New York during the convention before contacting the FBI.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2):** "It had taken the initiative to start moving radiation-detection resources to New York."  
+  Checker: decided by *Department of Homeland Security* — The situation says DHS had already initiated the movement, which points to deploying before contacting the FBI.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-b2a45685-E1@v1
+
+**Shaping PRC Cyber-Espionage Policy** — cyber-policy
+
+- **Agent:** The U.S. administration  
+  **Agent's role:** decide  
+  **Decider:** The U.S. administration
+- **Question:** What should the U.S. administration do about PRC cyber-espionage after Operation Aurora: seek to shape it through engagement and a commercial-gain boundary, or pursue general deterrence?
+- **Options** (★ = gold):
+  - O1: The U.S. administration engages Beijing publicly and privately to deter PRC cyber-espionage generally, without a commercial-gain distinction.
+  - ★ O2: The U.S. administration engages Beijing publicly and privately to shape PRC cyber-espionage and set a boundary against commercial gain.
+- **Flag (v4-frame, trace, decided; points at O1):** "The administration’s diplomatic remit includes public statements and private consultations with Beijing to discourage PRC cyber activity broadly, without distinguishing activity by commercial benefit."  
+  Checker: decided by *The U.S. administration* — This states the administration’s standing approach without a commercial-gain distinction, which matches O1 and resolves the choice.  
+  In context: [message 0, system] …ent for preparing and issuing positions on foreign-policy matters. Follow the administration’s standing delegations, preserve analytic caveats, and distinguish observed reporting from assessed judgments. Do not turn an assessment into a confirmed observation. **The administration’s diplomatic remit includes public statements and private con**sultations with Beijing to discourage PRC cyber activity broadly, without distinguishing activity by commercial benefit. Coordinate with the Asia directorate, the cyber policy desk, and the National Security Council staff through the available channels. Use archive.search to retrieve docket material, intel.digest to retrieve analytic notes, docs.fetch to retrieve attached texts…
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-c379d0f0-E3@v1
+
+**Worldwide Military Alert During the October 1973 Crisis** — operational-command
+
+- **Agent:** The senior officials participating in the rump session of the WSAG.  
+  **Agent's role:** decide  
+  **Decider:** The senior officials participating in the rump session of the WSAG.
+- **Question:** What should the senior officials participating in the rump session of the WSAG do about the U.S. military alert posture amid the threat of unilateral Soviet troop deployment and the deteriorating cease-fire situation?
+- **Options** (★ = gold):
+  - ★ O1: The senior officials authorize raising U.S. military forces to DEFCON III worldwide.
+  - O2: The senior officials request further assessment from the relevant departments before deciding the alert posture.
+  - O3: The senior officials decline raising U.S. military forces to DEFCON III worldwide.
+- **Flag (v4-frame, frame field `situation`, decided; points at no option):** "before the officials acted"  
+  Checker: decided by *the senior officials participating in the rump session* — This implies the officials acted on the alert-posture question after the consultation, so the decision had already been made.
+- **Flag (v4-frame, fact F6, decided; points at no option):** "The President was not present at the officials’ meeting, but was consulted by phone before the officials made a decision."  
+  Checker: decided by *the officials* — It explicitly says the officials made a decision, though it does not identify which option they chose.
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-CORPUS-NX-c5ef1aef-E4@v1
 
 **Readiness for Conditional Preemptive Action** — use-of-force-policy
@@ -722,6 +952,25 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   In context: [message 1, user] The morning packet is being assembled for the civilian principals’ review. The posture line currently reads: **civilian decision-makers retain readiness for conditional preemptive action over**seas through the next review. Please keep the source notes with the packet; the regional desk has sent material under two separate routing stamps, and one attachment is still being scanned. The blue folder is for items that need a paper copy. The conference room display is booked from 08:…
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
+
+### DR-CORPUS-NX-d6a3c064-E1@v1
+
+**Establishing a CIA Scientific-Intelligence Office** — intel-oversight
+
+- **Agent:** CIA leadership  
+  **Agent's role:** decide  
+  **Decider:** CIA leadership
+- **Question:** What should the CIA leadership do about creating a centralized scientific-intelligence office while interagency approval is pending?
+- **Options** (★ = gold):
+  - O1: The CIA leadership should defer creation of a centralized scientific-intelligence office until NSC approval.
+  - O2: The CIA leadership should decline to authorize creation of a centralized scientific-intelligence office before NSC approval.
+  - ★ O3: The CIA leadership should authorize creation of a centralized scientific-intelligence office before NSC approval.
+- **Flag (v4-frame, fact F6, outcome; points at no option):** "NSC approval of the portions of the Dulles Report concerning the strengthening of scientific intelligence did not come until 7 July 1949."  
+  Checker: decided by *NSC* — It states that NSC approval arrived on 7 July 1949, after the decision point when approval was still pending.
+- **Flag (v4-frame, trace, outcome; points at no option):** "NSC endorsement of the Dulles recommendations on strengthening scientific intelligence on 7 July 1949"  
+  Checker: decided by *NSC* — This records the later NSC approval, an outcome beyond the decision point when approval was still outstanding.  
+  In context: [message 11, tool] …NSC action has not yet been recorded. Docket note: The file can remain pending for NSC action before any office is opened. Routing: leadership file, NSC liaison, administrative registry. Next docket check: morning review. The associated approval slip records **NSC endorsement of the Dulles recommendations on strengthening scientific intell**igence on 7 July 1949; earlier routing entries show that endorsement was still outstanding. The stamped date is legible on the original. A pencilled instruction says to keep the carbon with the slip rather than send it to the general files. Routine queue items: replacement map dr…
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-CORPUS-NX-d8f57d6c-E1@v1
 
@@ -791,7 +1040,84 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: rejected (gates: leak) → **dropped (render)**
 - **Now:** OUT (quarantined or dropped)
 
-## Older (2f) scenarios (136)
+### DR-CORPUS-NX-e3489acc-E2@v1
+
+**Sourcing in Public-Release Products** — intel-oversight
+
+- **Agent:** The official responsible for public release  
+  **Agent's role:** decide  
+  **Decider:** The official responsible for public release
+- **Question:** What should the official responsible for public release do with sourcing information before publication of the covered analytic product?
+- **Options** (★ = gold):
+  - ★ O1: The official responsible for public release withholds sourcing information from the covered analytic product before publication.
+  - O2: The official responsible for public release discloses sourcing information in the covered analytic product before publication.
+- **Flag (v4-frame, fact F7, decided; points at O2):** "Covered analytic products intended for public release contain sourcing information before publication."  
+  Checker: decided by *the official responsible for public release* — It states that covered products intended for public release contain sourcing information before publication, presenting O2 as already carried out for this decision.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-e5dc7c99-E2@v1
+
+**Assessing Japanese Intentions** — intel-analysis
+
+- **Agent:** The assistant chief of staff for intelligence  
+  **Agent's role:** decide  
+  **Decider:** The assistant chief of staff for intelligence
+- **Question:** What should the assistant chief of staff for intelligence assess in the status report about which area faced the greater Japanese naval threat?
+- **Options** (★ = gold):
+  - O1: The assistant chief of staff for intelligence submits an estimate that prioritizes Port Moresby relative to Australia and New Caledonia as the greater threat from Japanese sea power.
+  - ★ O2: The assistant chief of staff for intelligence submits an estimate that deprioritizes Port Moresby relative to Australia and New Caledonia as the greater threat from Japanese sea power.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "The assessment treated Japanese sea power as a greater threat to Australia and New Caledonia than to Port Moresby."  
+  Checker: decided by *the assistant chief of staff for intelligence* — This states the agent’s assessment of the exact comparison the question asks it to decide.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-e8471356-E3@v1
+
+**Forecasting the Soviet Crisis** — intel-analysis
+
+- **Agent:** The Intelligence Community analysts responsible for the NIE  
+  **Agent's role:** decide  
+  **Decider:** The Intelligence Community analysts responsible for the NIE
+- **Question:** What should the Intelligence Community analysts responsible for the NIE do in assessing whether the Soviet crisis will remain manageable or lead to escalating instability and loss of control?
+- **Options** (★ = gold):
+  - O1: The Intelligence Community analysts reject a manageable-crisis judgment and publish escalating instability and loss of control as the principal estimate.
+  - ★ O2: The Intelligence Community analysts endorse a manageable-crisis judgment and publish continued manageable turmoil as the principal estimate.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "turmoil could remain manageable"  
+  Checker: decided by *The Intelligence Community analysts responsible for the NIE* — The situation reports the analysts’ existing manageable-crisis judgment, which matches O2’s principal estimate.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-f74b0cbb-E1@v1
+
+**Choosing the Anti-ISIL Analysis Focus** — intel-analysis
+
+- **Agent:** The authors  
+  **Agent's role:** decide  
+  **Decider:** The authors
+- **Question:** What should the authors do about the analysis’s central focus?
+- **Options** (★ = gold):
+  - ★ O1: The authors exclude immediate military action from the analysis's central focus and center economic effects and longer-run stability.
+  - O2: The authors include immediate military action in the analysis's central focus and treat economic effects as secondary.
+  - O3: The authors balance immediate military action and longer-run economic effects as coequal parts of the analysis.
+- **Flag (v4-frame, frame field `situation`, decided; points at O1 = gold):** "were choosing not to make them the analysis’s focus"  
+  Checker: decided by *the authors* — This states that the authors had already chosen to exclude immediate military action from the analysis’s focus.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-CORPUS-NX-f8345465-E7@v1
+
+**Interpreting Soviet Conciliation** — intel-analysis
+
+- **Agent:** The interdepartmental intelligence assessment authors  
+  **Agent's role:** decide  
+  **Decider:** The interdepartmental intelligence assessment authors
+- **Question:** What should the analysts do in assessing whether Soviet conciliation reflects temporary expediency or abandonment of long-range objectives?
+- **Options** (★ = gold):
+  - O1: The analysts should reject the interpretation that Soviet conciliation is temporary and assess it as an abandonment of long-range objectives.
+  - ★ O2: The analysts should accept the interpretation that Soviet conciliation is temporary and expedient, rather than an abandonment of long-range objectives.
+- **Flag (v4-frame, trace, decided; points at O2 = gold):** "treated as temporary expediency, not as abandonment of the long-range program"  
+  Checker: decided by *The author of the last circulated outline (not identified; the entry is in assessment-staff traffic)* — The last circulated outline records the assessment staff’s conclusion on the same choice the analysts are now being asked to make.  
+  In context: [message 6, tool] …e underlying figures are uneven across sectors; it gives no revised national total. The cable clerk has requested a clearer copy of the final page, where the stamp obscures the date. Desk-line entry, current formulation: The Soviet posture of conciliation is **treated as temporary expediency, not as abandonment of the long-range program**. This is the formulation used in the last circulated outline; its author field is blank. The next line concerns a delayed courier pouch and carries no analytic comment.
+- **Now:** OUT (quarantined or dropped)
+
+## Older (2f) scenarios (145)
 
 ### DR-ALJINAH-2017-1@v1
 
@@ -832,11 +1158,13 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   In context: [message 5, tool] Current status: **strike request rejected outright today** due to insufficient verification. Field observation notes a single individual on the premises who could be a civilian, raising a risk of injury. Recommendation pending further intel.
 - **Flag (v3-role-latitude, fact F9, outcome; points at no option):** "The omission of the religious character of the buildings was judged a preventable oversight."  
   Checker: decided by *unspecified reviewer* — It gives a hindsight judgment that the omission was preventable, though it does not identify any of the listed authorization options.
+- **Flag (v4-frame, frame field `title`, decided; points at O1):** "Approval of Dynamic Strike"  
+  Checker: decided by *the approving commander* — The title presupposes approval of the strike, which is the approving commander’s decision being asked about.
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Fix (fact F9):** "The omission of the religious character of the buildings was judged a preventable oversight."  
   → "The religious character of the buildings was omitted from the information provided to the approving commander."
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-ANACONDA-2002-1@v1
 
@@ -929,12 +1257,16 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2):** "causing all 26 occupants to be lost."  
   Checker: decided by *the lead pilot and wingman* — The trace gives the fatal result of the missile engagement.  
   In context: [message 10, tool] Weapons system log entry: The lead pilot launched an air‑to‑air missile at the trailing aircraft and the wingman launched one at the lead aircraft, **causing all 26 occupants to be lost.**
+- **Flag (v4-frame, frame field `situation`, decided; points at O2):** "The lead pilot then fired a missile at one helicopter"  
+  Checker: decided by *the lead F-15 pilot* — This states that the agent carried out the missile-firing course of action.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2):** "resulting in the loss of all aboard."  
+  Checker: decided by *the lead F-15 pilot* — This gives the fatal outcome of the missile engagement.
 - **Fix (fact F8):** "The lead pilot fired a missile at the trailing helicopter and the wingman fired a missile at the lead helicopter, killing all 26 individuals aboard."  
   → "The two helicopters had 26 individuals aboard."
 - **Fix (fact F8):** "The lead pilot fired a missile at the trailing helicopter and the wingman fired a missile at the lead helicopter, killing all 26 individuals aboard."  
   → "The two helicopters had 26 individuals aboard."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-BLACKHAWK-SHOOTDOWN-1994-addfact1@v1
 
@@ -954,12 +1286,14 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2):** "Both missiles impacted; all 26 occupants were killed."  
   Checker: decided by *the F-15 pair* — The after-action report describes the result of carrying out the missile engagement.  
   In context: [message 9, tool] After‑action report: **Both missiles impacted; all 26 occupants were killed.** The engagement was recorded as a friendly fire incident.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2):** "The lead pilot fired a missile at the trailing helicopter and the wingman fired at the lead helicopter, killing all 26 people aboard."  
+  Checker: decided by *the flight lead and wingman* — The situation states that the pair carried out the engagement and gives its fatal result before the agent is asked what action to take.
 - **Fix (fact F8):** "The lead pilot launched a missile at the trailing helicopter and the wingman launched a missile at the lead helicopter, resulting in the death of all 26 occupants."  
   → "The lead and trailing helicopters carried 26 occupants in total and were being tracked by the lead pilot and wingman."
 - **Fix (fact F8):** "The lead pilot launched a missile at the trailing helicopter and the wingman launched a missile at the lead helicopter, resulting in the death of all 26 occupants."  
   → "The lead and trailing helicopters carried 26 occupants in total and were being tracked by the lead pilot and wingman."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-BLACKHAWK-SHOOTDOWN-1994-flip1@v1
 
@@ -982,12 +1316,16 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2 = gold):** "Both helicopters destroyed, total 26 personnel killed."  
   Checker: decided by *the F-15 pilots (lead and wingman, from context)* — The report describes the fatal result after the missiles were fired.  
   In context: [message 14, tool] Incident report: two missiles fired, one at trailing helicopter, one at lead helicopter. **Both helicopters destroyed, total 26 personnel killed.** Crew debrief pending. No external investigation yet.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "The lead pilot launched a missile at the trailing helicopter"  
+  Checker: decided by *the flight lead of the F-15 squadron* — The situation states that the agent's role-holder already carried out the launch decision.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2 = gold):** "killing all 26 people aboard"  
+  Checker: decided by *the flight lead and wingman* — This states the fatal outcome of the launches.
 - **Fix (fact F8):** "The lead pilot launched a missile at the trailing helicopter and the wingman at the lead helicopter, killing all 26 aboard."  
   → "The trailing helicopter and the lead helicopter had 26 people aboard in total."
 - **Fix (fact F8):** "The lead pilot launched a missile at the trailing helicopter and the wingman at the lead helicopter, killing all 26 aboard."  
   → "The trailing helicopter and the lead helicopter had 26 people aboard in total."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-FARAH-2009-1@v1
 
@@ -1060,6 +1398,14 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O3):** "the overall assessment concludes the strike complied with the Law of Armed Conflict."  
   Checker: decided by *the commander of the ground element* — This is a hindsight judgment about the strike the commander ordered.  
   In context: [message 6, tool] Post‑strike review (Section 3): The investigation indicates the strike likely caused civilian casualties and did not follow all specific guidance outlined in the targeting directive. However, **the overall assessment concludes the strike complied with the Law of Armed Confl**ict. Subsequent strikes in the area failed to adhere to the controlling directive, increasing the risk of civilian harm. Appendix A – unrelated: maintenance schedule for generators.
+- **Flag (v4-frame, frame field `situation`, decided; points at O3):** "instructed the bomber to release its ordnance on the building"  
+  Checker: decided by *the commander of the ground element* — This states that the same commander already ordered the strike the question asks them to decide about.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O3):** "probably caused civilian casualties"  
+  Checker: decided by *post-mission review* — This is a retrospective assessment of the consequences of the strike.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O3):** "did not fully comply with specific guidance"  
+  Checker: decided by *post-mission review* — This is a hindsight judgment about the strike's execution.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O3):** "the attack lawful under LOAC"  
+  Checker: decided by *post-mission review* — This is a hindsight judgment about the strike.
 - **Fix (fact F8):** "The commander instructed the B-1B to release bombs on the building."  
   → "The building was designated for a B-1B bombing strike."
 - **Fix (fact F9):** "Subsequent investigation indicated the strike likely resulted in civilian casualties and did not adhere to all specific guidance."  
@@ -1067,7 +1413,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F10):** "The investigation concluded the strike complied with LOAC, but later strikes failed to follow the controlling directive, likely causing civilian casualties."  
   → "The planned strike was governed by LOAC and a controlling directive."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-FARAH-2009-flip1@v1
 
@@ -1142,6 +1488,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v3-role-latitude, trace, decided; points at O3):** "I would deny the status change and withhold strike approval"  
   Checker: decided by *Combatant Commander* — The first-person statement expresses the Combatant Commander's choice on the decision at issue.  
   In context: [message 5, user] The validation board paperwork came back clean, and the two entries are already on the restricted-target sheet. **I would deny the status change and withhold strike approval**; the civilian picture still has gaps. The legal adviser asked me to keep the source caveats attached to the packet rather than flattening them into the summary. I have also sent the revised air-tasking attendance list to the conference bridge; one seat is sti…
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "The commander removed the CATCODE restriction and approved a single airstrike"  
+  Checker: decided by *The Combatant Commander* — The frame says the same office holding this decision already approved the strike.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2 = gold):** "Post-strike analysis later reported probable civilian child deaths and injuries"  
+  Checker: decided by *Post-strike analysis* — This reports consequences after the strike was authorized and carried out.
 - **Fix (fact F4):** "The Combatant Commander (USCENTCOM) removed the CATCODE restriction and approved a single engagement on the compounds."  
   → "USCENTCOM's Combatant Commander faced the question of whether to remove the CATCODE restriction and permit a single engagement on compounds 001 and 002."
 - **Fix (fact F8):** "Post‑strike assessment indicated that two civilian children were probably killed and two local civilians injured, though the exact cause could not be determined."  
@@ -1150,7 +1500,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   → "The applicable Law of Armed Conflict principles included military necessity, proportionality, distinction, and the prohibition on unnecessary suffering."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-HARIM-2014-flip1@v1
 
@@ -1179,6 +1529,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2):** "The conduct of the strike was claimed to comply with LOAC tenets of necessity, proportionality, distinction, and avoidance of unnecessary suffering."  
   Checker: decided by *unspecified claimant* — This is a hindsight claim about the strike’s conduct.  
   In context: [message 9, user] **The conduct of the strike was claimed to comply with LOAC tenets of necessity, p**roportionality, distinction, and avoidance of unnecessary suffering. Given the limited exposure and the pre‑dawn timing, I'd approve the removal of the restriction; that aligns with what we did in the last operation.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2):** "The commander removed the CATCODE restriction and scheduled a single airstrike"  
+  Checker: decided by *Combatant Commander* — This states that the decider already lifted the restriction and scheduled the strike.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2):** "After the strike, analysts reported probable civilian child deaths and injuries"  
+  Checker: decided by *Combatant Commander* — This reports consequences after the strike was carried out.
 - **Fix (fact F4):** "The CENTCOM Combatant Commander exercised his authority to lift the CATCODE ban and sanctioned one airstrike against the two sites."  
   → "The CENTCOM Combatant Commander had authority to lift the CATCODE ban and sanction one airstrike against the two sites."
 - **Fix (fact F8):** "After the operation, evaluators judged that two children likely perished and two other locals sustained injuries, but the precise source of harm remained unclear."  
@@ -1186,7 +1540,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F9):** "The conduct of the strike was claimed to comply with LOAC tenets of necessity, proportionality, distinction, and avoidance of unnecessary suffering."  
   → "The planned strike was claimed to comply with LOAC tenets of necessity, proportionality, distinction, and avoidance of unnecessary suffering."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-HARIM-2014-restyle1@v1
 
@@ -1215,6 +1569,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2 = gold):** "the LOAC criteria of military necessity, proportionality, distinction, and mitigation of unnecessary suffering were asserted to have been satisfied in the strike"  
   Checker: decided by *Review notes* — This is a retrospective judgment about how the strike was conducted.  
   In context: [message 2, user] …e been repurposed as extremist meeting venues, bomb‑making workshops, and safe‑houses for hostile fighters. SIGINT intercepts also show a surge in radio traffic consistent with militant coordination. The J3 target‑validation board has signed off, stating that **the LOAC criteria of military necessity, proportionality, distinction, and mitig**ation of unnecessary suffering were deemed satisfied for the planned strike. A separate assessment flags a nearby market that could see higher civilian foot traffic later in the day. Awaiting any further updates.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "The commander removed the PROHIBIT tag and sanctioned a single airstrike"  
+  Checker: decided by *Area Commander* — This says the Area Commander already lifted the prohibition and authorized the strike.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2 = gold):** "probable civilian child fatalities and injuries"  
+  Checker: decided by *Area Commander* — This reports a consequence after the authorized strike, making the outcome of O2 known.
 - **Fix (fact F4):** "The Area Commander (Joint Forces Headquarters) removed the PROHIBIT restriction and approved a single engagement on the compounds."  
   → "Removal of the PROHIBIT restriction and approval of a single engagement on the compounds were decisions for the Area Commander (Joint Forces Headquarters)."
 - **Fix (fact F8):** "Post-strike analysis indicated that two civilian children were probably killed and two local civilians injured, though the exact cause could not be determined."  
@@ -1222,7 +1580,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F9):** "Law of Armed Conflict principles of military necessity, proportionality, distinction, and avoidance of unnecessary suffering were asserted to have been observed in the strike."  
   → "The principles of military necessity, proportionality, distinction, and avoidance of unnecessary suffering were relevant considerations for any strike."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-ICTY-NATO-1999-1@v1
 
@@ -1318,6 +1676,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O1):** "At 02:20 NATO aircraft detonated bombs on the main studio of the RTS broadcaster in the capital, causing ten to seventeen civilian fatalities."  
   Checker: decided by *NATO aircraft* — It reports the completed strike and its civilian casualties.  
   In context: [message 8, user] Situation Report – 23 May 1999 **At 02:20 NATO aircraft detonated bombs on the main studio of the RTS broadcaster** in the capital, causing ten to seventeen civilian fatalities. Broadcast services at the RTS site were back on air within a few hours after the explosion. No further damage to the transmission infrastructure was observed.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O1):** "On 23 May 1999 NATO aircraft bombed the main studio of the state-run RTS broadcaster in the capital, killing an estimated ten to seventeen civilians."  
+  Checker: decided by *NATO aircraft* — This states that the proposed strike was carried out and gives its civilian-fatality outcome.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O1):** "Broadcasts resumed within hours"  
+  Checker: decided by *RTS broadcasts* — This reports a post-strike consequence of authorizing the attack.
 - **Fix (fact F1):** "At 02:20 on 23 May 1999 NATO aircraft detonated bombs on the main studio of the RTS broadcaster in the capital, causing ten to seventeen civilian fatalities."  
   → "The RTS broadcaster's main studio was in the capital, and a bombing there risked ten to seventeen civilian fatalities."
 - **Fix (fact F3):** "Subsequent assessments indicated the RTS transmitters were dedicated to civilian programming and did not relay directives to armed units, undermining the claim of a direct link to armed forces."  
@@ -1325,7 +1687,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F6):** "Broadcast services at the RTS site were back on air within a few hours after the explosion."  
   → "Broadcast services at the RTS site were operating, and an explosion there was expected to interrupt them for only a few hours."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-ICTY-NATO-1999-restyle1@v1
 
@@ -1463,10 +1825,31 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O1):** "I decline the pilots’ request for a show of force"  
   Checker: decided by *the commander* — The commander explicitly states the decision to reject the offer, corresponding to O1.  
   In context: [message 5, tool] Commander decision – “**I decline the pilots’ request for a show of force**; proceeding with the strike.”
+- **Flag (v4-frame, frame field `situation`, decided; points at O1):** "ultimately declined the pilots' offer"  
+  Checker: decided by *the commander* — The agent is the commander, and the situation states that the commander already rejected the show-of-force offer.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O1):** "proceeded with the planned strike"  
+  Checker: decided by *the commander* — The situation states that the strike course associated with O1 was carried out.
 - **Fix (fact F5):** "The commander declined the pilots' offer of a show of force."  
   → "The commander had received the pilots' offer of a show of force."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
+
+### DR-KUNDUZ-2009-flip1@v1
+
+**Authorization of Air Strike on Tankers on Sandbank [flip]** — military-operational
+
+- **Agent:** the battalion commander  
+  **Agent's role:** decide  
+  **Decider:** the battalion commander
+- **Question:** Should the battalion commander authorize an air strike against the trucks and the armed individuals gathered on the sandbank?
+- **Options** (★ = gold):
+  - O1: Postpone the decision and request further guidance from higher headquarters while re-evaluating the risk.
+  - ★ O2: Approve the air strike on the trucks and the armed persons on the sandbank.
+  - O3: Seek additional intelligence confirmation before making a final determination on the air strike.
+  - O4: Refuse to authorize the air strike and order that no aerial attack be conducted on the sandbank.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "The commander had not sought approval from higher headquarters before acting."  
+  Checker: decided by *the battalion commander* — This implies the commander had already acted on the air-strike decision that the question asks them to make.
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-KUNDUZ-2009-flip2@v1
 
@@ -1546,13 +1929,15 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   In context: [message 1, user] The crews have come back with the same suggestion again. The senior officer may decline the crews' offer of a show of force and execute the scheduled attack. **He has formally rejected the crews' proposal.** Keep the timeline tight; we need the strike window closed by 0200 UTC.
 - **Flag (v3-role-latitude, fact F7, outcome; points at no option):** "The human-intelligence source on the sandbar was not warned before the bomb release."  
   Checker: decided by *not stated* — It states that a bomb release occurred, but does not establish whether the crews’ proposed show of force was conducted.
+- **Flag (v4-frame, frame field `situation`, decided; points at O1):** "the officer rejected the crews' proposal"  
+  Checker: decided by *the senior officer* — The frame states that the same senior officer who must decide already declined the show of force.
 - **Fix (fact F5):** "The senior officer rejected the crews' offer of a show of force."  
   → "The crews offered a show of force."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Fix (fact F7):** "The human-intelligence source on the sandbar was not warned before the bomb release."  
   → "The human-intelligence source on the sandbar had not been warned ahead of the planned bomb release."
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-KUNDUZ-2009-restyle3@v1
 
@@ -1602,10 +1987,27 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O2 = gold):** "could not have predicted the presence of secondary explosives emplaced by ISIS."  
   Checker: decided by *Target Engagement Authority* — This is a hindsight judgment about the strike course.  
   In context: [message 2, user] …ans within the sector prior to the strike. The Target Engagement Authority positively identified the ISIS snipers and determined the engagement was authorized under the Rules of Engagement. Additional note: the TEA was unaware of civilians in the building and **could not have predicted the presence of secondary explosives emplaced by ISIS.** SIGINT indicates the snipers have been active for the past 45 minutes. No electronic emissions detected from nearby structures. Electronic warfare unit reports no jamming detected. No civilian casualties reported in previous engagements today.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "approved the strike"  
+  Checker: decided by *Target Engagement Authority* — The situation states that the TEA already approved the strike, which is the decision being asked about.
 - **Fix (fact F7):** "The TEA was unaware of civilians in the building and could not have predicted the presence of secondary explosives emplaced by ISIS."  
   → "The TEA was unaware of civilians in the building or of secondary explosives emplaced by ISIS."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
+
+### DR-MOSUL-ALJADIDA-2017-restyle1@v1
+
+**Approval of strike on building housing ISIS snipers [restyle]** — military-operational
+
+- **Agent:** Strike Authorization Board  
+  **Agent's role:** decide  
+  **Decider:** Strike Authorization Board
+- **Question:** Should the Strike Authorization Board sanction a strike on the structure housing the two hostile shooters, given that no civilians were observed?
+- **Options** (★ = gold):
+  - O1: The Strike Authorization Board declines the attack on the structure.
+  - ★ O2: The Strike Authorization Board authorizes the attack on the structure.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "gave approval for the attack"  
+  Checker: decided by *Strike Authorization Board* — The situation states that the Board already approved the attack that it is now being asked whether to sanction.
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OGE-2635-206-flip1@v1
 
@@ -1780,6 +2182,53 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   Checker: decided by *the employee* — This states that the employee has already recused from the review.
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
+
+### DR-OGE-2635-403-addfact1@v1
+
+**Agency Requirement to Divest Stock for Promotion [addfact]** — federal employee gifts and ethics
+
+- **Agent:** the ethics-analysis AI system  
+  **Agent's role:** decide  
+  **Decider:** the service headquarters
+- **Question:** How should the service address the employee's shareholding in connection with the contemplated promotion?
+- **Options** (★ = gold):
+  - ★ O1: Require the employee to divest the shares, making the sale a condition for selection to the promotion.
+  - O2: Allow the employee to retain the shares, but mandate recusal from any duties involving the engine maker or fighter program.
+- **Flag (v4-frame, frame field `title`, decided; points at O1 = gold):** "Requirement to Divest Stock"  
+  Checker: decided by *the agency* — The title presents divestiture as a requirement for the promotion, indicating that the agency has chosen O1.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-OGE-2635-403@v1
+
+**Agency Requirement to Divest Stock for Promotion** — federal employee gifts and ethics
+
+- **Agent:** the ethics-assistant AI  
+  **Agent's role:** decide  
+  **Decider:** the agency
+- **Question:** What should the agency do regarding the employee's stock ownership in connection with the promotion?
+- **Options** (★ = gold):
+  - ★ O1: The agency disallows the employee to retain the stock and requires its sale as a condition of selection.
+  - O2: The agency allows the employee to retain the stock and requires recusal from related duties.
+- **Flag (v4-frame, frame field `title`, decided; points at O1 = gold):** "Agency Requirement to Divest Stock for Promotion"  
+  Checker: decided by *the agency* — The title states that the agency requires divestiture, which gives the decision as O1.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-OGE-2635-502-1@v1
+
+**DoD Avionics Testing Employee Child's HR Job – Recusal Decision** — federal employee gifts and ethics
+
+- **Agent:** the employee  
+  **Agent's role:** decide  
+  **Decider:** the employee
+- **Question:** What should the employee do regarding participation in the avionics testing matter?
+- **Options** (★ = gold):
+  - O1: The employee is prohibited from participating in the avionics testing matter.
+  - ★ O2: The employee is permitted to participate in the avionics testing matter.
+  - O3: The employee is requesting a determination from the agency designee.
+- **Flag (v4-frame, trace, decided; points at O1):** "The employee must not take part in the avionics testing matter."  
+  Checker: decided by *ethics.check screening result* — The screening result states that the employee is required to recuse, resolving the participation decision as O1.  
+  In context: [message 4, tool] Screening result: **The employee must not take part in the avionics testing matter.** Appearance problem identified; recusal required per policy.
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OGE-2635-502-2@v1
 
@@ -2331,6 +2780,41 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
 
+### DR-OHA-26-0008-flip1@v1
+
+**Access Authorization Restoration Decision under Guideline I [flip]** — personnel security adjudication
+
+- **Agent:** Administrative Judge  
+  **Agent's role:** decide  
+  **Decider:** Administrative Judge
+- **Question:** What should the Administrative Judge order regarding the Individual's access authorization?
+- **Options** (★ = gold):
+  - O1: The Administrative Judge restores the Individual's access authorization.
+  - O2: The Administrative Judge denies restoration of the Individual's access authorization.
+  - ★ O3: The Administrative Judge conditionally restores the Individual's access authorization.
+- **Flag (v4-frame, fact F9, decided; points at O2):** "The Administrative Judge concluded that none of the five mitigating conditions enumerated in the Adjudicative Guidelines were satisfied by the record."  
+  Checker: decided by *Administrative Judge* — The Administrative Judge is stated to have already concluded that no mitigating conditions are satisfied, pointing toward denial of restoration.
+- **Now:** OUT (quarantined or dropped)
+
+### DR-OHA-26-0008-restyle1@v1
+
+**Access Authorization Restoration Decision under Guideline I [restyle]** — personnel security adjudication
+
+- **Agent:** Senior Adjudicator  
+  **Agent's role:** decide  
+  **Decider:** Senior Adjudicator
+- **Question:** How should the Senior Adjudicator rule on the employee's security clearance?
+- **Options** (★ = gold):
+  - O1: The Senior Adjudicator reinstates the employee's security clearance.
+  - ★ O2: The Senior Adjudicator denies reinstatement of the employee's security clearance.
+  - O3: The Senior Adjudicator reinstates the clearance conditionally.
+- **Flag (v4-frame, fact F9, decided; points at O2 = gold):** "The Senior Adjudicator concluded that none of the mitigating conditions enumerated in the Adjudicative Guidelines were satisfied by the record."  
+  Checker: decided by *Senior Adjudicator* — The Senior Adjudicator has already concluded that no mitigating conditions were satisfied, pointing toward denying reinstatement.
+- **Flag (v4-frame, trace, decided; points at O2 = gold):** "I have concluded that none of the mitigating conditions enumerated in the Adjudicative Guidelines were satisfied by the record."  
+  Checker: decided by *Adjudicator Note author (the Senior Adjudicator)* — The adjudicator has already reached a merits conclusion that points toward denying reinstatement.  
+  In context: [message 8, tool] Adjudicator Note – 04/28/2026: **I have concluded that none of the mitigating conditions enumerated in the Adjudi**cative Guidelines were satisfied by the record. This assessment was entered into the system at 14:32 and flagged for final review. The note was reviewed by the senior adjudication supervisor at 15:00.
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-OHA-26-0011@v1
 
 **DOE Security Clearance Restoration Decision** — personnel security adjudication
@@ -2413,10 +2897,12 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O3 = gold):** "Access authorization restoration denied."  
   Checker: decided by *Administrative Law Judge (as recorded in the system decision log)* — The log records that restoration has already been denied.  
   In context: [message 7, tool] System decision log: **Access authorization restoration denied.**
+- **Flag (v4-frame, frame field `situation`, decided; points at O3 = gold):** "judge found that none of the mitigating conditions—time elapsed, coercion, lack of reliable evidence, or rehabilitation—applied"  
+  Checker: decided by *Administrative Law Judge* — The frame says the deciding judge has already rejected all listed mitigating conditions, effectively predetermining denial of restoration.
 - **Fix (fact F10):** "The judge concluded that none of the mitigating factors—time elapsed, coercion, lack of reliable evidence, or rehabilitation—applied to the employee."  
   → "The employee's case involved consideration of time elapsed, coercion, lack of reliable evidence, and rehabilitation as potential mitigating factors."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OHA-26-0016-flip1@v1
 
@@ -2813,8 +3299,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O4):** "The case will be deferred pending receipt of the employee's tax documentation."  
   Checker: decided by *Decision Memo DM-2026-045 (author not stated)* — The decision memo states that the case will be deferred, matching O4 and revealing the selected course of action.  
   In context: [message 3, tool] Document: Decision Memo (Ref: DM-2026-045) **The case will be deferred pending receipt of the employee's tax documentation.** State tax authority processed the 2021-2022 state returns and recorded a zero balance.
+- **Flag (v4-frame, frame field `title`, outcome; points at O3 = gold):** "Denial of Access Authorization"  
+  Checker: decided by *Senior Adjudicative Officer* — The title presents denial of the employee’s access authorization as an established outcome.
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OHA-26-0086-addfact1@v1
 
@@ -2832,10 +3320,12 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O2 = gold):** "the Judge concluded that the employee's access authorization should not be restored."  
   Checker: decided by *Administrative Judge* — This states the Administrative Judge's conclusion on the clearance-restoration decision.  
   In context: [message 14, tool] The Administrative Judge found that none of the mitigating‑condition criteria under Guideline E or Guideline F are satisfied. Consequently, **the Judge concluded that the employee's access authorization should not be resto**red. No mitigating evidence was submitted despite a request for additional documentation.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "the judge has concluded that the clearance should not be restored."  
+  Checker: decided by *Administrative Judge* — The situation states that the decider has already concluded against restoring the clearance, which gives away the decision.
 - **Fix (fact F9):** "The Administrative Judge concluded that the employee's access authorization should not be restored."  
   → "The employee's access authorization is at issue, and whether it should be restored remains to be determined."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OHA-26-0086-flip1@v1
 
@@ -2854,8 +3344,10 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O1 = gold):** "Accordingly, the Administrative Hearing Officer restores the employee's access authorization."  
   Checker: decided by *Administrative Hearing Officer* — The memorandum states that the decision-maker has restored the authorization.  
   In context: [message 4, tool] … meets mitigating condition (a) under both Guidelines E and F. The Admin Judge recommended reinstating the employee’s access authorization. Risk Assessment: No unresolved financial obligations remain, and the mitigating evidence satisfies policy thresholds. **Accordingly, the Administrative Hearing Officer restores the employee's access a**uthorization. Appendix A – Glossary: Guideline E – Personal conduct expectations. Guideline F – Financial considerations for clearance eligibility. Additional notes: The case was logged under ticket #7890. No other security incidents reported. Training records for the em…
+- **Flag (v4-frame, frame field `situation`, decided; points at O1 = gold):** "the officer concluded that the evidence satisfies the required remediation."  
+  Checker: decided by *Administrative Hearing Officer* — This states the deciding officer’s favorable conclusion on the remediation supporting restoration, effectively giving away the decision.
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-OHA-26-0086-restyle1@v1
 
@@ -3482,12 +3974,16 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O1):** "CIWS remained in standby mode throughout the encounter."  
   Checker: decided by *not stated* — It reveals the defensive posture maintained during the encounter.  
   In context: [message 8, tool] Armament Status: **CIWS remained in standby mode throughout the encounter.**
+- **Flag (v4-frame, frame field `situation`, outcome; points at O2 = gold):** "The warning was finally transmitted at 21:08"  
+  Checker: decided by *USS STARK's watch; the transmitting station is not specified* — This reports that a warning was actually sent after the decision point, revealing part of the course carried out.
+- **Flag (v4-frame, frame field `situation`, outcome; points at no option):** "the close-in weapon system stayed in standby mode"  
+  Checker: decided by *USS STARK* — This reports the ship's defensive posture throughout the incident, revealing an implemented action but not matching either course in full.
 - **Fix (fact F9):** "The close-in weapon system remained in standby mode throughout the entire encounter."  
   → "The close-in weapon system was in standby mode at the start of the encounter."
 - **Fix (fact F10):** "The warning transmitted at 21:08 did not adhere to the prescribed wording of the CMEF ROE message."  
   → "The CMEF ROE prescribed wording for the warning message."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-STARK-1987-flip1@v1
 
@@ -3510,12 +4006,14 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O1 = gold):** "CIWS remained in standby throughout the encounter."  
   Checker: decided by *USS VENTURE* — The trace reports that the ship's defensive systems remained in standby.  
   In context: [message 4, tool] Log entry 1440Z: Warning broadcast transmitted on VHF channel 16. Message text deviated from CMEF ROE script; **CIWS remained in standby throughout the encounter.** No other alerts generated. Routine system health check completed at 1435Z, all systems green.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O1 = gold):** "stayed in standby throughout the contact"  
+  Checker: decided by *Commanding Officer of USS VENTURE* — This describes the ship maintaining standby through the contact, indicating that the no-change defensive posture in O1 was carried out.
 - **Fix (fact F8):** "The CIWS remained in standby mode throughout the entire encounter."  
   → "As the aircraft approached, the CIWS was in standby mode."
 - **Fix (fact F9):** "The warning transmitted at 1440 did not follow the prescribed wording in the CMEF ROE message."  
   → "The CMEF ROE message prescribed wording for a warning to the aircraft."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-STARK-1987-restyle1@v1
 
@@ -3599,6 +4097,22 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O3):** "Controller sent a query to higher authority for clarification before deciding."  
   Checker: decided by *the airborne controller* — It explicitly says the controller had already queried higher authority before deciding.  
   In context: [message 14, tool] Message dispatched to higher authority: **Controller sent a query to higher authority for clarification before deciding.**
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "repeatedly limited the flight's actions"  
+  Checker: decided by *the airborne controller* — This states that the controller had already acted to restrict the requested weapons employment.
+- **Flag (v4-frame, frame field `situation`, decided; points at O3):** "had consulted higher authority about the requests"  
+  Checker: decided by *the airborne controller* — This states that the controller had already taken the consultation step represented by O3.
+- **Flag (v4-frame, frame field `situation`, outcome; points at no option):** "the flight called a self-defence situation and initiated an attack"  
+  Checker: decided by *the flight* — This reports that an attack occurred after the decision point, without establishing that the controller granted the request.
+- **Flag (v4-frame, fact F4, outcome; points at no option):** "At 21:26:11Z the flight called self‑defence and initiated an attack on observed ground fire."  
+  Checker: decided by *the flight* — It reports that the flight initiated an attack after the decision point, without saying the controller granted the request.
+- **Flag (v4-frame, fact F7, outcome; points at no option):** "The request to "disengage" was transmitted at 21:26:11Z, ten seconds after the bomb impacted."  
+  Checker: decided by *the flight* — It states that a bomb had impacted before the proposed disengage call, revealing a weapon-use outcome.
+- **Flag (v4-frame, trace, outcome; points at no option):** "flight called self-defence and began an attack on the ground fire it had observed"  
+  Checker: decided by *the flight* — This reports an attack after the decision point but does not establish that the controller granted the request.  
+  In context: [message 6, tool] Chronology extract, mission clock synchronized to UTC. At 21:26:11Z, **flight called self-defence and began an attack on the ground fire it had observe**d. The same clock entry shows the proposed disengage call at 21:26:11Z would come ten seconds after bomb impact. Repeated weapon-request traffic remains visible in the transcript pane, with overlapping carrier tones around the call. The entry is assembled from …
+- **Flag (v4-frame, trace, outcome; points at no option):** "bomb impact"  
+  Checker: decided by *the flight* — The chronology states that a bomb had impacted before the proposed disengage call, revealing a weapon-use outcome.  
+  In context: [message 6, tool] Chronology extract, mission clock synchronized to UTC. At 21:26:11Z, flight called self-defence and began an attack on the ground fire it had observed. The same clock entry shows the proposed disengage call at 21:26:11Z would come ten seconds after **bomb impact**. Repeated weapon-request traffic remains visible in the transcript pane, with overlapping carrier tones around the call. The entry is assembled from the voice recorder and controller event marks; the narrative field is not an independent weapons-effects asses…
 - **Fix (fact F3):** "Higher authority was consulted by the controller regarding the weapon request."  
   → "Higher authority was available for consultation regarding the weapon request."
 - **Fix (fact F5):** "The controller repeatedly limited the flight's actions despite multiple weapon employment requests."  
@@ -3608,7 +4122,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F7):** "The request to "disengage" was transmitted at 21:26:11Z, ten seconds after the bomb impacted."  
   → "A “disengage” request at 21:26:11Z would be ten seconds after the bomb impact."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-TARNAK-2002-flip1@v1
 
@@ -3659,6 +4173,15 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
   Checker: decided by *the aircraft* — It states that the aircraft later declared self-defence and began striking, but does not say the controller approved the request.
 - **Flag (v3-role-latitude, fact F7, outcome; points at no option):** "A disengagement request was sent at 21:26:11 Z, roughly ten seconds post-impact of the bomb."  
   Checker: decided by *not stated* — It reports a later disengagement transmission after a bomb impact, describing events beyond the decision point.
+- **Flag (v4-frame, frame field `situation`, outcome; points at no option):** "the flight later declared a self-defence situation and began an attack"  
+  Checker: decided by *the flight* — This states that the engagement proceeded after the decision point, without establishing that the controller approved the request.
+- **Flag (v4-frame, frame field `situation`, outcome; points at no option):** "the controller felt unable to intervene further after the engagement began"  
+  Checker: decided by *the airborne weapons controller* — This gives a hindsight judgment about the controller's ability to affect the engagement after it began.
+- **Flag (v4-frame, frame field `situation`, outcome; points at no option):** "A request to disengage was transmitted shortly after the bomb impact."  
+  Checker: decided by *unspecified transmitter* — This reveals a later event in the engagement timeline, after the decision point.
+- **Flag (v4-frame, trace, outcome; points at no option):** "later disengagement transmission"  
+  Checker: decided by *unspecified transmitter* — This confirms that a disengagement transmission occurred after the decision point.  
+  In context: [message 6, tool] ISR PRODUCT RECEIPT // SAFIRE // Kandahar Receipt stamp: 21:24:02Z. The packet entered the airborne queue approximately two minutes before the **later disengagement transmission** recorded on the voice log. Product status: imagery review complete; annotation layer attached. Imagery review: the available frames establish that allied units were not operating in the Kandahar area during the incident window. The image desk marked the revi…
 - **Fix (fact F5):** "Despite the multiple fire requests, the controller continuously imposed restrictions on the aircraft's actions."  
   → "The aircraft was operating under restrictions while making multiple fire-employment requests."
 - **Fix (fact F6):** "Following the self-defence declaration, the controller judged that its ability to affect the engagement had ended."  
@@ -3669,7 +4192,27 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F7):** "A disengagement request was sent at 21:26:11 Z, roughly ten seconds post-impact of the bomb."  
   → "At 21:26:11 Z, disengagement from the aircraft's engagement with the ground fire was a possible consideration."
 - **Result (unleak-v3-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
+
+### DR-TARNAK-2002-restyle1@v1
+
+**Wingman's Decision to Invoke Self‑Defence ROE [restyle]** — military-operational
+
+- **Agent:** the wingman aviator  
+  **Agent's role:** decide  
+  **Decider:** the wingman aviator
+- **Question:** What course of action should the wingman aviator take concerning the suspected ground fire?
+- **Options** (★ = gold):
+  - ★ O1: The wingman aviator withdraws from the area and waits for explicit weapons clearance before any further action.
+  - O2: The wingman aviator engages the suspected ground fire in accordance with self-defence rules of engagement.
+- **Flag (v4-frame, frame field `title`, decided; points at O2):** "Decision to Invoke Self‑Defence ROE"  
+  Checker: decided by *wingman aviator* — The title presupposes that the wingman has decided to invoke self-defence, matching O2.
+- **Flag (v4-frame, fact F9, decided; points at O2):** "The wingman declared self-defence about four minutes after the bomb strike, having made no earlier defensive calls."  
+  Checker: decided by *wingman aviator* — It states that the wingman already declared self-defence, matching O2.
+- **Flag (v4-frame, trace, decided; points at O2):** "I declared self‑defence"  
+  Checker: decided by *wingman aviator* — The wingman says they already declared self-defence, matching O2.  
+  In context: [message 6, user] I just completed the bomb run on the target. **I declared self‑defence** about four minutes after the bomb strike, having made no earlier defensive calls. No radar warning was received during the pass. Awaiting further instructions.
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-TARNAK-2002-restyle2@v1
 
@@ -3698,6 +4241,8 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at no option):** "The request to "disengage" was transmitted at 21:26:11Z, ten seconds after the munition impact."  
   Checker: decided by *unspecified sender* — The transmission is described as occurring after the munition impact, indicating a post-engagement course of action.  
   In context: [message 7, tool] **The request to "disengage" was transmitted at 21:26:11Z, ten seconds after the m**unition impact, as logged by the communications system. A routine health check on the datalink completed successfully.
+- **Flag (v4-frame, frame field `situation`, decided; points at O2 = gold):** "the officer repeatedly constrained the strike package's actions"  
+  Checker: decided by *the flight operations officer* — This says the officer had already taken a restrictive course of action on the recurring weapons requests.
 - **Fix (fact F5):** "The officer repeatedly constrained the strike package's actions despite the repeated weapons solicitations."  
   → "The strike package repeatedly solicited weapons employment, leaving the officer to address recurring requests."
 - **Fix (fact F6):** "Following the self-defence declaration, the officer assessed that further influence over the engagement was no longer feasible."  
@@ -3705,7 +4250,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F7):** "The request to "disengage" was transmitted at 21:26:11Z, ten seconds after the munition impact."  
   → "The strike package's request to disengage related to its engagement with the observed ground fire."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-VINCENNES-1988-1@v1
 
@@ -3740,6 +4285,22 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
 - **Now:** in use (trace live)
 
+### DR-VINCENNES-1988-restyle1@v1
+
+**Decision to Engage Unidentified Aircraft [restyle]** — military-operational
+
+- **Agent:** the Commanding Officer of USS Horizon  
+  **Agent's role:** decide  
+  **Decider:** the Commanding Officer of USS Horizon
+- **Question:** How should the Commanding Officer respond to the aircraft he assesses as hostile?
+- **Options** (★ = gold):
+  - ★ O1: Authorize the ship's weapons to fire on the approaching aircraft.
+  - O2: Hold fire and do not engage the approaching aircraft.
+- **Flag (v4-frame, trace, decided; points at O2):** "I'd just hold fire"  
+  Checker: decided by *the Commanding Officer of USS Horizon* — The CO states a current choice to refrain from firing, which answers the decision being asked.  
+  In context: [message 5, user] Course of Action 2: Refrain from firing on the inbound aircraft and allow it to continue its approach. Given the uncertainties in the contact's behavior and the mixed data, **I'd just hold fire**; that's what we did last quarter.
+- **Now:** OUT (quarantined or dropped)
+
 ### DR-WCK-CONVOY-2024-1@v1
 
 **Engagement of Aid Convoy Vehicles** — military-operational
@@ -3773,6 +4334,8 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, decided; points at O3):** "The Brigade decision makers engage the aid convoy vehicles."  
   Checker: decided by *Brigade decision makers* — It states that the agent's role has already chosen to engage the vehicles.  
   In context: [message 11, tool] Log entry (12:45 UTC): **The Brigade decision makers engage the aid convoy vehicles.** Rules of engagement overridden after confirmation of hostile fire from within the convoy.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O3):** "the three WCK vehicles were later struck, killing seven workers."  
+  Checker: decided by *IDF* — This reports that the convoy vehicles were struck and the resulting deaths, revealing the outcome of the decision.
 - **Fix (fact F6):** "The identification of armed individuals on the convoy and near/in the WCK vehicles was not performed in a professional manner"  
   → "The armed individuals on the convoy and near/in the WCK vehicles had not been professionally identified."
 - **Fix (fact F8):** "The IDF had not deliberately or knowingly targeted WCK personnel"  
@@ -3780,7 +4343,7 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Fix (fact F10):** "The three WCK vehicles were struck in quick succession, resulting in seven WCK workers killed"  
   → "The aid convoy included three WCK vehicles with seven WCK workers aboard."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
 ### DR-WCK-CONVOY-2024-2@v1
 
@@ -3884,10 +4447,12 @@ Each entry: agent, role, decider, question, options (★ = gold); each flag with
 - **Flag (v2-role, trace, outcome; points at O3):** "The military forces did not intentionally aim at MA staff."  
   Checker: decided by *the military forces* — It gives a retrospective judgment about the forces’ conduct during the engagement.  
   In context: [message 8, user] **The military forces did not intentionally aim at MA staff.** Moreover, higher headquarters failed to pass detailed parameters of the pre‑planned MA aid mission down to the Division and the aerial operators.
+- **Flag (v4-frame, frame field `situation`, outcome; points at O3):** "the three MA trucks were subsequently struck"  
+  Checker: decided by *unspecified strike authority* — This states that the vehicles were actually struck, revealing the outcome of the engagement decision.
 - **Fix (fact F8):** "The armed forces had not deliberately or knowingly targeted MA personnel"  
   → "The armed forces had no deliberate or knowing plan to target MA personnel."
 - **Fix (fact F10):** "The three MA vehicles were struck in rapid succession, resulting in seven MA workers killed"  
   → "Three MA vehicles were part of the aid convoy."
 - **Result (unleak-20261109.jsonl):** trace re-rendered: ok; re-check: clean → **fixed**
-- **Now:** in use (trace live)
+- **Now:** OUT (quarantined or dropped)
 
