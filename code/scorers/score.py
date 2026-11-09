@@ -77,13 +77,15 @@ def _sc(name: str, d: dict | None, keys=("key_only", "both", "agent_only")) -> d
 
 
 def score_reply_detailed(parsed: ParsedReply, key: AnswerKey, served, judge: Judge, *,
-                         threshold: float | None = None, weights: dict | None = None) -> ReplyScores:
+                         threshold: float | None = None, weights: dict | None = None,
+                         option_threshold: float | None = None) -> ReplyScores:
     """weights: optional per-scorer weight overrides, e.g. {"facts_enum": {"w_extra": 0.5}, "facts_mapping":
     {"w_agent_only": 1.0}} (keys: facts_enum, options_enum, considerations_enum, now, flip_conditions for ENUM;
     facts_mapping, considerations_mapping, decisive for SET_COMPARE)."""
     w = weights or {}
     ctx = R.ScoringContext(parsed, key, _served_list(served), judge,
-                           **({"threshold": threshold} if threshold is not None else {}))
+                           **({"threshold": threshold} if threshold is not None else {}),
+                           option_threshold=option_threshold)
     rows: dict[str, Any] = {}
     fr = R.format_report(parsed)
     rows["schema_valid"] = R.schema_valid(ctx)

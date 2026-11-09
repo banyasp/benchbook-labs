@@ -73,6 +73,7 @@ class ScoringContext:
     served: list[ServedCase] = field(default_factory=list)
     judge: Judge | None = None
     threshold: float = A.THRESHOLD
+    option_threshold: float | None = None    # options (the verdict translation) can be stricter (Peter 2026-11-09: 0.7)
     notes: dict[str, Any] = field(default_factory=dict)     # per-row diagnostics (paths taken, alignments...)
 
     # -- raw steps
@@ -149,7 +150,11 @@ class ScoringContext:
 
     @cached_property
     def option_al(self) -> A.Alignment:
-        return A.align(self.agent_options, self.gold_options, self.judge, self.threshold, instruction("option"))
+        return A.align(self.agent_options, self.gold_options, self.judge, self.opt_threshold, instruction("option"))
+
+    @property
+    def opt_threshold(self) -> float:
+        return self.option_threshold if self.option_threshold is not None else self.threshold
 
     @cached_property
     def cons_al(self) -> A.Alignment | None:
@@ -389,7 +394,8 @@ def _resolve_choice(ctx: ScoringContext) -> tuple[str | None, str]:
     gold_ids = list(ctx.gold_options)
     dist = ctx.judge.choice(ch, [ctx.gold_options[g] for g in gold_ids], None, instruction("option"))
     best = max(range(len(gold_ids)), key=lambda i: dist[i])
-    if dist[best] > ctx.threshold:
+    ctx.notes["choice_text_alignment"] = {"choice": ch, "gold_ids": gold_ids, "dist": [round(float(x), 6) for x in dist]}
+    if dist[best] > ctx.opt_threshold:
         return gold_ids[best], "choice text aligned directly"
     return None, "choice not among the agent's options and not alignable"
 

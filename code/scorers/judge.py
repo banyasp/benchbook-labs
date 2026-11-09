@@ -35,7 +35,7 @@ from pathlib import Path
 
 import yaml
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"          # 2026-11-09: option instruction only (v1 files kept)
 PROMPTS = Path(__file__).resolve().parent / "prompts"
 CHOICE_TEMPLATE = (PROMPTS / f"choice.{PROMPT_VERSION}.md").read_text()
 NOUL_TEMPLATE = (PROMPTS / f"noul.{PROMPT_VERSION}.md").read_text()

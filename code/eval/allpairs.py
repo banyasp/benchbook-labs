@@ -35,6 +35,7 @@ import random
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from bench.schema import parse_reply
 
@@ -46,6 +47,49 @@ SECONDARY = ("facts_enum", "facts_enum.found", "facts_enum.n_gold", "options_enu
              "options_enum.n_gold", "frame_question", "frame_decider", "frame_role", "considerations_enum",
              "considerations_enum.found", "considerations_enum.n_gold", "considerations_enum.equity",
              "schema_valid", "options_correct_omitted")
+
+
+# Scoring settings (2026-11-09): options -- the verdict translation -- use the tuned option instruction (judge prompts
+# v2) and match above 0.5 (Peter started at 0.7; hand-labelled tuning showed 0.7 lost half the real matches); facts and
+# considerations keep 0.5; ENUM / SET_COMPARE weights are the alignment.py defaults (secondary metrics only).
+# Every sample keeps ALL score rows and the full judge output (alignment matrices R, C, S per step: Jev Choice
+# probabilities) in details/<sample>.json, so thresholds and weights can be changed later and re-applied with
+# `rescore` (the judge cache makes that free) without generating again.
+SCORING = {"version": "allpairs-scoring-v3", "threshold": 0.5, "option_threshold": 0.5, "judge_prompts": "v2 (option instruction tuned 2026-11-09)",
+           "weights": "alignment.py defaults"}   # v2 had option_threshold 0.7 with judge prompts v1
+
+
+def score_full(parsed, key, judge) -> tuple[dict, dict]:
+    from scorers import score_reply_detailed
+    r = score_reply_detailed(parsed, key, None, judge, threshold=SCORING["threshold"],
+                             option_threshold=SCORING["option_threshold"])
+    rows = dict(r.rows)
+    rows["translated_choice"] = ((r.details.get("notes") or {}).get("choice") or {}).get("gold_id")
+    om = rows.get("options_correct_omitted")
+    rows["gold_option_present"] = None if om is None else 1 - om
+    return rows, r.details
+
+
+def score_fields(parsed, key, rows: dict | None, err: str | None) -> dict:
+    verdict = parsed.steps.get("verdict", {}) or {}
+    s = rows or {}
+    choice = verdict.get("choice")
+    tc = s.get("translated_choice")
+    cu = s.get("verdict_choice_ungated")
+    return {"parsed_choice": choice, "translated_choice": tc, "gold_choice": key.choice,
+            "correct": 0.0 if choice is None else (None if cu is None else float(cu)),
+            "off_menu": bool(choice is not None and tc is None), "model_relation": verdict.get("relation"),
+            "secondary": {k: s.get(k) for k in SECONDARY}, "scores": rows, "score_error": err,
+            "scoring": SCORING}
+
+
+def write_details(run_dir: Path, sid: str, details: dict | None) -> str | None:
+    if details is None:
+        return None
+    rel = f"details/{safe_name(sid)}.json"
+    (run_dir / "details").mkdir(exist_ok=True)
+    (run_dir / rel).write_text(json.dumps(details, ensure_ascii=False, default=str))
+    return rel
 
 
 # ------------------------------------------------------------------ X1 / X2 setup
@@ -190,26 +234,18 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
             out = await ctx.arun(ep, settings)
         raw = out.raw_text
         parsed = parse_reply(raw, noref=it["x2"] is None)
-        scores, err = None, None
+        rows, details, err = None, None, None
         try:   # scored against X1's key only: served=None, so no mapping gold is consulted
-            scores = await asyncio.to_thread(ctx.score, parsed, key, None, ctx.judge)
+            rows, details = await asyncio.to_thread(score_full, parsed, key, ctx.judge)
         except Exception as e:                                   # noqa: BLE001  judge down: keep, rescore later
             err = f"{type(e).__name__}: {e}"
         rel = f"raw/{safe_name(sid)}.txt"
         (ctx.run_dir / rel).write_text(raw)
-        verdict = parsed.steps.get("verdict", {}) or {}
-        s = scores or {}
-        choice = verdict.get("choice")
-        tc = s.get("translated_choice")
-        cu = s.get("verdict_choice_ungated")
         rec = {"sample_id": sid, "model": ctx.model, **it, "relation_x1_x2": ctx.rel(it["x1"], it["x2"]),
                "x2_family": ctx.store.scenario(it["x2"]).family if it["x2"] else None,
                **{f"x1_{k}": v for k, v in meta.items() if k != "warnings"},
-               "seed": seed, "parsed_choice": choice, "translated_choice": tc, "gold_choice": key.choice,
-               "correct": 0.0 if choice is None else (None if cu is None else float(cu)),
-               "off_menu": bool(choice is not None and tc is None),
-               "model_relation": verdict.get("relation"),
-               "secondary": {k: s.get(k) for k in SECONDARY}, "score_error": err,
+               "seed": seed, **score_fields(parsed, key, rows, err),
+               "details_path": write_details(ctx.run_dir, sid, details),
                "tokens": usage_tokens(out, raw), "seconds": getattr(out, "seconds", None),
                "finish_reason": getattr(out, "finish_reason", None),
                "format_repairs": list(getattr(parsed, "repairs", []) or [])[:10], "raw_path": rel, "ts": time.time()}
@@ -248,13 +284,56 @@ async def run_items(ctx: Ctx, items: list[dict], progress_every: int = 50) -> di
             "errors_total": sum(1 for _ in errs.open()) if errs.exists() else 0}
 
 
+def rescore_run(run_dir: Path, store, judge, workers: int = 16) -> dict:
+    """Re-parse every saved raw reply and re-score it with the current SCORING (judge answers come from the cache when
+    unchanged). Generation fields (tokens, seconds, seed, ...) are kept. samples.jsonl is copied to versions/ first."""
+    import shutil
+    from collections import Counter
+    from concurrent.futures import ThreadPoolExecutor
+    sp = run_dir / "samples.jsonl"
+    old = [json.loads(l) for l in sp.read_text().splitlines() if l.strip()]
+    keys: dict[str, Any] = {}
+
+    def key_of(x1):
+        if x1 not in keys:
+            from pipeline.project.project import gold_for
+            keys[x1] = gold_for(none_pair(store, x1, "pilot2"), store)[1]
+        return keys[x1]
+
+    for x1 in {r["x1"] for r in old}:
+        key_of(x1)
+
+    def one(r):
+        rp = run_dir / r["raw_path"]
+        if not rp.exists():
+            return r, "kept (no raw)"
+        parsed = parse_reply(rp.read_text(), noref=r["x2"] is None)
+        key = keys[r["x1"]]
+        rows, details, err = None, None, None
+        try:
+            rows, details = score_full(parsed, key, judge)
+        except Exception as e:                                   # noqa: BLE001
+            err = f"{type(e).__name__}: {e}"
+        new = {**r, **score_fields(parsed, key, rows, err), "details_path": write_details(run_dir, r["sample_id"], details),
+               "rescored": time.time()}
+        return new, "rescored" if err is None else "score error"
+
+    with ThreadPoolExecutor(workers) as ex:
+        res = list(ex.map(one, old))
+    (run_dir / "versions").mkdir(exist_ok=True)
+    shutil.copy2(sp, run_dir / "versions" / f"samples.{time.strftime('%Y%m%dT%H%M%S')}-before-rescore.jsonl")
+    sp.write_text("".join(json.dumps(r, ensure_ascii=False, default=str) + "\n" for r, _ in res))
+    flips = sum(1 for (r, _), o in zip(res, old) if r.get("correct") != o.get("correct"))
+    return {**dict(Counter(st for _, st in res)), "correct_changed": flips, "scoring": SCORING}
+
+
 def read_ids(path: str) -> list[str]:
     return [l.strip() for l in Path(path).read_text().splitlines() if l.strip() and not l.startswith("#")]
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("phase", choices=["run", "confirm"])
+    ap.add_argument("phase", choices=["run", "confirm", "rescore"])
     ap.add_argument("--run", required=True)
     ap.add_argument("--x1", help="file of X1 scenario ids (need traces); stored in the run dir on first use")
     ap.add_argument("--x2", help="file of X2 scenario ids (default: the X1 list)")
@@ -285,6 +364,9 @@ def main(argv=None):
     store = Store()
     ctx = Ctx(store, run_dir, cfg["model"], cfg["equities"], default_judge(a.judge), cfg["seed"], cfg["max_tokens"],
               a.concurrency)
+    if a.phase == "rescore":
+        print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))
+        return 0
     if a.phase == "run":
         items = grid_schedule(cfg["x1"], cfg["x2"], cfg["k"], cfg["seed"])
     else:
