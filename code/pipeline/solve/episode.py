@@ -18,7 +18,7 @@ from harness.episode import Episode, build_episode
 from harness.settings import HarnessSettings
 from pipeline.store import Store
 
-DEFAULT_EQUITIES = "pilot"
+DEFAULT_EQUITIES = "pilot2"   # Peter 2026-11-09: pilot2 from here on (superset of pilot)
 
 
 def load_equities(spec: str | Path | None, T: Scenario | None = None) -> EquitySet:

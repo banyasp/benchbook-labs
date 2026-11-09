@@ -27,7 +27,7 @@ from bench.schema.pipeline import PairRecord
 from .episode import Episode, ThinLeakError, build_episode, serve_cases  # noqa: F401
 from .settings import HarnessSettings
 
-DEFAULT_EQUITIES = "pilot"
+DEFAULT_EQUITIES = "pilot2"   # Peter 2026-11-09: pilot2 from here on (superset of pilot)
 
 
 def load_equities(spec: str | Path | None) -> EquitySet:

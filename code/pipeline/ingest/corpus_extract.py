@@ -19,7 +19,7 @@ select: reads data/store/episodes/corpus/*.yaml and writes data/store/episodes/c
   Walsh, Tonkin, Pueblo, Bay of Pigs, Able Archer), which are one family per collection (brief W8b: family per incident).
 - Splits per family: targeting -> held out (test, Peter's natsec ruling); otherwise registry.assign_splits_v2 per bucket
   (~20/10/70 test/dev/train). A family with any targeting episode is all test (no leakage).
-run: the standard extractor (extract_fq.v2 + extract_a.v1 + option rules) with prompts/corpus_scope.v1.md appended, the
+run: the standard extractor (extract_fq.v3 since 2026-11-09, was v2; + extract_a.v1 + option rules) with prompts/corpus_scope.v1.md appended, the
 technique screen with up to two re-extractions (as natsec_extract), equity set from BENCHBOOK_EQUITY_SET (pilot2).
 Outcomes in data/store/episodes/corpus-batch1.results.jsonl; scenarios in the store under their family.
 """
@@ -364,6 +364,16 @@ def _flags(s) -> list[str]:
     return sorted({f"{p}: {f.match}" for p, f in TC.scan_scenario(s.case.dump()) if f.severity == "strip"})
 
 
+def _leaks(s) -> list[dict]:
+    """Answer-leak check on the extracted FACTS (pipeline.render.answer_leak, role-aware; Peter 2026-11-09: decisions are
+    never facts). Fails closed: a check error counts as a leak, so the episode is re-extracted or rejected."""
+    from pipeline.render import answer_leak as AL
+    try:
+        return AL.check(s, None)["facts"]
+    except Exception as e:                                   # noqa: BLE001
+        return [{"id": None, "why": f"leak check failed: {type(e).__name__}"}]
+
+
 def extract_one(ep: dict, store: Store, complete_fn=None) -> dict:
     meta = json.loads((CORPUS_META / f"{ep['source']}.json").read_text())
     domain = DOMAIN_OF_BUCKET.get(ep["bucket"], ep["content_domain"] if ep["bucket"] != "other" else "natsec-other")
@@ -394,20 +404,32 @@ def extract_one(ep: dict, store: Store, complete_fn=None) -> dict:
         except ExtractionError as e:
             return {**rec, "outcome": "incomplete", "reason": str(e)[:300]}
         flags = _flags(s)
+        leaks = []
         if not flags:
-            break
-        addendum = (scope + "\n\n### Your previous extraction of this episode contained operational technique. Remove every "
-                    "one of these details (replace by its decision-level consequence or omit it):\n- " + "\n- ".join(flags[:30]))
+            leaks = _leaks(s)
+            if not leaks:
+                break
+        if flags:
+            addendum = (scope + "\n\n### Your previous extraction of this episode contained operational technique. Remove every "
+                        "one of these details (replace by its decision-level consequence or omit it):\n- " + "\n- ".join(flags[:30]))
+        else:                                   # answer leak in the facts (R89): re-extract with the offending facts named
+            addendum = (scope + "\n\n### Your previous extraction gave the decision away in its facts. These facts said the "
+                        "decision was already made (by the agent, its role or its decider) or what happened after it. Write "
+                        "the facts as the record stood BEFORE the decision, with the decision still open:\n- "
+                        + "\n- ".join(f"{x.get('id')}: {x.get('why')}" for x in leaks[:10]))
     if flags:
         return {**rec, "outcome": "rejected", "criterion": 4, "reason": "technique remains after two re-extractions",
                 "flags": flags[:30]}
+    if leaks:
+        return {**rec, "outcome": "rejected", "criterion": "answer-leak", "reason": "decision in facts after two re-extractions",
+                "leaks": leaks[:10]}
     s.held_out, s.split = ep["held_out"], ep["split"]
     s.tags += ["natsec", "corpus", BATCH.stem, f"bucket-{ep['bucket']}"] + (["doctrine-derived"] if ep["doctrine"] else []) \
         + (["held-out-domain"] if ep["held_out"] else [])
     s.case.library["equities"] = EQUITY_SET
     s.provenance.step(id="corpus.scope", operator="extract", ts=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                       notes=(f"{BATCH.stem} episode {ep['id']} ({ep['collection']}); {SCOPE.stem}; equities {EQUITY_SET}; "
-                             f"technique screen clean after {attempt} extraction(s)"),
+                             f"technique screen and answer-leak check (facts) clean after {attempt} extraction(s)"),
                       params={"attempts": attempt, "bucket": ep["bucket"], "doctrine": ep["doctrine"]})
     store.save_scenario(s)
     return {**rec, "outcome": "ok", "attempts": attempt, "facts": len(s.case.facts), "options": len(s.case.options),

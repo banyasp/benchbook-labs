@@ -1,4 +1,5 @@
-"""Answer-leak check, v2 (role-aware; Peter's definition, 2026-11-09). Checks a scenario's FACTS and its rendered TRACE.
+"""Answer-leak check, v4 (role-aware; Peter's definition and caveats, 2026-11-09). Checks a scenario's FRAME (title, setting,
+situation, decider, agent), its FACTS and its rendered TRACE. v3 (facts + trace only): versions/answer_leak.v3-role-latitude.py.
 
 The agent acts in a role (Q: agent, agent_role) for a decider (Q: decider) and faces one question. A LEAK is:
   - decided: the facts or the trace say that THIS decision has already been made (or carried out) by the agent itself,
@@ -17,7 +18,8 @@ then re-rendered); a trace-only leak means the trace is re-rendered. This module
     PYTHONPATH=code .venv/bin/python -m pipeline.render.answer_leak --ids <file> --out <jsonl>
 
 Model: role `answer_leak_checker` (GPT-6 Luna on Bedrock). The gold option is not shown to the checker.
-v1 (role-blind, trace only) is in versions/answer_leak.v1-role-blind.py.
+v1 (role-blind, trace only): versions/answer_leak.v1-role-blind.py. v2 (role-aware, before Peter's two caveats: a decider's
+prior plan is fine when the agent may adapt it; outcomes = authoritative future, not warnings): versions/answer_leak.v2-role.py.
 """
 from __future__ import annotations
 
@@ -39,19 +41,29 @@ A LEAK is one of:
 - "decided": a statement that THIS decision has already been made or carried out, by the agent itself, by whoever
   holds the agent's role (the same office, committee, post), or by the decider the agent acts for.
   Example: the agent IS the review committee, and the text says "the committee decided not to investigate".
-- "outcome": a description of what happened after this decision was taken (which course was carried out and how it
-  turned out), or a hindsight judgment of a course of action.
+  Exception: if the agent is explicitly asked or allowed to reconsider, adapt or deviate from a prior plan or
+  direction because circumstances have changed (e.g. the boss said "here is what I want, but pivot if things change"),
+  then stating that prior plan or the decider's earlier wish is NOT a leak.
+- "outcome": an authoritative statement of what happens AFTER the decision point (which course was carried out and
+  how it turned out), or a hindsight judgment of a course of action. The trace describes only the past and the
+  present; it cannot know the future. Warnings, forecasts, intelligence that something is about to happen, and
+  predictions are NOT outcomes.
 
 NOT a leak (never flag these):
 - a decision by a DIFFERENT entity in a different role that the agent may now review, uphold or overrule
   (e.g. the agent hears an appeal of a lower body's decision; the agent audits another office's choice);
 - recommendations, requests, advice, proposals, orders being sought, drafts or forms awaiting approval, anyone arguing
   for a course of action, a course being available or permitted;
-- background events that happened before the decision point, including earlier, different decisions.
+- background events that happened before the decision point, including earlier, different decisions;
+- a prior plan or the decider's earlier direction, when the agent is asked or allowed to adapt it to new circumstances;
+- warnings, forecasts or advance intelligence about what may happen next.
 When in doubt, do not flag.
 
-Check the FACTS list and the TRACE separately. Return one JSON object only:
-{"facts": [{"id": "<fact id>", "kind": "decided" | "outcome", "who": "<who made the decision, as stated>",
+Check the FRAME (title, setting, situation, decider and agent descriptions), the FACTS list and the TRACE separately.
+Return one JSON object only:
+{"frame": [{"field": "title|setting|situation|decider|agent|agent_role", "kind": "decided" | "outcome", "who": "<...>",
+            "option": "<option id or null>", "quote": "<shortest exact quote>", "why": "<one sentence>"}],
+ "facts": [{"id": "<fact id>", "kind": "decided" | "outcome", "who": "<who made the decision, as stated>",
             "option": "<option id it points to, or null>", "why": "<one sentence>"}],
  "trace": [{"kind": "decided" | "outcome", "who": "<...>", "option": "<option id or null>",
             "quote": "<shortest exact quote>", "why": "<one sentence>"}]}
@@ -77,7 +89,8 @@ def build_user(T, msgs: list[dict] | None) -> str:
     opts = "\n".join(f"{oid}: {o.do}" for oid, o in c.options.items())
     facts = "\n".join(f"{f.id}: {f.fact}" for f in c.facts)
     sys_prompt = str(msgs[0].get("content") or "")[:3000] if msgs else ""
-    return (f"AGENT: {c.agent}\nAGENT ROLE: {c.agent_role}\nDECIDER: {c.decider}\nQUESTION: {c.question}\n\n"
+    return (f"FRAME\nTITLE: {c.title}\nSETTING: {c.setting}\nSITUATION: {c.situation}\n"
+            f"AGENT: {c.agent}\nAGENT ROLE: {c.agent_role}\nDECIDER: {c.decider}\nQUESTION: {c.question}\n\n"
             f"COURSES OF ACTION:\n{opts}\n\nFACTS:\n{facts}\n\n"
             + (f"TRACE SYSTEM PROMPT:\n{sys_prompt}\n\nTRACE:\n{trace_text(msgs)}" if msgs else "TRACE: (none rendered)"))
 
@@ -90,7 +103,7 @@ def check(T, msgs: list[dict] | None, llm=None) -> dict:
     obj = extract_json(raw)
     gold = T.case.verdict.choice
     mark = lambda xs: [dict(x, option_is_gold=(x.get("option") == gold) if x.get("option") else None) for x in xs or []]
-    return {"facts": mark(obj.get("facts")), "trace": mark(obj.get("trace"))}
+    return {"frame": mark(obj.get("frame")), "facts": mark(obj.get("facts")), "trace": mark(obj.get("trace"))}
 
 
 def trace_leaks(T, msgs: list[dict], llm=None) -> list[dict]:
@@ -108,9 +121,10 @@ def check_one(store: Store, sid: str, llm=None) -> dict:
         r = check(T, msgs, llm)
     except Exception as e:                                   # noqa: BLE001
         return {"scenario": sid, "error": f"unparseable: {e}"[:200]}
-    fl, tl = r["facts"], r["trace"]
-    return {"scenario": sid, "check": "v2-role", "leak": bool(fl or tl), "where": ("facts" if fl else ("trace" if tl else None)),
-            "facts": fl, "trace": tl, "gold": T.case.verdict.choice,
+    qf, fl, tl = r["frame"], r["facts"], r["trace"]
+    return {"scenario": sid, "check": "v4-frame", "leak": bool(qf or fl or tl),
+            "where": ("frame" if qf else ("facts" if fl else ("trace" if tl else None))),
+            "frame": qf, "facts": fl, "trace": tl, "gold": T.case.verdict.choice,
             "agent": T.case.agent, "decider": T.case.decider, "question": T.case.question, "has_trace": msgs is not None}
 
 

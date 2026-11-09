@@ -188,7 +188,7 @@ class Library:
                             item = v.partition("/")[2]
                             if want and thens.get(item) and f"{c.id}/{thens[item]}" != want:
                                 errs.append(f"{s.id}/{arm}: via {v} says {thens[item]} but the gold choice maps to {want}")
-        eqs = sets.get("pilot")
+        eqs = sets.get("pilot2") or sets.get("pilot")   # pilot2 from 2026-11-09
         if eqs:
             for c in cases.values():
                 for con in c.considerations:

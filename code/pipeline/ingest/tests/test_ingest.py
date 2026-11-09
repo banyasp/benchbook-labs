@@ -121,7 +121,7 @@ def test_extract_with_retry_and_gate(tmp_path):
     assert len(s.grounded_facts()) == 6 and s.provenance.steps[0].params["attempts"] == 2
     assert "flip-conditions-authored" in s.tags and "case.flip_conditions.flip1" in s.provenance.authored
     assert {"case.facts", "case.verdict"} <= set(s.provenance.fields)
-    assert s.provenance.steps[0].prompt_version.startswith("extract_fq.v2+")
+    assert s.provenance.steps[0].prompt_version.startswith("extract_fq.v3+")
     st = store_mod.Store(tmp_path)
     st.save_scenario(s)
     assert st.scenario(s.id).case.verdict.choice == s.case.verdict.choice

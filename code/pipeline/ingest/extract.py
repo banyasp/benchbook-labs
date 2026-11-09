@@ -36,10 +36,10 @@ from . import registry as R
 from .normalize import load_spans
 
 PROMPTS = Path(__file__).with_name("prompts")
-EQUITY_SET = os.environ.get("BENCHBOOK_EQUITY_SET", "pilot")   # 2026-10-28: corpus batch uses pilot2 (R81)
+EQUITY_SET = os.environ.get("BENCHBOOK_EQUITY_SET", "pilot2")   # default pilot2 from 2026-11-09 (Peter); was pilot
 EQUITIES = DATA.parent / "data" / "registry" / "equities" / f"{EQUITY_SET}.yaml"
 MAX_ATTEMPTS = 3
-FQ_PROMPT = "extract_fq.v2"          # v1 stays on disk; set to extract_fq.v1 to reproduce older extractions
+FQ_PROMPT = "extract_fq.v3"          # v3 (2026-11-09): no decision in facts (R89). v1, v2 stay on disk for reproduction
 SPAN_RE = re.compile(r"^src:[0-9a-f]{12}#p\d+\.\d+$")
 
 

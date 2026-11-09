@@ -84,6 +84,13 @@ def fix_one(store: Store, rec: dict) -> dict:
     sid = rec["scenario"]
     out = {"scenario": sid, "where": rec.get("where"), "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
     try:
+        if rec.get("frame"):                    # the decision is in Q itself (title/situation/decider): no automatic fix yet
+            if store.has_trace(sid):
+                shutil.move(str(store.trace_dir(sid)),
+                            str(store.root / "traces" / "_leaked" / f"{sid}.frame-{time.strftime('%Y%m%d%H%M%S')}"))
+            out["final"] = "dropped (frame leak)"
+            out["frame"] = rec["frame"]
+            return out
         if rec.get("facts"):
             out["fact_fix"] = fix_facts(store, sid, rec["facts"])
         r = render_one(store, sid, leak_check=AL.trace_leaks)
@@ -113,6 +120,8 @@ def main(argv=None):
     ap.add_argument("--ids", help="only these scenario ids (file)")
     ap.add_argument("--log", required=True)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--fresh", action="store_true",
+                    help="with --ids: prepare NEW scenarios (no trace yet): check facts, fix leaks, render with the gate, re-check")
     a = ap.parse_args(argv)
     recs = {}
     for line in Path(a.leaks).read_text().splitlines():
@@ -123,6 +132,21 @@ def main(argv=None):
     if a.ids:
         want = {l.strip() for l in Path(a.ids).read_text().splitlines() if l.strip() and not l.startswith("#")}
         recs = {k: v for k, v in recs.items() if k in want}
+    if a.fresh:
+        if not a.ids:
+            raise SystemExit("--fresh needs --ids")
+        store0 = Store()
+        want = [l.strip() for l in Path(a.ids).read_text().splitlines() if l.strip() and not l.startswith("#")]
+        want = [w for w in want if not store0.has_trace(w)]
+        with ThreadPoolExecutor(a.workers) as ex:
+            checked = list(ex.map(lambda sid: AL.check_one(store0, sid), want))
+        recs = {}
+        for r in checked:
+            if r.get("error"):
+                print(r["scenario"], "fact check error, skipped", file=sys.stderr)
+                continue
+            recs[r["scenario"]] = {"scenario": r["scenario"], "where": r.get("where"), "facts": r.get("facts") or [],
+                                   "frame": r.get("frame") or []}
     log = Path(a.log)
     done = ({json.loads(l)["scenario"] for l in log.read_text().splitlines()
              if l.strip() and json.loads(l).get("final") != "error"} if log.exists() else set())   # errors are retried
