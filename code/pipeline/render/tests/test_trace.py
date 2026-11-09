@@ -61,8 +61,8 @@ def test_channels_deterministic_and_gold_blind():
     a = chan.assign_channels("T", o, 1)
     assert a == chan.assign_channels("T", list(reversed(o)), 1) and len(set(a.values())) == 3
     recs = [chan.pick_recommended(f"T{i}", o, 1) for i in range(400)]
-    assert 0.4 < sum(r is not None for r in recs) / 400 < 0.6
-    assert {r for r in recs if r} == set(o)
+    assert all(r is None for r in recs)          # Peter 2026-11-09: no artificial recommendations
+    assert "system_scope" not in {chan.assign_channels(f"T{i}", o, 1)[x] for i in range(50) for x in o}   # render.v4
 
 
 def test_ok_trace_saved_in_store_with_option_spans(tmp_path):

@@ -11,6 +11,10 @@ import random
 
 from bench.schema.pipeline import CHANNELS, Scenario
 
+# render.v4 (2026-11-09, R93): no course of action is introduced in the system prompt, so system_scope is never assigned
+# (it stays a valid schema value for older traces).
+ASSIGNABLE: tuple[str, ...] = tuple(c for c in CHANNELS if c != "system_scope")
+
 RECOMMEND_SHARE = 0.0   # Peter 2026-11-09: no artificial recommendations in traces (was 0.5, design v2.4 §8.2)
 
 
@@ -40,7 +44,7 @@ def assign_channels(trace_scenario, options=None, seed: int = 0) -> dict[str, st
     rng = _rng("channels", seed, sid)
     pool: list[str] = []
     while len(pool) < len(opts):
-        perm = list(CHANNELS)
+        perm = list(ASSIGNABLE)
         rng.shuffle(perm)
         pool += perm
     shuffled = list(opts)

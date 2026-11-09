@@ -57,9 +57,10 @@ def test_channels_deterministic_gold_blind():
     a = assign_channels("S@v1", opts, 3)
     assert a == assign_channels("S@v1", list(reversed(opts)), 3) and set(a.values()) <= set(CHANNELS) and len(set(a.values())) == 4
     assert a != assign_channels("S@v1", opts, 4) or a != assign_channels("T@v1", opts, 3)
-    assert len(set(assign_channels("S@v1", [f"S@v1/O{i}" for i in range(1, 8)], 0).values())) == 5      # > 5 options cycle
+    assert len(set(assign_channels("S@v1", [f"S@v1/O{i}" for i in range(1, 8)], 0).values())) == 4      # > 4 options cycle (system_scope no longer assigned, render.v4)
     rec = [assign_recommended(f"S{i}@v1", opts, 0) for i in range(400)]
-    assert 0.4 < sum(r is not None for r in rec) / 400 < 0.6 and {r for r in rec if r} == set(opts)
+    assert all(r is None for r in rec)           # Peter 2026-11-09: RECOMMEND_SHARE = 0
+    assert {r for r in (assign_recommended(f"S{i}@v1", opts, 0, share=0.5) for i in range(400)) if r} == set(opts)
     assert assign_recommended("S@v1", opts, 9) == assign_recommended("S@v1", list(reversed(opts)), 9)
 
 

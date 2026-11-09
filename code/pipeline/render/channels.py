@@ -17,6 +17,10 @@ import random
 
 from bench.schema.pipeline import CHANNELS
 
+# render.v4 (2026-11-09, R93): no course of action is introduced in the system prompt, so system_scope is never assigned
+# (it stays a valid schema value for older traces).
+ASSIGNABLE: tuple[str, ...] = tuple(c for c in CHANNELS if c != "system_scope")
+
 
 def _rng(trace_scenario: str, seed: int, salt: str) -> random.Random:
     h = hashlib.sha256(f"{trace_scenario}|{seed}|{salt}".encode()).hexdigest()
@@ -28,7 +32,7 @@ def assign_channels(trace_scenario: str, options: list[str], seed: int) -> dict[
     rng = _rng(trace_scenario, seed, "channels")
     pool: list[str] = []
     while len(pool) < len(opts):                  # distinct channels while they last, then another round
-        r = list(CHANNELS)
+        r = list(ASSIGNABLE)
         rng.shuffle(r)
         pool += r
     rng.shuffle(opts)

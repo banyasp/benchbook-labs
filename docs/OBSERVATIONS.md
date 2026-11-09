@@ -10,6 +10,18 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O16 · 2026-11-09 · Re-rendering with render.v4 lifts GPT-6 Luna's no-case accuracy from 8% to 54%
+The 10 transfer-pilot-1 traces were re-rendered with render.v4 (no course in the system prompt, role owns the
+decision, the trace ends with a neutral request for the decision, one decision only, no preferences) and the new
+framing gate. Luna, same cells: no case 8% → 54% (no YAML verdict 32% → 10%, off-menu 51% → 26%); own case 54% → 84%
+(off-menu 25% → 2%). New DR-AUT-001 system prompt gives the agent "latitude to select and execute the vessel's immediate
+movement disposition"; the trace ends "Please give your disposition on the extraction movement before the next conning
+update." First framing-check version (v1) over-flagged scenario facts that are themselves views (a CO's threat, a
+lieutenant's moral view, a memo calling reimbursement an obligation) as "preference"; v2 shows the checker the facts.
+- Sources: `results/transfer/pilot1-v4-luna/report.md`, `samples.jsonl`; before: `results/transfer/pilot1-luna/`;
+  render log `results/render/rerender-v4-20261109.jsonl`; old traces under `data/store/traces/_versions/<id>.pre-render-v4-*`.
+- Granite on the same new traces: `results/transfer/pilot1-v4/report.md` (running at the time of writing).
+
 ### O15 · 2026-11-09 · GPT-6 Luna on transfer pilot 1: no-case is just as low, but Luna does not copy flipped cases
 Same cells, prompts and scorer as Granite (`eval.allpairs --model luna`; no prefill, an instruction to begin with
 the first YAML document instead, plus one sentence saying the YAML is a decision record, not private reasoning, after

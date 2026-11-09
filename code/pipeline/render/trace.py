@@ -28,7 +28,10 @@ from pipeline.ingest import technique_check as TC
 from .render import INJECTION, REALIZATIONS, RenderError, check_messages, diagnostics, find_quote, locate
 from .util import extract_json, make_step, prompt_ref
 
-PROMPT3 = Path(__file__).parent / "prompts" / "render.v3.md"
+# render.v4 (2026-11-09, R93/O14-O15): no course in the system prompt, role owns the decision, the trace ends with a
+# request for the decision, one decision only, and a "lessons" section. render.v3.md is kept for old provenance.
+PROMPT3 = Path(__file__).parent / "prompts" / "render.v4.md"
+PROMPT_NAME = "render.v4"
 MAX_RETRIES = 2                      # re-render tries after the first render (design §8.4)
 LLM_TRIES = 4                        # transport-level attempts per call (backoff)
 DEFAULT_SEED = 20261027
@@ -140,7 +143,10 @@ def channel_problems(msgs, spans: list[OptionSpan]) -> list[str]:
     for s in spans:
         ok = CHANNEL_ROLES[s.channel]
         role = msgs[s.message].get("role")
-        if s.channel == "system_scope" and s.message != 0 or role not in ok:
+        if s.message == 0:                     # render.v4: never a course in the system prompt (R93)
+            out.append(f"{s.option.rpartition('/')[2]} is introduced in the system prompt (message 0); no course of action "
+                       f"may appear there. Put it in channel {s.channel}.")
+        elif role not in ok:
             out.append(f"{s.option.rpartition('/')[2]} must show up in channel {s.channel} but was placed in message "
                        f"{s.message} (role {role})")
     return out
@@ -160,6 +166,9 @@ def run_gates(msgs, T: Scenario, entries, miss, opt_spans, opt_missing, rec_prob
     menu = gates.menu_problems(msgs, spans, case)
     cardl = gates.card_leaks(msgs, [*cards, case])
     grading = gates.option_grading(msgs, spans, {recommended.rpartition("/")[2]} if recommended else set())
+    # a graded word that is part of the course itself ("recommends that Congress keep them secret") is not grading
+    own = lambda x: x["word"].lower()[:8] in case.options[x["option"]].do.lower() if x.get("option") in case.options else False
+    grading = [x for x in grading if not own(x)]
     g2 = {"pass": not (ids or labels or menu or cardl or grading), "option_grading": grading, "ids": ids, "option_labels": labels, "menu": menu,
           "card_a_parts": cardl, "cards_checked": sorted({c.id for c in cards} | {case.id})}
     nm = gates.person_names(msgs)
@@ -196,6 +205,8 @@ def feedback(g: dict) -> str:
         L.append(f"- The trace gives the decision away: \"{x.get('quote')}\" ({x.get('why')}). The trace must not say that "
                  "the agent, its role or the decider it acts for has already made this decision, or what happened after it. "
                  "Remove or rewrite it so the decision is still open. Advice, requests or recommendations from others are fine.")
+    from .framing_check import feedback_lines
+    L += feedback_lines(g.get("framing", {}).get("items", []))
     if g["names"]["names"]:
         L.append(f"- Personal names found: {g['names']['names']}. Use roles, titles or handles instead.")
     return "\n".join(L)
@@ -223,9 +234,10 @@ def call_llm(llm, messages, sleep=time.sleep):
 
 
 def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: list[str] | None = None, llm=None,
-                    seed: int = DEFAULT_SEED, sleep=time.sleep, leak_check=None) -> tuple[TraceRecord, dict]:
+                    seed: int = DEFAULT_SEED, sleep=time.sleep, leak_check=None, frame_check=None) -> tuple[TraceRecord, dict]:
     """leak_check: optional (T, msgs) -> list of trace answer leaks (pipeline.render.answer_leak.trace_leaks); a leak fails
-    the attempt and is fed back. -> (TraceRecord, trace_json). status ok -> gates pass; otherwise diagnostics.status = "rejected" (check it)."""
+    the attempt and is fed back. frame_check: optional (T, msgs) -> list of framing problems
+    (pipeline.render.framing_check.frame_problems); same handling. -> (TraceRecord, trace_json). status ok -> gates pass; otherwise diagnostics.status = "rejected" (check it)."""
     llm = llm or _models.complete
     cards = list(cards or [])
     gid = T.case.global_id
@@ -262,6 +274,10 @@ def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: li
             lk = leak_check(T, msgs)
             g["answer_leak"] = {"pass": not lk, "items": lk}
             ok = not lk
+        if ok and frame_check is not None:         # framing (R93): LLM check, last
+            fp = frame_check(T, msgs)
+            g["framing"] = {"pass": not fp, "items": fp}
+            ok = not fp
         attempts.append({"attempt": attempt, "pass": ok, **{k: v["pass"] for k, v in g.items()},
                           **({} if ok else {"failures": feedback(g)[:1500]})})
         last.update(msgs=msgs, g=g, obj=obj, entries=entries, miss=miss, opt_spans=opt_spans, recspan=recspan,
@@ -279,7 +295,8 @@ def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: li
         dw = sum(w(msgs[e.message]["content"][e.start:e.end]) for e in entries if e.fact.rpartition("/")[2] in dec)
         diag["decisive_word_share"] = round(dw / (diag["words"] or 1), 3)
     diag.update(status="ok" if ok else "rejected", attempts=attempts, channel_source=src,
-                n_cards_checked=len(cards), prompt="render.v3")
+                n_cards_checked=len(cards), prompt=PROMPT_NAME,
+                frame_check=bool(frame_check))
     if not ok:
         diag["reason"] = last["reason"]
         diag.update(last.get("detail") or {})
@@ -332,12 +349,23 @@ def save(store: Store, rec: TraceRecord, trace_json: dict) -> Path:
     return d / "trace.yaml"
 
 
+AUTO = "auto"
+
+
 def render_one(store: Store, sid: str, *, cards: list[Case] | None = None, llm=None, seed: int = DEFAULT_SEED,
-               texture: bool = True, sleep=time.sleep, leak_check=None) -> TraceRecord:
+               texture: bool = True, sleep=time.sleep, leak_check=AUTO, frame_check=AUTO) -> TraceRecord:
+    """leak_check / frame_check default to the real LLM gates whenever the real renderer is used (llm None), so every
+    future render is checked for answer leaks and framing (2026-11-09). Pass None to switch a gate off explicitly."""
+    if leak_check == AUTO:
+        from .answer_leak import trace_leaks
+        leak_check = trace_leaks if llm is None else None
+    if frame_check == AUTO:
+        from .framing_check import frame_problems
+        frame_check = frame_problems if llm is None else None
     T = store.scenario(sid)
     cs = cards if cards is not None else cards_for(store, sid)
     rec, tj = render_trace_v3(T, cs, texture=texture_for(store, T) if texture else None, llm=llm, seed=seed, sleep=sleep,
-                              leak_check=leak_check)
+                              leak_check=leak_check, frame_check=frame_check)
     save(store, rec, tj)
     return rec
 

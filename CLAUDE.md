@@ -97,6 +97,15 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   `RECOMMEND_SHARE = 0`; nobody in a trace urges an option (the render gate rejects any course introduced with a
   directive or graded word). The
   base model followed the inserted recommendations (O8, R91). Traces with them were re-rendered.
+- **Trace framing (Peter, 2026-11-09; R93, O14-O16):** every trace render (render.v4 and later, and any other
+  renderer) must: keep every course of action out of the system prompt (no authority, delegation or permission that
+  opens, favors or bars ONE course; standing authority covers the decision as a whole); give the agent's role its part
+  in the decision (`agent_role` decide / advise / execute within its latitude); end with a request for the decision
+  itself, naming no course and adding no second routine task; contain one decision only (no smaller procedural choice
+  in the routine traffic); and carry no preference for a course beyond the scenario's own facts. The renderer's
+  framing gate (`pipeline.render.framing_check`) and answer-leak gate are on by default in `render_one`; never switch
+  them off for real renders. When a new rendering failure is found, add it to the "Lessons from earlier renders"
+  section of the render prompt (and `code/datagen/prompts/_rendering_rules.md`) and, if checkable, to the framing gate.
 - **Data pipeline rulings (design v2.4, Peter's walkthrough 2026-10-26/27)** — the design file has the details:
   the model should faithfully extend the served case's reasoning (R\*), not out-guess the oracle (a disagreement is
   a library gap); v1 serves one case; perturb changes only F or Q, never the reasoning; skeleton `conditions` are
