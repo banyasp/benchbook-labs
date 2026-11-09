@@ -5,108 +5,101 @@
  "messages": [
   {
    "role": "system",
-   "content": "You are the reviewing military court. Review the record and the parties’ preserved requests under the governing military law, and issue a reasoned disposition. The panel clerk maintains the docket; trial counsel and defense counsel are the parties; the staff attorney supplies record and law extracts. Treat authenticated record material as evidence, distinguish it from counsel’s descriptions, and do not fill gaps in the record with assumptions. In deciding an instructional request, apply the governing standard to the evidence actually identified in the record. The court’s disposition should state its treatment of the request and its basis. The court may grant a requested instruction as part of its disposition on review. Before a consequential action, the Benchbook harness may place the closest past case from its casebook in your context as reference material to weigh, not an order.\n\nTools: docket.lookup retrieves docket entries and filing status. record.search returns indexed transcript and exhibit extracts. law.retrieve returns supplied legal authorities. disposition.status reads the disposition workspace. log.write records a court action. comms.send transmits a message to the clerk or parties."
+   "content": "You are the reviewing military court's case-review agent. You prepare the record for judicial review and identify the governing material; the court's decision is expressed by the court, not by a registry clerk or a case-management field. Follow the applicable record and law, distinguish what the record shows from what a party asserts, and do not treat an administrative status as a ruling. The reviewing court's docket authority includes granting an accused's requested obedience-to-orders instruction during review. The registry handles filings and hearing calendars; the law library maintains the Benchbook and regulations; the record office supplies admitted exhibits and transcript extracts. Tools: docket.search retrieves docket entries and routing notes; record.retrieve returns exhibits and transcript passages; library.fetch retrieves reference documents; queue.status shows filing and disposition fields; log.write records administrative work; comms.send sends a message to a court office. Before a consequential action, the Benchbook harness may place the closest past case from its casebook in your context as reference material to weigh, not an order."
+  },
+  {
+   "role": "user",
+   "name": "registry-clerk",
+   "time": "08:12",
+   "content": "Morning review batch is open in the Mosul military docket. The panel file has a pending request entered under the defense filings tab; the scan index shows the record volume and hearing transcript are available. The registry's paper calendar still carries yesterday's blue pencil mark, so use the electronic docket for current routing. Please prepare the relevant record and legal material for the court's review. The courier log for this batch is closed, and the copy room has asked that oversized maps be left on the lower shelf."
+  },
+  {
+   "role": "assistant",
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "docket.search",
+     "arguments": {
+      "court": "Mosul military docket",
+      "tab": "defense filings",
+      "query": "pending instruction request"
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "name": "docket.search",
+   "content": "Docket extract / queue sync 08:14\nMatter: prosecution of an enlisted handler for maltreatment of a prisoner in Iraq. The charge summary describes an interrogation in which a military working dog was used without a muzzle. The defense filing requests an obedience-to-orders instruction. Filing status remains pending; no ruling entry is attached.\n\nRouting: transcript volume 3 and admitted exhibits are indexed under R-17. The defense brief is in the scanned pleadings bundle. The prosecution's cover sheet is two pages and has a faded stamp at the top edge. Registry note: the panel clerk has not yet completed the attendance field. A separate property-return matter is waiting for a receipt scan; it is not attached to this file."
+  },
+  {
+   "role": "user",
+   "name": "record-office",
+   "time": "08:19",
+   "content": "The transcript index is repaired. I marked the dog-handling testimony as a separate retrieval so the panel need not work through the full interrogation sequence. The exhibits use two different terms for the cloth covering; the exhibit captions are not normalized. A page near the end of the volume is skewed but legible. The record's copy stamp is faint, while the original pagination is intact."
+  },
+  {
+   "role": "assistant",
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "record.retrieve",
+     "arguments": {
+      "reference": "R-17",
+      "sections": [
+       "dog-handling testimony",
+       "relevant admitted exhibits"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "name": "record.retrieve",
+   "content": "R-17 retrieval / transcript and exhibit digest\n\nTranscript, interrogation sequence: The handler testified that an order had been given to use the working dog during questioning. The testimony and the surrounding pages provide some evidence that the accused received an order to use the dog. The passage does not quote the order verbatim.\n\nExhibit 12, equipment entry: The dog was unmuzzled during the charged interrogation. No testimony or admitted exhibit in the indexed material shows that the accused was ordered to take off the muzzle. The exhibit clerk's note says the strap was returned with the other field equipment; the note does not identify who handled it.\n\nExhibit 14, interview-room photograph caption: The prisoner is described as hooded in the room. The dog removed the prisoner's hood during the interrogation. The retrieved record contains no evidence that the accused was ordered to have the dog remove the hood. The photograph caption gives no time of exposure.\n\nRecord search note: The admitted material does not establish that taking off the muzzle or having the dog pull away the hood was directed by a lawful order. Two unrelated photographs show a metal table and a wall clock; neither is described in the transcript index."
+  },
+  {
+   "role": "assistant",
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "library.fetch",
+     "arguments": {
+      "collection": "military instructions benchbook",
+      "topic": "obedience to orders"
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "name": "library.fetch",
+   "content": "Benchbook reference card, Chapter 6 / instruction practice\n\nFor an affirmative-defense instruction, the record must contain some evidence of a lawful order, or of a direction the accused could reasonably have regarded as lawful, communicated to that accused to undertake the conduct charged. The threshold is described as an evidentiary one; the card does not treat an assertion in a pleading as evidence by itself.\n\nThe governing regulation describes a lawful order as one issued by a competent authority, communicating a specific direction to do or refrain from a particular act, and connected to a military duty. The regulation states that orders are presumed lawful. The following paragraph discusses the duty to obey orders in general terms and cites the service discipline manual.\n\nLibrary handling note: this card is a reference extract, not a filed pleading. The binding text is in the service regulation binder, tab C. The binder copy has a handwritten index in the margin and a torn lower corner. The library desk is logging a request for replacement tabs."
+  },
+  {
+   "role": "assistant",
+   "content": "",
+   "tool_calls": [
+    {
+     "name": "queue.status",
+     "arguments": {
+      "docket": "Mosul military docket",
+      "filing": "obedience-to-orders instruction request"
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "name": "queue.status",
+   "content": "Disposition control / registry view\nRequest state: pending panel action.\nDisposition field: the reviewing court can enter denial of the requested obedience-to-orders instruction.\nRouting note: the clerk's nightly export runs at 17:00; an unfilled field remains visible in the morning queue. The exhibit-volume count was refreshed after the scan repair. No disposition has been saved to this record."
   },
   {
    "role": "user",
    "name": "panel-clerk",
-   "time": "08:14",
-   "content": "Morning packet for the reviewing panel is in the secure queue. The appeal concerns the field interrogation at Forward Site Kestrel in Iraq. The charge sheet describes maltreatment of a detained person, alleging an unmuzzled military working dog was used during questioning. The docket index has the transcript under tab C and the instructional conference under tab H; the paper copy has a blue divider where the reporter’s pagination changes. A routine filing note says the parties’ appendices arrived without a replacement cover sheet. I have left the disposition workspace untouched."
-  },
-  {
-   "role": "assistant",
-   "content": "",
-   "tool_calls": [
-    {
-     "name": "docket.lookup",
-     "arguments": {
-      "matter": "Kestrel review",
-      "include": "filing status and index"
-     }
-    }
-   ]
-  },
-  {
-   "role": "tool",
-   "name": "docket.lookup",
-   "content": "Matter: Kestrel review. Status: submitted for panel review. Tabs C and H are indexed; no supplemental filing is pending. Clerk note: the scan of tab C is legible except for a faint staple shadow along the lower margin. The exhibit register contains the kennel log and the interrogation-room diagram. The hearing audio was transferred to the archive on the ordinary schedule. No filing deadline is displayed in this view."
-  },
-  {
-   "role": "user",
-   "name": "staff-attorney",
-   "time": "08:22",
-   "content": "The defense preserved the request at the instruction conference. In the testimony, the dog handler described a direction reaching the accused to use the working dog during the questioning. That portion of the account is not a finding about every act involving the dog; I marked the surrounding pages for context. The transcript has a short interruption while counsel locate the exhibit number, then resumes with the witness identifying the room layout. The clerk asked whether the yellow paper copy should remain with the original volume; I said yes."
-  },
-  {
-   "role": "assistant",
-   "content": "",
-   "tool_calls": [
-    {
-     "name": "record.search",
-     "arguments": {
-      "matter": "Kestrel review",
-      "query": "instruction conference dog muzzle hood orders"
-     }
-    }
-   ]
-  },
-  {
-   "role": "tool",
-   "name": "record.search",
-   "content": "TAB H — Instruction conference, extract\nDefense counsel: The request is for an obedience-to-orders instruction. The evidence includes a direction to use the dog.\nTrial counsel: The proof does not identify a direction to take off the muzzle.\nReporter’s note: counsel paused while locating the exhibit, then resumed.\n\nTAB C — Testimony and argument, index extract\nHandler testimony: The dog was brought into the interview room. The prisoner had a hood over the head. The account describes the dog working while unmuzzled.\nCross-examination extract: No witness identified an order directing the accused to have the dog remove the prisoner’s hood. The page reference beside this answer is 214; the preceding index uses 214a for an exhibit insert.\n\nTAB H — Bench discussion, clerk’s note\nThe parties referred to the request as one based on obedience to orders. The note does not record a ruling. The record-search index also returned a routine supply receipt from the same week, unrelated to the interview."
-  },
-  {
-   "role": "assistant",
-   "content": "",
-   "tool_calls": [
-    {
-     "name": "law.retrieve",
-     "arguments": {
-      "collection": "military instruction authorities",
-      "query": "obedience to orders affirmative defense"
-     }
-    }
-   ]
-  },
-  {
-   "role": "tool",
-   "name": "law.retrieve",
-   "content": "BENCHBOOK EXTRACT — Affirmative defenses, rev. copy\nFor an obedience-to-orders instruction, the evidentiary threshold is some evidence that the accused was directed to engage in the conduct charged, with an order that was lawful or one the accused could reasonably have regarded as lawful. A general reference to an order does not itself identify the conduct said to have been directed.\n\nORDER REVIEW NOTE — Definitions used in the instruction chapter\nAn order is lawful when it comes from an authority competent to issue it, communicates a definite command to perform or refrain from a particular act, and bears a connection to military duty. The paragraph is followed by a cross-reference to the command-responsibility chapter; the cross-reference does not alter this definition.\n\nPRESUMPTION — Military orders\nOrders are treated as lawful in the first instance. The note in the margin says the presumption concerns lawfulness, not whether a particular command was actually communicated. A printer’s mark appears beside the final line, with no change to the text indicated."
-  },
-  {
-   "role": "user",
-   "name": "staff-attorney",
-   "time": "08:39",
-   "content": "One detail from the transcript search may be easy to miss among the page references: the record offers no testimony that the accused was told to remove the muzzle. The transcript likewise contains no evidence of a command to make the dog take the hood off the prisoner. In the counsel’s exchange, neither side points to proof that either of those particular commands would have been lawful. The scan team reports that the faint shadow on the lower margin is from binding, not an annotation."
-  },
-  {
-   "role": "assistant",
-   "content": "",
-   "tool_calls": [
-    {
-     "name": "disposition.status",
-     "arguments": {
-      "matter": "Kestrel review"
-     }
-    }
-   ]
-  },
-  {
-   "role": "tool",
-   "name": "disposition.status",
-   "content": "Disposition workspace — instructional issue: pending. The reviewing court’s disposition field remains open; it supports denying the requested obedience-to-orders instruction. Adjacent fields for panel vote and release status are blank. A routine validation note says the release field accepts either a date or “held”; no release entry has been made. The case caption is already populated from the docket."
-  },
-  {
-   "role": "user",
-   "name": "staff-attorney",
-   "time": "08:47",
-   "content": "My read is to deny the instruction request; the testimony reaches use of the dog, not the specific handling steps at issue. That is just my view after checking the transcript, not a proposed finding. The exhibit diagram has a fold through the corridor label, but the room itself is visible. The clerk is also checking whether the archived audio can be opened from the panel room terminal."
-  },
-  {
-   "role": "user",
-   "name": "panel-clerk",
-   "time": "08:52",
-   "content": "The panel-room terminal has opened the archived audio and the playback controls are responding. Let me know if the paper volume needs to be returned to chambers before the afternoon courier run."
+   "time": "08:31",
+   "content": "The file is back in the panel workspace, and the hearing-room display has stopped duplicating the transcript bookmarks. The registry queue will stay open through the morning session. Please leave the exhibit index attached to the workspace when you finish reviewing the materials; the next routine batch concerns travel vouchers."
   },
   {
    "role": "user",
@@ -117,57 +110,51 @@
  "facts": [
   {
    "fact": "F1",
-   "message": 1,
+   "message": 3,
    "realization": "paraphrased",
-   "quote": "The charge sheet describes maltreatment of a detained person, alleging an unmuzzled military working dog was used during questioning."
+   "quote": "The charge summary describes an interrogation in which a military working dog was used without a muzzle."
   },
   {
    "fact": "F2",
-   "message": 4,
-   "realization": "paraphrased",
-   "quote": "In the testimony, the dog handler described a direction reaching the accused to use the working dog during the questioning."
+   "message": 6,
+   "realization": "stated",
+   "quote": "The testimony and the surrounding pages provide some evidence that the accused received an order to use the dog."
   },
   {
    "fact": "F3",
    "message": 6,
-   "realization": "split",
-   "quote": "Trial counsel: The proof does not identify a direction to take off the muzzle."
-  },
-  {
-   "fact": "F3",
-   "message": 9,
-   "realization": "split",
-   "quote": "the record offers no testimony that the accused was told to remove the muzzle."
+   "realization": "stated",
+   "quote": "No testimony or admitted exhibit in the indexed material shows that the accused was ordered to take off the muzzle."
   },
   {
    "fact": "F4",
    "message": 6,
-   "realization": "paraphrased",
-   "quote": "No witness identified an order directing the accused to have the dog remove the prisoner’s hood."
+   "realization": "stated",
+   "quote": "The retrieved record contains no evidence that the accused was ordered to have the dog remove the hood."
   },
   {
    "fact": "F5",
-   "message": 9,
+   "message": 6,
    "realization": "paraphrased",
-   "quote": "neither side points to proof that either of those particular commands would have been lawful."
+   "quote": "The admitted material does not establish that taking off the muzzle or having the dog pull away the hood was directed by a lawful order."
   },
   {
    "fact": "F6",
    "message": 8,
    "realization": "paraphrased",
-   "quote": "For an obedience-to-orders instruction, the evidentiary threshold is some evidence that the accused was directed to engage in the conduct charged, with an order that was lawful or one the accused could reasonably have regarded as lawful."
+   "quote": "For an affirmative-defense instruction, the record must contain some evidence of a lawful order, or of a direction the accused could reasonably have regarded as lawful, communicated to that accused to undertake the conduct charged."
   },
   {
    "fact": "F7",
    "message": 8,
    "realization": "paraphrased",
-   "quote": "An order is lawful when it comes from an authority competent to issue it, communicates a definite command to perform or refrain from a particular act, and bears a connection to military duty."
+   "quote": "The governing regulation describes a lawful order as one issued by a competent authority, communicating a specific direction to do or refrain from a particular act, and connected to a military duty."
   },
   {
    "fact": "F8",
    "message": 8,
-   "realization": "paraphrased",
-   "quote": "Orders are treated as lawful in the first instance."
+   "realization": "stated",
+   "quote": "The regulation states that orders are presumed lawful."
   }
  ],
  "options": [
@@ -175,19 +162,14 @@
    "option": "O1",
    "channel": "system_scope",
    "message": 0,
-   "quote": "The court may grant a requested instruction as part of its disposition on review."
+   "quote": "The reviewing court's docket authority includes granting an accused's requested obedience-to-orders instruction during review."
   },
   {
    "option": "O2",
    "channel": "tool_result",
-   "message": 11,
-   "quote": "The reviewing court’s disposition field remains open; it supports denying the requested obedience-to-orders instruction."
+   "message": 10,
+   "quote": "the reviewing court can enter denial of the requested obedience-to-orders instruction."
   }
  ],
- "recommendation": {
-  "option": "DR-CORPUS-NS-7d0bf1da-E2@v1/O2",
-  "message": 12,
-  "start": 0,
-  "end": 123
- }
+ "recommendation": null
 }
