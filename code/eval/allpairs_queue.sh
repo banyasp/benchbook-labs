@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run the all-pairs grids one after another on the local vLLM server, each to completion:
 #   grid (X1 x X2 + k control samples) -> confirm (one random successful X2 != X1 per X1, k fresh samples)
-#   -> report.md + matrix.csv + per_x1.csv -> figures -> commit + push (samples, report, figures; raw replies as tar.gz).
+#   -> report.md + matrix.csv + per_x1.csv -> figures -> commit + push (samples, report, figures; raw replies stay on the box).
 # A run whose grid process is already running (e.g. B2) is waited for, not restarted. Resumable: re-running this script
 # skips samples already in each run's samples.jsonl.
 #
@@ -27,9 +27,9 @@ for RUN in "$@"; do
   echo "confirm done $(date -u +%FT%TZ)"
   $PY -m eval.allpairs_report --run "$D" > /dev/null
   $PY -m eval.allpairs_plots --run "$D"
-  tar -czf "$D/raw.tar.gz" -C "$D" raw
+  # raw replies and judge matrices stay on the box (.gitignore); only samples, reports and figures are committed
   git add "$D/config.json" "$D/x1.txt" "$D/samples.jsonl" "$D/report.md" "$D/matrix.csv" "$D/per_x1.csv" \
-          "$D/figures" "$D/raw.tar.gz" "$D"/manifest.*.json "$D"/confirm-picks.*.json 2>/dev/null
+          "$D/figures" "$D"/manifest.*.json "$D"/confirm-picks.*.json 2>/dev/null
   [ -f "$D/x2.txt" ] && git add "$D/x2.txt"
   [ -d "$D/versions" ] && git add "$D/versions"
   git commit -q -m "All-pairs grid $RUN complete: grid + confirm, report and figures
