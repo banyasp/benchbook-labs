@@ -47,6 +47,11 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   No weapons employment, targeting, intrusion, collection or covert-communication technique; "tradecraft" means
   decision practice only. Invented facts are fine and flagged in `provenance.caveats`. Keep `[UNVERIFIED]` marks.
 
+- **Log observations too** (Peter, 2026-11-09): interesting model, data or judge behavior goes in
+  `docs/OBSERVATIONS.md` (next to the risk register), each with pointers to its primary sources (sample ids, raw
+  reply files, scenario files). An observation that becomes a risk also gets an R-number.
+- **No data in git** (Peter, 2026-11-09): raw corpus, weights/checkpoints, per-sample raw replies and judge
+  matrices stay on the box (`.gitignore`); commit code, configs, reports, figures and `samples.jsonl`.
 - **Log risks as you find them.** `docs/RISK-REGISTER.md` records every assumption, risk and inference (and how
   to observe it). When you hit a new one — a shortcut cue, a data artifact, a judge failure — append an entry the
   same day. Never delete entries.
