@@ -73,6 +73,10 @@ def entry(store: Store, sid: str, checks: list[dict], fixes: list[dict]) -> list
         if not ch.get("leak"):
             continue
         ver = ch.get("check", "v2")
+        for x in ch.get("frame") or []:
+            L.append(f"- **Flag ({ver}, frame field `{x.get('field')}`, {x.get('kind')}; points at {x.get('option') or 'no option'}"
+                     f"{' = gold' if x.get('option_is_gold') else ''}):** \"{x.get('quote')}\"  \n"
+                     f"  Checker: decided by *{x.get('who')}* — {x.get('why')}")
         for x in ch.get("facts") or []:
             fid = x.get("id")
             text = old_fact.get(fid) or next((f.fact for f in c.facts if f.id == fid), "?")
@@ -104,7 +108,7 @@ def main(argv=None):
     ap.add_argument("--out", default=str(ROOT / "LEAK-REVIEW-2026-11-09.md"))
     a = ap.parse_args(argv)
     store = Store()
-    checks = load_jsonl("answer-leak-v[23]-*.jsonl")
+    checks = load_jsonl("answer-leak-v[234]-*.jsonl")
     fixes = load_jsonl("unleak*-*.jsonl")
     flagged = sorted(s for s, rs in checks.items() if any(r.get("leak") for r in rs))
     corpus = [s for s in flagged if s.startswith("DR-CORPUS")]
@@ -117,7 +121,7 @@ def main(argv=None):
          "to adapt that earlier plan to changed circumstances), or an authoritative statement of what happened after the "
          "decision point (warnings and forecasts are fine). A different body's decision under review is not a leak.", "",
          "Checks: v2 = role-aware; v3 = v2 plus the two caveats (prior plan the agent may adapt; outcome = authoritative "
-         "future). The checker is GPT-6 Luna and is not perfectly consistent run to run, which is why a trace that passed "
+         "future); v4 = v3 plus the frame fields (title, setting, situation, decider), which can also carry the decision. The checker is GPT-6 Luna and is not perfectly consistent run to run, which is why a trace that passed "
          "once can be flagged on a later check. What to look for: a flag that is NOT a leak (the check is too broad), or "
          "a fix that still gives the answer away (the fix is too lenient).", "",
          f"**{len(flagged)} scenarios flagged** ({len(corpus)} corpus, {len(older)} older set); {n_live} are back in use "
