@@ -10,6 +10,29 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O9 · 2026-11-09 · With a case, some replies never commit to a verdict
+In grid B2 (interim, 1,547 with-case cells), 10% of with-case replies have no verdict choice against 3% without a
+case; truncation explains little (4%). In 90 replies the verdict document is just `kind: verdict` followed by "...",
+after which the model argues with the format instructions ("close your thinking with </think> ... then write the
+verdict document as your reply"?) and never writes a choice. Another ~20 stop after `applicability` or `reasoning`.
+The with-case format (more steps, the think/verdict split) seems to confuse the base model; scored as wrong.
+- Sources: `results/allpairs/B2/samples.jsonl` (`phase` grid, `parsed_choice` null), e.g. raw replies of
+  `base|grid|DR-CORPUS-INC-NICARAGUA-COVERT-ACTION-AND-CONTRA-STRAT-NX-2e126ea7-E1@v1|…` and
+  `base|grid|DR-CORPUS-INC-YUGOSLAV-CRISIS-NS-776ba75b-E1@v1|…` under `results/allpairs/B2/raw/`; prompt text
+  `code/harness/prompts/format.v1.md`. Related risk: R87.
+
+### O8 · 2026-11-09 · The base model follows the trace's recommendation
+Traces contain a message urging one option (design v2.4 §8.2; deliberately sometimes wrong). In grid B2 (interim),
+no-case accuracy is 60% when the trace recommends the gold option (5 X1s), 14% when it recommends another option
+(24 X1s) and 38% with no recommendation (39 X1s); with a random case 53% / 13% / 32%. Even with its OWN case (verdict
+on the card) the model is right only 62% of the time when the trace recommends a different option, against 100% /
+79% otherwise. This explains O6 (below-chance control). In the clean corpus pool, recommendations point at gold in
+78 traces, elsewhere in 128, and 210 have none.
+- Sources: `results/allpairs/B2/report.md` ("By the trace's recommendation"), `results/allpairs/B2/samples.jsonl`,
+  `data/store/traces/<x1>/trace.yaml` (`recommended_option`), `pipeline/render/channels.py` (pick_recommended).
+- Why it matters: the case's job here is partly to overrule a wrong recommendation; the B2 headline mixes three
+  very different regimes. Risk: R91.
+
 ### O7 · 2026-11-09 · Own case is not a ceiling of 100%
 With X2 = X1 (the scenario's own case, verdict included), base Granite was right 75% of the time in the first 68
 self cells of grid B2 (eval v1: 59% main set, 81% held-out). Even with the answer on the card it does not always

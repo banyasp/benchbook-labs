@@ -58,6 +58,12 @@ def pct(t):
     return "n/a" if m != m else f"{100 * m:.0f}% [{100 * lo:.0f}-{100 * hi:.0f}]"
 
 
+def _rec_is_gold(x1: str, rec_local: str) -> bool:
+    """The trace's recommended option (scenario-local id, e.g. O2) is the scenario's gold verdict."""
+    from pipeline.store import Store
+    return Store().scenario(x1).case.verdict.choice == rec_local
+
+
 def build(run: Path) -> dict:
     cfg = json.loads((run / "config.json").read_text())
     S = [r for r in read_samples(run / "samples.jsonl") if r["model"] == cfg["model"]]
@@ -171,6 +177,22 @@ def write(run: Path, R: dict) -> str:
             if xs:
                 sub = lambda d: pct(fam_boot({x: d[x] for x in xs}, fam))
                 L.append(f"| {tag} | {len(xs)} | {sub(R['p0'])} | {sub(R['rand'])} | {sub(R['best'])} | {sub(R['selfc'])} |")
+    rec = {}
+    for x in seen:                              # the trace's recommendation vs gold (O8: the base model follows it)
+        try:
+            import yaml
+            t = yaml.safe_load(open(f"data/store/traces/{x}/trace.yaml"))
+            ro = (t.get("recommended_option") or "").rpartition("/")[2] or None
+            rec[x] = "none" if not ro else ("gold" if _rec_is_gold(x, ro) else "not gold")
+        except Exception:                       # noqa: BLE001
+            rec[x] = "unknown"
+    L += ["", "By the trace's recommendation (a message urging one option; design v2.4 §8.2, sometimes wrong):", "",
+          "| trace recommends | X1s | control | random case | best case | self |", "|---|---|---|---|---|---|"]
+    for tag in ("gold", "not gold", "none", "unknown"):
+        xs = [x for x in seen if rec.get(x) == tag]
+        if xs:
+            sub = lambda d: pct(fam_boot({x: d[x] for x in xs}, fam))
+            L.append(f"| {tag} | {len(xs)} | {sub(R['p0'])} | {sub(R['rand'])} | {sub(R['best'])} | {sub(R['selfc'])} |")
     nopt = {}
     for r in R["S"]:
         nopt[r["x1"]] = r.get("x1_n_options")
