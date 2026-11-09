@@ -24,6 +24,7 @@ from pipeline.store import Store, write_json, write_yaml
 
 from . import channels as chan
 from . import gates
+from pipeline.ingest import technique_check as TC
 from .render import INJECTION, REALIZATIONS, RenderError, check_messages, diagnostics, find_quote, locate
 from .util import extract_json, make_step, prompt_ref
 
@@ -85,7 +86,9 @@ def texture_for(store: Store, T: Scenario) -> list[str]:
         sha12 = T.source.doc.split(".")[0]
         ids = {s for v in T.fact_spans.values() for s in v}
         base = lambda s: s.split("[")[0]
-        return [d["text"] for d in store.doc_spans(sha12) if d.get("span") in {base(i) for i in ids}]
+        spans = [d["text"] for d in store.doc_spans(sha12) if d.get("span") in {base(i) for i in ids}]
+        # technique screen (design §4.2): never hand the renderer a source excerpt that carries operational technique
+        return [t for t in spans if TC.is_clean(t[:600])]
     except (OSError, KeyError, ValueError):
         return []
 
@@ -161,7 +164,10 @@ def run_gates(msgs, T: Scenario, entries, miss, opt_spans, opt_missing, rec_prob
           "card_a_parts": cardl, "cards_checked": sorted({c.id for c in cards} | {case.id})}
     nm = gates.person_names(msgs)
     g3 = {"pass": not nm, "names": nm}
-    return {"located": g1, "leak": g2, "names": g3}
+    tech = [{"message": i, "category": f.category, "match": f.match} for i, m in enumerate(msgs)
+            for f in TC.check(str(m.get("content") or "")) if f.severity == "strip"]
+    g4 = {"pass": not tech, "flags": tech}
+    return {"located": g1, "leak": g2, "names": g3, "technique": g4}
 
 
 def feedback(g: dict) -> str:
@@ -183,6 +189,9 @@ def feedback(g: dict) -> str:
                  "mention of something that exists or can be done; only the recommended course may be urged.")
     for x in b["card_a_parts"]:
         L.append(f"- Text copied from reference material ({x['part']}): \"{x['run']} ...\". Write it differently.")
+    for x in g.get("technique", {}).get("flags", []):
+        L.append(f"- Operational technique ({x['category']}): \"{x['match']}\". Remove it or state it at the level of "
+                 "the decision only (who decides, what is authorized, what is at stake), never how.")
     if g["names"]["names"]:
         L.append(f"- Personal names found: {g['names']['names']}. Use roles, titles or handles instead.")
     return "\n".join(L)
