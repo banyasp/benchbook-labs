@@ -94,7 +94,8 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   frame and course); reasoning prose and applicability-why are never scored. One scorer package shared by TRL
   (training) and Inspect (eval).
 - **No artificial recommendations in traces** (Peter, 2026-11-09, overrides design v2.4 §8.2's 50% default):
-  `RECOMMEND_SHARE = 0`; nobody in a trace urges an option unless the source situation itself had such advice. The
+  `RECOMMEND_SHARE = 0`; nobody in a trace urges an option (the render gate rejects any course introduced with a
+  directive or graded word). The
   base model followed the inserted recommendations (O8, R91). Traces with them were re-rendered.
 - **Data pipeline rulings (design v2.4, Peter's walkthrough 2026-10-26/27)** — the design file has the details:
   the model should faithfully extend the served case's reasoning (R\*), not out-guess the oracle (a disagreement is
