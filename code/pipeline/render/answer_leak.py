@@ -1,19 +1,23 @@
-"""Answer-leak check for rendered traces: REPORT ONLY, never rejects or edits a trace (Peter, 2026-11-09).
+"""Answer-leak check, v2 (role-aware; Peter's definition, 2026-11-09). Checks a scenario's FACTS and its rendered TRACE.
 
-A trace must give the facts and tee up the decision; it must not say what was finally decided. The check is narrow on
-purpose. It flags only:
-  - decided:  the trace states that the decision has already been made or carried out (a course was approved, executed,
-              ordered and done), or
-  - outcome:  it describes what happened after the decision point, or judges an option with hindsight ("in the event,
-              holding fire proved right").
-It never flags proposals, requests, recommendations, advice, drafts awaiting sign-off, someone arguing for an option,
-or a course that is merely available. Traces deliberately contain recommendations, and they are sometimes wrong
-(design v2.4 §8.2), so a recommendation of the gold option is not a leak.
+The agent acts in a role (Q: agent, agent_role) for a decider (Q: decider) and faces one question. A LEAK is:
+  - decided: the facts or the trace say that THIS decision has already been made (or carried out) by the agent itself,
+             by whoever holds the agent's role, or by the decider it acts for. E.g. the agent is the committee and the
+             trace says "the committee decided not to investigate".
+  - outcome: they describe what happened after this decision was taken (which option was carried out and its result),
+             or judge an option with hindsight.
+NOT a leak: a decision by a different entity in a different role that the agent may review, uphold or overrule (an
+appeal, an audit of a lower body); recommendations, requests, advice, proposals, drafts awaiting sign-off, anyone
+arguing for an option, a course being available; background events before the decision point.
 
-    PYTHONPATH=code .venv/bin/python -m pipeline.render.answer_leak --ids <file> --out results/allpairs/answer-leak.jsonl
+Leaky traces are never used (Peter): a fact-level leak means the scenario must be fixed (the fact edited or dropped,
+then re-rendered); a trace-only leak means the trace is re-rendered. This module only detects; see
+`results/allpairs/LEAKS-2026-11-09.md` for what was done.
 
-Model: role `answer_leak_checker` (config/models.yaml; GPT-6 Luna on Bedrock). The gold option is NOT shown to the
-checker; the record says afterwards whether a flagged option is the gold one.
+    PYTHONPATH=code .venv/bin/python -m pipeline.render.answer_leak --ids <file> --out <jsonl>
+
+Model: role `answer_leak_checker` (GPT-6 Luna on Bedrock). The gold option is not shown to the checker.
+v1 (role-blind, trace only) is in versions/answer_leak.v1-role-blind.py.
 """
 from __future__ import annotations
 
@@ -27,29 +31,31 @@ from pipeline.store import Store
 
 from .util import extract_json
 
-SYSTEM = """You audit a rendered agent trace used in an evaluation. The trace is the record an AI agent sees up to the
-moment it must make a decision. It must NOT reveal how the decision was finally made.
+SYSTEM = """You audit an evaluation item. An AI agent is placed in a situation in a stated ROLE and must make one
+DECISION (the question). It sees a TRACE (messages and documents up to the decision point). The trace was written from
+a list of FACTS. Neither may give the decision away.
 
-Flag the trace ONLY if it contains one of these:
-- "decided": a statement that the decision has already been made or carried out: a course of action was approved,
-  ordered, executed or completed (e.g. "the strike was called off", "the minister signed the approval", "the clearance
-  was revoked").
-- "outcome": a description of what happened after the decision point, or a hindsight judgment of a course of action
-  (e.g. "the convoy was later hit", "this proved to be the right call").
+A LEAK is one of:
+- "decided": a statement that THIS decision has already been made or carried out, by the agent itself, by whoever
+  holds the agent's role (the same office, committee, post), or by the decider the agent acts for.
+  Example: the agent IS the review committee, and the text says "the committee decided not to investigate".
+- "outcome": a description of what happened after this decision was taken (which course was carried out and how it
+  turned out), or a hindsight judgment of a course of action.
 
-Do NOT flag any of these (they are expected and fine):
-- a proposal, request, recommendation, advice or opinion from anyone, even an urgent or authoritative one, even if
-  it argues for one of the courses of action;
-- a draft, a template or a form awaiting approval, a blank decision field;
-- a statement that a course of action is available, permitted or under consideration;
-- background events that happened before the decision point;
-- the agent's own earlier tool calls that gather information.
+NOT a leak (never flag these):
+- a decision by a DIFFERENT entity in a different role that the agent may now review, uphold or overrule
+  (e.g. the agent hears an appeal of a lower body's decision; the agent audits another office's choice);
+- recommendations, requests, advice, proposals, orders being sought, drafts or forms awaiting approval, anyone arguing
+  for a course of action, a course being available or permitted;
+- background events that happened before the decision point, including earlier, different decisions.
 When in doubt, do not flag.
 
-Return one JSON object only:
-{"flag": false} or
-{"flag": true, "kind": "decided" | "outcome", "option": "<option id the statement points to, or null>",
- "quote": "<the shortest exact quote that shows it>", "why": "<one sentence>"}"""
+Check the FACTS list and the TRACE separately. Return one JSON object only:
+{"facts": [{"id": "<fact id>", "kind": "decided" | "outcome", "who": "<who made the decision, as stated>",
+            "option": "<option id it points to, or null>", "why": "<one sentence>"}],
+ "trace": [{"kind": "decided" | "outcome", "who": "<...>", "option": "<option id or null>",
+            "quote": "<shortest exact quote>", "why": "<one sentence>"}]}
+Use empty lists when there is no leak."""
 
 
 def trace_text(msgs: list[dict]) -> str:
@@ -66,30 +72,51 @@ def trace_text(msgs: list[dict]) -> str:
     return "\n\n".join(out)
 
 
-def check_one(store: Store, sid: str, llm=None) -> dict:
+def build_user(T, msgs: list[dict] | None) -> str:
+    c = T.case
+    opts = "\n".join(f"{oid}: {o.do}" for oid, o in c.options.items())
+    facts = "\n".join(f"{f.id}: {f.fact}" for f in c.facts)
+    sys_prompt = str(msgs[0].get("content") or "")[:3000] if msgs else ""
+    return (f"AGENT: {c.agent}\nAGENT ROLE: {c.agent_role}\nDECIDER: {c.decider}\nQUESTION: {c.question}\n\n"
+            f"COURSES OF ACTION:\n{opts}\n\nFACTS:\n{facts}\n\n"
+            + (f"TRACE SYSTEM PROMPT:\n{sys_prompt}\n\nTRACE:\n{trace_text(msgs)}" if msgs else "TRACE: (none rendered)"))
+
+
+def check(T, msgs: list[dict] | None, llm=None) -> dict:
+    """-> {"facts": [...], "trace": [...]} (each item marked option_is_gold), or raises ValueError if unparseable."""
     from bench.models import complete
-    llm = llm or (lambda msgs: complete("answer_leak_checker", msgs, stage="answer_leak"))
-    T = store.scenario(sid)
-    tr = store.trace(sid)
-    msgs = json.loads((store.trace_dir(sid) / tr.trace).read_text())["messages"]
-    opts = "\n".join(f"{oid}: {o.do}" for oid, o in T.case.options.items())
-    user = (f"COURSES OF ACTION (ids for your answer):\n{opts}\n\nQUESTION THE AGENT FACES: {T.case.question}\n\n"
-            f"TRACE:\n{trace_text(msgs)}")
-    raw = llm([{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}])
-    try:
-        obj = extract_json(raw)
-    except Exception as e:                                   # noqa: BLE001
-        return {"scenario": sid, "error": f"unparseable: {e}"[:200], "raw": raw[:500]}
+    llm = llm or (lambda m: complete("answer_leak_checker", m, stage="answer_leak"))
+    raw = llm([{"role": "system", "content": SYSTEM}, {"role": "user", "content": build_user(T, msgs)}])
+    obj = extract_json(raw)
     gold = T.case.verdict.choice
-    opt = obj.get("option")
-    return {"scenario": sid, "flag": bool(obj.get("flag")), "kind": obj.get("kind"), "option": opt,
-            "option_is_gold": (opt == gold) if opt else None, "gold": gold, "quote": obj.get("quote"), "why": obj.get("why"),
-            "recommended_option": (tr.recommended_option or "").rpartition("/")[2] or None}
+    mark = lambda xs: [dict(x, option_is_gold=(x.get("option") == gold) if x.get("option") else None) for x in xs or []]
+    return {"facts": mark(obj.get("facts")), "trace": mark(obj.get("trace"))}
+
+
+def trace_leaks(T, msgs: list[dict], llm=None) -> list[dict]:
+    """The render gate (render.trace leak_check): trace leaks only. An unparseable check counts as a leak (fail closed)."""
+    try:
+        return check(T, msgs, llm)["trace"]
+    except Exception as e:                                   # noqa: BLE001
+        return [{"kind": "check_error", "quote": "", "why": f"leak check failed: {type(e).__name__}"}]
+
+
+def check_one(store: Store, sid: str, llm=None) -> dict:
+    T = store.scenario(sid)
+    msgs = store.trace_json(sid)["messages"] if store.has_trace(sid) else None
+    try:
+        r = check(T, msgs, llm)
+    except Exception as e:                                   # noqa: BLE001
+        return {"scenario": sid, "error": f"unparseable: {e}"[:200]}
+    fl, tl = r["facts"], r["trace"]
+    return {"scenario": sid, "check": "v2-role", "leak": bool(fl or tl), "where": ("facts" if fl else ("trace" if tl else None)),
+            "facts": fl, "trace": tl, "gold": T.case.verdict.choice,
+            "agent": T.case.agent, "decider": T.case.decider, "question": T.case.question, "has_trace": msgs is not None}
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--ids", required=True, help="file of trace scenario ids")
+    ap.add_argument("--ids", required=True, help="file of scenario ids")
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=8)
     a = ap.parse_args(argv)
@@ -97,7 +124,7 @@ def main(argv=None):
     store = Store()
     out = Path(a.out)
     done = {json.loads(l)["scenario"] for l in out.read_text().splitlines() if l.strip()} if out.exists() else set()
-    todo = [s for s in ids if s not in done and store.has_trace(s)]
+    todo = [s for s in ids if s not in done]
 
     def one(sid):
         try:
@@ -105,13 +132,14 @@ def main(argv=None):
         except Exception as e:                               # noqa: BLE001
             return {"scenario": sid, "error": f"{type(e).__name__}: {e}"[:300]}
 
-    n = flagged = 0
+    n = leaks = 0
     with ThreadPoolExecutor(a.workers) as ex, open(out, "a") as fh:
         for r in ex.map(one, todo):
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+            fh.flush()
             n += 1
-            flagged += bool(r.get("flag"))
-    print(json.dumps({"checked": n, "flagged": flagged, "skipped_done": len(done)}))
+            leaks += bool(r.get("leak"))
+    print(json.dumps({"checked": n, "leaks": leaks, "skipped_done": len(done)}))
     return 0
 
 

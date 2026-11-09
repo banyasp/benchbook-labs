@@ -192,6 +192,10 @@ def feedback(g: dict) -> str:
     for x in g.get("technique", {}).get("flags", []):
         L.append(f"- Operational technique ({x['category']}): \"{x['match']}\". Remove it or state it at the level of "
                  "the decision only (who decides, what is authorized, what is at stake), never how.")
+    for x in g.get("answer_leak", {}).get("items", []):
+        L.append(f"- The trace gives the decision away: \"{x.get('quote')}\" ({x.get('why')}). The trace must not say that "
+                 "the agent, its role or the decider it acts for has already made this decision, or what happened after it. "
+                 "Remove or rewrite it so the decision is still open. Advice, requests or recommendations from others are fine.")
     if g["names"]["names"]:
         L.append(f"- Personal names found: {g['names']['names']}. Use roles, titles or handles instead.")
     return "\n".join(L)
@@ -219,8 +223,9 @@ def call_llm(llm, messages, sleep=time.sleep):
 
 
 def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: list[str] | None = None, llm=None,
-                    seed: int = DEFAULT_SEED, sleep=time.sleep) -> tuple[TraceRecord, dict]:
-    """-> (TraceRecord, trace_json). status ok -> gates pass; otherwise diagnostics.status = "rejected" (check it)."""
+                    seed: int = DEFAULT_SEED, sleep=time.sleep, leak_check=None) -> tuple[TraceRecord, dict]:
+    """leak_check: optional (T, msgs) -> list of trace answer leaks (pipeline.render.answer_leak.trace_leaks); a leak fails
+    the attempt and is fed back. -> (TraceRecord, trace_json). status ok -> gates pass; otherwise diagnostics.status = "rejected" (check it)."""
     llm = llm or _models.complete
     cards = list(cards or [])
     gid = T.case.global_id
@@ -253,6 +258,10 @@ def render_trace_v3(T: Scenario, cards: list[Case] | None = None, *, texture: li
         recspan, rec_probs = locate_recommendation(msgs, obj.get("recommendation"), rec, T.case)
         g = run_gates(msgs, T, entries, miss, opt_spans, opt_missing, rec_probs, channel_problems(msgs, opt_spans), cards, rec)
         ok = all(v["pass"] for v in g.values())
+        if ok and leak_check is not None:          # answer leak (role-aware, Peter 2026-11-09): LLM check, after the cheap gates
+            lk = leak_check(T, msgs)
+            g["answer_leak"] = {"pass": not lk, "items": lk}
+            ok = not lk
         attempts.append({"attempt": attempt, "pass": ok, **{k: v["pass"] for k, v in g.items()},
                           **({} if ok else {"failures": feedback(g)[:1500]})})
         last.update(msgs=msgs, g=g, obj=obj, entries=entries, miss=miss, opt_spans=opt_spans, recspan=recspan,
@@ -324,10 +333,11 @@ def save(store: Store, rec: TraceRecord, trace_json: dict) -> Path:
 
 
 def render_one(store: Store, sid: str, *, cards: list[Case] | None = None, llm=None, seed: int = DEFAULT_SEED,
-               texture: bool = True, sleep=time.sleep) -> TraceRecord:
+               texture: bool = True, sleep=time.sleep, leak_check=None) -> TraceRecord:
     T = store.scenario(sid)
     cs = cards if cards is not None else cards_for(store, sid)
-    rec, tj = render_trace_v3(T, cs, texture=texture_for(store, T) if texture else None, llm=llm, seed=seed, sleep=sleep)
+    rec, tj = render_trace_v3(T, cs, texture=texture_for(store, T) if texture else None, llm=llm, seed=seed, sleep=sleep,
+                              leak_check=leak_check)
     save(store, rec, tj)
     return rec
 
