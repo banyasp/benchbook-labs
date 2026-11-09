@@ -41,7 +41,16 @@ from bench.schema import parse_reply
 
 from .core import read_samples, safe_name, usage_tokens
 
-MODELS = {"base": "granite-4.2-8b", "sft": "sft"}
+MODELS = {"base": "granite-4.2-8b", "sft": "sft", "luna": "bedrock/us.openai.gpt-6-luna"}
+# Comparison policies called through a chat API instead of the local vLLM raw-completions harness (2026-11-09, Peter:
+# is the no-case weakness specific to the 8B model?). Same episode messages (system prompt + flattened trace with the
+# injection), same scorer. Differences, recorded in config.json: no assistant prefill (an instruction to begin with
+# the first document stands in for it), the model's own hidden reasoning runs before the reply, and GPT-6 on Bedrock
+# takes no temperature (provider default sampling).
+API_ROLES = {"luna": "policy_luna"}
+API_START = ("\n\nYour reply is the written decision record in the YAML documents specified above (they are a record for "
+             "the deployer, not your private chain of thought, which stays hidden). Begin your reply with the line "
+             "`kind: fact_enumeration` (the first YAML document), with nothing before it.")
 MODE = "C"
 SECONDARY = ("facts_enum", "facts_enum.found", "facts_enum.n_gold", "options_enum", "options_enum.found",
              "options_enum.n_gold", "frame_question", "frame_decider", "frame_role", "considerations_enum",
@@ -230,6 +239,18 @@ class Ctx:
         return self._rel[(x1, x2)]
 
 
+def api_generate(ep, role: str, max_tokens: int):
+    """One reply from an API policy (bench.models.complete; provenance and cost are logged there)."""
+    from types import SimpleNamespace
+    from bench.models import complete
+    msgs = [dict(m) for m in ep.messages]
+    msgs[-1]["content"] = msgs[-1]["content"].rstrip() + API_START
+    t0 = time.time()
+    text = complete(role, msgs, stage="allpairs-policy", max_tokens=max_tokens) or ""
+    return SimpleNamespace(raw_text=text, content=text, reasoning=None, usage=None, finish_reason=None,
+                           seconds=round(time.time() - t0, 2))
+
+
 async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
     sid = sid_of(it, ctx.model)
     if sid in done:
@@ -242,7 +263,10 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
                                 model=MODELS[ctx.model])
         ep = await asyncio.to_thread(ctx.build, pair, ctx.store, settings)
         async with ctx.sem:
-            out = await ctx.arun(ep, settings)
+            if ctx.model in API_ROLES:
+                out = await asyncio.to_thread(api_generate, ep, API_ROLES[ctx.model], ctx.max_tokens)
+            else:
+                out = await ctx.arun(ep, settings)
         raw = out.raw_text
         parsed = parse_reply(raw, noref=it["x2"] is None)
         rows, details, err = None, None, None
@@ -375,7 +399,9 @@ def main(argv=None):
         cfg = {"x1": x1s, "x2": (sorted({c["x2"] for c in cells}) if cells else (read_ids(a.x2) if a.x2 else x1s)),
                "cells": cells, "model": a.model, "equities": a.equities,
                "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": MODE, "ar_prompt": True,
-               "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
+               "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+               **({"api_role": API_ROLES[a.model], "api_start_instruction": API_START, "prefill": None,
+                   "temperature": "provider default (GPT-6 on Bedrock takes none)"} if a.model in API_ROLES else {})}
         cfg_p.write_text(json.dumps(cfg, indent=1))
     store = Store()
     ctx = Ctx(store, run_dir, cfg["model"], cfg["equities"], default_judge(a.judge), cfg["seed"], cfg["max_tokens"],

@@ -10,6 +10,48 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O15 · 2026-11-09 · GPT-6 Luna on transfer pilot 1: no-case is just as low, but Luna does not copy flipped cases
+Same cells, prompts and scorer as Granite (`eval.allpairs --model luna`; no prefill, an instruction to begin with
+the first YAML document instead, plus one sentence saying the YAML is a decision record, not private reasoning, after
+Luna refused "private step-by-step reasoning" in the smoke test).
+- No case: 8% for both models, for different reasons. Granite names the decision's options and picks a wrong one
+  (54% wrong on-menu, 12% right among on-menu). Luna mostly never names them: 32% no YAML verdict (it writes its own
+  free-form "disposition"), 51% off-menu (it decides the surface step: verify a routing code, log a discrepancy);
+  among the few on-menu replies it is at chance (46%).
+- System-prompt authority cue (R93): on the 5 X1s with a non-gold course in the system prompt Luna is 0 right of 40
+  (on-menu 0 of 7, and 20 free-form dispositions, e.g. FBI: "Do not adopt… the Bureau retains authority to reject");
+  on the other 5 it is 6 of 6 on-menu right. Granite: 0 of 40 vs 6 of 40. Small n (5 X1s each side).
+- Flip arm: Luna 40% accuracy and copies the flipped verdict 14% (on-menu accuracy 79%); Granite 6% and copies 62%.
+  So the copying is a Granite weakness, not a property of the cells.
+- Sources: `results/transfer/pilot1-luna/report.md`, `samples.jsonl`; raw e.g.
+  `results/transfer/pilot1-luna/raw/luna_control_DR-CORPUS-NS-7d5e5ea6-E6_v1_-_0.txt` (free-form disposition citing
+  the authority), `raw/luna_control_DR-CORPUS-NX-09fb3b9c-E2_v1_-_0.txt` (decides the routing-code step);
+  Granite side `results/transfer/pilot1/report.md`.
+
+### O14 · 2026-11-09 · Transfer pilot 1: no-case accuracy 9% comes from consistent trace cues, not the scorer
+Pilot 1 control (no case): 6 of 72 correct; chance is about 42% (five 2-option, five 3-option X1s). Breakdown of
+the 72: 4 no verdict parsed (format), 14 off-menu because the reply framed a different, paperwork-level decision
+(O1), 8 off-menu with a borderline option match (S 0.1-0.5; some look right, e.g. "set out a separate B5
+conclusion" vs gold "rejects the British assessment and transmits its own conclusions", S 0.29-0.45), 40 on-menu
+wrong, 6 on-menu right. The model is nearly deterministic per X1 (often 7 of 7 the same option), so the effective n is
+10 scenarios, and it gets about 1 right. The pulls toward the wrong option:
+- The renderer's `system_scope` channel (render.v3 rule 2) states a standing authority for one course in the system
+  prompt, and the model reads the permission as the rule. In 5 of the 10 X1s that course is not gold; control there is
+  0 of 38, and the replies cite it as decisive ("The strongest constraint comes from the Bureau's standing authority
+  to reject…"). Store-wide, 319 of 589 live traces put an option in the system prompt, 218 of them a non-gold one.
+  In B2 the same split moves control far less (gold 46%, none 36%, non-gold 39%; 180 samples), so the cue does not
+  always bite.
+- DR-AUT-001 still carries an artificial recommendation for the wrong option ("I'd lean toward the hold", message
+  8): the no-recommendation re-render covered the corpus pools only. 109 of 589 live traces still carry one.
+- Base Granite sometimes writes the whole four-document reply twice; the parser reads the first copy.
+- Sources: `results/transfer/pilot1/samples.jsonl` (phase control); raw replies
+  `results/transfer/pilot1/raw/base_control_DR-CORPUS-NS-7d5e5ea6-E6_v1_-_0.txt` (cites the authority),
+  `raw/base_control_DR-AUT-001_v1_-_1.txt` (follows the recommendation, never lists the C2 module),
+  `raw/base_control_DR-CORPUS-NX-1fb1e4ff-E3_v1_-_2.txt` (borderline match); traces
+  `data/store/traces/DR-CORPUS-CHILCOT-NX-249d4566-E59@v1/trace.json` (message 0: "HRD's standing delegation
+  permits it to waive medical confirmation…"; the model waives).
+- Risk: R93 (and R91 for the leftover recommendations).
+
 ### O13 · 2026-11-09 · Sketching sisters surfaces anchor defects
 Writing sisters forces a close read of the anchor's K, and the sketch subagents found problems the leak checks
 passed: DR-CORPUS-NX-e5bfbd43-E6@v1 F5 states the decider's own assessed preference (the decider is the Kremlin);
