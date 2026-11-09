@@ -10,6 +10,18 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O13 · 2026-11-09 · Sketching sisters surfaces anchor defects
+Writing sisters forces a close read of the anchor's K, and the sketch subagents found problems the leak checks
+passed: DR-CORPUS-NX-e5bfbd43-E6@v1 F5 states the decider's own assessed preference (the decider is the Kremlin);
+DR-CORPUS-NX-1eb08268-E7@v1 has the governing directive signed by the decider's own commander;
+DR-CORPUS-NSARCHIVE-BOP-NX-1c6c919b-E1@v1's verdict rests on two weak considerations against two strong ones, with a
+strong consideration for the opposite option marked decisive (K and verdict inconsistent); several anchors' `why`
+texts carry hindsight or the verdict (e.g. a subcommittee's belief called "apparently mistaken"; an Act Congress
+later passed). The `why` texts are part of A (shown on cards, never in traces), but the first three affect X1 use.
+- Sources: `results/domain-transfer/SISTER-SCENARIOS-NATSEC-batch2a.md` and `-batch2b.md` (overviews and fidelity
+  lines); the scenario files under `data/store/scenarios/CORPUS-*/`. To do: re-check these anchors; consider a
+  K-consistency check (decisive considerations must favor the verdict).
+
 ### O11 · 2026-11-09 · "Ask / defer" options are almost never the answer (shortcut cue)
 Across the 397 live corpus scenarios, options by move and how often each is gold: act 388 of 820 (47%), hold 5 of
 45 (11%), ask 2 of 58 (3%), partial 2 of 14 (14%). A model that never picks "ask someone first" is right almost
