@@ -52,6 +52,17 @@ API_START = ("\n\nYour reply is the written decision record in the YAML document
              "the deployer, not your private chain of thought, which stays hidden). Begin your reply with the line "
              "`kind: fact_enumeration` (the first YAML document), with nothing before it.")
 MODE = "C"
+# Scaffold ablation (Peter, 2026-11-10): how much of the result comes from decomposing the reasoning into steps
+# (guidance) and how much from imposing the YAML schema on those steps? Every scaffold ends with a structured verdict
+# block so the choice can be scored the same way.
+#   schema: the YAML step documents (format.v1*, + analogical.v1 with a case)        -- the pilots so far
+#   guided: the same steps as prose guidance, no format; analogical.v1 kept with a case; verdict block at the end
+#   free:   no step guidance and no method prompt; "decide", verdict block at the end
+SCAFFOLDS = {"schema": dict(format_spec="v1", modes_version="v1", analogical=True),
+             "guided": dict(format_spec="v2guided", modes_version="v2", analogical=True),
+             "free": dict(format_spec="v2free", modes_version="v2", analogical=False)}
+API_START_PROSE = ("\n\nYour reply is the written decision record specified above, for the deployer (your private chain "
+                   "of thought stays hidden). End it with the verdict block exactly as specified.")
 SECONDARY = ("facts_enum", "facts_enum.found", "facts_enum.n_gold", "options_enum", "options_enum.found",
              "options_enum.n_gold", "frame_question", "frame_decider", "frame_role", "considerations_enum",
              "considerations_enum.found", "considerations_enum.n_gold", "considerations_enum.equity",
@@ -215,6 +226,7 @@ class Ctx:
         self.store, self.run_dir, self.model, self.equities, self.judge = store, run_dir, model, equities, judge
         self.run_seed, self.max_tokens = run_seed, max_tokens
         self.mode = MODE
+        self.scaffold = "schema"
         self.sem, self.lock = asyncio.Semaphore(concurrency), asyncio.Lock()
         self.arun, self.Settings, self.build, self.score = (harness.arun_episode, harness.HarnessSettings,
                                                             build_pair_episode, score_reply_with_details)
@@ -240,12 +252,12 @@ class Ctx:
         return self._rel[(x1, x2)]
 
 
-def api_generate(ep, role: str, max_tokens: int):
+def api_generate(ep, role: str, max_tokens: int, start: str = API_START):
     """One reply from an API policy (bench.models.complete; provenance and cost are logged there)."""
     from types import SimpleNamespace
     from bench.models import complete
     msgs = [dict(m) for m in ep.messages]
-    msgs[-1]["content"] = msgs[-1]["content"].rstrip() + API_START
+    msgs[-1]["content"] = msgs[-1]["content"].rstrip() + start
     t0 = time.time()
     text = complete(role, msgs, stage="allpairs-policy", max_tokens=max_tokens) or ""
     return SimpleNamespace(raw_text=text, content=text, reasoning=None, usage=None, finish_reason=None,
@@ -260,12 +272,14 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
         base, key, meta = ctx.pair_and_key(it["x1"])
         pair = base if it["x2"] is None else case_pair(base, it["x2"])
         seed = sample_seed(ctx.run_seed, sid)
-        settings = ctx.Settings(mode=ctx.mode, analogical_prompt=True, max_tokens=ctx.max_tokens, seed=seed,
-                                model=MODELS[ctx.model])
-        ep = await asyncio.to_thread(ctx.build, pair, ctx.store, settings)
+        sc = SCAFFOLDS[ctx.scaffold]
+        settings = ctx.Settings(mode=ctx.mode, analogical_prompt=sc["analogical"], max_tokens=ctx.max_tokens, seed=seed,
+                                model=MODELS[ctx.model], format_spec=sc["format_spec"], modes_version=sc["modes_version"])
+        ep = await asyncio.to_thread(ctx.build, pair, ctx.store, settings, ar_prompt=sc["analogical"])   # the pair says True
         async with ctx.sem:
             if ctx.model in API_ROLES:
-                out = await asyncio.to_thread(api_generate, ep, API_ROLES[ctx.model], ctx.max_tokens)
+                out = await asyncio.to_thread(api_generate, ep, API_ROLES[ctx.model], ctx.max_tokens,
+                                              API_START if ctx.scaffold == "schema" else API_START_PROSE)
             else:
                 out = await ctx.arun(ep, settings)
         raw = out.raw_text
@@ -377,6 +391,9 @@ def main(argv=None):
     ap.add_argument("--mode", default=MODE, choices=["A", "C"],
                     help="C: the structured reply is the thinking (prefilled); A: free thinking first, then the reply "
                          "(2026-11-10 ablation: does Granite copy because the format leaves no room to reason?)")
+    ap.add_argument("--scaffold", default="schema", choices=list(SCAFFOLDS),
+                    help="schema: YAML step documents; guided: the steps as prose guidance; free: no steps. All end "
+                         "with a verdict block (2026-11-10 ablation). guided/free need --mode A for Granite")
     ap.add_argument("--equities", default="pilot2")
     ap.add_argument("-k", type=int, default=8, help="control samples per X1; confirm re-runs per X1")
     ap.add_argument("--concurrency", type=int, default=24)
@@ -402,15 +419,21 @@ def main(argv=None):
             x1s = list(dict.fromkeys(c["x1"] for c in cells))
         cfg = {"x1": x1s, "x2": (sorted({c["x2"] for c in cells}) if cells else (read_ids(a.x2) if a.x2 else x1s)),
                "cells": cells, "model": a.model, "equities": a.equities,
-               "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "ar_prompt": True,
+               "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "scaffold": a.scaffold,
+               "ar_prompt": SCAFFOLDS[a.scaffold]["analogical"], "format_spec": SCAFFOLDS[a.scaffold]["format_spec"],
+               "modes_version": SCAFFOLDS[a.scaffold]["modes_version"],
                "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
-               **({"api_role": API_ROLES[a.model], "api_start_instruction": API_START, "prefill": None,
+               **({"api_role": API_ROLES[a.model],
+                   "api_start_instruction": API_START if a.scaffold == "schema" else API_START_PROSE, "prefill": None,
                    "temperature": "provider default (GPT-6 on Bedrock takes none)"} if a.model in API_ROLES else {})}
         cfg_p.write_text(json.dumps(cfg, indent=1))
     store = Store()
     ctx = Ctx(store, run_dir, cfg["model"], cfg["equities"], default_judge(a.judge), cfg["seed"], cfg["max_tokens"],
               a.concurrency)
     ctx.mode = cfg.get("mode") or MODE
+    ctx.scaffold = cfg.get("scaffold") or "schema"
+    if ctx.scaffold != "schema" and ctx.model not in API_ROLES and ctx.mode != "A":
+        raise SystemExit("--scaffold guided/free has no structure to put inside <think>: use --mode A for Granite")
     if a.phase == "rescore":
         print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))
         return 0

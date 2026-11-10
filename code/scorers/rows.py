@@ -117,6 +117,8 @@ class ScoringContext:
     @cached_property
     def agent_options(self) -> dict[str, str]:
         opts = self.step("fact_enumeration").get("options")
+        if not opts:   # scaffold ablation (2026-11-10): guided / free replies list their options in the verdict block
+            opts = self.step("verdict").get("options")
         if isinstance(opts, dict):
             return {str(k): _s(v.get("do") if isinstance(v, dict) else v) for k, v in opts.items()}
         return _items(opts, "do", "gen-O")

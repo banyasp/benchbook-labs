@@ -1,0 +1,84 @@
+# Run registry for the ablation tensor (2026-11-10). One entry per run directory = one CONDITION: every factor below is
+# fixed within the run; the within-run coordinates of each reply are arm, x1, x2 and idx (sample index).
+# `code/eval/analysis/tensor.py build` reads this file and writes one row per reply (results/tensor/replies.parquet)
+# with these factors as columns. Add an entry BEFORE launching a run; set status when it changes.
+#
+# Factors (vary across runs):
+#   policy     granite-4.2-8b | gpt-6-luna            the model under test
+#   scaffold   schema | guided | free                   schema = YAML step documents; guided = the same steps as prose
+#                                                       guidance; free = no steps (all end with a verdict block)
+#   thinking   in_structure | free_then_reply | hidden  Granite mode C (YAML is the thinking) | Granite mode A (free
+#                                                       thinking, then the reply) | API model's hidden reasoning
+# Fixed so far (recorded, so later runs can vary them): cells (which X1 x X2 cells), traces (render version of the
+# X1 traces), equities, card_view, judge / scoring version; and max_tokens, mode_line (the appended mode instruction).
+# Known non-orthogonality: max_tokens differs (Granite C 12000, Granite A 20000, Luna 16000); Luna schema got the
+# mode-C line ("write the YAML inside your thinking", meaningless for a hidden-reasoning API model), Luna guided/free
+# the v2 mode-A line.
+
+defaults:
+  cells: pilot2            # results/transfer/pilot2/cells.json: 28 X1, 123 cells (28 self, 40 transfer, 27 flip, 28 decoy) + no case
+  traces: render.v5        # all 28 X1 traces last written 2026-11-09 22:24-22:26 UTC
+  equities: pilot2
+  card_view: full
+  scoring: allpairs-scoring-v3   # Jev Choice option translation, threshold 0.5
+  k: 8
+
+runs:
+  - run: results/transfer/pilot2
+    policy: granite-4.2-8b
+    scaffold: schema
+    thinking: in_structure
+    max_tokens: 12000
+    mode_line: v1.C
+    status: complete
+    measurement: M07
+  - run: results/transfer/pilot2-luna
+    policy: gpt-6-luna
+    scaffold: schema
+    thinking: hidden
+    max_tokens: 16000
+    mode_line: v1.C
+    status: complete
+    measurement: M06
+  - run: results/transfer/pilot2-modeA
+    policy: granite-4.2-8b
+    scaffold: schema
+    thinking: free_then_reply
+    max_tokens: 20000
+    mode_line: v1.A
+    status: partial
+    measurement: M09
+  - run: results/transfer/pilot2-luna-guided
+    policy: gpt-6-luna
+    scaffold: guided
+    thinking: hidden
+    max_tokens: 16000
+    mode_line: v2.A
+    status: planned
+    measurement: M11
+  - run: results/transfer/pilot2-luna-free
+    policy: gpt-6-luna
+    scaffold: free
+    thinking: hidden
+    max_tokens: 16000
+    mode_line: v2.A
+    status: planned
+    measurement: M11
+  - run: results/transfer/pilot2-granite-guided
+    policy: granite-4.2-8b
+    scaffold: guided
+    thinking: free_then_reply
+    max_tokens: 20000
+    mode_line: v2.A
+    k: 4
+    status: planned
+    measurement: M11
+  - run: results/transfer/pilot2-granite-free
+    policy: granite-4.2-8b
+    scaffold: free
+    thinking: free_then_reply
+    max_tokens: 20000
+    mode_line: v2.A
+    k: 4
+    status: planned
+    measurement: M11
