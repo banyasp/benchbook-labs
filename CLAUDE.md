@@ -52,6 +52,11 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   reply files, scenario files). An observation that becomes a risk also gets an R-number.
 - **No data in git** (Peter, 2026-11-09): raw corpus, weights/checkpoints, per-sample raw replies and judge
   matrices stay on the box (`.gitignore`); commit code, configs, reports, figures and `samples.jsonl`.
+- **Record measurements** (Peter, 2026-11-10): every data finding goes in `measurements/` (index in
+  `measurements/README.md`, one `M<nn>-*.md` per measurement): status (complete / partial with how far and when /
+  aborted / superseded), the data it covers (pointers), the exact command and code that produced it, and every LLM in
+  the loop (policy, judge, or Claude-read: numbers Claude produced by reading or by an unsaved ad-hoc query). Update a
+  PARTIAL entry when its run completes.
 - **Log risks as you find them.** `docs/RISK-REGISTER.md` records every assumption, risk and inference (and how
   to observe it). When you hit a new one — a shortcut cue, a data artifact, a judge failure — append an entry the
   same day. Never delete entries.

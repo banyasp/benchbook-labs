@@ -126,11 +126,12 @@ def analyse(run: str, store, info, max_idx=None) -> dict:
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--runs", nargs="+", help="subset of run names to compare (default: all three)")
     ap.add_argument("--max-idx", type=int, help="only samples with idx <= this, in every run (fair comparison while a run is partial)")
     a = ap.parse_args(argv)
     from pipeline.store import Store
     store, info = Store(), flip_info()
-    R = {run: analyse(run, store, info, a.max_idx) for run, _ in RUNS if (Path("results/transfer") / run / "samples.jsonl").exists()}
+    R = {run: analyse(run, store, info, a.max_idx) for run, _ in RUNS if (not a.runs or run in a.runs) and (Path("results/transfer") / run / "samples.jsonl").exists()}
     lab = dict(RUNS)
     L = ["# Reasoning-mode comparison on transfer pilot 2", "",
          "Same 28 anchors, same sisters, same traces, same equities; "
