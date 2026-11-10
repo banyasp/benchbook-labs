@@ -30,6 +30,14 @@ information did not establish ...").
 - Not a token budget: Granite's flip replies average about 7,900 completion tokens.
 - Open test (queued): Granite in mode A (free thinking, then the YAML) on the same flip and transfer cells:
   `results/transfer/pilot2-modeA/`.
+- Update 2026-11-10 (Granite pilot 2 complete, 1,208 samples): no case 45%, own case 81%, transfer 73%, flip 19%
+  (copies 57%), decoy 46%. Recomputed on the full run with `code/eval/analysis/mode_compare.py`, contamination is
+  control 36% / self 19% / transfer 23% / flip 50% / decoy 31% (Luna 24 / 14 / 18 / 22 / 18). Granite's flip replies
+  truncate at 12,000 tokens 8% of the time. Mode A was widened (Peter, 2026-11-10: "allow Granite to think before it
+  samples ... apples-to-apples against Luna") to all five arms at k=8 with 20,000 tokens: at 12,000 the free thinking
+  truncated 3 of the first 6 flip replies (that 60-sample attempt is kept in
+  `results/transfer/versions/pilot2-modeA.v1-12k-tokens-aborted/`). Early sign, not yet a result: mode A thinks far
+  longer on flip cells (about 44,000 characters) than on the others (17,000-27,000).
 - Sources: `results/transfer/pilot2/` and `results/transfer/pilot2-luna/` (samples.jsonl, raw/), flip cases from
   `results/transfer/build-batch2-20261109.jsonl`; analysis script
   `code/eval/analysis/flip_relation_audit.py` (relation, via and mapping counts; the contamination and cross-tab
