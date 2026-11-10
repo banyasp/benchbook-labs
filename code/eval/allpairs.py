@@ -214,6 +214,7 @@ class Ctx:
         from .core import score_reply_with_details
         self.store, self.run_dir, self.model, self.equities, self.judge = store, run_dir, model, equities, judge
         self.run_seed, self.max_tokens = run_seed, max_tokens
+        self.mode = MODE
         self.sem, self.lock = asyncio.Semaphore(concurrency), asyncio.Lock()
         self.arun, self.Settings, self.build, self.score = (harness.arun_episode, harness.HarnessSettings,
                                                             build_pair_episode, score_reply_with_details)
@@ -259,7 +260,7 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
         base, key, meta = ctx.pair_and_key(it["x1"])
         pair = base if it["x2"] is None else case_pair(base, it["x2"])
         seed = sample_seed(ctx.run_seed, sid)
-        settings = ctx.Settings(mode=MODE, analogical_prompt=True, max_tokens=ctx.max_tokens, seed=seed,
+        settings = ctx.Settings(mode=ctx.mode, analogical_prompt=True, max_tokens=ctx.max_tokens, seed=seed,
                                 model=MODELS[ctx.model])
         ep = await asyncio.to_thread(ctx.build, pair, ctx.store, settings)
         async with ctx.sem:
@@ -373,6 +374,9 @@ def main(argv=None):
     ap.add_argument("--x1", help="file of X1 scenario ids (need traces); stored in the run dir on first use")
     ap.add_argument("--x2", help="file of X2 scenario ids (default: the X1 list)")
     ap.add_argument("--model", default="base", choices=list(MODELS))
+    ap.add_argument("--mode", default=MODE, choices=["A", "C"],
+                    help="C: the structured reply is the thinking (prefilled); A: free thinking first, then the reply "
+                         "(2026-11-10 ablation: does Granite copy because the format leaves no room to reason?)")
     ap.add_argument("--equities", default="pilot2")
     ap.add_argument("-k", type=int, default=8, help="control samples per X1; confirm re-runs per X1")
     ap.add_argument("--concurrency", type=int, default=24)
@@ -398,7 +402,7 @@ def main(argv=None):
             x1s = list(dict.fromkeys(c["x1"] for c in cells))
         cfg = {"x1": x1s, "x2": (sorted({c["x2"] for c in cells}) if cells else (read_ids(a.x2) if a.x2 else x1s)),
                "cells": cells, "model": a.model, "equities": a.equities,
-               "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": MODE, "ar_prompt": True,
+               "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "ar_prompt": True,
                "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
                **({"api_role": API_ROLES[a.model], "api_start_instruction": API_START, "prefill": None,
                    "temperature": "provider default (GPT-6 on Bedrock takes none)"} if a.model in API_ROLES else {})}
@@ -406,6 +410,7 @@ def main(argv=None):
     store = Store()
     ctx = Ctx(store, run_dir, cfg["model"], cfg["equities"], default_judge(a.judge), cfg["seed"], cfg["max_tokens"],
               a.concurrency)
+    ctx.mode = cfg.get("mode") or MODE
     if a.phase == "rescore":
         print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))
         return 0

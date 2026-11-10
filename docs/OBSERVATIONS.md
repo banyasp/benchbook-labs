@@ -10,6 +10,31 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O19 · 2026-11-10 · Why Granite copies a flipped sister's verdict and Luna does not (pilot 2)
+Flip cases (`pipeline.transfer` flip.v1) change 1-2 facts so one of the sister's own flip conditions holds, update the
+considerations those facts carry (all 30 accepted flips changed at least one consideration's favors or weight; 26
+changed the decisive set), rewrite the weighing, and carry one reversed `would_change`. That item is prose in the
+SISTER's domain and cites no fact or consideration id (0 of 30); some `if` texts are awkward negations ("Credible new
+information did not establish ...").
+- Declared relation on the flip arm: Luna flips 52% (always naming the right `via`), distinguished 34%, follows 12%;
+  Granite follows 55%, distinguished 33%, flips 1%. Granite mentions a flip condition in its reasoning or
+  applicability in 18% of replies (Luna 45%).
+- Mapping of the consideration the flip changed: Luna "corresponding" 88% (correct: same equity, different
+  direction); Granite corresponding 37%, matched 28% (says it is the same), case_only 21%, absent 14%. Granite's
+  case_only lists often name most of the case's considerations and still declare "follows", with no assumption stated.
+- Granite does not act on its own mapping: accuracy 26% even when it marks the changed consideration corresponding;
+  when it declares "distinguished" it still takes the case's verdict 21 of 55 times (correct 21, off-menu 13).
+- Contamination before mapping: share of Granite's OWN live considerations (consideration_enumeration, written before
+  any mapping) that favor the flipped case's verdict: control 32%, transfer 19%, flip 45%. Luna: 21%, 18%, 23%.
+  Granite rewrites its own view of the situation toward the case's conclusion; Luna does not.
+- Not a token budget: Granite's flip replies average about 7,900 completion tokens.
+- Open test (queued): Granite in mode A (free thinking, then the YAML) on the same flip and transfer cells:
+  `results/transfer/pilot2-modeA/`.
+- Sources: `results/transfer/pilot2/` and `results/transfer/pilot2-luna/` (samples.jsonl, raw/), flip cases from
+  `results/transfer/build-batch2-20261109.jsonl`; analysis script
+  `code/eval/analysis/flip_relation_audit.py` (relation, via and mapping counts; the contamination and cross-tab
+  numbers came from ad-hoc queries in the same session).
+
 ### O18 · 2026-11-10 · The same cloning again: "What's your call on ..." in v5 final requests
 Over the full render.v5 re-render (535 traces), 281 final requests contain "your call" and 199 (37%) open "What's your
 call on ...": render.v5 quoted that phrasing as a good example in its lessons section. The line carries no
