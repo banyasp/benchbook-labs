@@ -60,7 +60,10 @@ Paired per-X1 differences, mode A − mode C (sample 0): no case +14 [−4, +31]
 
   Detached with `nohup setsid`; log `logs/pilot2-modeA.log`.
   - In mode A, generation starts at the `<think>` opener with no YAML prefill (`code/harness/episode.py`,
-    `render`). Mode C appends `kind: fact_enumeration` after the opener. The prompts are otherwise identical.
+    `render`). Mode C appends `kind: fact_enumeration` after the opener. The one prompt difference is the mode line
+    from `code/harness/prompts/modes.v1.yaml`, appended to the format spec:
+    - A: "Think through the decision freely first. Then, after your thinking, write the YAML documents as your reply."
+    - C: "Your thinking is the structure. Write the YAML documents inside your thinking…"
   - The parser takes the YAML after `</think>`. When a reply truncates, it falls back to drafts inside the thinking.
 - **Comparison.**
 
