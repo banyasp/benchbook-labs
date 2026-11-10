@@ -66,14 +66,20 @@ def bucket(doc, ref_id: str) -> str:
     return "unmentioned"
 
 
-def analyse(run: str, store, info) -> dict:
+def analyse(run: str, store, info, max_idx=None) -> dict:
     d = Path("results/transfer") / run
-    S = read_samples(d / "samples.jsonl")
+    S = [r for r in read_samples(d / "samples.jsonl") if max_idx is None or r["idx"] <= max_idx]
     fam = {r["x1"]: r.get("x1_family") for r in S}
     acc = defaultdict(lambda: defaultdict(list))
     cp = defaultdict(lambda: defaultdict(list))
     c = defaultdict(Counter)
     cv = {}
+    flipopt = defaultdict(set)       # x1 -> the flipped sisters' verdicts as X1 options (never X1's gold)
+    for r in S:
+        if r["phase"] == "flip" and r.get("x2"):
+            cv.setdefault(r["x2"], case_verdict_as_x1(store, r["x2"]))
+            flipopt[r["x1"]].add(cv[r["x2"]])
+    contam = defaultdict(lambda: defaultdict(list))   # arm -> x1 -> [share of own considerations favoring flipped verdict]
     for r in S:
         arm = r["phase"]
         acc[arm][r["x1"]].append(ok(r["correct"]))
@@ -85,11 +91,19 @@ def analyse(run: str, store, info) -> dict:
         if arm in ("transfer", "flip") and r.get("x2"):
             cv.setdefault(r["x2"], case_verdict_as_x1(store, r["x2"]))
             cp[arm][r["x1"]].append(1.0 if r.get("translated_choice") == cv[r["x2"]] else 0.0)
-        if arm not in ("transfer", "flip", "self", "decoy"):
-            continue
         raw = (d / r["raw_path"]).read_text()
         p = parse_reply(raw)
         s = p.steps
+        if r["x1"] in flipopt and r.get("details_path") and (d / r["details_path"]).exists():
+            tr = (json.loads((d / r["details_path"]).read_text()).get("option_alignment") or {}).get("translation") or {}
+            ce = s.get("consideration_enumeration") or {}
+            fav = [set(tr.get(o) for o in (x.get("favors") or []) if isinstance(o, str)) - {None}
+                   for x in (ce.get("considerations") or []) if isinstance(x, dict)]
+            fav = [f for f in fav if f]
+            if fav:
+                contam[arm][r["x1"]].append(mean(bool(f & flipopt[r["x1"]]) for f in fav))
+        if arm not in ("transfer", "flip", "self", "decoy"):
+            continue
         v = s.get("verdict") or {}
         k["rel:" + str(v.get("relation"))] += 1
         if arm != "flip" or r["x2"] not in info:
@@ -106,19 +120,21 @@ def analyse(run: str, store, info) -> dict:
         think = m.group(1) if m else ""
         prose = re.split(r"\bkind:\s*fact_enumeration", think)[0]       # free prose before any YAML draft
         k["free thinking mentions a flip condition"] += bool(FLIPWORDS.search(prose))
-    return dict(acc=acc, cp=cp, c=c, fam=fam, n=len(S))
+    return dict(acc=acc, cp=cp, c=c, fam=fam, n=len(S), contam=contam)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--max-idx", type=int, help="only samples with idx <= this, in every run (fair comparison while a run is partial)")
     a = ap.parse_args(argv)
     from pipeline.store import Store
     store, info = Store(), flip_info()
-    R = {run: analyse(run, store, info) for run, _ in RUNS if (Path("results/transfer") / run / "samples.jsonl").exists()}
+    R = {run: analyse(run, store, info, a.max_idx) for run, _ in RUNS if (Path("results/transfer") / run / "samples.jsonl").exists()}
     lab = dict(RUNS)
     L = ["# Reasoning-mode comparison on transfer pilot 2", "",
-         "Same 28 anchors, same sisters, same traces, same equities; k=8 per cell. "
+         "Same 28 anchors, same sisters, same traces, same equities; "
+         + (f"samples idx 0-{a.max_idx} only (partial run). " if a.max_idx is not None else "k=8 per cell. ")
          + ", ".join(f"{lab[r]}: {R[r]['n']} samples" for r in R) + ".", "",
          "## Accuracy (vs X1's key) and copy rate", "",
          "| arm | " + " | ".join(lab[r] for r in R) + " |", "|---|" + "---|" * len(R)]
@@ -164,6 +180,17 @@ def main(argv=None):
             k = R[r]["c"]["flip"]
             row.append(f"{k[kk] / k['flip_n']:.0%}" if k["flip_n"] else "—")
         L.append(f"| {kk} | " + " | ".join(row) + " |")
+    L += ["", "## Contamination: the model's OWN considerations bent toward the flipped case's verdict", "",
+          "Share of the reply's enumerated considerations whose `favors` includes the option the flipped sister decided "
+          "(never X1's gold), on X1s that have a flip cell; mean over X1. Under no case this is the baseline; a rise "
+          "under the flip arm means the model rewrote its own reading of the live facts to fit the case.", "",
+          "| arm | " + " | ".join(lab[r] for r in R) + " |", "|---|" + "---|" * len(R)]
+    for arm in ARM_ORDER:
+        row = []
+        for r in R:
+            x = R[r]["contam"].get(arm) or {}
+            row.append(f"{mean(mean(v) for v in x.values()):.0%} ({sum(map(len, x.values()))})" if x else "—")
+        L.append(f"| {arm} | " + " | ".join(row) + " |")
     L += ["", "## Paired per-X1 differences between runs (same X1, same arm)", ""]
     pairs = [("pilot2-modeA", "pilot2"), ("pilot2-luna", "pilot2-modeA"), ("pilot2-luna", "pilot2")]
     for r1, r2 in pairs:
