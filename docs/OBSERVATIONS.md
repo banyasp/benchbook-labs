@@ -10,6 +10,15 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O18 · 2026-11-10 · The same cloning again: "What's your call on ..." in v5 final requests
+Over the full render.v5 re-render (535 traces), 281 final requests contain "your call" and 199 (37%) open "What's your
+call on ...": render.v5 quoted that phrasing as a good example in its lessons section. The line carries no
+information about which option is right (every trace has one), so it is a style monoculture, not an answer cue; the
+live traces were kept. render.v6 (for future renders) describes the final request without quoting any example.
+Second instance of O17's lesson: quoted examples get cloned, including ones labelled "good" or "do not copy".
+- Sources: final non-harness message of `data/store/traces/<id>/trace.json` for traces whose `trace.yaml` names
+  render.v5; count script in this session (phrase counts above).
+
 ### O17 · 2026-11-09 · The renderer clones a single quoted example: stock closing lines
 render.v4 gave one example of the final request ("Please give your disposition on the station's reimbursement claim
 before the afternoon routing pass."). Of the first 97 v4 traces, 81 ended with "disposition" and 68 began "Please

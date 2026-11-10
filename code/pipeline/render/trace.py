@@ -32,8 +32,9 @@ from .util import extract_json, make_step, prompt_ref
 # request for the decision, one decision only, and a "lessons" section. render.v3.md is kept for old provenance.
 # render.v5 (same day): the final request in the speaker's own voice, no stock formula (v4 made 81 of 97 traces end
 # "Please give your disposition ... before the afternoon routing pass").
-PROMPT3 = Path(__file__).parent / "prompts" / "render.v5.md"
-PROMPT_NAME = "render.v5"
+# render.v6 (2026-11-10): no quoted examples of the final request (v5's examples were cloned: O18).
+PROMPT3 = Path(__file__).parent / "prompts" / "render.v6.md"
+PROMPT_NAME = "render.v6"
 MAX_RETRIES = 2                      # re-render tries after the first render (design §8.4)
 LLM_TRIES = 4                        # transport-level attempts per call (backoff)
 DEFAULT_SEED = 20261027
