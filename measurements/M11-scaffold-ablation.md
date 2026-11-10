@@ -66,4 +66,35 @@
   - max_tokens differs by policy (see `runs.yaml`).
 
 ## What was observed
-Pending.
+
+### Luna: COMPLETE
+
+All three scaffolds have 1,208 replies at k=8; the free and guided runs finished 2026-11-10 21:45 UTC.
+- View: `measurements/views/SCAFFOLD-ABLATION-luna-20261110.md`, from
+  `python -m eval.analysis.tensor standard --where policy=gpt-6-luna`.
+- Accuracy against X1's key, per arm, with the copy rate on the case arms:
+
+  | Scaffold | No case | Own case | Transferred | Flipped (copies) | Other anchor's case |
+  |---|---|---|---|---|---|
+  | free | 73% | 95% | 93% (copies 93%) | 70% (copies 11%) | 71% |
+  | guided | 67% | 93% | 88% | 77% (copies 10%) | 72% |
+  | schema | 66% | 91% | 86% | 76% (copies 14%) | 70% |
+
+- **Guidance effect** (guided − free, paired per X1): no case −5 [−12, 0]; transferred −6 [−10, −2]; flipped +7
+  [−5, +18]; other arms within ±2.
+- **Schema effect** (schema − guided): −1 to −3 points on every arm. No interval excludes 0.
+- **Case benefit is the same under every scaffold**: transferred − no case = +20 points for free, guided and schema;
+  own case − no case = +22 to +25.
+- **Verdict capture works without the schema.** The free scaffold had 0% no-verdict, versus 1-4% for the schema.
+  Off-menu rates are similar (0-11%).
+
+**Reading (Luna).**
+- Scaffolding buys a frontier model nothing. It reasons as well, or slightly better, when told only "decide", and the
+  structure costs a few points on the no-case and transferred arms.
+- The benefit of a case comes from the case itself, not from the steps.
+- The one place the steps may help is the flipped case (+7 for guided over free, not significant). That is where
+  checking the case's flip conditions should matter.
+
+### Granite: PENDING
+
+Queued behind M09's k=4 (`logs/scaffold-gpu-chain.log`).
