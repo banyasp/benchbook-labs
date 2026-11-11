@@ -45,10 +45,36 @@ def drift(case: dict) -> dict:
             support[o] += len(k.get("facts", []))
     others = [support[o] for o in ids if o != gold]
     return {"gold_pos": ids.index(gold) + 1, "n_options": len(ids), "len_spread": round(max(lens) / max(1, min(lens)), 2),
-            "gold_len_rank": sorted(lens, reverse=True).index(len(case["options"][gold]["do"].split())) + 1,
+            # gold length cue, in characters (2026-11-11 fix: the old word-rank counted a tie for longest as "longest" and
+            # was compared with 1/n, which overstated the cue: 66% vs a true 39% = chance; M12 corrected)
+            "gold_unique_longest": _unique_longest(case, gold),
+            "chance_unique_longest": _chance_unique_longest(case),
+            "gold_len_ratio": _gold_len_ratio(case, gold),
             "support_gold": support[gold], "support_other_mean": (sum(others) / len(others)) if others else 0,
             "handup_gold": case["options"][gold]["move"] in HANDUP,
             "n_facts": len(case["facts"]), "n_considerations": len(case["considerations"])}
+
+
+def _clen(case):
+    return {k: len(o["do"]) for k, o in case["options"].items()}
+
+
+def _unique_longest(case, gold) -> bool:
+    L = _clen(case)
+    m = max(L.values())
+    return L[gold] == m and list(L.values()).count(m) == 1
+
+
+def _chance_unique_longest(case) -> float:
+    L = _clen(case)
+    m = max(L.values())
+    return 1 / len(L) if list(L.values()).count(m) == 1 else 0.0
+
+
+def _gold_len_ratio(case, gold) -> float:
+    L = _clen(case)
+    others = [v for k, v in L.items() if k != gold]
+    return round(L[gold] / (sum(others) / len(others)), 3) if others else 1.0
 
 
 def collect(store: Store | None = None, since: str | None = None, runs_dir: Path | None = None) -> dict:
@@ -90,7 +116,7 @@ def report(data: dict) -> str:
         out.append(f"| {k} | {b['buckets']['accepted']} | {b['buckets']['hard']} | {b['buckets']['rejected']} | {gf} | "
                    f"{a['verdict_shift.flag']} / {a['verdict_shift.informative']} / {a['verdict_shift.run']} |")
     out += ["", "## Drift over accepted outputs", "",
-            "| op/mode | n | gold position (per option count) | option length spread (median) | gold is longest | "
+            "| op/mode | n | gold position (per option count) | option length spread (median) | gold uniquely longest (chars) vs chance; gold/other length | "
             "facts supporting gold vs others (mean) | hand-up golds | facts / considerations (mean) | tiers |",
             "|---|---|---|---|---|---|---|---|---|"]
     for k, b in sorted(data["by"].items()):
@@ -102,7 +128,8 @@ def report(data: dict) -> str:
             pos[x["n_options"]][x["gold_pos"]] += 1
         pos_s = "; ".join(f"{n}-opt: " + " ".join(f"{p}:{c[p]}" for p in sorted(c)) for n, c in sorted(pos.items()))
         out.append(f"| {k} | {len(ds)} | {pos_s} | {st.median(x['len_spread'] for x in ds):.2f} | "
-                   f"{sum(x['gold_len_rank'] == 1 for x in ds)}/{len(ds)} | "
+                   f"{sum(x['gold_unique_longest'] for x in ds)}/{len(ds)} vs {sum(x['chance_unique_longest'] for x in ds):.0f}; "
+                   f"{st.mean(x['gold_len_ratio'] for x in ds):.2f} | "
                    f"{st.mean(x['support_gold'] for x in ds):.1f} vs {st.mean(x['support_other_mean'] for x in ds):.1f} | "
                    f"{sum(x['handup_gold'] for x in ds)}/{len(ds)} | "
                    f"{st.mean(x['n_facts'] for x in ds):.1f} / {st.mean(x['n_considerations'] for x in ds):.1f} | "

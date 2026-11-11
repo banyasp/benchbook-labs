@@ -10,11 +10,13 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
-### O22 · 2026-11-11 · The gold option is the longest in two thirds of corpus scenarios
-Across 985 corpus anchors the gold option's `do` text is the longest in 66% (chance 44%); considerations favoring the
-gold cite 5.8 facts against 1.3 for each other option. Every operator output inherits both cues. Position is
-balanced. Not yet checked at trace level or as a baseline on eval runs.
-- Sources: `data/store/scenarios/CORPUS*/` (anchors), `results/ops/ANALYTICS-20261111.md`; measurement M12; risk R6.
+### O22 · 2026-11-11 · (CORRECTED) No gold-length cue in anchors; transfer sisters do make the gold longer
+First reported as "gold is the longest option in two thirds of corpus scenarios" (66% vs 44% chance). That was a metric
+bug: a tie for longest counted as longest, and chance ignored ties. Corrected (characters, unique longest): anchors
+39% vs 39% chance, gold/other length 1.00. The cue is real in cross-domain transfer sisters: gold uniquely longest in
+40/63 vs 26 by chance, about 15% longer. Flips, rewords and target_f outputs are at chance.
+- Sources: `data/store/scenarios/*/` (anchors), `results/ops/ANALYTICS-20261111.md`; measurement M12 (corrected; the
+  wrong first version in `measurements/versions/`); risk R6. Fix: `surface_edit` `match_options` after `transfer`.
 
 ### O21 · 2026-11-11 · Granite rarely declines an irrelevant case; Luna almost always does (M09, k=8)
 On the "other anchor's case" arm (a sister of a different anchor, served as if relevant), Luna declares

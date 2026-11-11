@@ -5,6 +5,7 @@ each step's batch-level arguments for the scenarios entering it, runs the jobs i
 Recipe file (YAML):
     name: same_domain_flip
     chain: [accepted]                 # which buckets feed the next step (default: accepted)
+    # a step with `pass_skipped: true` feeds its skipped inputs (no-ops) on unchanged
     steps:
       - op: structural_edit
         args: {mode: flip, phi: each, realization: plain}
@@ -145,6 +146,8 @@ def run_recipe(recipe: dict, inputs: list[str], store: Store | None = None, work
                     fh.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
         summary["steps"].append({"step": i, "op": step["op"], "jobs": len(jobs), "buckets": dict(Counter(r["bucket"] for r in rows))})
         nxt = [r["id"] for r in rows if r.get("id") and r["bucket"] in chain]
+        if step.get("pass_skipped"):       # a no-op (e.g. options already matched) passes its input on unchanged
+            nxt += [r["parent"] for r in rows if r["bucket"] == "skipped" and r.get("parent")]
         scens = [load_any(store, s) for s in nxt]
         if not scens:
             break

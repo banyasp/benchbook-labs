@@ -1,0 +1,20 @@
+# pairs-v1 (Peter, 2026-11-11): the served case (X2) for one arm, derived from a quality anchor (X1 = the anchor).
+# Every permute step balances the gold position over the batch, so the served gold position carries no information
+# about the live gold position. pass_skipped: a no-op (already matched / gold already in place) passes its input on.
+# Steps 1-3 give the transfer case; steps 4-5 the flipped transfer case (each would_change item whose then != V).
+# match_options after transfer: the transfer writer makes the gold option longer (M12, corrected).
+name: pairs_v1_transfer
+steps:
+  - op: surface_edit
+    args: {mode: transfer, setting: propose, annotate: true}
+  - op: surface_edit
+    args: {mode: match_options}
+    pass_skipped: true
+  - op: permute
+    args: {target: options, order: balance}
+    pass_skipped: true
+  - op: structural_edit
+    args: {mode: flip, phi: each, realization: plain, annotate: true}
+  - op: permute
+    args: {target: options, order: balance}
+    pass_skipped: true

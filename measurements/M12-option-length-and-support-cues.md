@@ -1,27 +1,39 @@
 # M12 · Shortcut cues in the scenario store: gold option length and fact support
 
-**Status: COMPLETE**, 2026-11-11 (one pass over the store; re-run after new data with the commands below).
+**Status: COMPLETE (CORRECTED 2026-11-11 ~17:30 UTC).** The first version (copy in
+`versions/M12-option-length-and-support-cues.v1-wrong-tie-handling.md`) reported "gold is the longest option in 66% of
+anchors vs 44% chance". **That was wrong**: the metric (`drift()` in `code/pipeline/ops/analytics.py`, word-count
+rank) counted a TIE for longest as "longest", and the chance level used 1/n, which ignores ties. Peter chose to "fix at
+anchors first" on the strength of the wrong number; see "Consequence" below.
 
 ## What was measured
 - **Question.** Do two shortcut cues Peter asked to watch (CLAUDE.md: answer length, number of supporting facts)
   appear in the scenarios? R6 requires a "longest option" baseline to score at chance.
-- **Data.** 985 corpus anchors (`data/store/scenarios/CORPUS*/`, no lineage parent; scenarios the drift function
-  could not read were skipped) and the 371 derived outputs in the store after the operator-lineage migration.
+- **Data.** All 1,082 anchors in `data/store/scenarios/*/` (no lineage parent) and the 371 derived outputs in the
+  store after the operator-lineage migration (`results/ops/ANALYTICS-20261111.md`).
 
 ## How
-- Code: `pipeline.ops.analytics.drift` (deterministic; option length = words in `do`; support = facts cited by the
-  considerations that favor each option).
-- Anchors: an ad-hoc loop over `drift(case_dict(S))` for every corpus scenario without a parent (run 2026-11-11, not
-  saved as a script; same function as the analytics report).
+- Corrected metric (`pipeline.ops.analytics.drift`, deterministic): option length in characters; "gold uniquely
+  longest" = the gold is the single longest option; chance = 1/n for scenarios with a unique longest option, 0 when the
+  longest is tied; gold/other length = gold characters / mean characters of the other options.
+- Anchors: ad-hoc loop over every anchor (2026-11-11, not saved as a script; same definitions as the fixed `drift`).
 - Derived outputs: `PYTHONPATH=code .venv/bin/python -m pipeline.ops analytics --out results/ops/ANALYTICS-20261111.md`.
-- LLMs: none in this measurement (the scenarios themselves were written by the extraction and operator LLMs).
+- LLMs: none in this measurement.
 
 ## What was observed
-- **Gold is the longest option in 66% of corpus anchors (646/985); chance is 44%** (mean of 1/n options). Derived
-  outputs inherit it: gold longest in 42/78 rewords, 47/63 transfers, 51/106 flips.
-- **Gold position is balanced** in the anchors (2 options: 302/305; 3 options: 122/122/122).
-- **Facts supporting the gold vs each other option: 5.8 vs 1.3** (mean per anchor). Rewords 8.2 vs 0.1; flips 6.2 vs
-  1.5; target_f 9.1 vs 0.4.
-- **Caveat.** These are scenario-level counts. The agent sees the rendered trace, whose option wording and fact
-  presentation differ; a trace-level length check and a "longest option" baseline on the eval runs are still to do.
-- Logged: O22; R6 updated.
+- **Anchors: no length cue.** Gold uniquely longest by characters in 424/1,082 (39%); chance 39%. Gold length / mean
+  other length: median 1.00, mean 1.003. By option count: 2 options 46% (chance 50%), 3 options 30% (33%), 4 options
+  22% (25%). By words: uniquely longest 23% (chance 23%), tied 40%.
+- **Transfer sisters: a real length cue.** Gold uniquely longest in 40/63 accepted transfer outputs vs 26 expected
+  by chance; gold about 15% longer than the other options on average (ratio 1.15). The cross-domain writer
+  (`pipeline/transfer/prompts/write.v1.md`) elaborates the chosen option.
+- Other operator outputs are at chance: flips 34/106 (chance 38; ratio 0.99), rewords 26/78 (24; 0.99), target_f
+  13/45 (14; 1.00), judgment_edit 26/66 (19; 1.03, slight).
+- **Fact support** (facts cited by considerations favoring the gold vs each other option): 5.8 vs 1.3 in anchors.
+  This follows from the weighing (the considerations that decide the case favor the gold); every fact appears in the
+  trace whatever it supports, so it is not a surface cue a model can read without weighing. Kept as a monitor.
+
+## Consequence
+- The fix belongs after the transfer writer, not at the anchors: `surface_edit` mode `match_options` (built
+  2026-11-11) runs as a step after `transfer` in the pair-dataset recipe.
+- Logged: O22 (corrected), R6 (corrected).

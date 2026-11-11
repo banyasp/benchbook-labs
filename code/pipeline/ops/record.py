@@ -19,7 +19,7 @@ from pipeline.store import Store, write_yaml
 
 SPEC = "OPERATORS-SPEC-v1"
 CODES = {("permute", None): "pm", ("surface_edit", "reword"): "sr", ("surface_edit", "neighbor"): "sn",
-         ("surface_edit", "transfer"): "st", ("structural_edit", "flip"): "xf", ("structural_edit", "target_f"): "xn",
+         ("surface_edit", "transfer"): "st", ("surface_edit", "match_options"): "so", ("structural_edit", "flip"): "xf", ("structural_edit", "target_f"): "xn",
          ("frame_edit", "drop_option"): "fd", ("judgment_edit", None): "je"}
 BUCKETS = ("accepted", "hard", "rejected")
 INHERIT = ("family", "split", "held_out", "content_domain", "refusal_sensitivity")

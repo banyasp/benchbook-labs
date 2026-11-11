@@ -19,8 +19,8 @@ verdict on 42 of 57 anchors).
 | `structural_edit` flip (incl. a same-domain flip used as a lookalike) | yes | the Φ `would_change` item's `then` |
 | `structural_edit` target_f **realizing a `would_not_change` item** | yes (Peter: "interesting and cool") | held |
 | `frame_edit` remove a non-gold option | yes | held |
-| `frame_edit` add an option the source considered and rejected | **no** (Peter, 2026-11-11: "dont do it") | — |
-| `frame_edit` decide ↔ advise | pending: Peter undecided (2026-11-11, "idk") | held (proposed) |
+| `frame_edit` add an option the source considered and rejected | **no** (Peter, 2026-11-11: an option the source considered and rejected is already in the option set; a rejected *preceding* decision belongs to a different question) | — |
+| `frame_edit` decide ↔ advise | **parked** (Peter, 2026-11-11: "causes some quirks and i dont want to engage those yet") | — |
 | `judgment_edit` | yes | the planner's target |
 | `structural_edit` target_k, general target_f, lookalike beyond Φ; `frame_edit` remove gold / add an invented option / change decider | **later** (needs a solver) | — |
 
@@ -48,7 +48,7 @@ Built in `code/pipeline/ops/` (README there), with the v1 scope above:
   `data/store/versions/pre-ops-migration-20261111/`).
 
 Not built:
-- `frame_edit` decide ↔ advise (Peter undecided, 2026-11-11); add-a-source-rejected-option is dropped (Peter, 2026-11-11: "dont do it");
+- `frame_edit` decide ↔ advise: parked (Peter, 2026-11-11); add-a-source-rejected-option: dropped (Peter, 2026-11-11);
 - the solver's panel and human backends;
 - the dashboard page.
 

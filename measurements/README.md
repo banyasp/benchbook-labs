@@ -39,7 +39,7 @@ Each `M<nn>-*.md` file answers:
 | [M09](M09-transfer-pilot2-granite-modeA.md) | 2026-11-10 | Transfer pilot 2, Granite thinks first (mode A) | COMPLETE (k=8) |
 | [M10](M10-earlier-and-stopped-sets.md) | various | Earlier measurement sets and the stopped B2 grid (pointers only) | — |
 | [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema, Granite and Luna, all arms | COMPLETE |
-| [M12](M12-option-length-and-support-cues.md) | 2026-11-11 | Shortcut cues: gold option length and fact support in the store | COMPLETE |
+| [M12](M12-option-length-and-support-cues.md) | 2026-11-11 | Shortcut cues: gold option length and fact support in the store | COMPLETE (corrected 2026-11-11: no cue in anchors; cue in transfer sisters) |
 
 ## Datasets, the run registry and the tensor
 
