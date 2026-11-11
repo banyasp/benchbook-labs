@@ -18,3 +18,15 @@ Order is priority. Keep every version (`docs/versions/`) before large edits.*
 5. **Fallback router and natsec sources** (design v2.4 §4.2): route false-positive refusals of in-scope decision content
    to another provider; then add use-of-force / intelligence-oversight decision sources tagged by `refusal_sensitivity`.
    (Router is T2 in v1; listed here so the natsec domain expansion isn't forgotten.)
+
+## Deferred TODOs from the operator redesign (Peter, 2026-11-11; spec `context/OPERATORS-SPEC-v1.md`)
+
+- **Distance metric (important, undecided).** Every operator application is recorded without loss (operator, mode,
+  args, writer, solver, checks, Δ) so distance labels can be computed retroactively for every completed
+  transformation once the metric is chosen. Headline graph depends on it; see R56.
+- **Render parameterization, before SFT.** Fact realization (stated → indirect → multi-hop), distractor density,
+  channel mix, filler register. For now obvious fact listing is acceptable (tests reasoning, not extraction; R4, R5);
+  SFT targets will demonstrate fact extraction, so realistic traces must be ready by then. Second priority after the
+  pair operators.
+- **Duplicate checks** for operator outputs against the store (esp. `surface_edit` neighbor). Hard; later.
+- **Epistemic edits** (fact status confirmed → assessed, removing a decisive fact). Decide later.
