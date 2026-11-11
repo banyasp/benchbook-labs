@@ -36,9 +36,9 @@ Each `M<nn>-*.md` file answers:
 | [M06](M06-transfer-pilot2-luna.md) | 2026-11-09 | Transfer pilot 2, GPT-6 Luna | COMPLETE |
 | [M07](M07-transfer-pilot2-granite-modeC.md) | 2026-11-09/10 | Transfer pilot 2, Granite, YAML-only reasoning (mode C) | COMPLETE |
 | [M08](M08-flip-arm-mechanism.md) | 2026-11-10 | Flip arm: relation, via, mapping buckets, contamination | COMPLETE (pilot 2 C vs Luna) |
-| [M09](M09-transfer-pilot2-granite-modeA.md) | 2026-11-10 | Transfer pilot 2, Granite thinks first (mode A) | PARTIAL (first pass of 8 complete) |
+| [M09](M09-transfer-pilot2-granite-modeA.md) | 2026-11-10 | Transfer pilot 2, Granite thinks first (mode A) | PARTIAL (k=4 of 8 complete; resumed 2026-11-11) |
 | [M10](M10-earlier-and-stopped-sets.md) | various | Earlier measurement sets and the stopped B2 grid (pointers only) | — |
-| [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema, Granite and Luna, all arms | PARTIAL |
+| [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema, Granite and Luna, all arms | COMPLETE |
 
 ## Datasets, the run registry and the tensor
 

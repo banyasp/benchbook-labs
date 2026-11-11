@@ -10,6 +10,19 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O20 · 2026-11-11 · Prompted steps do not fix Granite's flip copying; the YAML schema costs base accuracy (M11)
+Scaffold ablation on pilot 2 (28 X1s, all arms). Granite at k=4, think first; Luna at k=8.
+- Granite flip arm: 28% (free), 29% (guided), 31% (schema); it copies the flipped sister's verdict about 48% of the
+  time under all three. Luna's flip arm gains +7 from guided over free; Granite's gains +1. Telling the small model
+  the steps (incl. checking flip conditions) does not make it apply them.
+- The YAML schema costs Granite 6-9 points against guided prose on no case, own case and transferred (own case −9
+  [−17, −3]); Luna loses 1-3. Free uses about a third of the schema's completion tokens (2,345 vs 7,496 median) and
+  never fails to give a verdict.
+- The case benefit (+30 transferred − no case) is the same under every scaffold, for both policies.
+- Sources: `results/transfer/pilot2-granite-{guided,free}/samples.jsonl`, `results/transfer/pilot2-modeA/` (idx 0-3),
+  `results/transfer/pilot2/` (M07); view `measurements/views/SCAFFOLD-ABLATION-granite-20261111.md`; measurement M11.
+  Related: O19 (why Granite copies), R92.
+
 ### O19 · 2026-11-10 · Why Granite copies a flipped sister's verdict and Luna does not (pilot 2)
 Flip cases (`pipeline.transfer` flip.v1) change 1-2 facts so one of the sister's own flip conditions holds, update the
 considerations those facts carry (all 30 accepted flips changed at least one consideration's favors or weight; 26

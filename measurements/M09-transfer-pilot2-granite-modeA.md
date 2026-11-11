@@ -1,6 +1,12 @@
 # M09 · Transfer pilot 2, Granite thinks first (mode A)
 
 **Status: PARTIAL**, still running.
+- **k=4 reached** 2026-11-11 00:19 UTC (604 samples, idx 0-3); the run was stopped for M11's Granite guided/free runs and
+  resumed toward k=8 at 2026-11-11 03:52 UTC (`scripts/scaffold_gpu_chain.sh`). k=4 accuracy, from the tensor
+  (`measurements/views/SCAFFOLD-ABLATION-granite-20261111.md`, `--max-idx 3`): no case 45% [32-57]; own case 88%
+  [78-96]; transferred 76% [65-85] (copies 76%); flipped 31% [15-49] (copies 48%); other anchor's case 48% [33-63].
+  Compared with the first-pass snapshot below, no case and the flip arm fell back (54 → 45, 38 → 31): the first-pass
+  gains over mode C were mostly noise.
 - **This snapshot.** The first pass is complete: sample index 0 of all 151 schedule items (28 no-case + 123 cells),
   out of k=8.
 - **Taken.** 2026-11-10 20:29 UTC (`results/transfer/MODE-COMPARE-idx0-20261110.md`).

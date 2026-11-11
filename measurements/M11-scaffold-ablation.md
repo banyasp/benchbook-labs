@@ -1,10 +1,10 @@
 # M11 · Scaffold ablation: step guidance vs schema imposition, with and without a case
 
-**Status: PARTIAL**, launched 2026-11-10.
-- Luna guided and Luna free (k=8 each) started 21:30 UTC.
-- Granite guided and Granite free (k=4 each) are queued behind the think-first run (M09) by
-  `scripts/scaffold_gpu_chain.sh`, whose log is `logs/scaffold-gpu-chain.log`.
-- Views are regenerated from the tensor as runs fill in.
+**Status: COMPLETE**, 2026-11-11.
+- Luna guided and Luna free (k=8 each): 2026-11-10 21:30-21:45 UTC.
+- Granite guided and Granite free (k=4 each): 2026-11-11 00:20-03:51 UTC, run by `scripts/scaffold_gpu_chain.sh`
+  (log `logs/scaffold-gpu-chain.log`) after M09 reached k=4. 604 replies each, 0 errors.
+- Views: `measurements/views/SCAFFOLD-ABLATION-luna-20261110.md`, `measurements/views/SCAFFOLD-ABLATION-granite-20261111.md`.
 
 ## What is measured
 - **Question** (Peter, 2026-11-10). Where does the benefit come from: decomposing the reasoning into steps (guidance
@@ -95,6 +95,45 @@ All three scaffolds have 1,208 replies at k=8; the free and guided runs finished
 - The one place the steps may help is the flipped case (+7 for guided over free, not significant). That is where
   checking the case's flip conditions should matter.
 
-### Granite: PENDING
+### Granite: COMPLETE (k=4)
 
-Queued behind M09's k=4 (`logs/scaffold-gpu-chain.log`).
+All four Granite conditions have 604 replies at sample index 0-3: guided, free, schema think-first (M09's first four
+passes) and schema YAML-in-think (M07).
+- View: `measurements/views/SCAFFOLD-ABLATION-granite-20261111.md`, from
+  `python -m eval.analysis.tensor standard --where policy=granite-4.2-8b --max-idx 3` (tensor rebuilt 2026-11-11 ~04:00
+  UTC; M09 had 629 rows then, and `--max-idx 3` keeps its first 604).
+- Accuracy against X1's key, per arm, with the copy rate on the case arms:
+
+  | Scaffold (thinking) | No case | Own case | Transferred | Flipped (copies) | Other anchor's case |
+  |---|---|---|---|---|---|
+  | free (think first) | 50% | 95% | 81% (copies 81%) | 28% (copies 49%) | 50% |
+  | guided (think first) | 53% | 96% | 82% | 29% (copies 48%) | 47% |
+  | schema (think first, M09) | 45% | 88% | 76% | 31% (copies 48%) | 48% |
+  | schema (YAML in think, M07) | 46% | 83% | 72% | 19% (copies 57%) | 43% |
+
+- **Guidance effect** (guided − free, paired per X1): every arm within ±3 points; own case +2 [0, +4]. No interval
+  excludes 0 except that one, at its edge.
+- **Schema effect** (schema − guided, both think first): no case −8 [−16, +1]; own case −9 [−17, −3]; transferred
+  −6 [−14, +2]; flipped +2 [−6, +10]; other anchor's case +1 [−9, +11].
+- **Case benefit is the same under every scaffold**: transferred − no case = +29 to +31 at think first (+27 YAML in
+  think); own case − no case = +43 to +45 (+38).
+- **Flipped case hurts under every scaffold**: flip − no case = −21 (free), −22 (guided), −11 (schema think first),
+  −24 (YAML in think). Granite copies the flipped sister's verdict about 48% of the time whatever the scaffold.
+- **No-verdict and off-menu.** free 0% no-verdict, guided 0-3%, schema 2-10%. Off-menu 0-13% for all, with no pattern
+  by scaffold.
+- **Cost** (median completion tokens, including thinking): free 2,345; guided 4,565; schema think first 7,496;
+  YAML in think 6,654. Truncation: 0% for guided and free, 0.2% schema think first, 7.8% YAML in think.
+- **Confound.** The schema think-first run used mode line v1.A ("…then write the YAML documents as your reply");
+  guided and free use v2.A ("…then write your reply as described above"). The two lines say the same thing for their
+  formats, but the schema effect is not a single-factor contrast.
+
+**Reading (Granite).**
+- The same answer as Luna, more strongly. Step guidance adds nothing over "decide" (±3), and imposing the YAML schema
+  costs 6-9 points on no case, own case and transferred. Free costs a third of the schema's tokens.
+- The benefit of a case comes from the case, not from the steps: +30 for a transferred sister under every scaffold.
+- **The flip weakness is the model's, not the format's.** Luna gained +7 on the flip arm from guidance; Granite gains
+  +1, and copies the flipped verdict half the time under every scaffold. Prompted steps do not teach a small model to
+  check a case's flip conditions. That is the gap SFT and RL are meant to close, and the reason for a flip arm in
+  training.
+- Implication for the base-model baseline: the YAML scaffold understates base Granite by 6-9 points on choice
+  accuracy. Base numbers reported with the schema scaffold should say so, or be paired with the free-scaffold number.
