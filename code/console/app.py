@@ -220,6 +220,11 @@ def prompt_diff(a: str, b: str):
     return page("diff.html", [("Prompts", "/prompts"), ("Diff", None)], a=a, b=b, h=Markup(h))
 
 
+@app.get("/pipeline", response_class=HTMLResponse)
+def pipeline():
+    return page("pipeline.html", [("System diagram", None)], c=D.PIPE.get(), yields=D.pairs_yields())
+
+
 @app.get("/operators", response_class=HTMLResponse)
 def operators():
     return page("operators.html", [("Operators", None)], o=D.operators(), counts=D.op_counts())

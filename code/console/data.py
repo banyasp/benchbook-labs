@@ -1150,3 +1150,55 @@ def search(q: str, limit: int = 60) -> dict:
     rs = [r for r in runs() if q in r["run"].lower()]
     ms = [m for m in measurements()["rows"] if q in (m["id"] + " " + m["title"]).lower()]
     return {"scenarios": sc, "runs": rs, "measurements": ms, "families": fam}
+
+
+# ---------------------------------------------------------------- system diagram page (2026-11-11, Peter)
+def _pipeline_counts() -> dict:
+    out = {"docs": len(list((DATA / "docs").glob("*.jsonl")))}
+    n_ep = n_docs = 0
+    for p in (STORE / "episodes" / "corpus").glob("*.yaml"):
+        d = load_yaml(p)
+        eps = d.get("episodes", []) if isinstance(d, dict) else (d if isinstance(d, list) else [])
+        n_docs += 1
+        n_ep += len(eps)
+    out.update(episodes=n_ep, episode_docs=n_docs)
+    sel = ok = 0
+    for b in ("corpus-batch1", "corpus-batch2"):
+        p = STORE / "episodes" / f"{b}.results.jsonl"
+        if p.exists():
+            rs = [json.loads(l) for l in p.read_text().splitlines() if l.strip()]
+            sel += len(rs)
+            ok += sum(1 for r in rs if (r.get("outcome") or r.get("status")) == "ok")
+    out.update(selected=sel, extracted_ok=ok)
+    rows = SCEN.get()["rows"]
+    anchors = [r for r in rows if not r.get("parent") and r["where"] == "store"]
+    out["anchors"] = len(anchors)
+    out["corpus_anchors"] = sum(1 for r in anchors if str(r.get("family", "")).startswith("CORPUS"))
+    el = DATA / "datasets" / "pairs-v1" / "eligibility.jsonl"
+    if el.exists():
+        er = [json.loads(l) for l in el.read_text().splitlines() if l.strip()]
+        out["eligible"] = sum(1 for r in er if r.get("eligible"))
+        out["leak_fail"] = sum(1 for r in er if "leak" in (r.get("why_not") or []))
+    return out
+
+
+PIPE = _Cached(_pipeline_counts, ttl=600)
+
+
+def pairs_yields() -> list[dict]:
+    """Latest run log of each pairs-v1 recipe: buckets per step (results/ops/runs/pairs_v1_<arm>-<ts>.jsonl)."""
+    runs_dir = ROOT / "results" / "ops" / "runs"
+    latest = {}
+    for p in sorted(runs_dir.glob("pairs_v1_*.jsonl")):
+        latest[p.name.split("-")[0]] = p                      # sorted by timestamp in the name: last wins
+    out = []
+    for name, p in sorted(latest.items()):
+        steps = {}
+        for l in p.read_text().splitlines():
+            if not l.strip():
+                continue
+            r = json.loads(l)
+            st = steps.setdefault(r.get("recipe_step"), {"op": r.get("op"), "mode": r.get("mode"), "buckets": {}})
+            st["buckets"][r.get("bucket")] = st["buckets"].get(r.get("bucket"), 0) + 1
+        out.append({"recipe": name, "log": rel(p), "stem": p.stem, "steps": [dict(step=k, **v) for k, v in sorted(steps.items())]})
+    return out

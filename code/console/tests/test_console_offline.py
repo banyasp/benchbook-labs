@@ -108,3 +108,11 @@ def test_app_routes(tmp_path, monkeypatch):
                                  "back": "/runs"}, follow_redirects=False)
     assert r.status_code == 303 and json.loads(lab.read_text().splitlines()[-1])["decision"] == "approve"
     assert c.get("/file?path=config/models.yaml").status_code == 404
+
+
+def test_pipeline_page_data():
+    from console import data as D
+    c = D._pipeline_counts()
+    assert c["docs"] > 0 and c["anchors"] > 0 and c["episodes"] >= 0
+    for y in D.pairs_yields():
+        assert y["recipe"].startswith("pairs_v1_") and all("buckets" in s for s in y["steps"])

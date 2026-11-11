@@ -1,0 +1,158 @@
+{% extends "base.html" %}{% block content %}
+{% macro fmt(x) %}{% if x is number %}{{ "{:,}".format(x) }}{% else %}{{ x if x is not none else '—' }}{% endif %}{% endmacro %}
+<h1>System diagram</h1>
+<p>How a source document becomes a scenario, how the operators turn a quality scenario into served cases, and how a pair
+reaches a score. Counts are live (cached up to 10 min). Related: <a href="/funnel">data readiness</a>,
+<a href="/operators">operators</a>, <a href="/doc?path=context/OPERATORS-SPEC-v1.md">operator spec</a>,
+<a href="/outstanding">outstanding work</a>.</p>
+
+<h2>1 · Raw corpus → anchor scenarios</h2>
+{% set S = [
+ {'t':'Sources','k':'code','l':['source catalog','natsec seed lists','family registry'],'w':'registry/sources.yaml','n':'','g':[]},
+ {'t':'Fetch + normalize','k':'code','l':['fetch, PDF text, OCR','paragraphs with','stable span ids'],'w':'data/docs/<sha12>','n':fmt(c.docs)~' docs','g':[]},
+ {'t':'Find episodes','k':'LLM','l':['decision points','in each document','find_episodes v2'],'w':'episodes/corpus/','n':fmt(c.episodes)~' episodes','g':[]},
+ {'t':'Select batch','k':'code','l':['quotas per domain','one episode / family','splits per family'],'w':'corpus-batch1/2.yaml','n':fmt(c.selected)~' selected','g':['targeting → held-out','test split']},
+ {'t':'Extract F, Q','k':'LLM','l':['facts → span ids','frame: agent, role,','decider; 2–4 options'],'w':'extract_fq.v3','n':'','g':['each fact cites a span','or is marked authored','options ≤ 1.3× length']},
+ {'t':'Extract A','k':'LLM','l':['K: equity, favors,','weight, why; W','verdict, Φ'],'w':'extract_a.v1','n':fmt(c.extracted_ok)~' extracted','g':['verdict = real option','technique screen','(≤ 2 re-extractions)']},
+ {'t':'Anchor store','k':'code','l':['gold position','balanced; invented','parts flagged'],'w':'store/scenarios/','n':fmt(c.anchors)~' anchors','g':['leak gate on extraction','(since 11-09)']},
+ {'t':'Eligibility','k':'LLM + code','l':['structure','answer leak (v4)','technique screen'],'w':'pairs-v1/eligibility','n':fmt(c.eligible)~' quality','g':[fmt(c.leak_fail)~' fail: leak']},
+] %}
+<figure class="dg">
+<svg viewBox="0 0 1200 250" role="img" aria-label="Eight stages from source catalog to quality anchors: acquire and normalize, find episodes, select, extract F and Q, extract A, anchor store, eligibility; each with what it writes, its count and its gates.">
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+{% for s in S %}{% set x = 14 + loop.index0 * 148 %}
+<text x="{{ x + 68 }}" y="26" text-anchor="middle" class="s">{{ s.k }}</text>
+<rect x="{{ x }}" y="34" width="136" height="84" rx="6" class="box{% if 'LLM' in s.k %} llm{% endif %}{% if loop.last %} end{% endif %}"/>
+<text x="{{ x + 68 }}" y="54" text-anchor="middle" class="t">{{ s.t }}</text>
+{% for l in s.l %}<text x="{{ x + 68 }}" y="{{ 72 + loop.index0 * 15 }}" text-anchor="middle" class="s">{{ l }}</text>{% endfor %}
+<text x="{{ x + 68 }}" y="138" text-anchor="middle" class="m">{{ s.w }}</text>
+<text x="{{ x + 68 }}" y="158" text-anchor="middle" class="n">{{ s.n }}</text>
+{% for g in s.g %}<text x="{{ x + 68 }}" y="{{ 184 + loop.index0 * 14 }}" text-anchor="middle" class="g">{{ g }}</text>{% endfor %}
+{% if not loop.last %}<line x1="{{ x + 137 }}" y1="76" x2="{{ x + 146 }}" y2="76" class="wire" marker-end="url(#ah1)"/>{% endif %}
+{% endfor %}
+</svg>
+<figcaption>Dashed blue boxes call an LLM (Bedrock); solid boxes are code. Under each stage: what it writes, the count
+now, and in amber the gate that can stop an item. {{ fmt(c.corpus_anchors) }} of the {{ fmt(c.anchors) }} anchors come
+from the corpus batches; the rest are earlier hand-converted and pilot scenarios. Everything an LLM invented (non-real
+options, authored flip conditions, facts without a span) is recorded in <code>provenance.authored</code>.</figcaption>
+</figure>
+
+<h2>2 · The operators: what each one changes in a scenario</h2>
+{% set COLS = [('F','facts'),('Q','frame + options'),('K','considerations'),('W','weighing'),('V','verdict'),('Φ','flip conditions')] %}
+{% set R = [
+ {'op':'permute','m':'options','c':[('held','held'),('rew','reordered'),('rew','ids remapped'),('rew','ids remapped'),('rew','same, new id'),('rew','ids remapped')],'v':['code'],'a':['every arm: gold','position balanced']},
+ {'op':'surface_edit','m':'transfer','c':[('rew','new world'),('rew','new world'),('held','held exactly'),('rew','restated'),('held','held'),('rew','restated')],'v':['by construction;','setting-adds gate → hard'],'a':['transfer']},
+ {'op':'surface_edit','m':'neighbor','c':[('rew','new situation'),('rew','same domain'),('held','held exactly'),('rew','restated'),('held','held'),('rew','restated')],'v':['by construction;','setting-adds gate → hard'],'a':['neighbor control']},
+ {'op':'surface_edit','m':'match_options','c':[('held','held'),('rew','option wording'),('held','held'),('held','held'),('held','held'),('held','held')],'v':['by construction;','equivalence checker'],'a':['after transfer','and neighbor']},
+ {'op':'structural_edit','m':'flip','c':[('chg','1–2 facts'),('held','held'),('chg','favors / weights'),('chg','rewritten'),('v','→ Φ item’s then'),('chg','reversed item')],'v':['the Φ item','(by construction)'],'a':['same-domain flip;','flipped transfer']},
+ {'op':'structural_edit','m':'target_f','c':[('chg','1–2 facts'),('held','held'),('held','held exactly'),('held','held'),('held','held'),('chg','item now true')],'v':['the would_not_change','item: V holds'],'a':['would-not-change','edit']},
+ {'op':'judgment_edit','m':'weights only','c':[('held','held'),('held','held'),('chg','weights only'),('chg','rewritten'),('v','→ target option'),('chg','updated')],'v':["the planner's",'target option'],'a':['revised case C′']},
+ {'op':'surface_edit','m':'reword','dim':1,'c':[('rew','reworded'),('rew','reworded'),('held','held exactly'),('held','held'),('held','held'),('held','held')],'v':['by construction'],'a':['not in pairs-v1']},
+ {'op':'frame_edit','m':'drop_option','dim':1,'c':[('held','held'),('chg','one option out'),('chg','pruned'),('held','held'),('held','held'),('chg','pruned')],'v':['held'],'a':['removed (Peter):','raises guess odds']},
+] %}
+<figure class="dg">
+<svg viewBox="0 0 1180 470" role="img" aria-label="Grid: for each operator and mode, which of facts, frame, considerations, weighing, verdict and flip conditions are held, reworded, changed, or have the verdict changed, where the new verdict comes from, and which pairs-v1 arm uses it.">
+<text x="10" y="30" class="t">operator · mode</text>
+{% for k, name in COLS %}{% set x = 240 + loop.index0 * 102 %}
+<text x="{{ x + 48 }}" y="20" text-anchor="middle" class="n">{{ k }}</text>
+<text x="{{ x + 48 }}" y="35" text-anchor="middle" class="s">{{ name }}</text>{% endfor %}
+<text x="862" y="30" class="t">new V comes from</text><text x="1030" y="30" class="t">pairs-v1 arm</text>
+{% for r in R %}{% set y = 50 + loop.index0 * 40 %}
+<g{% if r.dim %} class="dim"{% endif %}>
+<text x="10" y="{{ y + 18 }}"><tspan class="t">{{ r.op }}</tspan><tspan class="s"> · {{ r.m }}</tspan></text>
+{% for cls, lab in r.c %}{% set x = 240 + loop.index0 * 102 %}
+<rect x="{{ x }}" y="{{ y }}" width="96" height="28" rx="4" class="c-{{ cls }}"/>
+<text x="{{ x + 48 }}" y="{{ y + 18 }}" text-anchor="middle" style="font-size:10.5px">{{ lab }}</text>{% endfor %}
+{% for l in r.v %}<text x="862" y="{{ y + 12 + loop.index0 * 13 }}" class="s">{{ l }}</text>{% endfor %}
+{% for l in r.a %}<text x="1030" y="{{ y + 12 + loop.index0 * 13 }}" class="s">{{ l }}</text>{% endfor %}
+</g>
+{% if loop.index == 7 %}<line x1="10" y1="{{ y + 35 }}" x2="1170" y2="{{ y + 35 }}" class="rowline"/>{% endif %}
+{% endfor %}
+{% set LG = [('held','held: unchanged'),('rew','surface: new wording or new world, same K'),('chg','content changes'),('v','the verdict changes')] %}
+{% for cls, lab in LG %}{% set x = 10 + loop.index0 * 290 %}
+<rect x="{{ x }}" y="432" width="22" height="16" rx="3" class="c-{{ cls }}"/><text x="{{ x + 30 }}" y="445" class="s">{{ lab }}</text>{% endfor %}
+</svg>
+<figcaption>A scenario X = (F, Q, A) with A = K, W, V, Φ. Read a row to see what an operator touches. Surface operators
+keep K exactly (same equity ids, favors and weights), so the verdict is held by construction. Structural and judgment
+operators change content, and the new verdict comes from a source fixed in advance (a flip condition, or the planner's
+target), never from a model solving the new scenario. The two faded rows are built but not used in pairs-v1. Modes that
+would need an independent solver are on <a href="/outstanding">outstanding work</a>.</figcaption>
+</figure>
+
+<h2>3 · pairs-v1: arms as compositions of operators</h2>
+{% set A = [
+ {'arm':'self','blocks':[],'served':'own case','col':0},
+ {'arm':'transfer','blocks':[('surface','surface_edit','transfer'),('surface','surface_edit','match_options'),('permute','permute','balance')],'served':'transfer case'},
+ {'arm':'flipped transfer','blocks':[('structural','structural_edit','flip · each Φ'),('permute','permute','balance')],'served':'flipped transfer','start':3},
+ {'arm':'same-domain flip','blocks':[('structural','structural_edit','flip · each Φ'),('permute','permute','balance')],'served':'lookalike: V flips'},
+ {'arm':'would-not-change','blocks':[('structural','structural_edit','target_f · each'),('permute','permute','balance')],'served':'V holds'},
+ {'arm':'revised','blocks':[('judgment','judgment_edit','weights only'),('permute','permute','balance')],'served':'revised case C′'},
+ {'arm':'neighbor','blocks':[('surface','surface_edit','neighbor'),('surface','surface_edit','match_options'),('permute','permute','balance')],'served':'neighbor case'},
+ {'arm':'decoy','blocks':[],'served':"another anchor's case",'decoy':1},
+] %}
+<figure class="dg">
+<svg viewBox="0 0 1196 500" role="img" aria-label="Each pairs-v1 arm as a chain of operator blocks starting from a quality anchor, ending in the case served with the anchor's live trace. The flipped-transfer chain continues from the transfer case.">
+<defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+<rect x="10" y="40" width="126" height="410" rx="8" class="box end"/>
+<text x="73" y="225" text-anchor="middle" class="t">quality anchor X</text>
+<text x="73" y="243" text-anchor="middle" class="s">= live X1</text>
+<text x="73" y="258" text-anchor="middle" class="s">(its rendered trace)</text>
+{% for a in A %}{% set y = 40 + loop.index0 * 52 %}{% set st = a.start or 0 %}
+<text x="{{ 150 if not a.start else 170 + a.start * 172 + 160 }}" y="{{ y - 4 }}" class="s">{{ a.arm }}</text>
+{% if not a.start %}<line x1="137" y1="{{ y + 17 }}" x2="{{ 168 }}" y2="{{ y + 17 }}" class="wire" marker-end="url(#ah3)"/>{% endif %}
+{% for cls, op, mode in a.blocks %}{% set x = 170 + (st + loop.index0) * 172 %}
+<rect x="{{ x }}" y="{{ y }}" width="150" height="34" rx="5" class="o-{{ cls }}"/>
+<text x="{{ x + 75 }}" y="{{ y + 14 }}" text-anchor="middle" class="t" style="font-size:11.5px">{{ op }}</text>
+<text x="{{ x + 75 }}" y="{{ y + 28 }}" text-anchor="middle" class="s">{{ mode }}</text>
+<line x1="{{ x + 151 }}" y1="{{ y + 17 }}" x2="{{ x + 170 }}" y2="{{ y + 17 }}" class="wire" marker-end="url(#ah3)"/>{% endfor %}
+{% set sx = 170 + (st + a.blocks|length) * 172 %}
+<rect x="{{ sx }}" y="{{ y }}" width="150" height="34" rx="17" class="served"{% if a.decoy %} style="stroke-dasharray:5 3"{% endif %}/>
+<text x="{{ sx + 75 }}" y="{{ y + 14 }}" text-anchor="middle" class="s">served as X2</text>
+<text x="{{ sx + 75 }}" y="{{ y + 28 }}" text-anchor="middle" style="font-size:11.5px">{{ a.served }}</text>
+{% if a.start %}<line x1="{{ 170 + 3 * 172 + 75 }}" y1="{{ y - 18 }}" x2="{{ 170 + 3 * 172 + 75 }}" y2="{{ y - 1 }}" class="wire" marker-end="url(#ah3)"/>{% endif %}
+{% endfor %}
+{% set LG = [('o-permute','permute'),('o-surface','surface_edit'),('o-structural','structural_edit'),('o-judgment','judgment_edit'),('served','served case')] %}
+{% for cls, lab in LG %}{% set x = 170 + loop.index0 * 200 %}
+<rect x="{{ x }}" y="470" width="22" height="16" rx="3" class="{{ cls }}"/><text x="{{ x + 30 }}" y="483" class="s">{{ lab }}</text>{% endfor %}
+</svg>
+<figcaption>Every arm starts from the same quality anchor, whose rendered trace is the live situation X1 (v1: anchors are
+always X1). Each block passes on only <b>accepted</b> outputs; a no-op (options already matched, gold already in place)
+passes its input through unchanged. The flipped transfer continues from the transfer case. Every chain ends with
+<code>permute · balance</code> so the served case's gold position says nothing about the live one. Self serves the
+anchor itself; the decoy is another anchor's case, drawn at assembly with no operator ("go fish").
+Recipes: <code>code/pipeline/ops/recipes/pairs_v1/</code>.</figcaption>
+</figure>
+
+<h3>Latest pairs-v1 yields per step (live, from the run logs)</h3>
+{% if yields %}<table class="grid"><tr><th>recipe</th><th>step</th><th>operator · mode</th><th class="num">accepted</th><th class="num">hard</th><th class="num">rejected</th><th class="num">skipped / passed on</th><th class="num">error</th><th>log</th></tr>
+{% for y in yields %}{% for s in y.steps %}<tr>{% if loop.first %}<td rowspan="{{ y.steps|length }}"><b>{{ y.recipe }}</b></td>{% endif %}
+<td class="num">{{ s.step }}</td><td>{{ s.op }}{% if s.mode %} · {{ s.mode }}{% endif %}</td>
+{% for b in ['accepted','hard','rejected','skipped','error'] %}<td class="num">{{ s.buckets.get(b, '') }}</td>{% endfor %}
+{% if loop.first %}<td rowspan="{{ y.steps|length }}" class="mono small"><a href="/batch/opsrun:{{ y.stem|q }}">batch page</a></td>{% endif %}</tr>{% endfor %}{% endfor %}</table>
+{% else %}<p class="muted">No pairs-v1 run logs yet.</p>{% endif %}
+
+<h2>4 · From a pair to a score</h2>
+{% set D4 = [
+ {'t':'Pair cells','k':'code','l':['X1 = anchor trace','X2 = served case','one cell per arm']},
+ {'t':'Render T(X1)','k':'LLM','l':['render.v5','framing + leak gates','drops what fails']},
+ {'t':'Harness','k':'code','l':['equities + case card','injected; scaffold','and reasoning mode']},
+ {'t':'Policy','k':'LLM','l':['Granite 4.2 8B (vLLM)','GPT-6 Luna (Bedrock)','k samples per cell']},
+ {'t':'Score','k':'code + judge','l':['parse the verdict','Jev Choice aligns','options to the key']},
+ {'t':'Results','k':'code','l':['samples.jsonl → tensor','measurements, views','this console']},
+] %}
+<figure class="dg">
+<svg viewBox="0 0 1200 130" role="img" aria-label="Pair cells, render the live trace, harness injects equities and the case, policy replies, scoring aligns options with a judge, results flow into the tensor, measurements and this console.">
+<defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+{% for s in D4 %}{% set x = 14 + loop.index0 * 196 %}
+<text x="{{ x + 90 }}" y="22" text-anchor="middle" class="s">{{ s.k }}</text>
+<rect x="{{ x }}" y="30" width="180" height="84" rx="6" class="box{% if 'LLM' in s.k or 'judge' in s.k %} llm{% endif %}{% if loop.last %} end{% endif %}"/>
+<text x="{{ x + 90 }}" y="50" text-anchor="middle" class="t">{{ s.t }}</text>
+{% for l in s.l %}<text x="{{ x + 90 }}" y="{{ 68 + loop.index0 * 15 }}" text-anchor="middle" class="s">{{ l }}</text>{% endfor %}
+{% if not loop.last %}<line x1="{{ x + 181 }}" y1="72" x2="{{ x + 194 }}" y2="72" class="wire" marker-end="url(#ah4)"/>{% endif %}
+{% endfor %}
+</svg>
+<figcaption>The eval path for one pair. The live trace never contains the served case; the harness injects the
+deployer's equities and the case card when the agent nears the decision. The choice is scored from the verdict after
+the judge maps the agent's options onto the answer key's. Runs: <a href="/runs">runs</a>; tables: <a href="/measurements">measurements</a>.</figcaption>
+</figure>
+{% endblock %}
