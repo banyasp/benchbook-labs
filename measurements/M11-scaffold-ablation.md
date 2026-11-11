@@ -33,6 +33,20 @@
     are all at think-first.
 - **Arms.** All five (no case, own case, transferred, flipped, other anchor's case) on pilot 2's 28 X1s: the same
   cells, traces and equities as M06, M07 and M09.
+- **Samples per run.** 151 prompts (schedule items) × k. Breakdown from `measurements/datasets/pilot2.md`:
+
+  | Arm | Prompts | X1s covered | Replies at k=4 (Granite) | Replies at k=8 (Luna) |
+  |---|---|---|---|---|
+  | no case | 28 | 28 | 112 | 224 |
+  | own case | 28 | 28 | 112 | 224 |
+  | transferred | 40 | 28 (some X1s have 2+ sisters) | 160 | 320 |
+  | flipped | 27 | 20 (8 X1s have no accepted flip; some have 2) | 108 | 216 |
+  | other anchor's case | 28 | 28 | 112 | 224 |
+  | **total** | **151** | 28 | **604** | **1,208** |
+
+  - Accuracy cells average each X1's replies within an arm first, then average across X1s, so an X1 with two
+    transferred sisters is not counted twice.
+  - Paired contrasts use 28 X1s per arm, or 20 on the flipped arm.
 
 ## How
 - **Runs.** `eval.allpairs run --scaffold {guided|free} --mode A ...`. Each run directory is one condition, registered
