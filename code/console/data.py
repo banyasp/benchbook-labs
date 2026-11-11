@@ -1083,8 +1083,8 @@ def funnel() -> list[dict]:
         st.append({"stage": "Quality-eligible anchors", "count": None, "where": "data/datasets/pairs-v1/eligibility.jsonl",
                    "link": None, "blocking": "eligibility file not written yet"})
     mo = [r for r in rows if r.get("op") == "surface_edit" and r.get("mode") == "match_options"]
-    st.append({"stage": "Option-matched anchors", "count": len([r for r in mo if r["bucket"] == "accepted"]),
-               "detail": f"{len(mo)} attempted; buckets {dict(Counter(r['bucket'] for r in mo))}" if mo else "operator mode coming",
+    st.append({"stage": "Option-matched cases (after transfer / neighbor; anchors need none, M12)", "count": len([r for r in mo if r["bucket"] == "accepted"]),
+               "detail": f"{len(mo)} attempted; buckets {dict(Counter(r['bucket'] for r in mo))}" if mo else "none yet: runs as a step in the pairs-v1 transfer and neighbor recipes",
                "where": "surface_edit / match_options", "link": "/scenarios?op=surface_edit&mode=match_options",
                "blocking": None})
     by = Counter((r.get("op") or f"legacy:{r.get('legacy_op')}", r.get("mode"), r["bucket"]) for r in derived)
