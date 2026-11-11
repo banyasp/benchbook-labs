@@ -6,6 +6,33 @@ Revision 2 (same day): Peter's second round (k_tolerance exact; lookalike = V ch
 annotation, not a gate; `resolve` dropped; `author` → `writer`; lineage written by code). First draft:
 `versions/OPERATORS-SPEC.v1-first-draft.md`.*
 
+## v1 build scope: no independent solver (Peter, 2026-11-11)
+
+Build only the modes whose V′ needs no independent solver. The solver module is specified below, but its LLM and human
+backends are not built yet (solver fidelity to practitioners is unresolved: a blind Luna solve agrees with the corpus
+verdict on 42 of 57 anchors).
+
+| Operator · mode | In v1 | V′ from |
+|---|---|---|
+| `permute` (all) | yes | code |
+| `surface_edit` reword / neighbor / transfer | yes | held |
+| `structural_edit` flip (incl. a same-domain flip used as a lookalike) | yes | the Φ `would_change` item's `then` |
+| `structural_edit` target_f **realizing a `would_not_change` item** | yes (Peter: "interesting and cool") | held |
+| `frame_edit` remove a non-gold option / add an option the source considered and rejected | yes | held |
+| `frame_edit` decide ↔ advise | pending Peter's ruling | held (proposed) |
+| `judgment_edit` | yes | the planner's target |
+| `structural_edit` target_k, general target_f, lookalike beyond Φ; `frame_edit` remove gold / add an invented option / change decider | **later** (needs a solver) | — |
+
+- **Capacity** (1,072 extracted scenarios):
+  - 1,493 `would_change` items, at least one per scenario;
+  - about 1,100 `would_not_change` items, but many restate a fact already present, so only the counterfactual ones
+    give a real edit.
+- **Φ grounding is an annotation, not a gate** (Peter). No Φ item records whether its `if` and `then` are stated or
+  implied in the source spans, or were authored by the extractor. A grounding check records this per item
+  (`phi_grounding: stated | implied | authored`) for the dashboard. It never removes items.
+- The blind-solve annotations (`verdict_shift`, `k_support`) are optional in v1: they are an LLM call per output
+  and serve observability only.
+
 ## Principles (Peter)
 
 - **Few primitive operators, each with parameters. No near-duplicates.** An experimental arm is a *recipe* (a
@@ -90,7 +117,7 @@ that the id number equals the position.
   |---|---|---|
   | `flip` | a Φ `would_change` item id | by construction: the item's `then`; `via` = the item |
   | `target_k` | a K change (add or remove a consideration, change `favors`, change a weight) | the solver, from the new F and Q |
-  | `target_f` | an F change (add, edit or remove a fact) | the solver: K′, then V′ |
+  | `target_f` | an F change (add, edit or remove a fact) | the solver: K′, then V′. **Except** when the change makes a Φ `would_not_change` item true: then V is held by construction, `via` = that item, and the relation is `follows` (v1) |
   | `lookalike` | same domain and surface; change K **enough that V changes** (Peter) | the solver; accepted only if V′ ≠ V |
 
 - Args:
