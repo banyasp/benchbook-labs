@@ -227,6 +227,7 @@ class Ctx:
         self.run_seed, self.max_tokens = run_seed, max_tokens
         self.mode = MODE
         self.scaffold = "schema"
+        self.modes_version = None
         self.sem, self.lock = asyncio.Semaphore(concurrency), asyncio.Lock()
         self.arun, self.Settings, self.build, self.score = (harness.arun_episode, harness.HarnessSettings,
                                                             build_pair_episode, score_reply_with_details)
@@ -274,7 +275,7 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
         seed = sample_seed(ctx.run_seed, sid)
         sc = SCAFFOLDS[ctx.scaffold]
         settings = ctx.Settings(mode=ctx.mode, analogical_prompt=sc["analogical"], max_tokens=ctx.max_tokens, seed=seed,
-                                model=MODELS[ctx.model], format_spec=sc["format_spec"], modes_version=sc["modes_version"])
+                                model=MODELS[ctx.model], format_spec=sc["format_spec"], modes_version=ctx.modes_version or sc["modes_version"])
         ep = await asyncio.to_thread(ctx.build, pair, ctx.store, settings, ar_prompt=sc["analogical"])   # the pair says True
         async with ctx.sem:
             if ctx.model in API_ROLES:
@@ -394,6 +395,9 @@ def main(argv=None):
     ap.add_argument("--scaffold", default="schema", choices=list(SCAFFOLDS),
                     help="schema: YAML step documents; guided: the steps as prose guidance; free: no steps. All end "
                          "with a verdict block (2026-11-10 ablation). guided/free need --mode A for Granite")
+    ap.add_argument("--modes-version", choices=["v1", "v2"],
+                    help="mode-line file (code/harness/prompts/modes.<v>.yaml); default: the scaffold's own (schema v1, "
+                         "guided/free v2). 2026-11-11: schema with v2 removes the v1 wording difference from the ablation")
     ap.add_argument("--equities", default="pilot2")
     ap.add_argument("-k", type=int, default=8, help="control samples per X1; confirm re-runs per X1")
     ap.add_argument("--concurrency", type=int, default=24)
@@ -421,7 +425,7 @@ def main(argv=None):
                "cells": cells, "model": a.model, "equities": a.equities,
                "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "scaffold": a.scaffold,
                "ar_prompt": SCAFFOLDS[a.scaffold]["analogical"], "format_spec": SCAFFOLDS[a.scaffold]["format_spec"],
-               "modes_version": SCAFFOLDS[a.scaffold]["modes_version"],
+               "modes_version": a.modes_version or SCAFFOLDS[a.scaffold]["modes_version"],
                "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
                **({"api_role": API_ROLES[a.model],
                    "api_start_instruction": API_START if a.scaffold == "schema" else API_START_PROSE, "prefill": None,
@@ -432,6 +436,9 @@ def main(argv=None):
               a.concurrency)
     ctx.mode = cfg.get("mode") or MODE
     ctx.scaffold = cfg.get("scaffold") or "schema"
+    ctx.modes_version = cfg.get("modes_version")
+    if ctx.modes_version == "v2" and ctx.mode not in ("A", "B"):
+        raise SystemExit("modes.v2 defines only A and B (no structure inside <think>): use --mode A")
     if ctx.scaffold != "schema" and ctx.model not in API_ROLES and ctx.mode != "A":
         raise SystemExit("--scaffold guided/free has no structure to put inside <think>: use --mode A for Granite")
     if a.phase == "rescore":
