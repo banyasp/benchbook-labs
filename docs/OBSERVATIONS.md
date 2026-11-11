@@ -10,6 +10,14 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O21 · 2026-11-11 · Granite rarely declines an irrelevant case; Luna almost always does (M09, k=8)
+On the "other anchor's case" arm (a sister of a different anchor, served as if relevant), Luna declares
+`not_governed` in 97% of replies. Granite thinking first declares it in 8%, follows in 47% and distinguishes in 38%;
+YAML-only Granite 12% / 37% / 42%. Accuracy on that arm: Luna 70%, Granite 46-48%, about Granite's no-case level. So
+Granite is not misled into the irrelevant case's verdict much, but it does not recognise that the case does not apply.
+- Sources: `results/transfer/MODE-COMPARE-pilot2-k8-20261111.md` (relations table); `results/transfer/pilot2-modeA/`,
+  `results/transfer/pilot2/`, `results/transfer/pilot2-luna/` (decoy phase in `samples.jsonl`); measurement M09.
+
 ### O20 · 2026-11-11 · Prompted steps do not fix Granite's flip copying; the YAML schema costs base accuracy (M11)
 Scaffold ablation on pilot 2 (28 X1s, all arms). Granite at k=4, think first; Luna at k=8.
 - Granite flip arm: 28% (free), 29% (guided), 31% (schema); it copies the flipped sister's verdict about 48% of the

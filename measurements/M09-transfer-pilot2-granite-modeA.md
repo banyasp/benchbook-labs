@@ -1,21 +1,13 @@
 # M09 · Transfer pilot 2, Granite thinks first (mode A)
 
-**Status: PARTIAL**, still running.
-- **k=4 reached** 2026-11-11 00:19 UTC (604 samples, idx 0-3); the run was stopped for M11's Granite guided/free runs and
-  resumed toward k=8 at 2026-11-11 03:52 UTC (`scripts/scaffold_gpu_chain.sh`). k=4 accuracy, from the tensor
-  (`measurements/views/SCAFFOLD-ABLATION-granite-20261111.md`, `--max-idx 3`): no case 45% [32-57]; own case 88%
-  [78-96]; transferred 76% [65-85] (copies 76%); flipped 31% [15-49] (copies 48%); other anchor's case 48% [33-63].
-  Compared with the first-pass snapshot below, no case and the flip arm fell back (54 → 45, 38 → 31): the first-pass
-  gains over mode C were mostly noise.
-- **This snapshot.** The first pass is complete: sample index 0 of all 151 schedule items (28 no-case + 123 cells),
-  out of k=8.
-- **Taken.** 2026-11-10 20:29 UTC (`results/transfer/MODE-COMPARE-idx0-20261110.md`).
-- **Running.** Started 2026-11-10 19:03 UTC; expected to finish around 2026-11-11 05:00 UTC (GPU KV cache saturated,
-  about 216 tokens/s).
+**Status: COMPLETE** (k=8), 2026-11-11 09:14 UTC: 1,208 samples, 0 errors.
+- Ran 2026-11-10 19:03 UTC to 2026-11-11 00:19 (k=4); paused for M11's Granite guided/free runs; resumed 03:52 to 09:14
+  UTC (`scripts/scaffold_gpu_chain.sh`, log `logs/scaffold-gpu-chain.log`).
+- Final comparison: `results/transfer/MODE-COMPARE-pilot2-k8-20261111.md` (all three runs at k=8). The first-pass
+  snapshot below is kept for the record; the k=8 tables supersede it.
 - **ABORTED earlier attempt.** 60 samples with a 12,000-token budget, 16:41-19:02 UTC, archived at
   `results/transfer/versions/pilot2-modeA.v1-12k-tokens-aborted/`. At 12,000 tokens the free thinking truncated 3 of
-  the first 6 flip replies (up to 107,000 characters of thinking), so it was restarted at 20,000. The earlier
-  queued design (flip, transfer and no case only, k=4) was widened to all arms at k=8 (`config.json` → `note`).
+  the first 6 flip replies (up to 107,000 characters of thinking), so it was restarted at 20,000.
 
 ## What was measured
 - **Question** (Peter, 2026-11-10). Does letting Granite think in free prose before writing the YAML (as Luna does with
@@ -57,6 +49,40 @@ Paired per-X1 differences, mode A − mode C (sample 0): no case +14 [−4, +31]
 | no case | 39% | 28% | 20% |
 | flipped sister | 56% | 49% | 23% |
 
+## Final results (k=8, all three runs)
+
+From `results/transfer/MODE-COMPARE-pilot2-k8-20261111.md` (`python -m eval.analysis.mode_compare`, no `--max-idx`).
+
+| Arm | Granite C (M07) | Granite A (this) | Luna (M06) |
+|---|---|---|---|
+| no case | 45% [32-60] | 48% [35-61] | 66% [51-79] |
+| own case | 81% [72-88] | 90% [82-97] | 91% [83-98] |
+| transferred sister | 73%; copies 73% | 81%; copies 81% | 86%; copies 86% |
+| flipped sister | 19%; copies 57% | 31%; copies 49% | 76%; copies 14% |
+| other anchor's sister | 46% | 48% | 70% |
+
+- **Paired, mode A − mode C:** no case +3 [−5, +10]; own case +9 [+4, +16]; transferred +7 [0, +16]; flipped +11
+  [+3, +20]; other anchor's case +2 [−6, +11].
+- **Luna − mode A:** no case +18 [+4, +32]; own case +1; transferred +5 [−3, +13]; flipped +45 [+28, +62]; other
+  anchor's case +22 [+9, +35].
+- **Truncation** falls from 1-9% (mode C) to 0% on every arm. Thinking is about 1.6x longer (flip arm 29,000 vs
+  16,000 characters).
+- **Flip mechanics:** declares `flips` with the right `via` 8% (C 3%, Luna 52%). Flipped consideration marked
+  corresponding 45% (C 36%, Luna 88%) and matched 31% (Luna 1%). Free thinking mentions a flip condition 59%.
+- **Contamination**, own considerations favoring the flipped case's verdict: no case 30%, flip 45% (C 36% → 50%; Luna
+  24% → 22%).
+- **Other anchor's case:** Luna declares `not_governed` 97% of the time; Granite A does 8%, follows 47% and
+  distinguishes 38%.
+
+**Reading.**
+- Thinking first is a real but modest gain for Granite: significant on own case (+9) and flipped (+11), and it ends
+  truncation. It closes the gap to Luna where the answer is in the case (own, transferred). It does not close it
+  where the model has to reason against or without the case (no case −18, flipped −45, other anchor's case −22).
+- The flip failure survives free thinking. Granite notices the flip condition in its thinking (59%) but rarely acts on
+  it (8% declare flips), and its own considerations still bend toward the case (45%). With M11 (the scaffold does not
+  matter either), this places the flip weakness in the model, not in the format or the token budget.
+- Granite rarely declines an irrelevant case (8% not_governed vs Luna 97%). That is a second thing training must teach.
+
 ## How
 - **Run.**
 
@@ -85,7 +111,7 @@ Paired per-X1 differences, mode A − mode C (sample 0): no case +14 [−4, +31]
 - **Data.** `results/transfer/pilot2-modeA/` (`config.json`, `samples.jsonl`, `raw/`, `details/`). The report is
   written when the run ends.
 
-## Key observations (provisional: one reply per cell)
+## Key observations from the first pass (provisional, superseded by the k=8 results above)
 - **Thinking first helps a little everywhere.** Granite matches Luna on its own case, but no difference is
   statistically clear yet.
 - **Granite now notices the flip condition** (63% mention it in free thinking) and thinks twice as long on flip cells,
