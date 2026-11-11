@@ -110,6 +110,28 @@ All three scaffolds have 1,208 replies at k=8; the free and guided runs finished
   in `results/transfer/pilot2-luna/raw/`). Luna guided and free used mode A from `modes.v2.yaml` plus `API_START_PROSE`.
   So Luna's schema − guided contrast also differs in the mode line, not only the scaffold.
 
+### Luna, clean schema re-run (2026-11-11): COMPLETE
+
+`results/transfer/pilot2-luna-schemaA`: the schema scaffold with the v2 mode-A line and `API_START` (no conflicting
+mode-C line), launched 16:22 UTC, finished 16:58 UTC, 1,208 replies, 0 errors. Command:
+`eval.allpairs run --run results/transfer/pilot2-luna-schemaA --cells results/transfer/pilot2-luna-schemaA/cells.json
+--model luna --mode A --scaffold schema --modes-version v2 -k 8 --max-tokens 16000 --concurrency 24`. Now schema,
+guided and free differ only in the format file. View: `measurements/views/SCAFFOLD-ABLATION-luna-v2A-20261111.md`
+(`tensor standard --where policy=gpt-6-luna mode_line=v2.A`). Cost: about $2-3 of Bedrock (estimate).
+
+| Scaffold (all v2 mode A) | No case | Own case | Transferred | Flipped (copies) | Other anchor's case |
+|---|---|---|---|---|---|
+| free | 73% | 95% | 93% | 70% (11%) | 71% |
+| guided | 67% | 93% | 88% | 77% (10%) | 72% |
+| schema (clean re-run) | 71% | 94% | 88% | 80% (11%) | 75% |
+
+- **Schema effect, clean** (schema − guided): +1 to +4 points on every arm; no interval excludes 0. No-verdict 0%.
+- **The contradictory prompt cost the old run** (same scaffold, mode line v2.A − v1.C, paired): no case +5 [0, +10];
+  own case +3 [0, +7]; transferred +2 [−2, +7]; flipped +5 [−2, +12]; other anchor's case +6 [−1, +12].
+- **Reading.** For Luna the scaffold does not matter: free, guided and schema are within a few points, and the
+  earlier "schema costs 1-3 points" was the conflicting instruction, not the schema. The M06 numbers understate Luna by
+  2-6 points.
+
 **Reading (Luna).**
 - Scaffolding buys a frontier model nothing. It reasons as well, or slightly better, when told only "decide", and the
   structure costs a few points on the no-case and transferred arms.

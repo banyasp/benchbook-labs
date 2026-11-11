@@ -10,6 +10,15 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O23 · 2026-11-11 · A self-contradictory prompt cost Luna 2-6 points (M06 vs clean re-run)
+M06 (Luna, schema scaffold) appended the v1 mode-C line ("write the YAML documents inside your thinking … then the
+verdict as your reply") and the API start line ("begin your reply with `kind: fact_enumeration`"). Luna followed the
+second, but accuracy was lower on every arm than in a re-run without the conflict: paired +5 no case, +3 own case,
++2 transferred, +5 flipped, +6 other anchor's case; no-verdict 1-4% → 0%. Lesson: check the assembled prompt for
+conflicting instructions whenever a harness option (mode, scaffold, API start line) is combined with another.
+- Sources: `results/transfer/pilot2-luna/` (M06), `results/transfer/pilot2-luna-schemaA/`; view
+  `measurements/views/SCAFFOLD-ABLATION-luna-v2A-20261111.md`; measurement M11.
+
 ### O22 · 2026-11-11 · (CORRECTED) No gold-length cue in anchors; transfer sisters do make the gold longer
 First reported as "gold is the longest option in two thirds of corpus scenarios" (66% vs 44% chance). That was a metric
 bug: a tie for longest counted as longest, and chance ignored ties. Corrected (characters, unique longest): anchors
