@@ -1214,7 +1214,7 @@ ARM_INFO = {
     "transfer_flip": ("Flipped transfer", "the transfer case with one would_change condition made true: V changes"),
     "same_domain_flip": ("Same-domain flip", "the anchor with one would_change condition made true: V changes"),
     "noflip": ("Would-not-change edit", "a would_not_change condition made true: facts change, V holds"),
-    "revised": ("Revised case C′", "the case's weights edited so its weighing reaches another option"),
+    "revised": ("Revised case C′", "the case's weights edited so its weighing reaches another option; key = C′'s verdict (online edit)"),
     "neighbor": ("Neighbor control", "same sub-domain, a different situation with the same K and V"),
     "random": ("Random", "another pilot anchor drawn at random (different family and domain label); not checked for irrelevance"),
 }
@@ -1245,6 +1245,10 @@ def _case_brief(sid: str) -> dict:
             "gold_text": ((c.get("options") or {}).get(gold) or {}).get("do"), "has_trace": bool(r.get("has_trace"))}
 
 
+def _opt_text(sid: str, oid: str | None) -> str | None:
+    return ((((scenario(sid) or {}).get("case") or {}).get("options") or {}).get(oid) or {}).get("do") if oid else None
+
+
 def dataset_overview(name: str, tag: str, arm: str | None = None) -> dict:
     ds = _ds_load(name, tag)
     cells, att = ds["cells"], ds["attempts"]
@@ -1261,7 +1265,8 @@ def dataset_overview(name: str, tag: str, arm: str | None = None) -> dict:
             for k, v in sorted(yields.items())]
     arm_rows = None
     if arm:
-        arm_rows = [{"cell": c, "x1": briefs[c["x1"]], "x2": _case_brief(c["x2"])} for c in cells if c["arm"] == arm]
+        arm_rows = [{"cell": c, "x1": briefs[c["x1"]], "x2": _case_brief(c["x2"]), "key_text": _opt_text(c["x1"], c.get("key"))}
+                    for c in cells if c["arm"] == arm]
     return {"name": name, "tag": tag, "tags": dataset_tags(name), "manifest": ds["manifest"], "anchors": anchors,
             "grid": grid, "briefs": briefs, "yields": ytab, "arm": arm, "arm_rows": arm_rows,
             "by_arm": Counter(c["arm"] for c in cells),
@@ -1288,7 +1293,8 @@ def dataset_anchor(name: str, tag: str, aid: str) -> dict:
                 st = ((scenario(ch) or {}).get("lineage") or {}).get("steps") or []
                 hops.append({"from": p, "to": ch, "attempt": by_id.get(ch), "step": st[-1] if st else None,
                              "diff": case_diff((scenario(p) or {}).get("case") or {}, (scenario(ch) or {}).get("case") or {})})
-            served.append({"cell": c, "case": x2.get("case") or {}, "title": x2.get("title"), "domain": x2.get("domain"),
+            served.append({"cell": c, "key_text": ((a_case.get("options") or {}).get(c.get("key")) or {}).get("do"),
+                           "case": x2.get("case") or {}, "title": x2.get("title"), "domain": x2.get("domain"),
                            "hops": hops, "diff": case_diff(a_case, x2.get("case") or {}) if k not in ("self", "random") else [],
                            "signoff": signoff_of("scenario", c["x2"])})
         arms.append({"arm": k, "label": ARM_INFO[k][0], "what": ARM_INFO[k][1], "served": served})

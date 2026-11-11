@@ -162,8 +162,12 @@ def assemble(tag: str, seed: int = 0) -> dict:
     """build-<tag>.json + the recipe run logs -> cells-<tag>.json (one cell per X1 anchor x served X2) and
     attempts-<tag>.jsonl (every operator application, with its anchor resolved, for the console's per-anchor view).
 
-    Cell: X1 = the anchor (live trace), X2 = the served case. The answer key is X1's gold whatever is served
-    (eval.allpairs), so a cell needs no key of its own; x2_gold and the chain are recorded for analysis."""
+    Cell: X1 = the anchor (live trace), X2 = the served case. Each cell carries its own answer key (`key`, an X1
+    option id, and `key_source`). It is X1's gold for every arm except **revised**: C' has X1's facts and
+    considerations with the weights edited, so a model that faithfully extends the served case reaches C''s verdict;
+    that is the online-edit test (R54), and the key is C''s gold mapped onto X1's options by option text (Peter,
+    2026-11-11, caught that a single X1 key would mark every faithful revised reply wrong). An eval over these cells
+    must score against `key`, not against eval.allpairs' X1-only key."""
     from pipeline.ops.recipes import load_recipe
     store = Store()
     b = json.loads((OUT / f"build-{tag}.json").read_text())
@@ -230,6 +234,12 @@ def assemble(tag: str, seed: int = 0) -> dict:
     for c in cells:
         c["x1_gold"], c["x2_gold"] = gold_of(c["x1"]), gold_of(c["x2"])
         c["x1_has_trace"] = store.has_trace(c["x1"])
+        c["key"], c["key_source"] = c["x1_gold"], "x1_gold"
+        if c["arm"] == "revised":
+            A, B = store.scenario(c["x1"]).case, store.scenario(c["x2"]).case
+            by_text = {o.do: k for k, o in A.options.items()}
+            c["key"] = by_text.get(B.options[c["x2_gold"]].do)
+            c["key_source"] = "x2_revised_gold (C' verdict mapped to X1 options by text)" if c["key"] else "UNMAPPED"
     cells.sort(key=lambda c: (c["x1"], ARMS.index(c["arm"]), c["x2"]))
     for i, c in enumerate(cells):
         c["cell"] = f"PV1-{tag}-{i:05d}"
@@ -242,8 +252,9 @@ def assemble(tag: str, seed: int = 0) -> dict:
            "cells": len(cells), "by_arm": {a: sum(c["arm"] == a for c in cells) for a in ARMS},
            "anchors_with_trace": sum(store.has_trace(x) for x in ids), "random_seed": seed,
            "excluded_recipes": sorted(set(logs) - set(ARM_STEPS)),
+           "key_sources": dict(Counter(c["key_source"] for c in cells)),
            "rules": ["X1 is always an anchor (Peter 2026-11-11; revisit for SFT/RL)",
-                     "answer key = X1 gold for every arm (eval.allpairs)",
+                     "answer key per cell (`key`): X1 gold, except revised = C' gold mapped onto X1 options (online-edit test, R54; Peter 2026-11-11)",
                      "drop_option excluded (Peter 2026-11-11)", "decide<->advise parked",
                      "random: another pilot anchor drawn at random (different family and, when possible, different domain); not checked for irrelevance, so not called a decoy (Peter 2026-11-11)"]}
     (OUT / f"manifest-{tag}.json").write_text(json.dumps(man, indent=1))

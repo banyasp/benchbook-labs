@@ -5,7 +5,7 @@ built {{ d.manifest.built }} from <a href="/file?path={{ d.manifest.build|q }}" 
 inputs <a href="/file?path={{ d.manifest.inputs|q }}" class="mono">{{ d.manifest.inputs }}</a> ·
 <a href="/batch/dataset:{{ d.name }}">batch page &amp; spot-check sample</a></p>
 <p><b>{{ d.manifest.cells }}</b> pair cells over <b>{{ d.manifest.n_anchors }}</b> anchors ({{ d.manifest.anchors_with_trace }} with a rendered trace).
-X1 is always the anchor; the answer key is X1's gold for every arm. Excluded recipes: {{ d.manifest.excluded_recipes|join(', ') or 'none' }}.</p>
+X1 is always the anchor; each cell has its own answer key: X1's gold, except the revised arm, keyed to C′'s verdict (key sources: {{ d.manifest.key_sources }}). Excluded recipes: {{ d.manifest.excluded_recipes|join(', ') or 'none' }}.</p>
 <details><summary>Rules recorded in the manifest</summary><ul>{% for r in d.manifest.rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
 
 <h2>Arms</h2>
@@ -21,11 +21,11 @@ X1 is always the anchor; the answer key is X1's gold for every arm. Excluded rec
 
 {% if d.arm_rows is not none %}
 <h2 id="arm">All {{ arm_info[d.arm][0] }} cells ({{ d.arm_rows|length }}) <a class="small" href="?tag={{ d.tag }}">clear</a></h2>
-<table class="grid"><tr><th>anchor (X1)</th><th>X1 question</th><th>served case (X2)</th><th>X2 domain · question</th><th>X2 gold</th></tr>
+<table class="grid"><tr><th>anchor (X1)</th><th>X1 question</th><th>served case (X2)</th><th>X2 domain · question</th><th>X2 gold</th><th>answer key (X1 option)</th></tr>
 {% for r in d.arm_rows %}<tr><td><a class="mono small" href="/dataset/{{ d.name }}/anchor/{{ r.x1.id|q }}?tag={{ d.tag }}#{{ d.arm }}">{{ r.x1.id }}</a><div class="small muted">{{ r.x1.domain }}</div></td>
 <td class="small">{{ r.x1.question }}</td>
 <td><a class="mono small" href="/scenario/{{ r.x2.id|q }}">{{ r.x2.id }}</a>{% if r.cell.phi %}<div class="small">via <span class="mono">{{ r.cell.phi }}</span></div>{% endif %}</td>
-<td class="small"><span class="muted">{{ r.x2.domain }}</span> · {{ r.x2.question }}</td><td class="small">{{ r.x2.gold_text }}</td></tr>{% endfor %}</table>
+<td class="small"><span class="muted">{{ r.x2.domain }}</span> · {{ r.x2.question }}</td><td class="small">{{ r.x2.gold_text }}</td><td class="small"><span class="mono">{{ r.cell.key }}</span> {{ r.key_text }}{% if r.cell.key_source != 'x1_gold' %}<div class="badge warn">{{ r.cell.key_source }}</div>{% endif %}</td></tr>{% endfor %}</table>
 {% endif %}
 
 <h2>Anchors × arms</h2>
