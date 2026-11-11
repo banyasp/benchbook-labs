@@ -6,6 +6,10 @@ derived scenarios are only served as cases (revisit for SFT/RL); decide <-> advi
 
     python -m pipeline.datasets.pairs_v1 eligibility [--workers 16]      # data/datasets/pairs-v1/eligibility.jsonl
     python -m pipeline.datasets.pairs_v1 pilot [--n 100] [--seed 0]      # data/datasets/pairs-v1/pilot-anchors.txt
+    python -m pipeline.datasets.pairs_v1 build --inputs <ids.txt> --tag pilot [--workers 6] [--arms transfer,...]
+        runs every arm recipe (code/pipeline/ops/recipes/pairs_v1/*.yaml) on the anchors, all in ONE process so the
+        id reservation lock is shared (separate processes could mint the same derived id); writes
+        data/datasets/pairs-v1/build-<tag>.json (per-recipe summaries and run-log paths)
 
 Eligibility ("quality" anchors): every check is recorded per anchor, pass or fail with reasons; nothing is deleted.
   structure   parses; 2-4 options; gold among them; >= 1 consideration
@@ -115,6 +119,27 @@ def pilot(n: int = 100, seed: int = 0) -> dict:
             "n_options": dict(Counter(r["n_options"] for r in picked)), "with_trace": sum(r["has_trace"] for r in picked)}
 
 
+RECIPES = ROOT / "code" / "pipeline" / "ops" / "recipes" / "pairs_v1"
+
+
+def build(inputs: str, tag: str, workers: int = 6, arms: list[str] | None = None, seed: int = 0) -> dict:
+    from pipeline.ops.recipes import load_recipe, run_recipe
+    ids = [l.split()[0] for l in Path(inputs).read_text().splitlines() if l.strip() and not l.startswith("#")]
+    files = sorted(RECIPES.glob("*.yaml"))
+    if arms:
+        files = [f for f in files if f.stem in arms]
+    store = Store()
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=len(files)) as ex:
+        futs = {ex.submit(run_recipe, load_recipe(str(f)), ids, store, workers, seed): f.stem for f in files}
+        res = {futs[f]: f.result() for f in as_completed(futs)}
+    out = {"tag": tag, "inputs": inputs, "n_inputs": len(ids), "seed": seed, "workers": workers,
+           "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t0)), "seconds": round(time.time() - t0),
+           "recipes": res}
+    (OUT / f"build-{tag}.json").write_text(json.dumps(out, indent=1, default=str))
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="pipeline.datasets.pairs_v1")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -123,8 +148,17 @@ def main(argv=None):
     pl = sub.add_parser("pilot")
     pl.add_argument("--n", type=int, default=100)
     pl.add_argument("--seed", type=int, default=0)
+    b = sub.add_parser("build")
+    b.add_argument("--inputs", required=True)
+    b.add_argument("--tag", required=True)
+    b.add_argument("--workers", type=int, default=6)
+    b.add_argument("--arms")
+    b.add_argument("--seed", type=int, default=0)
     a = ap.parse_args(argv)
-    res = eligibility(a.workers) if a.cmd == "eligibility" else pilot(a.n, a.seed)
+    if a.cmd == "build":
+        res = build(a.inputs, a.tag, a.workers, a.arms.split(",") if a.arms else None, a.seed)
+    else:
+        res = eligibility(a.workers) if a.cmd == "eligibility" else pilot(a.n, a.seed)
     print(json.dumps(res, indent=1))
 
 
