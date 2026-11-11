@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% from "_macros.html" import sid %}{% block content %}
+<h1>{{ run }}</h1>
+<p>{{ info.model }} · mode {{ info.mode }} · scaffold {{ info.scaffold }} · k={{ info.k }} · {{ info.n }}{% if info.scheduled %} / {{ info.scheduled }}{% endif %} replies
+{% if info.running %}<span class="badge warn">running</span>{% endif %} · created {{ created }}
+{% if info.measurement %} · measurement <a href="/search?q={{ info.measurement }}">{{ info.measurement }}</a>{% endif %}
+· <a href="/doc?path={{ (run ~ '/report.md')|q }}">report.md</a> · <a href="/run/samples?run={{ run|q }}">all samples</a></p>
+
+<h2>Results</h2>
+<form class="inline">{% if max_idx is not none %}Showing sample index ≤ {{ max_idx }}. {% endif %}<input type="hidden" name="run" value="{{ run }}">
+Restrict to sample index ≤ <input name="max_idx" size="3" value="{{ max_idx if max_idx is not none else '' }}"> <button>apply</button></form>
+<table class="grid"><tr><th>arm</th><th>replies</th><th>X1s</th><th>accuracy (mean over X1)</th><th>raw accuracy</th><th>copies the case</th><th>off-menu</th><th>no verdict</th><th></th></tr>
+{% for r in res.rows %}<tr><td>{{ r.arm }}</td><td class="num">{{ r.n }}</td><td class="num">{{ r.x1s }}</td><td class="num"><b>{{ r.acc|pct }}</b></td><td class="num">{{ r.acc_raw|pct }}</td><td class="num">{{ r.copied|pct }}</td><td class="num">{{ r.off_menu|pct }}</td><td class="num">{{ r.no_verdict|pct }}</td>
+<td><a href="/run/samples?run={{ run|q }}&arm={{ r.arm }}">samples</a> · <a href="/run/samples?run={{ run|q }}&arm={{ r.arm }}&wrong=1">wrong only</a></td></tr>{% endfor %}</table>
+<p class="small muted">Computed now from samples.jsonl (sample indexes {{ res.idx|join(', ') }}). Copy rate from results/tensor/replies.parquet (registered runs only). Confidence intervals: see the measurement's view.</p>
+
+<h2>What data it used</h2>
+<p>{{ data.x1|length }} X1s · cells by arm: {{ data.by_arm }} (plus the no-case arm per X1) · cells hash <code>{{ data.cells_hash }}</code></p>
+{% if data.manifest %}<p>Dataset manifest <a href="/doc?path={{ data.manifest.doc|q }}">{{ data.manifest.doc }}</a> (generated {{ data.manifest.generated }}):
+{{ data.manifest.files_checked }} recorded file hashes checked against the files now.
+{% if not data.manifest.changed %}<span class="badge ok">all match</span>{% else %}<span class="badge warn">{{ data.manifest.changed|length }} differ</span>{% endif %}</p>
+{% if data.manifest.changed %}<details><summary>files that differ from the manifest</summary><table class="grid small"><tr><th>kind</th><th>file</th><th>modified</th><th>only the lineage migration?</th></tr>
+{% for x in data.manifest.changed %}<tr><td>{{ x.kind }}</td><td class="mono">{{ x.file }}</td><td>{{ x.mtime }}</td><td>{{ 'yes (backup matches the manifest)' if x.migration_only else 'NO' }}</td></tr>{% endfor %}</table></details>{% endif %}
+{% else %}<p class="muted">No dataset manifest matches this run's cells.</p>{% endif %}
+<h3>How the served cases were derived</h3>
+<table class="grid"><tr><th>arm: operator</th><th>cells</th></tr>{% for k, v in data.x2_ops.items() %}<tr><td>{{ k }}</td><td class="num">{{ v }}</td></tr>{% endfor %}</table>
+<details><summary>X1 list ({{ data.x1|length }})</summary><ul class="cols3">{% for x in data.x1 %}<li>{{ sid(x) }}</li>{% endfor %}</ul></details>
+<details><summary>Cells ({{ data.cells|length }})</summary><table class="grid small"><tr><th>arm</th><th>X1</th><th>X2 (served case)</th></tr>
+{% for c in data.cells %}<tr><td>{{ c.arm }}</td><td>{{ sid(c.x1) }}</td><td>{{ sid(c.x2) }}</td></tr>{% endfor %}</table></details>
+
+<h2>Prompts it used</h2>
+<table class="grid"><tr><th>what</th><th>file</th><th>last modified</th></tr>
+{% for p in prompts %}<tr><td>{{ p.what }}</td><td>{% if p.path %}<a href="/prompt?path={{ p.path|q }}">{{ p.path }}</a>{% if not p.exists %} <span class="badge bad">missing</span>{% endif %}{% endif %}
+{% if p.text %}<pre class="small">{{ p.text }}</pre>{% endif %}</td><td class="small">{{ p.mtime or '' }}</td></tr>{% endfor %}</table>
+<p class="small">The exact model input of any sample can be rebuilt from its sample page (“rebuild prompt”).</p>
+
+<h2>What changed since the previous run</h2>
+<form class="inline"><input type="hidden" name="run" value="{{ run }}">Compare with
+<select name="vs">{% for r in all_runs if r != run %}<option {% if r == ch.prev %}selected{% endif %}>{{ r }}</option>{% endfor %}</select> <button>compare</button></form>
+<p>Code at launch: <code>{{ (ch.commit or '?')[:10] }}</code> ({{ ch.commit_how }}){% if ch.dirty %}; uncommitted code changes at launch: <code>{{ ch.dirty|join(', ') }}</code>{% endif %}.
+{% if ch.prev %}Previous: <a href="/run?run={{ ch.prev|q }}">{{ ch.prev }}</a> at <code>{{ (ch.prev_commit or '?')[:10] }}</code>.{% else %}No earlier run in this group.{% endif %}</p>
+{% if ch.prev %}
+<h3>Config differences</h3>
+{% if ch.config_diff %}<table class="grid"><tr><th>key</th><th>previous</th><th>this run</th></tr>
+{% for x in ch.config_diff %}<tr><td>{{ x.key }}</td><td><pre class="small">{{ x.prev|pretty }}</pre></td><td><pre class="small">{{ x.this|pretty }}</pre></td></tr>{% endfor %}</table>{% else %}<p class="muted">Identical config (apart from creation time).</p>{% endif %}
+<h3>Pipeline commits in between ({{ ch.commits|length }})</h3>
+<p class="small muted">git log of {{ ['code/harness','code/eval','code/scorers','code/pipeline','code/bench','prompts','equities','config']|join(', ') }} between the two commits.</p>
+{% if ch.commits %}<table class="grid small"><tr><th>commit</th><th>date</th><th>subject</th><th>files</th></tr>
+{% for c in ch.commits %}<tr><td class="mono">{{ c.hash }}</td><td>{{ c.date }}</td><td>{{ c.subject }}</td><td class="mono">{{ c.files|join('<br>')|safe }}</td></tr>{% endfor %}</table>{% else %}<p class="muted">none</p>{% endif %}
+<h3>Data files changed between the two runs</h3>
+{% if ch.data_between %}<table class="grid small">{% for x in ch.data_between %}<tr><td>{{ x.kind }}</td><td class="mono">{{ x.file }}</td><td>{{ x.mtime }}</td></tr>{% endfor %}</table>{% else %}<p class="muted">none (by file modification time)</p>{% endif %}
+{% endif %}
+<h3>Data files changed after this run</h3>
+{% if ch.data_after %}<details><summary>{{ ch.data_after|length }} files (re-rendered, edited or migrated since the run)</summary><table class="grid small">{% for x in ch.data_after %}<tr><td>{{ x.kind }}</td><td class="mono">{{ x.file }}</td><td>{{ x.mtime }}</td></tr>{% endfor %}</table></details>{% else %}<p class="muted">none</p>{% endif %}
+
+<h2>Config</h2><pre>{{ cfg|pretty }}</pre>
+{% if git %}<pre>{{ git|pretty }}</pre>{% endif %}
+{% endblock %}

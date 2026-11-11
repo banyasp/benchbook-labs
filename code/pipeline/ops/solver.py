@@ -1,7 +1,9 @@
 """Solver module (OPERATORS-SPEC-v1 §Solver module). v1 scope: no independent solver sets a verdict (Peter, 2026-11-11);
-the LLM backend is used for annotations and realization checks only. `panel` and `human` are specified, not built.
+the LLM backend is used for annotations and realization checks only. `panel` is specified, not built. `human` writes a
+task to the queue (`pipeline.ops.queue`, answered in the console) and returns a pending result (2026-11-11).
 
-    solve(task, spec) -> {"answer": ..., "by": {...}}      (Pending is reserved for the human backend)
+    solve(task, spec) -> {"answer": ..., "by": {...}}                     llm
+    solve(task, spec) -> {"pending": task_id, "answer": None, "by": {...}} human; read back with answer_for(task_id)
 
 Task types carry only their inputs, so blindness is enforced here, not by each caller:
     verdict        F, Q, equities                -> choice (+ the considerations the solver sees)
@@ -14,7 +16,7 @@ from dataclasses import dataclass
 
 @dataclass
 class SolverSpec:
-    backend: str = "llm"            # llm | panel | human (panel and human: later)
+    backend: str = "llm"            # llm | human | panel (panel: later)
     role: str = "transfer_checker"
 
     def meta(self, used_for: str) -> dict:
@@ -31,6 +33,8 @@ def _blind_case(case: dict) -> dict:
 
 def solve(task: str, payload: dict, spec: SolverSpec | None = None) -> dict:
     spec = spec or SolverSpec()
+    if spec.backend == "human":
+        return _human(task, payload, spec)
     if spec.backend != "llm":
         raise NotImplementedError(f"solver backend {spec.backend!r} is specified but not built (v1 scope)")
     if task == "verdict":
@@ -44,3 +48,23 @@ def solve(task: str, payload: dict, spec: SolverSpec | None = None) -> dict:
         return {"answer": condition_holds(payload["if"], payload["facts_text"], role="perturber"),
                 "by": {"backend": "llm", "role": "perturber", "used_for": "check"}}
     raise ValueError(f"unknown solver task {task!r}")
+
+
+def _human(task: str, payload: dict, spec: SolverSpec) -> dict:
+    """Queue the task for a person (console /queue). Blindness: a verdict task carries only blind_case(case)."""
+    from . import queue as Q
+    if task == "verdict":
+        tid = Q.enqueue("verdict", {"case": Q.blind_case(payload["case"])}, ref=payload.get("ref"), source="solver")
+    elif task == "condition_holds":
+        tid = Q.enqueue("condition_holds", {"if": payload["if"], "facts_text": payload["facts_text"]},
+                        ref=payload.get("ref"), source="solver")
+    else:
+        raise ValueError(f"unknown solver task {task!r}")
+    return {"pending": tid, "answer": None, "by": {"backend": "human", "role": spec.role, "used_for": "solve"}}
+
+
+def answer_for(task_id: str) -> dict | None:
+    """The person's latest answer to a queued task, or None while it is pending. (Resuming the operator chain from
+    the answer is not built yet: docs/OUTSTANDING.md.)"""
+    from . import queue as Q
+    return Q.answer_of(task_id)

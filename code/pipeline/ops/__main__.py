@@ -5,6 +5,8 @@
     python -m pipeline.ops analytics [--since 2026-11-11] [--out results/ops/ANALYTICS.md]
     python -m pipeline.ops migrate [--apply]
     python -m pipeline.ops grounding (--scenario ID ... | --inputs file.txt) [--window 12] [--workers 8]
+    python -m pipeline.ops enqueue-review (--scenario ID ... | --inputs file.txt) [--source NAME]
+        queue spot-check tasks for the console (/queue); answers go to data/labels/labels.jsonl
 """
 from __future__ import annotations
 
@@ -45,6 +47,10 @@ def main(argv=None):
     gr.add_argument("--inputs")
     gr.add_argument("--window", type=int, default=12)
     gr.add_argument("--workers", type=int, default=8)
+    q = sub.add_parser("enqueue-review")
+    q.add_argument("--scenario", nargs="*", default=[])
+    q.add_argument("--inputs")
+    q.add_argument("--source", default="manual")
     ns = ap.parse_args(argv)
     store = Store()
 
@@ -81,6 +87,18 @@ def main(argv=None):
         print(json.dumps({"scenarios": len(rows), "errors": sum(1 for r in rows if r.get("error")),
                           "labels": dict(Counter(f"{i['kind']}:{i['label']}" for r in rows for i in r.get("items", []))),
                           "out": str(grounding.OUT)}, indent=1, default=str))
+    elif ns.cmd == "enqueue-review":
+        from . import queue as Q
+        ids = list(ns.scenario)
+        if ns.inputs:
+            ids += [l.split()[0] for l in Path(ns.inputs).read_text().splitlines() if l.strip() and not l.startswith("#")]
+        if not ids:
+            sys.exit("give --scenario or --inputs")
+        out = []
+        for sid in ids:
+            load_any(store, sid)                       # fails loudly on an unknown id
+            out.append(Q.enqueue_review(sid, source=ns.source))
+        print(json.dumps({"queued": len(out), "tasks": out, "queue": str(Q.QUEUE)}, indent=1))
     elif ns.cmd == "migrate":
         rows = migrate.plan(store)
         print(json.dumps(migrate.summary(rows), indent=1))

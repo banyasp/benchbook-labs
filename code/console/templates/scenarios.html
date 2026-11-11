@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% from "_macros.html" import sid, so_badge %}{% block content %}
+<h1>Scenarios <span class="muted">{{ total }} match{% if total > limit %} (showing {{ limit }}){% endif %}</span></h1>
+<form class="filters" method="get">
+  <input name="q" value="{{ f.q or '' }}" placeholder="text in id or title">
+  {% for k in ['family','domain','content_domain','split','status','tier','agent_role','where','bucket','op','mode','tag'] %}
+  <select name="{{ k }}"><option value="">{{ k }}</option>{% for v in facets[k] %}<option {% if f.get(k) == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+  {% endfor %}
+  <select name="held_out"><option value="">held_out</option><option {% if f.held_out=='true' %}selected{% endif %}>true</option><option {% if f.held_out=='false' %}selected{% endif %}>false</option></select>
+  <select name="derived"><option value="">anchor or derived</option><option value="anchor" {% if f.derived=='anchor' %}selected{% endif %}>anchors only</option><option value="derived" {% if f.derived=='derived' %}selected{% endif %}>derived only</option></select>
+  <select name="trace"><option value="">trace?</option><option value="yes" {% if f.trace=='yes' %}selected{% endif %}>has trace</option></select>
+  <button>Filter</button> <a href="/scenarios">clear</a> · <a href="{{ batch_link }}">open this filter as a batch (analytics + spot-check + sign-off)</a>
+</form>
+<p class="small muted">Index built {{ built }}. Click a column header to sort.</p>
+<table class="grid sortable"><thead><tr><th>id</th><th>title</th><th>family</th><th>domain</th><th>split</th><th>role</th><th>opts</th><th>gold pos</th><th>op / mode</th><th>bucket</th><th>tier</th><th>trace</th><th>sign-off</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ sid(r.id) }}</td><td>{{ r.title or '' }}</td><td class="small">{{ r.family }}</td><td class="small">{{ r.domain }}{% if r.held_out %} <span class="badge">held out</span>{% endif %}</td>
+<td>{{ r.split }}</td><td>{{ r.agent_role }}</td><td class="num">{{ r.n_options }}</td><td class="num">{{ r.gold_pos }}</td>
+<td class="small">{{ r.op or ('legacy:' ~ r.legacy_op if r.legacy_op else '') }}{% if r.mode %}/{{ r.mode }}{% endif %}</td>
+<td><span class="badge b-{{ r.bucket }}">{{ r.bucket }}</span></td><td class="small">{{ r.tier }}</td>
+<td>{% if r.has_trace %}<a href="/scenario/{{ r.id|q }}/trace">trace</a>{% endif %}</td><td>{{ so_badge(so.get(('scenario', r.id))) }}</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}

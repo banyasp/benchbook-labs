@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block content %}
+<h1>Operators</h1>
+<p>The five primitive operators (<a href="/doc?path=context/OPERATORS-SPEC-v1.md">spec</a>, <a href="/doc?path=code/pipeline/ops/README.md">README</a>, <a href="/operators/analytics">live analytics</a>, <a href="/outstanding">what is not built</a>). Every output records a lineage step; gates decide the bucket, annotations never do.</p>
+{% for o in o.ops %}<section class="op"><h2>{{ o.name }}</h2>
+<p class="mono small"><a href="/file?path={{ o.module|q }}">{{ o.module }}</a> · {{ o.name }}{{ o.signature }}</p>
+<p>Built modes: {% for m in o.modes %}<span class="badge ok">{{ m.mode or '(default)' }}</span> {% endfor %}
+· Gates: {% for g in o.gates %}<span class="badge">{{ g }}</span> {% endfor %}
+· Annotations: {% for a in o.annotations %}<span class="badge tag">{{ a }}</span> {% endfor %}</p>
+<details><summary>docstring</summary><pre class="wrap">{{ o.doc }}
+
+{{ o.module_doc }}</pre></details></section>{% endfor %}
+<h2>Outputs in the store by operator</h2>
+<table class="grid"><tr><th>operator</th><th>mode</th><th>accepted</th><th>hard</th><th>rejected</th></tr>
+{% for c in counts %}<tr><td>{{ c.op }}</td><td>{{ c.mode or '' }}</td>
+{% for b in ['accepted','hard','rejected'] %}<td class="num"><a href="/scenarios?{{ urlencode({'op': c.op if not c.op.startswith('legacy:') else '', 'mode': c.mode or '', 'bucket': b}) }}">{{ c[b] }}</a></td>{% endfor %}</tr>{% endfor %}</table>
+<h2>Recipes (arms as compositions)</h2>
+{% for r in o.recipes %}<details><summary><b>{{ r.name }}</b> — {{ r.data.steps|map(attribute='op')|join(' → ') }}</summary><pre>{{ r.text }}</pre></details>{% endfor %}
+{% endblock %}

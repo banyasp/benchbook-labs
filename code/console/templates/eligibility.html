@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<h1>Anchor eligibility (pairs-v1)</h1>
+{% if not rows %}<p class="muted">data/datasets/pairs-v1/eligibility.jsonl does not exist yet.</p>{% else %}
+<input class="tfilter" data-table="elig" placeholder="filter rows">
+<table class="grid" id="elig"><tr><th>anchor</th><th>eligible</th><th>failed checks</th><th>reasons</th></tr>
+{% for r in rows %}{% set id = r.id or r.anchor or r.scenario %}<tr><td><a class="mono" href="/scenario/{{ id|q }}">{{ id }}</a></td>
+<td>{{ 'yes' if r.get('eligible', r.get('pass')) else 'no' }}</td>
+<td>{% for k, v in (r.checks or {}).items() %}{% if (v is mapping and not v.get('pass', True)) or v is sameas false %}<span class="badge bad">{{ k }}</span> {% endif %}{% endfor %}</td>
+<td class="small">{{ (r.reasons or [])|join('; ') }}</td></tr>{% endfor %}</table>{% endif %}
+{% endblock %}

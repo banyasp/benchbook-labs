@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block content %}
+<h1>Queue</h1>
+<p class="tabs"><a href="?show=pending" class="{{ 'on' if show=='pending' }}">Pending</a> <a href="?show=answered" class="{{ 'on' if show=='answered' }}">Answered</a> <a href="?show=all" class="{{ 'on' if show=='all' }}">All</a></p>
+<p class="small muted">Tasks from the human solver backend (verdict, condition_holds) and spot-check reviews (<code>python -m pipeline.ops enqueue-review --inputs ids.txt</code>). Answers append to data/labels/labels.jsonl.</p>
+{% if not tasks %}<p class="muted">Nothing here.</p>{% else %}
+<table class="grid"><tr><th>task</th><th>type</th><th>ref</th><th>source</th><th>created</th><th>answer</th></tr>
+{% for t in tasks %}<tr><td><a class="mono" href="/queue/{{ t.id }}">{{ t.id }}</a></td><td>{{ t.type }}</td><td class="mono small">{{ t.ref or '' }}</td><td>{{ t.source }}</td><td class="small">{{ t.created }}</td><td>{% if t.answer %}<b>{{ t.answer.answer }}</b>{% if t.answer.note %} — {{ t.answer.note }}{% endif %}{% endif %}</td></tr>{% endfor %}</table>{% endif %}
+{% endblock %}

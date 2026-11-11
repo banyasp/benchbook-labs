@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% from "_macros.html" import frame, options %}{% block content %}
+<h1>Trace · {{ c.title }}</h1>
+<p class="small mono">{{ t.path }} · written {{ t.mtime }} · sha {{ t.sha }}{% if t.recommendation %} · <span class="badge warn">recommendation: {{ t.recommendation }}</span>{% endif %}</p>
+<p class="small">Highlights: <mark class="fact"><sup>F</sup>fact span</mark> <mark class="option"><sup>O</sup>option span</mark> (hover for realization / channel).
+{% if not key %}<a href="?key=1">Show the answer key</a>{% endif %}</p>
+<div class="cols">
+<section class="chat">
+{% for m in t.messages %}<div class="msg {{ m.role }}"><div class="who">#{{ m.i }} · {{ m.role }}{% if m.name %} · {{ m.name }}{% endif %}{% if m.time %} · {{ m.time }}{% endif %}</div>
+{% if m.tool_calls %}<pre class="tool">{% for tc in m.tool_calls %}{{ tc.name }}({{ tc.arguments|tojson }})
+{% endfor %}</pre>{% endif %}<div class="body">{{ m.html|safe }}</div></div>{% endfor %}
+</section>
+<section class="side2">
+<h2>Scenario frame</h2>{{ frame(c) }}
+<h2>Options</h2>{{ options(c) }}
+<h2>Where the facts are</h2>
+<table class="grid small"><tr><th>fact</th><th>msg</th><th>realization</th><th>quote</th></tr>
+{% for f in t.facts or [] %}<tr><td class="mono">{{ f.fact }}</td><td>{{ f.message }}</td><td>{{ f.realization }}</td><td>{{ f.quote }}</td></tr>{% endfor %}</table>
+<h2>Where the options are</h2>
+<table class="grid small"><tr><th>option</th><th>msg</th><th>channel</th><th>quote</th></tr>
+{% for o in t.options or [] %}<tr><td class="mono">{{ o.option }}</td><td>{{ o.message }}</td><td>{{ o.channel }}</td><td>{{ o.quote }}</td></tr>{% endfor %}</table>
+{% if key %}<h2>Answer key (no-case arm, equities pilot2)</h2>
+{% if key.error %}<p class="bad">{{ key.error }}</p>{% else %}
+{% if key.warnings %}<p class="warn">warnings: {{ key.warnings }}</p>{% endif %}
+<p>Gold choice: <b class="mono">{{ key.key.choice }}</b>{% if key.key.acceptable %} (also acceptable: {{ key.key.acceptable|join(', ') }}){% endif %}</p>
+<pre>{{ key.key|pretty }}</pre>{% endif %}{% endif %}
+<details><summary>Trace record (gates, diagnostics, provenance)</summary><pre>{{ t.record|pretty }}</pre></details>
+</section></div>
+{% endblock %}

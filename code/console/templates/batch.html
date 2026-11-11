@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% from "_macros.html" import frame, options, diff_table, step, so_badge %}{% block content %}
+<h1>Batch <span class="mono">{{ b.id }}</span></h1>
+<p>{{ b.n }} items · buckets {{ b.buckets }} · operators {{ b.ops }}</p>
+<div class="cols"><section><h2>Gate failures</h2>{% if b.gate_failures %}<table class="grid">{% for g, n in b.gate_failures.items() %}<tr><td>{{ g }}</td><td class="num">{{ n }}</td></tr>{% endfor %}</table>{% else %}<p class="muted">none recorded</p>{% endif %}</section>
+<section><h2>Shortcut cues and drift</h2>{% if b.cues %}<table class="kv">
+<tr><th>gold is uniquely the longest option (characters)</th><td><b>{{ b.cues.gold_longest|pct }}</b> (chance {{ b.cues.gold_longest_chance|pct }})</td></tr>
+<tr><th>median gold length ÷ mean other length</th><td>{{ b.cues.gold_len_ratio if b.cues.gold_len_ratio is not none else '–' }}</td></tr>
+<tr><th>facts supporting gold vs each other option</th><td>{{ '%.1f'|format(b.cues.support_gold) }} vs {{ '%.1f'|format(b.cues.support_other) }}</td></tr>
+<tr><th>hand-up gold</th><td>{{ b.cues.handup_gold|pct }}</td></tr>
+<tr><th>median option-length spread</th><td>{{ b.cues.len_spread }}</td></tr>
+<tr><th>gold position</th><td class="small">{{ b.cues.gold_pos }}</td></tr></table>{% else %}<p class="muted">no cases</p>{% endif %}</section></div>
+<h2>Spot-check sample ({{ b.sample|length }} random items, seed {{ seed }})</h2>
+<form class="inline"><input type="hidden" name="n" value="{{ n }}">Draw again with seed <input name="seed" size="3" value="{{ seed + 1 }}"> <button>redraw</button> · show <a href="?n={{ n * 2 }}&seed={{ seed }}">{{ n * 2 }}</a></form>
+{% for x in b.sample %}<section class="spot"><h3><a class="mono" href="/scenario/{{ x.id|q }}">{{ x.id }}</a> {{ so_badge(x.signoff) }}</h3>
+<div class="cols"><div>{{ frame(x.case) }}</div><div>{{ options(x.case) }}</div></div>
+{% if x.parent_id %}<details open><summary>before / after vs <span class="mono">{{ x.parent_id }}</span></summary>{{ diff_table(x.diff) }}</details>{% endif %}
+<details><summary>operator step</summary>{{ step(x.step) }}</details>
+<form method="post" action="/signoff" class="soform small"><input type="hidden" name="target_kind" value="scenario"><input type="hidden" name="target_id" value="{{ x.id }}"><input type="hidden" name="back" value="" class="backfield">
+<input name="note" placeholder="note" size="40"> <button name="decision" value="approve" class="ok">approve item</button> <button name="decision" value="needs-work" class="warn">needs work</button> <button name="decision" value="reject" class="bad">reject item</button></form>
+</section>{% endfor %}
+<details><summary>All {{ b.ids|length }} ids</summary><pre class="small">{{ b.ids|join('\n') }}</pre></details>
+{% endblock %}

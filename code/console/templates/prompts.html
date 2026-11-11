@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<h1>Prompts</h1>
+<p class="muted">Every prompt file in the pipeline, the code that loads it (by file name), and its saved earlier versions. Harness prompts also list the eval runs that used them.</p>
+{% for g in groups %}<h2 class="mono">{{ g.dir }}</h2>
+<table class="grid"><tr><th>file</th><th>modified</th><th>used by (code)</th><th>earlier versions</th></tr>
+{% for f in g.files %}<tr><td><a href="/prompt?path={{ f.path|q }}">{{ f.name }}</a></td><td class="small">{{ f.mtime }}</td><td class="small mono">{{ f.users|join('<br>')|safe if f.users else '—' }}</td>
+<td class="small">{% for v in f.versions %}<a href="/prompt/diff?a={{ v|q }}&b={{ f.path|q }}">diff vs {{ v.split('/')[-1] }}</a><br>{% endfor %}</td></tr>{% endfor %}</table>
+{% endfor %}
+{% endblock %}

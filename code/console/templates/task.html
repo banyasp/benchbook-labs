@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% from "_macros.html" import frame, options, diff_table, step %}{% block content %}
+<h1>{{ t.type }} · <span class="mono">{{ t.id }}</span></h1>
+{% if ans %}<p class="badge so-approve">answered: {{ ans.answer }} at {{ ans.ts }}{% if ans.note %} — {{ ans.note }}{% endif %}</p>{% endif %}
+<p class="small muted">Keys: {% if t.type == 'review' %}<b>a</b> approve · <b>r</b> reject · <b>e</b> edit (write the ground truth){% elif t.type == 'verdict' %}<b>1–9</b> choose option{% else %}<b>y</b> holds · <b>n</b> does not hold{% endif %} · <b>c</b> comment · <b>→</b> next task · <b>Enter</b> in a text box submits.</p>
+{% if t.type == 'verdict' %}{% set c = t.payload.case %}
+<p class="warn small">Blind task: you see only the frame, the facts and the options — no gold, reasoning or flip conditions.</p>
+<div class="cols"><section>{{ frame(c) }}<h2>Facts</h2><table class="grid">{% for f in c.facts or [] %}<tr><td class="mono">{{ f.id }}</td><td>{{ f.status }}</td><td>{{ f.fact }}</td></tr>{% endfor %}</table></section>
+<section><h2>Options</h2>{{ options(c, False) }}
+<form method="post" action="/queue/{{ t.id }}/answer" id="ansform">{% for k in c.options %}<button name="answer" value="{{ k }}" data-key="{{ loop.index }}">{{ loop.index }} · {{ k }}</button> {% endfor %}
+<p><textarea name="note" placeholder="why (optional)" rows="3" cols="60" id="note"></textarea></p></form></section></div>
+{% elif t.type == 'condition_holds' %}
+<h2>Condition</h2><p class="big2"><b>{{ t.payload['if'] }}</b></p><h2>Facts</h2><pre class="wrap">{{ t.payload.facts_text }}</pre>
+<form method="post" action="/queue/{{ t.id }}/answer" id="ansform"><button name="answer" value="holds" data-key="y" class="ok">y · holds</button> <button name="answer" value="does_not_hold" data-key="n" class="bad">n · does not hold</button>
+<p><textarea name="note" placeholder="why (optional)" rows="3" cols="60" id="note"></textarea></p></form>
+{% else %}{% set c = ctx.case %}
+<p>{% if ctx.row %}<a class="mono" href="/scenario/{{ ctx.id|q }}">{{ ctx.id }}</a> · {{ ctx.row.op or ctx.row.legacy_op }}{% if ctx.row.mode %}/{{ ctx.row.mode }}{% endif %} · bucket {{ ctx.row.bucket }}{% if ctx.row.has_trace %} · <a href="/scenario/{{ ctx.id|q }}/trace">trace</a>{% endif %}{% endif %}
+{% if ctx.parent_id %} · parent <a class="mono" href="/scenario/{{ ctx.parent_id|q }}">{{ ctx.parent_id }}</a>{% endif %}</p>
+<form method="post" action="/queue/{{ t.id }}/answer" id="ansform" class="answerbar">
+<button name="answer" value="approve" data-key="a" class="ok">a · approve</button> <button name="answer" value="reject" data-key="r" class="bad">r · reject</button>
+<button name="answer" value="edit" data-key="e-submit" class="warn">edit (submit ground truth)</button>
+<p><textarea name="note" placeholder="note (c)" rows="2" cols="70" id="note"></textarea><br>
+<textarea name="ground_truth" placeholder="ground truth / correction (e)" rows="3" cols="70" id="gt"></textarea></p></form>
+<div class="cols"><section><h2>Frame</h2>{{ frame(c) }}</section><section><h2>Options</h2>{{ options(c) }}</section></div>
+<h2>Before / after</h2>{{ diff_table(ctx.diff) }}
+<h2>Operator step</h2>{{ step(ctx.step) }}
+{% endif %}
+{% if nxt %}<p><a href="/queue/{{ nxt }}" id="nextlink">next pending → {{ nxt }}</a></p>{% endif %}
+{% endblock %}
+{% block scripts %}<script>taskKeys();</script>{% endblock %}

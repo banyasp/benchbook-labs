@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% from "_macros.html" import so_badge %}{% block content %}
+<h1>Awaiting your sign-off</h1>
+<h2>Batches and dataset versions ({{ a.batches|length }})</h2>
+{% if a.batches %}<table class="grid"><tr><th>batch</th><th>kind</th><th>items</th><th>buckets</th><th>modified</th></tr>
+{% for b in a.batches %}<tr><td><a href="/batch/{{ b.id }}">{{ b.id }}</a></td><td>{{ b.kind }}</td><td class="num">{{ b.n }}</td><td class="small">{{ b.buckets }}</td><td class="small">{{ b.mtime }}</td></tr>{% endfor %}</table>
+{% else %}<p class="muted">No unsigned batches. Any scenario filter can be opened as a batch from the <a href="/scenarios">scenario list</a>.</p>{% endif %}
+<h2>Completed runs ({{ a.runs|length }})</h2>
+<table class="grid"><tr><th>run</th><th>created</th><th>replies</th><th>measurement</th></tr>
+{% for r in a.runs %}<tr><td><a href="/run?run={{ r.run|q }}">{{ r.run }}</a></td><td class="small">{{ r.created }}</td><td class="num">{{ r.n }}</td><td>{{ r.measurement or '' }}</td></tr>{% endfor %}</table>
+<h2>Spot-check reviews pending ({{ a.reviews|length }})</h2>
+{% if a.reviews %}<p><a href="/queue/{{ a.reviews[0].id }}">start reviewing →</a></p>{% else %}<p class="muted">none queued</p>{% endif %}
+<h2>Signed off so far</h2>
+<table class="grid"><tr><th>when</th><th>kind</th><th>target</th><th>decision</th><th>note</th></tr>
+{% for s in a.done %}<tr><td class="small">{{ s.ts }}</td><td>{{ s.target_kind }}</td><td class="mono small">{% if s.target_kind=='run' %}<a href="/run?run={{ s.target_id|q }}">{{ s.target_id }}</a>{% elif s.target_kind=='scenario' %}<a href="/scenario/{{ s.target_id|q }}">{{ s.target_id }}</a>{% else %}<a href="/batch/{{ s.target_id }}">{{ s.target_id }}</a>{% endif %}</td><td>{{ so_badge(s) }}</td><td>{{ s.note }}</td></tr>{% endfor %}</table>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}{% from "_macros.html" import sid, frame, options, diff_table, step, badge, so_badge %}{% block content %}
+<h1>{{ c.title }}</h1>
+<p class="mono small">{{ d.id }} · <a href="/file?path={{ row.path|q }}">{{ row.path }}</a></p>
+<p>{{ badge(d.family) }} {{ badge(d.domain) }} {% if d.content_domain %}{{ badge(d.content_domain) }}{% endif %} {{ badge('split ' ~ d.split) }}
+{% if d.held_out %}{{ badge('held out') }}{% endif %} {{ badge('status ' ~ d.status) }} {{ badge('tier ' ~ d.verdict_tier) }} <span class="badge b-{{ row.bucket }}">{{ row.bucket }}</span>
+{% for t in d.tags or [] %}{{ badge(t, 'tag') }}{% endfor %}
+{% if has_trace %} · <a href="/scenario/{{ d.id|q }}/trace"><b>view trace</b></a> · <a href="/scenario/{{ d.id|q }}/trace?key=1">trace + answer key</a>{% endif %}</p>
+
+<div class="cols">
+<section><h2>Frame</h2>{{ frame(c) }}</section>
+<section><h2>Options</h2>{{ options(c) }}
+<p class="small">Verdict basis: {{ (c.verdict or {}).basis }} · decisive: {{ ((c.verdict or {}).decisive or [])|join(', ') }}{% if d.basis %} · endorsed by: {{ d.basis }}{% endif %}</p></section>
+</div>
+
+{% if parent %}
+<h2>Before / after against the parent <a class="small" href="/scenario/{{ lin.parent|q }}">{{ lin.parent }}</a></h2>
+{{ diff_table(diff) }}
+{% endif %}
+
+<h2>Facts</h2>
+<table class="grid"><tr><th>id</th><th>kind</th><th>status</th><th>fact</th><th>source</th></tr>
+{% for f in c.facts or [] %}<tr><td class="mono">{{ f.id }}</td><td>{{ f.kind }}</td><td>{{ f.status }}</td><td>{{ f.fact }}</td>
+<td class="small">{% for s in sources.get(f.id, []) %}<details><summary class="mono">{{ s.span }}</summary>{% for x in s.context %}<p class="{{ 'hit' if x.hit else 'muted' }}">{{ x.text }}</p>{% endfor %}{% if not s.context %}<span class="muted">source text not found</span>{% endif %}</details>{% else %}{% if f.id in (d.fact_spans or {}) %}<span class="badge warn">authored</span>{% endif %}{% endfor %}</td></tr>{% endfor %}</table>
+
+<h2>Considerations</h2>
+<table class="grid"><tr><th>id</th><th>facts</th><th>equity</th><th>favors</th><th>weight</th><th>why</th></tr>
+{% for k in c.considerations or [] %}<tr><td class="mono">{{ k.id }}</td><td class="mono small">{{ k.facts|join(', ') }}</td><td>{{ k.equity }}</td><td class="mono">{{ k.favors|join(', ') }}{% if k.rules_out %} · rules out {{ k.rules_out|join(', ') }}{% endif %}</td><td>{{ k.weight }}</td><td>{{ k.why }}</td></tr>{% endfor %}</table>
+
+<h2>Reasoning</h2>
+<table class="kv">{% for k, v in (c.reasoning or {}).items() %}<tr><th>{{ k }}</th><td>{% if v is mapping %}<pre>{{ v|pretty }}</pre>{% else %}{{ v }}{% endif %}</td></tr>{% endfor %}
+<tr><th>lesson</th><td>{{ c.lesson }}</td></tr><tr><th>limits</th><td>{{ c.limits }}</td></tr></table>
+
+<h2>Flip conditions</h2>
+{% set fc = c.flip_conditions or {} %}
+<table class="grid"><tr><th>id</th><th>kind</th><th>if</th><th>then / favors</th><th>why</th></tr>
+{% for w in fc.would_change or [] %}<tr><td class="mono">{{ w.id }}</td><td>would change</td><td>{{ w['if'] }}</td><td class="mono">{{ w.then }}</td><td>{{ w.why }}</td></tr>{% endfor %}
+{% for w in fc.would_not_change or [] %}<tr><td class="mono">{{ w.id }}</td><td>would not change</td><td>{{ w['if'] }}</td><td></td><td>{{ w.why }}</td></tr>{% endfor %}
+{% for w in fc.watch_for or [] %}<tr><td class="mono">{{ w.id }}</td><td>watch for</td><td>{{ w.what }}</td><td class="mono">{{ w.favors|join(', ') }}</td><td>{{ w.why }}</td></tr>{% endfor %}
+</table>
+
+<h2>Lineage</h2>
+<p>{% for x in chain %}{% if not loop.first %} → {% endif %}{% if x.id == d.id %}<b class="mono">{{ x.id }}</b>{% else %}{{ sid(x.id) }}{% endif %}{% endfor %}</p>
+{% set steps = lin.steps or [] %}
+{% for st in steps %}<details {% if loop.last %}open{% endif %}><summary>step {{ loop.index }}: {{ st.op }}{% if st.mode %}/{{ st.mode }}{% endif %} → {{ st.bucket }}</summary>{{ step(st) }}</details>{% endfor %}
+{% if not steps %}<p class="muted">{% if lin.parent %}Legacy lineage only: operator <code>{{ lin.operator }}</code>.{% else %}Anchor (no parent).{% endif %}</p>{% endif %}
+{% if lin.detail %}<details><summary>legacy lineage detail</summary><pre>{{ lin.detail|pretty }}</pre></details>{% endif %}
+
+<h2>Derived from this scenario ({{ desc|length }})</h2>
+{% if desc %}<table class="grid"><tr><th>id</th><th>depth</th><th>op / mode</th><th>bucket</th><th>trace</th></tr>
+{% for x in desc %}<tr><td>{{ sid(x.id) }}</td><td>{{ x.depth }}</td><td>{{ (x.row or {}).op or ('legacy:' ~ (x.row or {}).legacy_op) }}{% if (x.row or {}).mode %}/{{ x.row.mode }}{% endif %}</td><td>{{ (x.row or {}).bucket }}</td><td>{% if (x.row or {}).has_trace %}<a href="/scenario/{{ x.id|q }}/trace">trace</a>{% endif %}</td></tr>{% endfor %}</table>{% else %}<p class="muted">none</p>{% endif %}
+
+<h2>Used in eval runs</h2>
+{% if use.summary %}<table class="grid"><tr><th>run</th><th>as</th><th>replies</th><th>accuracy</th><th>arms</th><th></th></tr>
+{% for u in use.summary %}<tr><td><a href="/run?run={{ u.run|q }}">{{ u.run }}</a></td><td>{{ u['as'] }}</td><td class="num">{{ u.n }}</td><td class="num">{{ u.acc|pct }}</td><td class="small">{{ u.phases }}</td>
+<td>{% if u['as'] == 'X1' %}<a href="/run/samples?run={{ u.run|q }}&x1={{ d.id|q }}">samples</a>{% endif %}</td></tr>{% endfor %}</table>
+{% else %}<p class="muted">Not used in any run yet.</p>{% endif %}
+
+<details><summary>Provenance</summary><pre>{{ d.provenance|pretty }}</pre></details>
+<details><summary>Raw YAML</summary><pre>{{ d|pretty }}</pre></details>
+{% endblock %}

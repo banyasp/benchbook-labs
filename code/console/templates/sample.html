@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "_macros.html" import sid %}{% block content %}
+{% set r = s.row %}
+<h1>Sample</h1>
+<p class="mono small">{{ r.sample_id }}</p>
+<table class="kv"><tr><th>arm</th><td>{{ r.phase }}</td></tr><tr><th>X1 (live)</th><td>{{ sid(r.x1) }} · <a href="/scenario/{{ r.x1|q }}/trace?key=1">trace + key</a></td></tr>
+<tr><th>X2 (served case)</th><td>{% if r.x2 %}{{ sid(r.x2) }}{% else %}none{% endif %} {% if r.relation_x1_x2 %}· relation {{ r.relation_x1_x2 }}{% endif %}</td></tr>
+<tr><th>verdict</th><td class="mono">parsed {{ r.parsed_choice }} → translated {{ r.translated_choice }} · gold {{ r.gold_choice }} · <b class="{{ 'ok' if r.correct else 'bad' }}">{{ 'correct' if r.correct else 'wrong' }}</b>{% if r.off_menu %} · off-menu{% endif %}{% if r.model_relation %} · declared {{ r.model_relation }}{% endif %}</td></tr>
+<tr><th>tokens / time</th><td>{{ r.tokens }} · {{ r.seconds }} s · finish {{ r.finish_reason }}</td></tr></table>
+<p><a href="?run={{ run|q }}&sid={{ sid|q }}&prompt=1"><b>Rebuild the exact prompt</b></a> <span class="small muted">(built now with the current code and files; differs from what ran only if those changed since)</span></p>
+{% if pr %}<h2>Prompt (rebuilt)</h2>{% if pr.error %}<p class="bad">{{ pr.error }}</p>{% else %}
+{% for m in pr.messages %}<details {% if loop.last %}open{% endif %}><summary>{{ m.role }}{% if m.name %} · {{ m.name }}{% endif %} ({{ m.content|length }} chars)</summary><pre class="wrap">{{ m.content }}</pre></details>{% endfor %}
+{% if pr.prefill %}<p>Assistant prefill: <code>{{ pr.prefill }}</code></p>{% endif %}{% endif %}{% endif %}
+<h2>Raw reply</h2><pre class="wrap">{{ s.raw or '(raw file not found)' }}</pre>
+<h2>Scores</h2><pre>{{ r.scores|pretty }}</pre>
+{% if s.details %}<h2>Judge details</h2>{% for k, v in s.details.items() %}<details><summary>{{ k }}</summary><pre>{{ v|pretty }}</pre></details>{% endfor %}{% endif %}
+{% endblock %}

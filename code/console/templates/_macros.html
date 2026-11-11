@@ -1,0 +1,49 @@
+{% macro badge(text, cls='') %}<span class="badge {{ cls }}">{{ text }}</span>{% endmacro %}
+{% macro so_badge(s) %}{% if s %}<span class="badge so-{{ s.decision }}" title="{{ s.ts }} {{ s.note }}">{{ s.decision }}</span>{% endif %}{% endmacro %}
+{% macro sid(id) %}<a class="mono" href="/scenario/{{ id|q }}">{{ id }}</a>{% endmacro %}
+{% macro signoff_box(kind, target, s) %}
+<details class="signoff {% if s %}so-{{ s.decision }}{% endif %}" {% if not s %}open{% endif %}>
+  <summary>Sign-off · {{ kind }}: {% if s %}<b>{{ s.decision }}</b> by {{ s.by }} at {{ s.ts }}{% if s.note %} — “{{ s.note }}”{% endif %}{% else %}<b>not signed off</b>{% endif %}</summary>
+  <form method="post" action="/signoff" class="soform">
+    <input type="hidden" name="target_kind" value="{{ kind }}"><input type="hidden" name="target_id" value="{{ target }}">
+    <input type="hidden" name="back" value="" class="backfield">
+    <input name="note" placeholder="note (optional)" size="50">
+    <button name="decision" value="approve" class="ok">Approve</button>
+    <button name="decision" value="needs-work" class="warn">Needs work</button>
+    <button name="decision" value="reject" class="bad">Reject</button>
+  </form>
+  {% if s and s.history|length > 1 %}<div class="small">history: {% for h in s.history %}{{ h.ts }} {{ h.decision }}{% if h.note %} (“{{ h.note }}”){% endif %}{% if not loop.last %}; {% endif %}{% endfor %}</div>{% endif %}
+</details>
+{% endmacro %}
+{% macro frame(c) %}
+<table class="kv">
+  <tr><th>Agent</th><td>{{ c.agent }}</td></tr>
+  <tr><th>Role</th><td><b>{{ c.agent_role }}</b></td></tr>
+  <tr><th>Decider</th><td>{{ c.decider }}</td></tr>
+  <tr><th>Setting</th><td>{{ c.setting }}</td></tr>
+  {% if c.situation %}<tr><th>Situation</th><td>{{ c.situation }}</td></tr>{% endif %}
+  <tr><th>Question</th><td><b>{{ c.question }}</b></td></tr>
+</table>
+{% endmacro %}
+{% macro options(c, show_gold=True) %}
+<table class="grid"><tr><th>id</th><th>option</th><th>move</th><th>words</th></tr>
+{% for k, o in (c.options or {}).items() %}
+<tr class="{% if show_gold and c.verdict and c.verdict.choice == k %}gold{% endif %}"><td class="mono">{{ k }}{% if show_gold and c.verdict and c.verdict.choice == k %} ★ gold{% endif %}</td><td>{{ o.do }}</td><td>{{ o.move }}</td><td>{{ o.do.split()|length }}</td></tr>
+{% endfor %}</table>
+{% endmacro %}
+{% macro diff_table(diff) %}
+{% if diff %}<table class="grid diff"><tr><th>field</th><th>change</th><th>before → after</th></tr>
+{% for x in diff %}<tr><td class="mono small">{{ x.path }}</td><td>{{ x.kind }}</td><td>{{ x.html|safe }}</td></tr>{% endfor %}</table>
+{% else %}<p class="muted">No differences against the parent.</p>{% endif %}
+{% endmacro %}
+{% macro step(st) %}
+{% if st %}<table class="kv">
+<tr><th>Operator</th><td><b>{{ st.op }}</b>{% if st.mode %} / {{ st.mode }}{% endif %} · bucket <b>{{ st.bucket }}</b>{% if st.legacy_operator %} · migrated from <code>{{ st.legacy_operator }}</code>{% endif %}</td></tr>
+<tr><th>Args</th><td><code>{{ st.args|tojson }}</code></td></tr>
+<tr><th>Writer</th><td><code>{{ st.writer|tojson }}</code></td></tr>
+<tr><th>Gates</th><td>{% for g, v in (st.gates or {}).items() %}{% if v is mapping %}<span class="badge {{ 'ok' if v.get('pass', True) else 'bad' }}">{{ g }}</span>{% else %}<span class="badge">{{ g }}: {{ v }}</span>{% endif %} {% endfor %}
+  {% if st.gates %}<details><summary>gate details</summary><pre>{{ st.gates|pretty }}</pre></details>{% endif %}</td></tr>
+<tr><th>Annotations</th><td>{% if st.annotations %}<pre>{{ st.annotations|pretty }}</pre>{% else %}<span class="muted">none</span>{% endif %}</td></tr>
+{% if st.delta %}<tr><th>Delta</th><td><details><summary>delta</summary><pre>{{ st.delta|pretty }}</pre></details></td></tr>{% endif %}
+</table>{% else %}<p class="muted">No operator step recorded (an anchor, or legacy lineage only).</p>{% endif %}
+{% endmacro %}
