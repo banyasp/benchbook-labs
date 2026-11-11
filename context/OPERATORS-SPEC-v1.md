@@ -33,6 +33,27 @@ verdict on 42 of 57 anchors).
 - The blind-solve annotations (`verdict_shift`, `k_support`) are optional in v1: they are an LLM call per output
   and serve observability only.
 
+## Build status (2026-11-11)
+
+Built in `code/pipeline/ops/` (README there), with the v1 scope above:
+- all five operators;
+- code-built lineage steps (`lineage.anchor`, `lineage.steps` added to the schema);
+- gates and annotations; the solver interface (LLM backend for annotations and checks only);
+- recipes and the planner (`recipes/`: same_domain_flip, transfer_flip, neighbor_control, lookalike_flip, noflip,
+  drop_option, revised);
+- batch analytics;
+- the Φ grounding sidecar (`python -m pipeline.ops grounding`);
+- the legacy lineage migration (dry run only so far: 470 legacy derived scenarios, 253 with a gold partial).
+
+Not built:
+- `frame_edit` add-a-source-rejected-option (needs the source text) and decide ↔ advise (awaiting Peter);
+- the solver's panel and human backends;
+- the dashboard page.
+
+Live smoke (every v1 mode once, on pilot-2 X1s, written to a scratch store):
+- 8 accepted;
+- the neighbor and transfer outputs went to hard on setting_adds, and both were also flagged by verdict_shift.
+
 ## Principles (Peter)
 
 - **Few primitive operators, each with parameters. No near-duplicates.** An experimental arm is a *recipe* (a

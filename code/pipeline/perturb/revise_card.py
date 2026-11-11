@@ -128,10 +128,14 @@ def assert_fq_unchanged(C: Case, d: dict) -> None:
 
 
 # ------------------------------------------------------------------ the operator
-def revise_card(X, store, rng, *, tally=None, target: str | None = None):
+def revise_card(X, store, rng, *, tally=None, target: str | None = None, weights_only: bool = False):
+    """weights_only (pipeline.ops judgment_edit, OPERATORS-SPEC-v1 §5, Peter 2026-11-11): only weights (and the matching
+    `why`) of existing considerations may change; no favors / rules_out change and no new consideration."""
     C = X.case
     pt = pick_target(X, rng, target_tally(store) if tally is None else tally, force=target)
     tgt, move = pt["target"], pt["move"]
+    if weights_only and not any(tgt in c.favors for c in C.considerations):
+        raise OperatorError(f"{X.id}: no consideration favors target {tgt}; a weights-only edit cannot reach it")
     tries = pconfig.get("perturb_tries")
     ctx = Ctx("revise_card", X, store, rng)
     ctx.code_step("revise_card.pick_target", f"target {tgt} (move {move}) picked in code, seeded, balanced by move; hand-up cap", pt)
@@ -157,6 +161,9 @@ def revise_card(X, store, rng, *, tally=None, target: str | None = None):
             f"the final list then has {n_wc} items. {back_note}\n\nCASE:\n"
             + json.dumps(bundle(sk.d, {"fq", "a"}) | {"flip_then": {w.id: w.then for w in C.flip_conditions.would_change}},
                          indent=1, ensure_ascii=False))
+    if weights_only:
+        user += ("\n\nCONSTRAINT: change only the `weight` (and the matching `why`) of existing considerations. Do not change "
+                 "any `favors` or `rules_out`, and send no new_consideration.")
     meta = {}
 
     def validate(out):
@@ -167,6 +174,8 @@ def revise_card(X, store, rng, *, tally=None, target: str | None = None):
         for cid, u in cons.items():
             if cid not in {c["id"] for c in d["considerations"]} or not isinstance(u, dict):
                 raise ValueError(f"considerations.{cid}: not an existing consideration id with an object value")
+            if weights_only and set(u) - {"weight", "why"}:
+                raise ValueError(f"considerations.{cid}: only weight and why may change (favors, rules_out, facts and equity are fixed)")
             if set(u) - {"weight", "favors", "rules_out", "why"}:
                 raise ValueError(f"considerations.{cid}: only weight, favors, rules_out and why may change (facts and equity are fixed)")
         # existing considerations: weight / favors / rules_out / why
@@ -183,6 +192,8 @@ def revise_card(X, store, rng, *, tally=None, target: str | None = None):
                 else:
                     c.pop("rules_out", None)
         nc = out.get("new_consideration")
+        if weights_only and nc:
+            raise ValueError("do not add a consideration: re-weight existing ones only")
         fresh = {"new_considerations": [nc]} if nc else {}
         if nc:
             if not isinstance(nc, dict) or not nc.get("facts") or not set(nc["facts"]) <= {f["id"] for f in d["facts"]}:

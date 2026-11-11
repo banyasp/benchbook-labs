@@ -93,8 +93,12 @@ class SourceRef(Strict):
 
 class Lineage(Strict):
     parent: str | None = None                 # scenario id this was derived from
-    operator: str | None = None               # restyle | flip | add_fact | ...
+    operator: str | None = None               # restyle | flip | add_fact | ... (legacy name; ops steps below are canonical)
     detail: dict = Field(default_factory=dict)
+    # Operator spec v1 (context/OPERATORS-SPEC-v1.md, 2026-11-11): the full recipe, one step per operator application,
+    # written by code (pipeline.ops.record). anchor = the extracted root scenario of the chain.
+    anchor: str | None = None
+    steps: list[dict] = Field(default_factory=list)
 
 
 class Scenario(Strict):
