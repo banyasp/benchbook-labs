@@ -253,6 +253,19 @@ class Ctx:
         return self._rel[(x1, x2)]
 
 
+def git_state() -> dict:
+    """Commit and dirty files at launch (2026-11-11, Peter: each run page shows what changed since the last run)."""
+    import subprocess
+    def g(*args):
+        try:
+            return subprocess.run(["git", *args], capture_output=True, text=True, timeout=20,
+                                  cwd=Path(__file__).resolve().parents[2]).stdout.strip()
+        except Exception:                                             # noqa: BLE001
+            return None
+    dirty = g("status", "--porcelain", "--", "code", "config")
+    return {"commit": g("rev-parse", "HEAD"), "dirty_code": dirty.splitlines() if dirty else []}
+
+
 def api_generate(ep, role: str, max_tokens: int, start: str = API_START):
     """One reply from an API policy (bench.models.complete; provenance and cost are logged there)."""
     from types import SimpleNamespace
@@ -426,7 +439,7 @@ def main(argv=None):
                "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "scaffold": a.scaffold,
                "ar_prompt": SCAFFOLDS[a.scaffold]["analogical"], "format_spec": SCAFFOLDS[a.scaffold]["format_spec"],
                "modes_version": a.modes_version or SCAFFOLDS[a.scaffold]["modes_version"],
-               "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+               "card_view": "full", "created": time.strftime("%Y-%m-%dT%H:%M:%S"), "git": git_state(),
                **({"api_role": API_ROLES[a.model],
                    "api_start_instruction": API_START if a.scaffold == "schema" else API_START_PROSE, "prefill": None,
                    "temperature": "provider default (GPT-6 on Bedrock takes none)"} if a.model in API_ROLES else {})}

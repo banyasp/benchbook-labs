@@ -18,8 +18,9 @@ verdict on 42 of 57 anchors).
 | `surface_edit` reword / neighbor / transfer | yes | held |
 | `structural_edit` flip (incl. a same-domain flip used as a lookalike) | yes | the Φ `would_change` item's `then` |
 | `structural_edit` target_f **realizing a `would_not_change` item** | yes (Peter: "interesting and cool") | held |
-| `frame_edit` remove a non-gold option / add an option the source considered and rejected | yes | held |
-| `frame_edit` decide ↔ advise | pending Peter's ruling | held (proposed) |
+| `frame_edit` remove a non-gold option | yes | held |
+| `frame_edit` add an option the source considered and rejected | **no** (Peter, 2026-11-11: "dont do it") | — |
+| `frame_edit` decide ↔ advise | pending: Peter undecided (2026-11-11, "idk") | held (proposed) |
 | `judgment_edit` | yes | the planner's target |
 | `structural_edit` target_k, general target_f, lookalike beyond Φ; `frame_edit` remove gold / add an invented option / change decider | **later** (needs a solver) | — |
 
@@ -43,10 +44,11 @@ Built in `code/pipeline/ops/` (README there), with the v1 scope above:
   drop_option, revised);
 - batch analytics;
 - the Φ grounding sidecar (`python -m pipeline.ops grounding`);
-- the legacy lineage migration (dry run only so far: 470 legacy derived scenarios, 253 with a gold partial).
+- the legacy lineage migration (applied 2026-11-11 to 470 legacy derived scenarios, 253 with a delta; backups in
+  `data/store/versions/pre-ops-migration-20261111/`).
 
 Not built:
-- `frame_edit` add-a-source-rejected-option (needs the source text) and decide ↔ advise (awaiting Peter);
+- `frame_edit` decide ↔ advise (Peter undecided, 2026-11-11); add-a-source-rejected-option is dropped (Peter, 2026-11-11: "dont do it");
 - the solver's panel and human backends;
 - the dashboard page.
 
