@@ -116,3 +116,17 @@ def test_pipeline_page_data():
     assert c["docs"] > 0 and c["anchors"] > 0 and c["episodes"] >= 0
     for y in D.pairs_yields():
         assert y["recipe"].startswith("pairs_v1_") and all("buckets" in s for s in y["steps"])
+
+
+def test_dataset_pages_data():
+    from console import data as D
+    tags = D.dataset_tags("pairs-v1")
+    if not tags:
+        return
+    o = D.dataset_overview("pairs-v1", tags[-1], "transfer")
+    assert o["anchors"] and set(o["by_arm"]) <= set(D.ARM_INFO) and "drop_option" not in o["by_arm"]
+    a = D.dataset_anchor("pairs-v1", tags[-1], o["anchors"][0])
+    assert [x["arm"] for x in a["arms"]] == D.ARM_ORDER
+    for arm in a["arms"]:
+        for s in arm["served"]:
+            assert s["cell"]["x1"] == o["anchors"][0] and len(s["hops"]) == len(s["cell"]["chain"]) - 1

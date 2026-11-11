@@ -1,7 +1,7 @@
 """Pair dataset v1, built with the scenario operators (Peter, 2026-11-11).
 
 Peter's rulings for v1: pilot ~100 anchors, then all; every arm (self, transfer, flipped transfer, same-domain flip,
-would-not-change edit, revised C', drop option, neighbor control, decoy); X1 (the live trace) is always an anchor,
+would-not-change edit, revised C', neighbor control, decoy; drop option removed the same day); X1 (the live trace) is always an anchor,
 derived scenarios are only served as cases (revisit for SFT/RL); decide <-> advise parked; leaky scenarios never used.
 
     python -m pipeline.datasets.pairs_v1 eligibility [--workers 16]      # data/datasets/pairs-v1/eligibility.jsonl
@@ -10,6 +10,8 @@ derived scenarios are only served as cases (revisit for SFT/RL); decide <-> advi
         runs every arm recipe (code/pipeline/ops/recipes/pairs_v1/*.yaml) on the anchors, all in ONE process so the
         id reservation lock is shared (separate processes could mint the same derived id); writes
         data/datasets/pairs-v1/build-<tag>.json (per-recipe summaries and run-log paths)
+    python -m pipeline.datasets.pairs_v1 assemble --tag pilot [--seed 0]
+        -> cells-<tag>.json (X1 anchor x served X2, per arm), attempts-<tag>.jsonl, manifest-<tag>.json
 
 Eligibility ("quality" anchors): every check is recorded per anchor, pass or fail with reasons; nothing is deleted.
   structure   parses; 2-4 options; gold among them; >= 1 consideration
@@ -140,6 +142,112 @@ def build(inputs: str, tag: str, workers: int = 6, arms: list[str] | None = None
     return out
 
 
+# Which recipe step's output is served as which arm. drop_option is not an arm (Peter, 2026-11-11: it only shrinks
+# the choice set and makes guessing easier); its earlier outputs stay on disk but never enter cells.
+ARM_STEPS = {"transfer": [("transfer", 3), ("transfer_flip", 5)], "same_domain_flip": [("same_domain_flip", 2)],
+             "noflip": [("noflip", 2)], "revised": [("revised", 2)], "neighbor": [("neighbor", 3)]}
+ARMS = ["self", "transfer", "transfer_flip", "same_domain_flip", "noflip", "revised", "neighbor", "decoy"]
+
+
+def _step_outputs(rows: list[dict], steps: list[dict], k: int) -> list[dict]:
+    """The rows whose scenario leaves step k (1-based) of a recipe: accepted outputs, plus the inputs of skipped
+    no-ops when the step has pass_skipped (the same rule recipes.run_recipe uses)."""
+    out = [{"x2": r["id"], "row": r} for r in rows if r["recipe_step"] == k and r["bucket"] == "accepted" and r.get("id")]
+    if steps[k - 1].get("pass_skipped"):
+        out += [{"x2": r["parent"], "row": r} for r in rows if r["recipe_step"] == k and r["bucket"] == "skipped"]
+    return out
+
+
+def assemble(tag: str, seed: int = 0) -> dict:
+    """build-<tag>.json + the recipe run logs -> cells-<tag>.json (one cell per X1 anchor x served X2) and
+    attempts-<tag>.jsonl (every operator application, with its anchor resolved, for the console's per-anchor view).
+
+    Cell: X1 = the anchor (live trace), X2 = the served case. The answer key is X1's gold whatever is served
+    (eval.allpairs), so a cell needs no key of its own; x2_gold and the chain are recorded for analysis."""
+    from pipeline.ops.recipes import load_recipe
+    store = Store()
+    b = json.loads((OUT / f"build-{tag}.json").read_text())
+    inp = Path(b["inputs"]) if Path(b["inputs"]).is_absolute() else ROOT / b["inputs"]
+    ids = [l.split()[0] for l in inp.read_text().splitlines() if l.strip() and not l.startswith("#")]
+    anchors_set = set(ids)
+    logs = {name: [json.loads(l) for l in Path(v["log"]).read_text().splitlines() if l.strip()]
+            for name, v in b["recipes"].items()}
+    parent = {r["id"]: r["parent"] for rs in logs.values() for r in rs if r.get("id")}
+
+    def anchor_of(x):
+        seen = 0
+        while x not in anchors_set and x in parent and seen < 20:
+            x, seen = parent[x], seen + 1
+        return x if x in anchors_set else None
+
+    def chain_of(x):
+        ch = [x]
+        while ch[-1] not in anchors_set and ch[-1] in parent:
+            ch.append(parent[ch[-1]])
+        return list(reversed(ch))
+
+    attempts = []
+    for name, rs in logs.items():
+        for r in rs:
+            attempts.append({"recipe": name, "arm_excluded": name not in ARM_STEPS, "anchor": anchor_of(r["parent"]),
+                             "step": int(r["recipe_step"]), "op": r["op"], "mode": r.get("mode"), "parent": r["parent"],
+                             "id": r.get("id"), "bucket": r["bucket"], "why": r.get("why"),
+                             "args": {k: v for k, v in (r.get("args") or {}).items()
+                                      if k in ("mode", "phi", "target", "order", "option", "realization")}})
+    gold = {}
+
+    def gold_of(x):
+        if x not in gold:
+            S = store.scenario(x)
+            gold[x] = S.case.verdict.choice
+        return gold[x]
+
+    cells = []
+    for name, rs in logs.items():
+        if name not in ARM_STEPS:
+            continue
+        steps = load_recipe(str(RECIPES / f"{name}.yaml"))["steps"]
+        for arm, k in ARM_STEPS[name]:
+            for o in _step_outputs(rs, steps, k):
+                a = anchor_of(o["x2"])
+                if a is None:
+                    continue
+                ch = chain_of(o["x2"])
+                flip_row = next((x for x in attempts if x["id"] in ch and x["op"] == "structural_edit"), None)
+                tgt = (flip_row or {}).get("args", {}).get("target")
+                cells.append({"arm": arm, "x1": a, "x2": o["x2"], "chain": ch,
+                              "phi": tgt.get("phi") if isinstance(tgt, dict) else None})
+    rng = random.Random(f"pairs-v1|decoy|{seed}")
+    meta = {x: store.scenario(x) for x in ids}
+    for x in ids:
+        cells.append({"arm": "self", "x1": x, "x2": x, "chain": [x], "phi": None})
+        pool = [y for y in ids if meta[y].family != meta[x].family and meta[y].domain != meta[x].domain] or \
+               [y for y in ids if meta[y].family != meta[x].family]
+        d = rng.choice(sorted(pool))
+        cells.append({"arm": "decoy", "x1": x, "x2": d, "chain": [d], "phi": None})
+    for c in cells:
+        c["x1_gold"], c["x2_gold"] = gold_of(c["x1"]), gold_of(c["x2"])
+        c["x1_has_trace"] = store.has_trace(c["x1"])
+    cells.sort(key=lambda c: (c["x1"], ARMS.index(c["arm"]), c["x2"]))
+    for i, c in enumerate(cells):
+        c["cell"] = f"PV1-{tag}-{i:05d}"
+    (OUT / f"cells-{tag}.json").write_text(json.dumps(cells, indent=1))
+    with open(OUT / f"attempts-{tag}.jsonl", "w") as fh:
+        for a in attempts:
+            fh.write(json.dumps(a, ensure_ascii=False) + "\n")
+    man = {"dataset": "pairs-v1", "tag": tag, "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+           "build": f"data/datasets/pairs-v1/build-{tag}.json", "inputs": b["inputs"], "n_anchors": len(ids),
+           "cells": len(cells), "by_arm": {a: sum(c["arm"] == a for c in cells) for a in ARMS},
+           "anchors_with_trace": sum(store.has_trace(x) for x in ids), "decoy_seed": seed,
+           "excluded_recipes": sorted(set(logs) - set(ARM_STEPS)),
+           "rules": ["X1 is always an anchor (Peter 2026-11-11; revisit for SFT/RL)",
+                     "answer key = X1 gold for every arm (eval.allpairs)",
+                     "drop_option excluded (Peter 2026-11-11)", "decide<->advise parked",
+                     "decoy: another pilot anchor, different family and (when possible) different domain"]}
+    (OUT / f"manifest-{tag}.json").write_text(json.dumps(man, indent=1))
+    return man
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="pipeline.datasets.pairs_v1")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -154,8 +262,13 @@ def main(argv=None):
     b.add_argument("--workers", type=int, default=6)
     b.add_argument("--arms")
     b.add_argument("--seed", type=int, default=0)
+    s = sub.add_parser("assemble")
+    s.add_argument("--tag", required=True)
+    s.add_argument("--seed", type=int, default=0)
     a = ap.parse_args(argv)
-    if a.cmd == "build":
+    if a.cmd == "assemble":
+        res = assemble(a.tag, a.seed)
+    elif a.cmd == "build":
         res = build(a.inputs, a.tag, a.workers, a.arms.split(",") if a.arms else None, a.seed)
     else:
         res = eligibility(a.workers) if a.cmd == "eligibility" else pilot(a.n, a.seed)

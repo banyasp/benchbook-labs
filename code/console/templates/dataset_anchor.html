@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% from "_macros.html" import frame, options, diff_table, step, so_badge, sid %}{% block content %}
+<h1>{{ d.doc.title or d.id }}</h1>
+<p class="mono">{{ d.id }} · {{ d.doc.domain }} · family {{ d.doc.family }} · split {{ d.doc.split }}
+· <a href="/scenario/{{ d.id|q }}">full scenario page</a>{% if d.brief.has_trace %} · <a href="/scenario/{{ d.id|q }}/trace">rendered trace (X1)</a>{% else %} · <span class="badge bad">no trace yet</span>{% endif %}</p>
+{% if d.elig %}<p class="small">Eligibility: {% for k, v in d.elig.checks.items() %}<span class="badge {{ 'ok' if v.get('pass') else 'bad' }}">{{ k }}</span> {% endfor %}
+{% if d.elig.trace_leak %}· trace leak check: <span class="badge {{ 'bad' if d.elig.trace_leak.leak else 'ok' }}">{{ 'leak' if d.elig.trace_leak.leak else 'clean' }}</span>{% endif %}</p>{% endif %}
+<p class="small">Jump to: {% for a in d.arms %}<a href="#{{ a.arm }}">{{ a.label }} ({{ a.served|length }})</a> · {% endfor %}<a href="#failed">failed attempts ({{ d.failed|length }})</a></p>
+
+<h2>Anchor (X1, the live scenario)</h2>
+<div class="cols"><div>{{ frame(d.case) }}</div><div>{{ options(d.case) }}</div></div>
+<details><summary>Facts, considerations, flip conditions</summary><pre class="small">{{ {'facts': d.case.facts, 'considerations': d.case.considerations, 'verdict': d.case.verdict, 'flip_conditions': d.case.flip_conditions}|pretty }}</pre></details>
+
+{% for a in d.arms %}
+<h2 id="{{ a.arm }}">{{ a.label }} <span class="small muted">— {{ a.what }}</span></h2>
+{% if not a.served %}<p class="muted">No served case for this arm (see failed attempts below).</p>{% endif %}
+{% for s in a.served %}<section class="spot">
+<h3>{{ sid(s.cell.x2) }} {{ so_badge(s.signoff) }} <span class="small muted">cell {{ s.cell.cell }}{% if s.cell.phi %} · via <span class="mono">{{ s.cell.phi }}</span>{% endif %}{% if s.domain and s.domain != d.doc.domain %} · domain {{ s.domain }}{% endif %}</span></h3>
+{% if a.arm != 'self' %}<div class="cols"><div>{{ frame(s.case) }}</div><div>{{ options(s.case) }}</div></div>{% endif %}
+{% if s.hops %}<p class="small">Operator chain: <span class="mono">{{ d.id }}</span>{% for h in s.hops %} → <b>{{ h.step.op if h.step else '?' }}{% if h.step and h.step.mode %}/{{ h.step.mode }}{% endif %}</b> → <a class="mono" href="/scenario/{{ h.to|q }}">{{ h.to }}</a>{% endfor %}</p>
+{% if s.diff %}<details><summary>End-to-end diff: anchor → served case ({{ s.diff|length }} fields)</summary>{{ diff_table(s.diff) }}</details>{% endif %}
+{% for h in s.hops %}<details><summary>Hop {{ loop.index }}: {{ h.step.op if h.step else '?' }}{% if h.step and h.step.mode %}/{{ h.step.mode }}{% endif %} · {{ h.diff|length }} fields changed</summary>
+{{ diff_table(h.diff) }}<details><summary>operator step record (gates, annotations)</summary>{{ step(h.step) }}</details></details>{% endfor %}{% endif %}
+<form method="post" action="/signoff" class="soform small"><input type="hidden" name="target_kind" value="scenario"><input type="hidden" name="target_id" value="{{ s.cell.x2 }}"><input type="hidden" name="back" value="" class="backfield">
+<input name="note" placeholder="note" size="40"> <button name="decision" value="approve" class="ok">approve</button> <button name="decision" value="needs-work" class="warn">needs work</button> <button name="decision" value="reject" class="bad">reject</button></form>
+</section>{% endfor %}
+{% endfor %}
+
+<h2 id="failed">Failed attempts ({{ d.failed|length }})</h2>
+{% if d.failed %}<table class="grid"><tr><th>recipe</th><th>step</th><th>operator</th><th>input</th><th>bucket</th><th>output</th><th>why</th></tr>
+{% for x in d.failed %}<tr{% if x.arm_excluded %} class="muted"{% endif %}><td>{{ x.recipe }}{% if x.arm_excluded %} <span class="badge">excluded</span>{% endif %}</td><td class="num">{{ x.step }}</td><td class="mono small">{{ x.op }}{% if x.mode %}/{{ x.mode }}{% endif %}</td>
+<td class="mono small">{{ x.parent }}</td><td><span class="badge {{ 'warn' if x.bucket == 'hard' else 'bad' }}">{{ x.bucket }}</span></td>
+<td>{% if x.id %}{{ sid(x.id) }}{% else %}<span class="muted">none written</span>{% endif %}</td><td class="small">{{ x.why }}</td></tr>{% endfor %}</table>
+{% else %}<p class="muted">None.</p>{% endif %}
+<details><summary>All {{ d.attempts|length }} operator applications for this anchor</summary><table class="grid small">
+{% for x in d.attempts %}<tr><td>{{ x.recipe }}</td><td>{{ x.step }}</td><td class="mono">{{ x.op }}{% if x.mode %}/{{ x.mode }}{% endif %}</td><td class="mono">{{ x.parent }}</td><td>{{ x.bucket }}</td><td class="mono">{{ x.id or '' }}</td><td>{{ x.why }}</td></tr>{% endfor %}</table></details>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block content %}
+<h1>Dataset <span class="mono">{{ d.name }}</span> · {{ d.tag }}</h1>
+<p>{% if d.tags|length > 1 %}Versions: {% for t in d.tags %}<a href="/dataset/{{ d.name }}?tag={{ t }}">{{ t }}</a>{% if not loop.last %} · {% endif %}{% endfor %} · {% endif %}
+built {{ d.manifest.built }} from <a href="/file?path={{ d.manifest.build|q }}" class="mono">{{ d.manifest.build }}</a> ·
+inputs <a href="/file?path={{ d.manifest.inputs|q }}" class="mono">{{ d.manifest.inputs }}</a> ·
+<a href="/batch/dataset:{{ d.name }}">batch page &amp; spot-check sample</a></p>
+<p><b>{{ d.manifest.cells }}</b> pair cells over <b>{{ d.manifest.n_anchors }}</b> anchors ({{ d.manifest.anchors_with_trace }} with a rendered trace).
+X1 is always the anchor; the answer key is X1's gold for every arm. Excluded recipes: {{ d.manifest.excluded_recipes|join(', ') or 'none' }}.</p>
+<details><summary>Rules recorded in the manifest</summary><ul>{% for r in d.manifest.rules %}<li>{{ r }}</li>{% endfor %}</ul></details>
+
+<h2>Arms</h2>
+<table class="grid"><tr><th>arm</th><th>what X2 is</th><th class="num">cells</th><th class="num">anchors covered</th><th></th></tr>
+{% for k, info in arm_info.items() %}<tr{% if d.arm == k %} class="gold"{% endif %}><td><b>{{ info[0] }}</b> <span class="mono small muted">{{ k }}</span></td><td class="small">{{ info[1] }}</td>
+<td class="num">{{ d.by_arm.get(k, 0) }}</td><td class="num">{{ d.anchors_with[k] }} / {{ d.anchors|length }}</td>
+<td><a href="?tag={{ d.tag }}&arm={{ k }}#arm">browse all</a></td></tr>{% endfor %}</table>
+
+<details><summary>Operator yield per recipe step (every application, including failures)</summary>
+<table class="grid"><tr><th>recipe</th><th>step</th><th>operator</th><th class="num">accepted</th><th class="num">skipped</th><th class="num">hard</th><th class="num">rejected</th><th class="num">total</th></tr>
+{% for y in d.yields %}<tr{% if y.excluded %} class="muted"{% endif %}><td>{{ y.recipe }}{% if y.excluded %} <span class="badge">excluded</span>{% endif %}</td><td class="num">{{ y.step }}</td><td class="mono small">{{ y.op }}</td>
+<td class="num">{{ y.accepted or '' }}</td><td class="num">{{ y.skipped or '' }}</td><td class="num">{{ y.hard or '' }}</td><td class="num">{{ y.rejected or '' }}</td><td class="num">{{ y.total }}</td></tr>{% endfor %}</table></details>
+
+{% if d.arm_rows is not none %}
+<h2 id="arm">All {{ arm_info[d.arm][0] }} cells ({{ d.arm_rows|length }}) <a class="small" href="?tag={{ d.tag }}">clear</a></h2>
+<table class="grid"><tr><th>anchor (X1)</th><th>X1 question</th><th>served case (X2)</th><th>X2 domain · question</th><th>X2 gold</th></tr>
+{% for r in d.arm_rows %}<tr><td><a class="mono small" href="/dataset/{{ d.name }}/anchor/{{ r.x1.id|q }}?tag={{ d.tag }}#{{ d.arm }}">{{ r.x1.id }}</a><div class="small muted">{{ r.x1.domain }}</div></td>
+<td class="small">{{ r.x1.question }}</td>
+<td><a class="mono small" href="/scenario/{{ r.x2.id|q }}">{{ r.x2.id }}</a>{% if r.cell.phi %}<div class="small">via <span class="mono">{{ r.cell.phi }}</span></div>{% endif %}</td>
+<td class="small"><span class="muted">{{ r.x2.domain }}</span> · {{ r.x2.question }}</td><td class="small">{{ r.x2.gold_text }}</td></tr>{% endfor %}</table>
+{% endif %}
+
+<h2>Anchors × arms</h2>
+<p class="small muted">Each number is the count of served cases for that arm; click an anchor to see every variant with its operator chain and diffs, plus every attempt that failed.</p>
+<table class="grid"><tr><th>anchor (X1)</th><th>domain</th><th>trace</th>{% for k, info in arm_info.items() %}<th class="num small">{{ info[0] }}</th>{% endfor %}</tr>
+{% for a in d.anchors %}{% set b = d.briefs[a] %}<tr><td><a class="mono small" href="/dataset/{{ d.name }}/anchor/{{ a|q }}?tag={{ d.tag }}">{{ a }}</a><div class="small">{{ b.title or '' }}</div></td>
+<td class="small">{{ b.domain }}</td><td>{% if b.has_trace %}<a href="/scenario/{{ a|q }}/trace">yes</a>{% else %}<span class="badge bad">none</span>{% endif %}</td>
+{% for k in arm_info %}{% set n = d.grid[a][k]|length %}<td class="num">{% if n %}<a href="/dataset/{{ d.name }}/anchor/{{ a|q }}?tag={{ d.tag }}#{{ k }}">{{ n }}</a>{% else %}<span class="muted">·</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</table>
+{% endblock %}

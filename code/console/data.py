@@ -975,8 +975,10 @@ def batch_items(bid: str) -> list[str]:
     if kind == "dataset":
         d = DATASETS / name
         ids = []
-        if (d / "cells.json").exists():
-            for c in json.loads((d / "cells.json").read_text()):
+        tags = dataset_tags(name)
+        cf = d / (f"cells-{tags[-1]}.json" if tags else "cells.json")
+        if cf.exists():
+            for c in json.loads(cf.read_text()):
                 ids += [c.get("x1"), c.get("x2")]
         for f in ("items.txt", "ids.txt"):
             if (d / f).exists():
@@ -1098,11 +1100,12 @@ def funnel() -> list[dict]:
     st.append({"stage": "Rendered traces", "count": len(traces), "where": "data/store/traces/*/trace.json",
                "link": "/scenarios?trace=yes",
                "blocking": f"{sum(1 for r in anchors if not r['has_trace'])} store anchors without a trace"})
-    cf = DATASETS / "pairs-v1" / "cells.json"
+    _t = dataset_tags("pairs-v1")
+    cf = DATASETS / "pairs-v1" / (f"cells-{_t[-1]}.json" if _t else "cells.json")
     if cf.exists():
         cells = json.loads(cf.read_text())
         st.append({"stage": "Pair cells (pairs-v1)", "count": len(cells), "where": rel(cf),
-                   "detail": str(dict(Counter(c.get("arm") for c in cells))), "link": "/batch/dataset:pairs-v1",
+                   "detail": str(dict(Counter(c.get("arm") for c in cells))), "link": "/dataset/pairs-v1",
                    "blocking": None})
     else:
         st.append({"stage": "Pair cells (pairs-v1)", "count": None, "where": "data/datasets/pairs-v1/cells.json",
@@ -1202,3 +1205,95 @@ def pairs_yields() -> list[dict]:
             st["buckets"][r.get("bucket")] = st["buckets"].get(r.get("bucket"), 0) + 1
         out.append({"recipe": name, "log": rel(p), "stem": p.stem, "steps": [dict(step=k, **v) for k, v in sorted(steps.items())]})
     return out
+
+
+# ====================================================================== datasets (pairs-v1 browser)
+ARM_INFO = {
+    "self": ("Self", "X2 = X1's own case (ceiling)"),
+    "transfer": ("Transfer", "same structure (K, V) in another domain; options matched, gold position balanced"),
+    "transfer_flip": ("Flipped transfer", "the transfer case with one would_change condition made true: V changes"),
+    "same_domain_flip": ("Same-domain flip", "the anchor with one would_change condition made true: V changes"),
+    "noflip": ("Would-not-change edit", "a would_not_change condition made true: facts change, V holds"),
+    "revised": ("Revised case C′", "the case's weights edited so its weighing reaches another option"),
+    "neighbor": ("Neighbor control", "same sub-domain, a different situation with the same K and V"),
+    "decoy": ("Decoy", "another pilot anchor (different family and domain): should be not_governed"),
+}
+ARM_ORDER = list(ARM_INFO)
+
+
+def dataset_tags(name: str) -> list[str]:
+    d = DATASETS / name
+    return sorted(p.stem[len("manifest-"):] for p in d.glob("manifest-*.json")) if d.exists() else []
+
+
+def _ds_load(name: str, tag: str) -> dict:
+    d = DATASETS / name
+    man = json.loads((d / f"manifest-{tag}.json").read_text())
+    cells = json.loads((d / f"cells-{tag}.json").read_text())
+    att = [json.loads(l) for l in (d / f"attempts-{tag}.jsonl").read_text().splitlines() if l.strip()]
+    return {"manifest": man, "cells": cells, "attempts": att}
+
+
+def _case_brief(sid: str) -> dict:
+    d = scenario(sid) or {}
+    c = d.get("case") or {}
+    r = SCEN.get()["by_id"].get(sid) or {}
+    gold = (c.get("verdict") or {}).get("choice")
+    return {"id": sid, "title": d.get("title") or r.get("title"), "domain": d.get("domain"), "family": d.get("family"),
+            "question": c.get("question"), "role": c.get("agent_role"), "decider": c.get("decider"),
+            "n_options": len(c.get("options") or {}), "gold": gold,
+            "gold_text": ((c.get("options") or {}).get(gold) or {}).get("do"), "has_trace": bool(r.get("has_trace"))}
+
+
+def dataset_overview(name: str, tag: str, arm: str | None = None) -> dict:
+    ds = _ds_load(name, tag)
+    cells, att = ds["cells"], ds["attempts"]
+    anchors = sorted({c["x1"] for c in cells})
+    grid = {a: {k: [] for k in ARM_ORDER} for a in anchors}
+    for c in cells:
+        grid[c["x1"]][c["arm"]].append(c)
+    briefs = {a: _case_brief(a) for a in anchors}
+    # yield: per recipe x step x bucket (drop_option shown but marked excluded)
+    yields = defaultdict(Counter)
+    for a in att:
+        yields[(a["recipe"], a["step"], a["op"] + (f"/{a['mode']}" if a.get("mode") else ""), a["arm_excluded"])][a["bucket"]] += 1
+    ytab = [{"recipe": k[0], "step": k[1], "op": k[2], "excluded": k[3], **dict(v), "total": sum(v.values())}
+            for k, v in sorted(yields.items())]
+    arm_rows = None
+    if arm:
+        arm_rows = [{"cell": c, "x1": briefs[c["x1"]], "x2": _case_brief(c["x2"])} for c in cells if c["arm"] == arm]
+    return {"name": name, "tag": tag, "tags": dataset_tags(name), "manifest": ds["manifest"], "anchors": anchors,
+            "grid": grid, "briefs": briefs, "yields": ytab, "arm": arm, "arm_rows": arm_rows,
+            "by_arm": Counter(c["arm"] for c in cells),
+            "anchors_with": {k: sum(1 for a in anchors if grid[a][k]) for k in ARM_ORDER}}
+
+
+def dataset_anchor(name: str, tag: str, aid: str) -> dict:
+    """One anchor and everything built from it: the served cells per arm (with the full operator chain, each hop's
+    diff, and the end-to-end diff against the anchor), plus every attempt that did not make it and why."""
+    ds = _ds_load(name, tag)
+    a_doc = scenario(aid) or {}
+    a_case = a_doc.get("case") or {}
+    cells = [c for c in ds["cells"] if c["x1"] == aid]
+    att = [x for x in ds["attempts"] if x["anchor"] == aid]
+    by_id = {x["id"]: x for x in att if x.get("id")}
+    arms = []
+    for k in ARM_ORDER:
+        served = []
+        for c in [c for c in cells if c["arm"] == k]:
+            x2 = scenario(c["x2"]) or {}
+            hops = []
+            for i in range(1, len(c["chain"])):
+                p, ch = c["chain"][i - 1], c["chain"][i]
+                st = ((scenario(ch) or {}).get("lineage") or {}).get("steps") or []
+                hops.append({"from": p, "to": ch, "attempt": by_id.get(ch), "step": st[-1] if st else None,
+                             "diff": case_diff((scenario(p) or {}).get("case") or {}, (scenario(ch) or {}).get("case") or {})})
+            served.append({"cell": c, "case": x2.get("case") or {}, "title": x2.get("title"), "domain": x2.get("domain"),
+                           "hops": hops, "diff": case_diff(a_case, x2.get("case") or {}) if k not in ("self", "decoy") else [],
+                           "signoff": signoff_of("scenario", c["x2"])})
+        arms.append({"arm": k, "label": ARM_INFO[k][0], "what": ARM_INFO[k][1], "served": served})
+    failed = [x for x in att if x["bucket"] in ("rejected", "hard")]
+    return {"name": name, "tag": tag, "id": aid, "doc": a_doc, "case": a_case, "brief": _case_brief(aid),
+            "arms": arms, "failed": failed, "attempts": att,
+            "elig": next((json.loads(l) for l in (DATASETS / name / "eligibility.jsonl").read_text().splitlines()
+                          if f'"id": "{aid}"' in l), None) if (DATASETS / name / "eligibility.jsonl").exists() else None}

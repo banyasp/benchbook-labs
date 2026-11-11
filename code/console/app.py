@@ -31,7 +31,10 @@ def _pct(x, digits=0):
 
 
 def _pretty(o):
-    return yaml.safe_dump(o, sort_keys=False, allow_unicode=True, width=110) if o is not None else ""
+    from jinja2 import Undefined
+    if isinstance(o, dict):
+        o = {k: v for k, v in o.items() if not isinstance(v, Undefined)}
+    return yaml.safe_dump(o, sort_keys=False, allow_unicode=True, width=110) if o is not None and not isinstance(o, Undefined) else ""
 
 
 env.filters.update(pct=_pct, pretty=_pretty, q=lambda s: quote(str(s), safe=""),
@@ -293,6 +296,36 @@ def signoff(target_kind: str = Form(...), target_id: str = Form(...), decision: 
             back: str = Form("/signoff")):
     Q.signoff(target_kind, target_id, decision, note)
     return RedirectResponse(back if back.startswith("/") else "/signoff", 303)
+
+
+# ---------------------------------------------------------------- datasets (pairs-v1 browser)
+@app.get("/datasets")
+def datasets_index():
+    names = [d.name for d in sorted(D.DATASETS.iterdir()) if d.is_dir() and D.dataset_tags(d.name)] if D.DATASETS.exists() else []
+    return RedirectResponse(f"/dataset/{names[0]}" if names else "/batches", 303)
+
+
+@app.get("/dataset/{name}", response_class=HTMLResponse)
+def dataset(name: str, tag: str | None = None, arm: str | None = None):
+    tags = D.dataset_tags(name)
+    if not tags:
+        raise HTTPException(404, f"no assembled versions of {name}")
+    tag = tag if tag in tags else tags[-1]
+    d = D.dataset_overview(name, tag, arm if arm in D.ARM_INFO else None)
+    return page("dataset.html", [("Datasets", "/datasets"), (f"{name} · {tag}", None)], d=d, arm_info=D.ARM_INFO)
+
+
+@app.get("/dataset/{name}/anchor/{aid}", response_class=HTMLResponse)
+def dataset_anchor(name: str, aid: str, tag: str | None = None):
+    tags = D.dataset_tags(name)
+    if not tags:
+        raise HTTPException(404, f"no assembled versions of {name}")
+    tag = tag if tag in tags else tags[-1]
+    d = D.dataset_anchor(name, tag, aid)
+    if not d["attempts"] and not any(a["served"] for a in d["arms"]):
+        raise HTTPException(404, f"{aid} is not an anchor of {name} · {tag}")
+    return page("dataset_anchor.html", [("Datasets", "/datasets"), (f"{name} · {tag}", f"/dataset/{name}?tag={tag}"),
+                                        (aid, None)], d=d)
 
 
 @app.get("/batches", response_class=HTMLResponse)
