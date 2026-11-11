@@ -193,6 +193,8 @@ that the id number equals the position.
 
 ### What is *not* an operator
 - **Decoy** (different surface, different K): "go fish". The planner draws another scenario from the store.
+  *pairs-v1 (Peter, 2026-11-11):* this arm is called **random**: the draw is another anchor from a different family and
+  domain label, with no check that it is irrelevant, so it is not a guaranteed decoy.
 - **Deployer equity variation**: out of scope (Peter). The deployer's equities are fixed. Swapping equities would
   happen upstream, at scenario writing, into a partitioned store.
 - **Two-scenario operators** (merge or split cases): out of scope.

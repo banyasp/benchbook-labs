@@ -1216,7 +1216,7 @@ ARM_INFO = {
     "noflip": ("Would-not-change edit", "a would_not_change condition made true: facts change, V holds"),
     "revised": ("Revised case C′", "the case's weights edited so its weighing reaches another option"),
     "neighbor": ("Neighbor control", "same sub-domain, a different situation with the same K and V"),
-    "decoy": ("Decoy", "another pilot anchor (different family and domain): should be not_governed"),
+    "random": ("Random", "another pilot anchor drawn at random (different family and domain label); not checked for irrelevance"),
 }
 ARM_ORDER = list(ARM_INFO)
 
@@ -1289,7 +1289,7 @@ def dataset_anchor(name: str, tag: str, aid: str) -> dict:
                 hops.append({"from": p, "to": ch, "attempt": by_id.get(ch), "step": st[-1] if st else None,
                              "diff": case_diff((scenario(p) or {}).get("case") or {}, (scenario(ch) or {}).get("case") or {})})
             served.append({"cell": c, "case": x2.get("case") or {}, "title": x2.get("title"), "domain": x2.get("domain"),
-                           "hops": hops, "diff": case_diff(a_case, x2.get("case") or {}) if k not in ("self", "decoy") else [],
+                           "hops": hops, "diff": case_diff(a_case, x2.get("case") or {}) if k not in ("self", "random") else [],
                            "signoff": signoff_of("scenario", c["x2"])})
         arms.append({"arm": k, "label": ARM_INFO[k][0], "what": ARM_INFO[k][1], "served": served})
     failed = [x for x in att if x["bucket"] in ("rejected", "hard")]

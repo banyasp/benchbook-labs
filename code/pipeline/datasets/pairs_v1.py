@@ -1,7 +1,7 @@
 """Pair dataset v1, built with the scenario operators (Peter, 2026-11-11).
 
 Peter's rulings for v1: pilot ~100 anchors, then all; every arm (self, transfer, flipped transfer, same-domain flip,
-would-not-change edit, revised C', neighbor control, decoy; drop option removed the same day); X1 (the live trace) is always an anchor,
+would-not-change edit, revised C', neighbor control, random (another anchor's case; called decoy until 2026-11-11); drop option removed the same day); X1 (the live trace) is always an anchor,
 derived scenarios are only served as cases (revisit for SFT/RL); decide <-> advise parked; leaky scenarios never used.
 
     python -m pipeline.datasets.pairs_v1 eligibility [--workers 16]      # data/datasets/pairs-v1/eligibility.jsonl
@@ -146,7 +146,7 @@ def build(inputs: str, tag: str, workers: int = 6, arms: list[str] | None = None
 # the choice set and makes guessing easier); its earlier outputs stay on disk but never enter cells.
 ARM_STEPS = {"transfer": [("transfer", 3), ("transfer_flip", 5)], "same_domain_flip": [("same_domain_flip", 2)],
              "noflip": [("noflip", 2)], "revised": [("revised", 2)], "neighbor": [("neighbor", 3)]}
-ARMS = ["self", "transfer", "transfer_flip", "same_domain_flip", "noflip", "revised", "neighbor", "decoy"]
+ARMS = ["self", "transfer", "transfer_flip", "same_domain_flip", "noflip", "revised", "neighbor", "random"]
 
 
 def _step_outputs(rows: list[dict], steps: list[dict], k: int) -> list[dict]:
@@ -217,6 +217,8 @@ def assemble(tag: str, seed: int = 0) -> dict:
                 tgt = (flip_row or {}).get("args", {}).get("target")
                 cells.append({"arm": arm, "x1": a, "x2": o["x2"], "chain": ch,
                               "phi": tgt.get("phi") if isinstance(tgt, dict) else None})
+    # "random" arm (Peter 2026-11-11: renamed from "decoy"; nothing checks the drawn case is irrelevant, so it is a
+    # random other case, not a guaranteed decoy). The seed string keeps the old name so draws stay reproducible.
     rng = random.Random(f"pairs-v1|decoy|{seed}")
     meta = {x: store.scenario(x) for x in ids}
     for x in ids:
@@ -224,7 +226,7 @@ def assemble(tag: str, seed: int = 0) -> dict:
         pool = [y for y in ids if meta[y].family != meta[x].family and meta[y].domain != meta[x].domain] or \
                [y for y in ids if meta[y].family != meta[x].family]
         d = rng.choice(sorted(pool))
-        cells.append({"arm": "decoy", "x1": x, "x2": d, "chain": [d], "phi": None})
+        cells.append({"arm": "random", "x1": x, "x2": d, "chain": [d], "phi": None})
     for c in cells:
         c["x1_gold"], c["x2_gold"] = gold_of(c["x1"]), gold_of(c["x2"])
         c["x1_has_trace"] = store.has_trace(c["x1"])
@@ -238,12 +240,12 @@ def assemble(tag: str, seed: int = 0) -> dict:
     man = {"dataset": "pairs-v1", "tag": tag, "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
            "build": f"data/datasets/pairs-v1/build-{tag}.json", "inputs": b["inputs"], "n_anchors": len(ids),
            "cells": len(cells), "by_arm": {a: sum(c["arm"] == a for c in cells) for a in ARMS},
-           "anchors_with_trace": sum(store.has_trace(x) for x in ids), "decoy_seed": seed,
+           "anchors_with_trace": sum(store.has_trace(x) for x in ids), "random_seed": seed,
            "excluded_recipes": sorted(set(logs) - set(ARM_STEPS)),
            "rules": ["X1 is always an anchor (Peter 2026-11-11; revisit for SFT/RL)",
                      "answer key = X1 gold for every arm (eval.allpairs)",
                      "drop_option excluded (Peter 2026-11-11)", "decide<->advise parked",
-                     "decoy: another pilot anchor, different family and (when possible) different domain"]}
+                     "random: another pilot anchor drawn at random (different family and, when possible, different domain); not checked for irrelevance, so not called a decoy (Peter 2026-11-11)"]}
     (OUT / f"manifest-{tag}.json").write_text(json.dumps(man, indent=1))
     return man
 
