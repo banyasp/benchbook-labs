@@ -59,7 +59,7 @@ def collect(store: Store | None = None, since: str | None = None, runs_dir: Path
         b = by[key]
         b["buckets"][step.get("bucket", "?")] += 1
         for g, v in (step.get("gates") or {}).items():
-            if not v.get("pass", True):
+            if isinstance(v, dict) and not v.get("pass", True):   # migrated steps carry {"legacy_checks": True}
                 b["gate_fail"][g] += 1
         vs = (step.get("annotations") or {}).get("verdict_shift")
         if vs:

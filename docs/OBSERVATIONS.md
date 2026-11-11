@@ -10,6 +10,12 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O22 · 2026-11-11 · The gold option is the longest in two thirds of corpus scenarios
+Across 985 corpus anchors the gold option's `do` text is the longest in 66% (chance 44%); considerations favoring the
+gold cite 5.8 facts against 1.3 for each other option. Every operator output inherits both cues. Position is
+balanced. Not yet checked at trace level or as a baseline on eval runs.
+- Sources: `data/store/scenarios/CORPUS*/` (anchors), `results/ops/ANALYTICS-20261111.md`; measurement M12; risk R6.
+
 ### O21 · 2026-11-11 · Granite rarely declines an irrelevant case; Luna almost always does (M09, k=8)
 On the "other anchor's case" arm (a sister of a different anchor, served as if relevant), Luna declares
 `not_governed` in 97% of replies. Granite thinking first declares it in 8%, follows in 47% and distinguishes in 38%;
