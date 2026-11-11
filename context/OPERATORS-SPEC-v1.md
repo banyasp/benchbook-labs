@@ -18,7 +18,7 @@ verdict on 42 of 57 anchors).
 | `surface_edit` reword / neighbor / transfer | yes | held |
 | `structural_edit` flip (incl. a same-domain flip used as a lookalike) | yes | the Φ `would_change` item's `then` |
 | `structural_edit` target_f **realizing a `would_not_change` item** | yes (Peter: "interesting and cool") | held |
-| `frame_edit` remove a non-gold option | yes | held |
+| `frame_edit` remove a non-gold option | built, but **not used as an arm** (Peter, 2026-11-11: it shrinks the choice set and raises the odds of a correct guess) | held |
 | `frame_edit` add an option the source considered and rejected | **no** (Peter, 2026-11-11: an option the source considered and rejected is already in the option set; a rejected *preceding* decision belongs to a different question) | — |
 | `frame_edit` decide ↔ advise | **parked** (Peter, 2026-11-11: "causes some quirks and i dont want to engage those yet") | — |
 | `judgment_edit` | yes | the planner's target |

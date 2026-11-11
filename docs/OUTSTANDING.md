@@ -53,6 +53,7 @@ anchors (74%), so a model-solved gold may depart from what a practitioner would 
 |---|---|---|
 | `frame_edit` decide ↔ advise | **Not to be built for now.** | "Causes some quirks, I don't want to engage those yet." (The quirks: option wording changes from "approve" to "recommend approval", and a hand-up option such as "refer it to the minister" is a real choice for a decider but close to a non-answer for an advisor.) |
 | `frame_edit` add an option the source considered and rejected | **Dropped.** | Options the source considered and rejected would already be in the option set; a rejected preceding decision is a different question, not another option for this one. |
+| `frame_edit` drop_option as a pairs-v1 arm | **Removed from the dataset** (the operator code stays; 51 pilot outputs kept in the store, not used in cells). | "That just reduces the choice set and almost certainly increases the probability of correct guesses." |
 
 ## Done
 
