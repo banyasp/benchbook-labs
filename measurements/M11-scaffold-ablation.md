@@ -102,6 +102,14 @@ All three scaffolds have 1,208 replies at k=8; the free and guided runs finished
 - **Verdict capture works without the schema.** The free scaffold had 0% no-verdict, versus 1-4% for the schema.
   Off-menu rates are similar (0-11%).
 
+- **Confound (found 2026-11-11).** Luna's schema run (M06) used mode C from `modes.v1.yaml` ("Your thinking is the
+  structure. Write the YAML documents inside your thinking … then write the verdict document as your reply"), followed by
+  the API start instruction `API_START` in `code/eval/allpairs.py` ("Your reply is the written decision record in the YAML
+  documents … your private chain of thought … stays hidden. Begin your reply with `kind: fact_enumeration`"). The two
+  conflict; Luna followed the second and wrote every document in its visible reply after hidden reasoning (raw replies
+  in `results/transfer/pilot2-luna/raw/`). Luna guided and free used mode A from `modes.v2.yaml` plus `API_START_PROSE`.
+  So Luna's schema − guided contrast also differs in the mode line, not only the scaffold.
+
 **Reading (Luna).**
 - Scaffolding buys a frontier model nothing. It reasons as well, or slightly better, when told only "decide", and the
   structure costs a few points on the no-case and transferred arms.
