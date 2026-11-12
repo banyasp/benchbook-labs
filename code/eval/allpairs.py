@@ -194,8 +194,21 @@ def pairs_schedule(cells: list[dict], k: int) -> list[dict]:
     items = []
     for i in range(k):
         items += [{"phase": "control", "x1": x, "x2": None, "idx": i} for x in x1s]
-        items += [{"phase": c["arm"], "x1": c["x1"], "x2": c["x2"], "idx": i} for c in cells]
+        items += [{"phase": c["arm"], "x1": c["x1"], "x2": c["x2"], "idx": i,
+                   **({"cell_key": c["key"], "cell": c.get("cell")} if c.get("key") and c["key"] != c.get("x1_gold") else {})}
+                  for c in cells]
     return items
+
+
+def cell_key(store, x1: str, key, local_id: str):
+    """pairs-v1 cells carry their own answer key as an X1 option id (R94: the revised arm is keyed to C''s verdict).
+    -> the X1 key with `choice` moved to that option's LIVE id (matched by source_id, else by option text)."""
+    opt = store.scenario(x1).case.options[local_id]
+    hit = [g for g, o in key.options.items() if o.source_id == local_id] or \
+          [g for g, o in key.options.items() if o.do.strip() == opt.do.strip()]
+    if len(hit) != 1:
+        raise ValueError(f"cell key {local_id} of {x1} matches {len(hit)} key options")
+    return key.model_copy(update={"choice": hit[0], "acceptable": []})
 
 
 def sid_of(it: dict, model: str) -> str:
@@ -296,6 +309,8 @@ async def run_one(ctx: Ctx, it: dict, done: set) -> dict | None:
         return None
     try:
         base, key, meta = ctx.pair_and_key(it["x1"])
+        if it.get("cell_key"):
+            key = cell_key(ctx.store, it["x1"], key, it["cell_key"])
         pair = base if it["x2"] is None else case_pair(base, it["x2"])
         seed = sample_seed(ctx.run_seed, sid)
         sc = SCAFFOLDS[ctx.scaffold]
