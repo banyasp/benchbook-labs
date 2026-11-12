@@ -181,3 +181,31 @@ passes) and schema YAML-in-think (M07).
   training.
 - Implication for the base-model baseline: the YAML scaffold understates base Granite by 6-9 points on choice
   accuracy. Base numbers reported with the schema scaffold should say so, or be paired with the free-scaffold number.
+
+
+## Size-class comparison: four more local models (PARTIAL, started 2026-11-12)
+
+Peter, 2026-11-12: is Granite's schema cost common to models of its size class? Same data (pilot 2: 28 X1s, 151
+prompts), same three scaffolds, k=4, thinking first. Status: **running** (`logs/scaffold-compare-chain.log`).
+
+| Key | Model (HF) | Sampling (model card, thinking mode) |
+|---|---|---|
+| qwen35 | Qwen/Qwen3.5-9B | T 1.0, top_p 0.95, top_k 20, presence 1.5 |
+| olmo3 | allenai/Olmo-3-7B-Think | T 0.6, top_p 0.95 |
+| gemma4 | google/gemma-4-12B-it | T 1.0, top_p 0.95, top_k 64 |
+| ministral3 | mistralai/Ministral-3-14B-Reasoning-2512 | T 1.0, top_p 0.95 |
+
+- Runs: `results/transfer/pilot2-<key>-{schemaA,guided,free}` (registered in `runs.yaml`).
+- Command: `scripts/scaffold_compare_chain.sh` → per model `code/inference/serve_compare.sh <key>` (vLLM 0.27.1, bf16,
+  max-model-len 49152, the model's own reasoning parser), then
+  `eval.allpairs run --model <key> --mode A --scaffold <s> [--modes-version v2 for schema] -k 4 --max-tokens 20000`.
+- **Differences from Granite's runs (record when comparing):**
+  - Granite runs through the raw-completions harness with a prefilled `<think>`; these four run through the chat
+    endpoint (like Luna) with the API_START / API_START_PROSE instruction appended, and the model's own template
+    turns thinking on. Their thinking is saved in the raw reply as `<think>…</think>`.
+  - Schema uses the v2 mode-A line (as Luna's clean re-run); Granite's schema row (M09) used v1.
+- **Smoke test (Qwen, 3 schema no-case items):** 2 of 3 replies omitted the `options` list from `fact_enumeration`,
+  so the bare choice id could not be matched (scored wrong). Granite and Luna lose 4-6% of choices this way under
+  every scaffold (measured 2026-11-12 on the M11 runs). Check this rate per model before reading the schema rows; a
+  course-text fallback in the scorer would be a scoring change applied to all runs (not done).
+- LLMs: the four policies above (local); judge Jev Choice (OpenRouter) as in M11.

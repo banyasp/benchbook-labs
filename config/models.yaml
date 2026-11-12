@@ -87,6 +87,39 @@ roles:
     temperature: 1.0          # dropped for GPT-6 on Bedrock (provider default); kept for the record
     max_tokens: 16000
     reasoning_effort: medium
+  # Local comparison policies (Peter, 2026-11-12: is Granite's schema cost common to models of its size class?).
+  # One at a time on :8000 via code/inference/serve_compare.sh <key> (Granite's server stopped meanwhile). Called
+  # through the chat endpoint like Luna (eval.allpairs API path); vLLM's reasoning parser hands the thinking back
+  # separately and it is saved in the raw reply. Sampling: each model card's recommendation for thinking mode.
+  policy_qwen35:
+    model: vllm/qwen3.5-9b
+    base_url: http://localhost:8000/v1
+    temperature: 1.0       # model card, thinking mode, general tasks
+    top_p: 0.95
+    top_k: 20
+    presence_penalty: 1.5
+    chat_template_kwargs: {enable_thinking: true}
+    max_tokens: 20000
+  policy_gemma4:
+    model: vllm/gemma-4-12b-it
+    base_url: http://localhost:8000/v1
+    temperature: 1.0       # model card
+    top_p: 0.95
+    top_k: 64
+    chat_template_kwargs: {enable_thinking: true}
+    max_tokens: 20000
+  policy_olmo3:
+    model: vllm/olmo-3-7b-think
+    base_url: http://localhost:8000/v1
+    temperature: 0.6       # model card
+    top_p: 0.95
+    max_tokens: 20000
+  policy_ministral3:
+    model: vllm/ministral-3-14b-reasoning
+    base_url: http://localhost:8000/v1
+    temperature: 1.0       # model card ("temperature of 1 for most environments")
+    top_p: 0.95
+    max_tokens: 20000
   answer_leak_checker:        # report-only check (2026-11-09): does a rendered trace say what was finally decided?
     model: bedrock/us.openai.gpt-6-luna
     temperature: 0.0

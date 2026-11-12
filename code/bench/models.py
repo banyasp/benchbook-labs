@@ -100,9 +100,13 @@ def __getattr__(name):
 
 
 def complete(role_name: str, messages: list[dict], *, stage: str | None = None, out_path=None,
-             stub: str | None = None, **overrides) -> str:
+             stub: str | None = None, full: bool = False, **overrides):
     """One chat completion for a role. overrides replace config params for this call (temperature, max_tokens...).
-    For vllm/ the extra keys `chat_template_kwargs` and `top_p` are passed through."""
+    For vllm/ the extra keys `chat_template_kwargs`, `top_p`, `top_k`, `min_p`, `presence_penalty` are passed through; `sampling: model_default` sends no
+    temperature/top_p, so vLLM applies the model's own generation_config.json (2026-11-12, comparison policies).
+    full=True (vllm/ only) returns a dict {text, reasoning, usage, finish_reason} instead of the text."""
+    if full and role(role_name, load_config()).backend != "vllm":
+        raise ValueError("full=True is only supported for vllm/ roles")
     cfg = load_config()
     r = role(role_name, cfg)
     p = {**r.params, **overrides}
@@ -112,7 +116,7 @@ def complete(role_name: str, messages: list[dict], *, stage: str | None = None, 
             raise ValueError(f"role `{role_name}` is a stub/ model; the caller must pass stub=<text>")
         return stub
     if r.backend == "vllm":
-        return _vllm(r, messages, p, prov, stage)
+        return _vllm(r, messages, p, prov, stage, full=full)
     _bedrock_env(cfg)
     extra = dict(p.get("extra") or {})
     if p.get("reasoning_effort"):          # gpt-oss on Bedrock / OpenRouter
@@ -122,18 +126,22 @@ def complete(role_name: str, messages: list[dict], *, stage: str | None = None, 
                            extra=extra or None)
 
 
-def _vllm(r: RoleConfig, messages, p, prov: Path, stage):
+def _vllm(r: RoleConfig, messages, p, prov: Path, stage, full: bool = False):
     import json
     import time
     from openai import OpenAI
 
     llm = _llm()
     client = OpenAI(base_url=p.get("base_url", "http://localhost:8000/v1"), api_key="unused")
-    extra = {k: p[k] for k in ("chat_template_kwargs",) if k in p}
+    extra = {k: p[k] for k in ("chat_template_kwargs", "top_k", "min_p") if k in p}
     t0 = time.time()
-    resp = client.chat.completions.create(model=r.bare, messages=messages, temperature=p.get("temperature", 1.0),
-                                          top_p=p.get("top_p", 1.0), max_tokens=p.get("max_tokens", 4000),
-                                          seed=p.get("seed"), extra_body=extra or None)
+    samp = {} if p.get("sampling") == "model_default" else {"temperature": p.get("temperature", 1.0),
+                                                            "top_p": p.get("top_p", 1.0)}
+    if "presence_penalty" in p:
+        samp["presence_penalty"] = p["presence_penalty"]
+    client = client.with_options(timeout=p.get("timeout", 1800))
+    resp = client.chat.completions.create(model=r.bare, messages=messages, max_tokens=p.get("max_tokens", 4000),
+                                          seed=p.get("seed"), extra_body=extra or None, **samp)
     rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "model": r.model, "role": r.name, "backend": "vllm",
            "stage": stage, "prompt_sha256": llm.prompt_hash(messages), "seconds": round(time.time() - t0, 2),
            "usage": resp.usage.model_dump() if resp.usage else None}
@@ -149,6 +157,12 @@ def _vllm(r: RoleConfig, messages, p, prov: Path, stage):
         f.write(json.dumps(rec) + "\n")
     if reason:
         raise llm.RefusalError(reason, text, r.model, stage)
+    if full:
+        msg = resp.choices[0].message
+        reasoning = getattr(msg, "reasoning_content", None) or getattr(msg, "reasoning", None) \
+            or (getattr(msg, "model_extra", None) or {}).get("reasoning_content") or (getattr(msg, "model_extra", None) or {}).get("reasoning")
+        return {"text": text, "reasoning": reasoning, "usage": resp.usage.model_dump() if resp.usage else None,
+                "finish_reason": stop}
     return text
 
 
