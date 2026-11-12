@@ -82,6 +82,25 @@ roles:
     temperature: 0.0
     max_tokens: 8000
     reasoning_effort: medium
+  sft_aligner:                # SFT pair gold (2026-11-12): aligns X1/X2 facts where lineage has no fact map (transfer,
+    model: bedrock/us.openai.gpt-6-luna   # neighbor) and everything for the random arm (code/pipeline/sft/pairgold.py)
+    temperature: 0.0
+    max_tokens: 8000
+    reasoning_effort: medium
+    training_bound: true
+  sft_writer:                 # SFT targets (Peter, 2026-11-12): writes the prose of the gold-fixed reply (mapping notes,
+    model: bedrock/us.openai.gpt-6-luna   # applicability why, W, verdict course/now); Granite then restates it
+    temperature: 0.3
+    max_tokens: 16000
+    reasoning_effort: high
+    training_bound: true
+  sft_restater:               # SFT targets: base Granite restates the writer's prose in its own words (local vLLM)
+    model: vllm/granite-4.2-8b
+    base_url: http://localhost:8000/v1
+    temperature: 0.7
+    top_p: 0.95
+    max_tokens: 6000
+    chat_template_kwargs: {enable_thinking: false}   # thinking on ran to the cap with an empty reply (2026-11-12)
   policy_luna:                # comparison POLICY for eval.allpairs --model luna (2026-11-09): same prompts as Granite
     model: bedrock/us.openai.gpt-6-luna
     temperature: 1.0          # dropped for GPT-6 on Bedrock (provider default); kept for the record

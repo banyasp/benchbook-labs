@@ -78,9 +78,12 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   Each step is a YAML document with `kind:`. Worked example: PDF pp. 14-18. (The v7 yaml in `context/schema/` is
   the same example with older names: `discretization`, `altered`, `carried/revised`, plus `confidence`/`via`.)
   Extracting facts before seeing cases is future work.
-- Relations: `follows | flips | distinguished | not_governed`. **`not_governed` ends the agent's reasoning, and
-  nothing it does after deciding not_governed is rewarded or punished** (he is not training judgment independent
-  of the case). Governance is decided on considerations, not fact overlap.
+- Relations: `follows | flips | distinguished | not_governed`. Governance is decided on considerations, not fact
+  overlap. **Scoring after `not_governed` (Peter, 2026-11-12; supersedes "nothing after not_governed is rewarded or
+  punished"):** a reply gets credit if (1) it says not_governed and (2) its final choice matches the choice the model
+  makes when it sees no case (he is still not training judgment independent of the case; the reference no-case verdict
+  must be fixed before RL, R97). The reply format therefore needs a reasoning + verdict after not_governed (format.v1
+  says to skip the reasoning document; to be changed with the SFT format).
 - **No numeric `confidence` in the verdict** (matches the PDF), so the reward has no calibration term.
 - **The decision is scored from the verdict's `choice`** (PDF; Peter confirmed 2026-10-25). Tool calls and
   says/does consistency are future work: they test whether a model does what it says, not analogical reasoning.
@@ -89,7 +92,17 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
 - **Fact matching uses greedy assignment** (PDF p. 21), not Hungarian. **The reward function is TBD** (Peter will
   define the weights and combination): build every scorer as a separate function.
 - Training: LoRA SFT with loss only on the generated reasoning tokens (trace, equities and cases masked).
-  **SFT targets come from rejection sampling the base model** (Peter, evening of 2026-10-25 — back in line with
+  **SFT targets (Peter, 2026-11-12; under test, supersedes the 2026-10-25 ruling below once the W experiment
+  settles it):** the target is `T(X1), E, C(X2) -> F,Q | M_F | K | M_K | applicability | W | V`, in the YAML
+  documents. F, Q, K are X1's recorded gold (revised arm: K's weights and V are C′'s); maps and the verdict's
+  choice / relation / via come from the pair, built by code from operator lineage (`code/pipeline/sft/pairgold.py`;
+  an alignment strategy for pairs not derived from each other); W and the prose fields are written by Luna from the
+  full answer key and restated by base Granite in its own words, gated by Jev (the reasoning supports the gold choice;
+  the restatement makes the same argument). Random arm: applicability says not_governed, then W and V are base
+  Granite's own no-case reasoning over the same F, Q, K, spliced in. Post-hoc rationalization is a logged
+  experimental concern (R95). Comparison under way: gold-conditioned rejection sampling (Granite writes W and V after
+  a gold prefill) vs Luna-write + Granite-restate (`code/pipeline/sft/wexp.py`, `results/sft/wexp1/`).
+  Earlier ruling: **SFT targets come from rejection sampling the base model** (Peter, evening of 2026-10-25 — back in line with
   the PDF): Granite generates replies with two worked examples in the prompt and *no gold answer*; only samples
   that match gold structure (verdict, relation, `via`, applicability, mapping buckets) are kept. SFT is a warm
   start for format and plain weighing; RLVR on gold structure does most of the teaching. (Earlier the same day:

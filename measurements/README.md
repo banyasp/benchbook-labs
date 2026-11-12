@@ -40,6 +40,7 @@ Each `M<nn>-*.md` file answers:
 | [M10](M10-earlier-and-stopped-sets.md) | various | Earlier measurement sets and the stopped B2 grid (pointers only) | — |
 | [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema, Granite and Luna, all arms | COMPLETE |
 | [M12](M12-option-length-and-support-cues.md) | 2026-11-11 | Shortcut cues: gold option length and fact support in the store | COMPLETE (corrected 2026-11-11: no cue in anchors; cue in transfer sisters) |
+| [M13](M13-sft-w-experiment.md) | 2026-11-12 | SFT W experiment: Luna + Granite restate vs Granite alone vs Granite guided by Luna's notes (24 pairs-v1 cells) | COMPLETE |
 
 ## Datasets, the run registry and the tensor
 

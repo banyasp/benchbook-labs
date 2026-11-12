@@ -10,6 +10,26 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O24 · 2026-11-12 · Asked to restate a passage, Granite copies it; given it as notes, Granite rewrites it
+In the SFT W experiment (M13), base Granite restating Luna's reasoning passage by passage kept most of the wording
+(median per-field similarity 0.83, 12/105 fields verbatim) and the result was no more likely under Granite than Luna's
+text. Given the same reasoning as "notes from a senior reviewer" in the prompt and asked to write its own reasoning
+after a gold prefill, Granite wrote different text (similarity 0.13) that Granite itself finds far more likely
+(+0.66 nats/token), kept the argument (Jev 34/37), and for the first time produced `flips` with `via` (16/18 flip
+samples; 0/48 without the notes). Restating also dropped nearly all id citations in 2/21 cells.
+- Sources: `results/sft/wexp1/granite.jsonl` (restate, granite_rs), `guided.jsonl`, `likelihood.json`; cells
+  PV1-pilot-00330 (verbatim copy), 00282 and 00056 (ids dropped), 00451 and 00148 (guided, read side by side);
+  measurement M13.
+
+### O25 · 2026-11-12 · The aligner calls flipped sisters "not governing"
+Asked whether X2 governs X1 (on considerations), the Luna aligner said `governs: false` for both transfer_flip cells it
+saw in the smoke test, explaining that the case's decisive condition is absent in the live scenario. By the reply
+format's definitions that is a `flips` (the case governs and its would_change fires), so the pair gold keeps
+governs = true for derived arms and uses the aligner's governs only for the random arm. A model may conflate "the case's
+condition fails here" with "the case does not govern" the same way.
+- Sources: smoke test of `pipeline.sft.pairgold.align` on PV1-pilot-00002 and the CHURCH transfer_flip cell
+  (aligner output printed in the session; the W experiment's stored aligner outputs are in `results/sft/wexp1/write.jsonl`).
+
 ### O23 · 2026-11-11 · A self-contradictory prompt cost Luna 2-6 points (M06 vs clean re-run)
 M06 (Luna, schema scaffold) appended the v1 mode-C line ("write the YAML documents inside your thinking … then the
 verdict as your reply") and the API start line ("begin your reply with `kind: fact_enumeration`"). Luna followed the
