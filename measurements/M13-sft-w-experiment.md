@@ -92,3 +92,24 @@ Code: `code/pipeline/sft/{pairgold,targets,wexp}.py`, `code/pipeline/sft/prompts
 - TypeSafe Jev 1.14 (OpenRouter): the two gates.
 - Claude-read: the qualitative judgments above (case_approach as directive in ~11/15 G samples; G+notes cites the
   decisive condition and fired flip item in the two cells read side by side). Not a systematic rating.
+
+## Addendum 2026-11-13: case_approach guidance (G+notes)
+
+Peter chose G+notes, no thinking block (mode B), and no `case_approach` after not_governed (reply schema relaxed;
+prompt `format.v3` = v1 with "after not_governed, write the reasoning without case_approach"; SFT generation now uses
+v3). He asked whether prompting can improve Granite's `case_approach`. A generation-only paragraph
+(`targets.CASE_APPROACH_GUIDE`, appended after the notes; not in the training prompt) describes what the field is for:
+the case's decisive considerations by REF1 id and the condition each depended on, what it set aside, its choice and
+would_change items, stated as a rule about conditions; no live ids, no instructions. No quoted example (O17).
+
+| G+notes, 21 cells, k=2 | accepted | Jev "account of how the case was decided" (vs the case's own recorded reasoning) median / >=0.5 | starts as a directive | REF1 ids (median) | words (median) | Jev supports / same-arg | logprob/token |
+|---|---|---|---|---|---|---|---|
+| no guide (format v1) | 37/42 | 0.80 / 25 of 37 | 8 | 0 | 36 | 35 / 34 | -0.77 |
+| with guide (format v3) | 36/42 | 0.95 / 33 of 36 | 0 | 4 | 92 | 35 / 34 | -0.84 |
+| Luna's own (notes) | 21/21 | 0.93 / 21 of 21 | 0 | 3 | 66 | — | -1.45 |
+
+Claude-read (cells 00150, 00330, 00427): the guided accounts name the decisive consideration, its condition, what was
+set aside and the flip items. Flaws: longer than Luna's (00150 is one run-on sentence); 00427 misstates a would_change
+item ("did not change if …"), not caught by Jev. Format confound: the two G+notes runs used format v1 and v3, which
+differ only in the not_governed sentence (irrelevant to these non-random cells). Output `results/sft/wexp1/guided-ca.jsonl`;
+command `wexp guided --k 2 --guide --out guided-ca.jsonl`; comparison script run ad hoc (Claude) over both files.

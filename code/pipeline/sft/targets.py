@@ -129,7 +129,7 @@ def prepare(store, cell: dict, mode: str = "B", call=None, aligned: dict | None 
     """aligned: a stored aligner output for this cell (reuse it: the aligner is an LLM and can differ run to run)."""
     b = pair_gold(store, cell, call=call, aligned=aligned)
     g, _ = gold_for(b.pair, store, C=b.C, T=b.T)
-    settings = HarnessSettings(mode=mode, model=GRANITE, max_tokens=6000)
+    settings = HarnessSettings(mode=mode, model=GRANITE, max_tokens=6000, format_spec="v3")   # v3: reasoning after not_governed (Peter 2026-11-12)
     ep = student_episode(b.pair, store, settings=settings, C=b.C)
     try:
         q = trace_quotes(b.pair, store, g)
@@ -414,11 +414,8 @@ def nocase_wv(store, p: Prep, k: int = 4, seed0: int = 0) -> list[dict]:
 
 def splice_random(writer_text: str, r: dict, v: dict, g: GoldStructure) -> str:
     docs = [d for d in yaml.safe_load_all(writer_text) if d["kind"] in ORDER[:5]]
-    # the with-case reasoning schema requires case_approach; after not_governed it says only that the case is set aside
-    # (placeholder until the reply format for reasoning after not_governed is settled with Peter)
+    # no case_approach after not_governed: the case was judged irrelevant (Peter, 2026-11-12; reply schema relaxed)
     reasoning = {"kind": "reasoning", "case": _served_id(g),
-                 "case_approach": f"{_served_id(g)} does not govern this decision, so I weigh my own considerations "
-                                  "without it.",
                  **{k: x for k, x in r.items() if k not in ("kind", "case", "case_approach")}}
     fl = g.flips_live()                       # V's flip conditions are X1's gold, as on every other arm
     verdict = {"kind": "verdict", "choice": v.get("choice"), "course": v.get("course"), "relation": "not_governed",
@@ -433,7 +430,21 @@ NOTES = ("\n\nNotes from a senior reviewer on how to reason about this decision 
          "reasoning and verdict yourself, in your own words, keeping the ids you cite):\n<notes>\n{notes}</notes>")
 
 
-def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100) -> list[dict]:
+CASE_APPROACH_GUIDE = """
+
+What to write in `case_approach`, the first field of your reasoning document. It is an account of how the case,
+REF1, was decided, written about the case alone, before you turn to your own decision:
+- Name the case's decisive considerations by their REF1 ids and the condition each one depended on: what had to be true
+  in the case for it to carry the weight it did.
+- Say which of the case's considerations it treated as weaker or set aside, and why.
+- Say what the case chose, and what its would_change items say would have changed that choice.
+- State the case's reasoning as a rule about conditions that could carry over to another situation, not as a retelling
+  of its setting (names, places, dates).
+- Do not mention your own facts, considerations or options in `case_approach`, and do not say what to do now: comparing
+  the case with your situation is the job of `weighing`, and deciding is the job of the verdict."""
+
+
+def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100, guide: bool = False) -> list[dict]:
     """Variant of granite_rs: the writer's reasoning and verdict are added to the prompt as notes (not prefilled);
     Granite writes W and V after the gold prefill (F..applicability). Kept iff the reply passes check_reply."""
     from concurrent.futures import ThreadPoolExecutor
@@ -442,7 +453,7 @@ def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100) -> list[d
     docs = list(yaml.safe_load_all(writer_text))
     notes = emit([d for d in docs if d["kind"] in ("reasoning", "verdict")])
     msgs = [dict(m) for m in p.ep.messages]
-    msgs[-1]["content"] = msgs[-1]["content"] + NOTES.format(notes=notes)
+    msgs[-1]["content"] = msgs[-1]["content"] + NOTES.format(notes=notes) + (CASE_APPROACH_GUIDE if guide else "")
     ep = _rerender(p.ep, msgs, p.settings)
     partial = prefix_through_applicability(writer_text)
     with ThreadPoolExecutor(k) as ex:
@@ -458,3 +469,24 @@ def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100) -> list[d
                     "finish": c.finish_reason, "choice": (d2.get("verdict") or {}).get("choice"),
                     "relation": (d2.get("verdict") or {}).get("relation")})
     return out
+
+
+# ============================================================================================== case_approach quality
+CA_Q = ("Is the candidate an account of how the reference case was decided (which considerations were decisive and the "
+        "conditions they depended on, consistent with the reference), rather than instructions or a plan for a new "
+        "decision?")
+DIRECTIVE = re.compile(r"^(weigh|weight|request|identify|continue|treat|consider|assess|determine|ensure|use|apply|"
+                       r"check|keep|give|prioriti[sz]e|balance|evaluate|compare|focus|first)\b", re.I)
+
+
+def case_approach_quality(p: Prep, text: str, judge) -> dict:
+    """Jev Noul against the served case's own recorded reasoning (read + weighing), plus cheap form checks."""
+    docs = parse_docs(text)
+    ca = str((docs.get("reasoning") or {}).get("case_approach") or "")
+    if not ca:
+        return {}
+    r = p.built.C.case.reasoning
+    ref = f"{r.read} {r.weighing}"
+    return {"p_case_account": round(judge.noul(ref, ca, CA_Q), 3), "directive": bool(DIRECTIVE.match(ca.strip())),
+            "ref_ids": len(set(re.findall(r"\bREF1-[A-Za-z]+\d+\b", ca))),
+            "live_ids": len(set(re.findall(r"\bLIVE-[A-Za-z]+\d+\b", ca))), "words": len(ca.split())}

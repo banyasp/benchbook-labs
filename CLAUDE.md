@@ -100,8 +100,12 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   full answer key and restated by base Granite in its own words, gated by Jev (the reasoning supports the gold choice;
   the restatement makes the same argument). Random arm: applicability says not_governed, then W and V are base
   Granite's own no-case reasoning over the same F, Q, K, spliced in. Post-hoc rationalization is a logged
-  experimental concern (R95). Comparison under way: gold-conditioned rejection sampling (Granite writes W and V after
-  a gold prefill) vs Luna-write + Granite-restate (`code/pipeline/sft/wexp.py`, `results/sft/wexp1/`).
+  experimental concern (R95). **Chosen 2026-11-13 after M13:** Luna writes the full target; base Granite then writes W
+  and V itself after a gold prefill (F..applicability) with Luna's reasoning and verdict in the prompt as notes plus
+  the case_approach guidance (`targets.guided_rs(guide=True)`); kept iff it passes the structure check and both Jev
+  gates; Luna's own text where no sample passes. The passage-by-passage restate is dropped (Granite copied). Targets
+  have no thinking block (mode B). After not_governed the reasoning has no case_approach (schema relaxed; prompt
+  `format.v3`).
   Earlier ruling: **SFT targets come from rejection sampling the base model** (Peter, evening of 2026-10-25 — back in line with
   the PDF): Granite generates replies with two worked examples in the prompt and *no gold answer*; only samples
   that match gold structure (verdict, relation, `via`, applicability, mapping buckets) are kept. SFT is a warm

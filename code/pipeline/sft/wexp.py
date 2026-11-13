@@ -228,6 +228,8 @@ def main(argv=None):
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--k-random", type=int, default=4)
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--guide", action="store_true", help="guided: add the case_approach guidance to the prompt")
+    ap.add_argument("--out", help="guided: output file name in the run dir")
     a = ap.parse_args(argv)
     run = ROOT / a.run
     if a.stage == "sample":
@@ -236,7 +238,7 @@ def main(argv=None):
     elif a.stage == "write":
         write_stage(run, a.workers)
     elif a.stage == "guided":
-        guided_stage(run, a.k, a.workers)
+        guided_stage(run, a.k, a.workers, guide=a.guide, out_name=a.out or "guided.jsonl")
     elif a.stage == "likelihood":
         import statistics as st
         res = likelihood_stage(run, a.workers)
@@ -304,7 +306,7 @@ def likelihood_stage(run: Path, workers: int):
     (run / "likelihood.json").write_text(json.dumps(res, indent=1))
     return res
 
-def guided_stage(run: Path, k: int, workers: int):
+def guided_stage(run: Path, k: int, workers: int, guide: bool = False, out_name: str = "guided.jsonl"):
     """Granite writes W+V with the writer's reasoning as notes in the prompt; gates + likelihood per accepted sample."""
     from eval.core import default_judge
     from pipeline.sft import targets as T
@@ -316,17 +318,18 @@ def guided_stage(run: Path, k: int, workers: int):
     def one(cid):
         c, w = cells[cid], writes[cid]
         p = _prep(store, c, aligned=w.get("aligner"))
-        ss = T.guided_rs(p, w["text"], k=k)
+        ss = T.guided_rs(p, w["text"], k=k, guide=guide)
         for s in ss:
             if s["accepted"]:
                 s["gate"] = T.gate(p, s["text"], judge, reference=w["text"])
                 s["lik"] = w_logprob(p, s["text"])
+                s["ca"] = T.case_approach_quality(p, s["text"], judge)
         print(cid, c["arm"], [s["accepted"] for s in ss], flush=True)
         return {"cell": cid, "arm": c["arm"], "choice": p.g.choice, "guided": ss}
 
     with ThreadPoolExecutor(workers) as ex:
         res = list(ex.map(one, list(writes)))
-    with open(run / "guided.jsonl", "w") as f:
+    with open(run / out_name, "w") as f:
         for r in res:
             f.write(json.dumps(r, ensure_ascii=False, default=str) + "\n")
     return res

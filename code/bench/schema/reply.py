@@ -456,7 +456,11 @@ def parse_reply(content: str | None, reasoning: str | None = None, *, noref: boo
         except ValidationError as e:
             out.errors[k] = "; ".join(f"{'.'.join(map(str, x['loc']))}: {x['msg']}" for x in e.errors())[:600]
             continue
-        absent = [f for f in CASE_BOUND.get(k, []) if not noref and getattr(m, f) is None]
+        # Peter 2026-11-12: after not_governed (applicability governs: false) the case is irrelevant, so the reasoning
+        # need not articulate case_approach
+        gov_false = out.steps.get("applicability", {}).get("governs") is False
+        absent = [f for f in CASE_BOUND.get(k, []) if not noref and getattr(m, f) is None
+                  and not (k == "reasoning" and f == "case_approach" and gov_false)]
         if absent:
             out.errors[k] = f"missing {', '.join(absent)}"
             continue
