@@ -18,7 +18,21 @@ PROMPT_DIR = "code/pipeline/sft/prompts"
 STAGES = [("write.jsonl", "Luna writes the full target (writer.v1.md)"),
           ("granite.jsonl", "Granite restate (retired) · Granite alone after gold prefill (k=8) · random arm no-case W+V"),
           ("guided.jsonl", "Granite with Luna's notes (notes.v1.md), k=2"),
-          ("guided-ca.jsonl", "Granite with Luna's notes + case_approach guidance (case_approach_guide.v1.md), k=2 — CHOSEN")]
+          ("guided-ca.jsonl", "Granite with Luna's notes + case_approach guidance (case_approach_guide.v1.md), k=2 — CHOSEN"),
+          ("wv.jsonl", "Production run (pipeline.sft.generate): the chosen W+V step with gates, Luna fallback; random arm "
+                       "no-case W+V"),
+          ("sft.jsonl", "Assembled SFT rows (prompt = mode-B generation prompt, completion = target)")]
+
+
+def _wv(r: Path) -> dict:
+    """A production run's wv.jsonl, in the shapes the experiment pages use (guided rounds flattened; random samples
+    as `nocase`)."""
+    out = {}
+    for x in _jl(r / "wv.jsonl"):
+        x["guided"] = [s for rd in x.get("rounds") or [] for s in rd]
+        x["nocase"] = x.get("samples") or []
+        out[x["cell"]] = x
+    return out
 
 
 def _jl(p: Path) -> list[dict]:
@@ -46,6 +60,10 @@ def run_overview(run: str) -> dict:
     G = {x["cell"]: x for x in _jl(r / "granite.jsonl")}
     GU = {x["cell"]: x for x in _jl(r / "guided.jsonl")}
     GC = {x["cell"]: x for x in _jl(r / "guided-ca.jsonl")}
+    V = _wv(r)
+    for cid, x in V.items():
+        GC.setdefault(cid, x)
+        G.setdefault(cid, x)
     rows = []
     for c in cells:
         cid = c["cell"]
@@ -54,7 +72,8 @@ def run_overview(run: str) -> dict:
         rows.append({"cell": cid, "arm": c["arm"], "x1": c["x1"], "x2": c["x2"], "relation": w.get("relation"),
                      "luna": w.get("accepted"), "rs": _acc(g.get("granite_rs")), "guided": _acc(gu.get("guided")),
                      "guided_ca": _acc(gc.get("guided")), "nocase": len([s for s in g.get("nocase") or [] if s.get("text")]),
-                     "ca_p": round(st.median(cas), 2) if cas else None})
+                     "ca_p": round(st.median(cas), 2) if cas else None,
+                     "source": (V.get(cid) or {}).get("source", "") if cid in V else None})
     prompts = sorted(p.name for p in (ROOT / PROMPT_DIR).glob("*") if p.is_file())
     report = (r / "report.md").read_text() if (r / "report.md").exists() else ""
     return {"run": run, "rows": rows, "stages": [(f, d, (r / f).exists()) for f, d in STAGES], "prompts": prompts,
@@ -80,8 +99,11 @@ def cell_detail(run: str, cell: str) -> dict:
     g = next((x for x in _jl(r / "granite.jsonl") if x["cell"] == cell), {})
     gu = next((x for x in _jl(r / "guided.jsonl") if x["cell"] == cell), {})
     gc = next((x for x in _jl(r / "guided-ca.jsonl") if x["cell"] == cell), {})
+    v = _wv(r).get(cell)
+    if v:
+        gc, g = gc or v, g or v
     out = {"cell": c, "write": w, "granite": g, "guided": gu.get("guided") or [], "guided_ca": gc.get("guided") or [],
-           "prompts": {}, "error": None}
+           "prompts": {}, "error": None, "final": v}
     try:
         p = T.prepare(_store(), c, aligned=w.get("aligner"))
         out["gold"] = {"relation": p.g.pair.relation, "choice": p.g.choice, "via": p.g.via, "governs": p.g.pair.governs,

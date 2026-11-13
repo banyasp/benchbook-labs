@@ -105,7 +105,10 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   the case_approach guidance (`targets.guided_rs(guide=True)`); kept iff it passes the structure check and both Jev
   gates; Luna's own text where no sample passes. The passage-by-passage restate is dropped (Granite copied). Targets
   have no thinking block (mode B). After not_governed the reasoning has no case_approach (schema relaxed; prompt
-  `format.v3`).
+  `format.v3`). **Scope (Peter, 2026-11-13):** no revised-arm cells in SFT (from SFT's point of view revised is the
+  same as self); only train-split anchors, and the served anchor of a random cell must be train too, so no eval
+  scenario appears in a training prompt. Runner: `code/pipeline/sft/generate.py`. SFT generation has the GPU before
+  the comparison-model runs.
   Earlier ruling: **SFT targets come from rejection sampling the base model** (Peter, evening of 2026-10-25 — back in line with
   the PDF): Granite generates replies with two worked examples in the prompt and *no gold answer*; only samples
   that match gold structure (verdict, relation, `via`, applicability, mapping buckets) are kept. SFT is a warm

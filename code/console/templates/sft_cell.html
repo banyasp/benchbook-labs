@@ -20,6 +20,7 @@
 <h2>Outputs</h2>
 <h3>Luna's target {% if d.write.accepted %}<span class="badge ok">passes structure check</span>{% elif d.write %}<span class="badge bad">fails</span>{% endif %}</h3>
 {% if d.write.reasons %}<p class="small">{{ d.write.reasons|join('; ') }}</p>{% endif %}
+{% if d.final %}<h3>Final SFT target</h3><p class="small">source <b>{{ d.final.source or "none (cell dropped)" }}</b>{% if d.final.gate %} · gate <span class="mono">{{ d.final.gate }}</span>{% endif %}{% if d.final.ca %} · case_approach <span class="mono">{{ d.final.ca }}</span>{% endif %}{% if d.final.error %} · <span class="badge bad">{{ d.final.error }}</span>{% endif %}</p>{% if d.final.target %}<details open><summary>target</summary><pre class="wrap prompttext">{{ d.final.target }}</pre></details>{% endif %}{% endif %}
 <details{% if not d.guided_ca %} open{% endif %}><summary>Luna target text</summary><pre class="wrap prompttext">{{ d.write.text }}</pre></details>
 
 {% for name, ss in [('Granite with notes + case_approach guidance (chosen)', d.guided_ca), ('Granite with notes', d.guided)] %}{% if ss %}
@@ -34,5 +35,5 @@
 {% for s in d.granite.granite_rs %}<details><summary>sample {{ s.i }}: {% if s.accepted %}<span class="badge ok">pass</span>{% else %}<span class="badge bad">fail</span>{% endif %} choice {{ s.choice }} · {{ s.relation }}</summary>{% if s.reasons %}<p class="small">{{ s.reasons|join('; ') }}</p>{% endif %}<pre class="wrap prompttext">{{ s.text }}</pre></details>{% endfor %}{% endif %}
 {% if d.granite.restate %}<details><summary>Granite restate (retired){% if d.granite.restate.gate %} · supports {{ d.granite.restate.gate.supports }} · same argument {{ d.granite.restate.gate.same_argument }}{% endif %}</summary><pre class="wrap prompttext">{{ d.granite.restate.text }}</pre></details>{% endif %}
 {% if d.granite.nocase %}<h3>No-case W + V (random arm)</h3>
-{% for s in d.granite.nocase %}<details><summary>sample {{ s.i }}: {% if s.text %}<span class="badge ok">spliced</span> choice {{ (s.verdict or {}).get('choice') }}{% if s.gate %} · supports own choice {{ s.gate.supports }}{% endif %}{% else %}<span class="badge bad">no reasoning+verdict</span>{% endif %}</summary><pre class="wrap prompttext">{{ s.text or s.raw }}</pre></details>{% endfor %}{% endif %}
+{% for s in d.granite.nocase %}<details><summary>sample {{ s.i }}: {% if s.text %}<span class="badge ok">spliced</span> choice {{ (s.verdict or {}).get('choice') }}{% if s.why %} · <span class="badge bad">{{ s.why|join("; ") }}</span>{% endif %}{% if s.gate %} · supports own choice {{ s.gate.supports }}{% endif %}{% else %}<span class="badge bad">no reasoning+verdict</span>{% endif %}</summary><pre class="wrap prompttext">{{ s.text or s.raw }}</pre></details>{% endfor %}{% endif %}
 {% endblock %}
