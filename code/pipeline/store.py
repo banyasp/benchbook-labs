@@ -47,6 +47,10 @@ def write_json(p: Path, obj):
     p.write_text(json.dumps(obj, indent=1, ensure_ascii=False))
 
 
+import threading as _threading
+_INDEX_LOCK = _threading.Lock()
+
+
 class Store:
     def __init__(self, data: Path | str = DATA):
         self.data = Path(data)
@@ -59,10 +63,18 @@ class Store:
     def scenario_path(self, s: Scenario | str, family: str | None = None) -> Path:
         if isinstance(s, Scenario):
             return self.root / "scenarios" / s.family / f"{s.id}.yaml"
-        hits = list((self.root / "scenarios").glob(f"*/{s}.yaml"))
-        if not hits:
+        # 2026-11-13: an id -> path index (one glob over the store) instead of a glob over every family per lookup;
+        # rebuilt once on a miss, so files written by another process are still found. Same result as the old glob.
+        idx = getattr(self, "_paths", None)
+        if idx is None or s not in idx:
+            with _INDEX_LOCK:
+                idx = {}
+                for p in sorted((self.root / "scenarios").glob("*/*.yaml")):
+                    idx.setdefault(p.stem, p)
+                self._paths = idx
+        if s not in idx:
             raise KeyError(s)
-        return hits[0]
+        return idx[s]
 
     def save_scenario(self, s: Scenario) -> Path:
         Scenario.model_validate(s.dump())          # round-trip check before writing

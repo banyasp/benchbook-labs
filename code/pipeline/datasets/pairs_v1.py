@@ -142,6 +142,92 @@ def build(inputs: str, tag: str, workers: int = 6, arms: list[str] | None = None
     return out
 
 
+def _job_key(X_id: str, kw: dict) -> tuple:
+    """Identity of one operator application within a step (for resume): its input and the argument that varies."""
+    t, st = kw.get("target"), kw.get("setting")
+    phi = kw.get("phi") or (t.get("phi") if isinstance(t, dict) else None)   # operators record phi as target: {phi}
+    return (X_id, phi, t if isinstance(t, str) and t != "options" else None, kw.get("option"),
+            st.get("sister") if isinstance(st, dict) else None)
+
+
+def _resume_recipe(recipe: dict, ids: list[str], store, workers: int, seed: int, log: Path, dry: bool = False) -> dict:
+    """run_recipe, resumable (2026-11-13: the full build's four recipes stopped silently between step 1 and step 2).
+    Per step: the inputs are recomputed from the log exactly as run_recipe would; jobs already in the log are skipped;
+    the rest run and are appended to the same log. Balanced permutes need their whole batch, so a step with any rows
+    already logged is only topped up (never re-balanced)."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pipeline.ops.recipes import expand, load_any, run_job
+    name = recipe["name"]
+    chain = set(recipe.get("chain") or ["accepted"])
+    rows_all = [json.loads(l) for l in log.read_text().splitlines() if l.strip()] if log.exists() else []
+    scens = [load_any(store, s) for s in ids]
+    summary = {"recipe": name, "inputs": len(scens), "log": str(log), "steps": [], "resumed": True}
+    for i, step in enumerate(recipe["steps"], 1):
+        jobs = expand(step, scens, seed)
+        have = [r for r in rows_all if r.get("recipe_step") == i]
+        done = {_job_key(r.get("parent"), r.get("args") if isinstance(r.get("args"), dict) else {}) for r in have}
+        todo = [(X, kw) for X, kw in jobs if _job_key(X.id, kw) not in done]
+        if dry:
+            print(f"{name} step {i}: {len(jobs)} jobs, {len(have)} logged rows, {len(todo)} to run", flush=True)
+            break
+        new = []
+        if todo:
+            with ThreadPoolExecutor(max_workers=workers) as ex:
+                futs = [ex.submit(run_job, store, X, step["op"], kw, name, i) for X, kw in todo]
+                for f in as_completed(futs):
+                    row = f.result()
+                    new.append(row)
+                    with open(log, "a") as fh:
+                        fh.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+        rows = have + new
+        summary["steps"].append({"step": i, "op": step["op"], "jobs": len(jobs), "already": len(have), "ran": len(new),
+                                 "buckets": dict(Counter(r["bucket"] for r in rows))})
+        print(f"{name} step {i} {step['op']}: {len(jobs)} jobs, {len(have)} already logged, ran {len(new)}", flush=True)
+        nxt = [r["id"] for r in rows if r.get("id") and r["bucket"] in chain]
+        if step.get("pass_skipped"):
+            nxt += [r["parent"] for r in rows if r["bucket"] == "skipped" and r.get("parent")]
+        scens = [load_any(store, s) for s in nxt]
+        if not scens:
+            break
+    summary["outputs"] = [s.id for s in scens]
+    return summary
+
+
+def resume(inputs: str, tag: str, stamp: str, workers: int = 8, seed: int = 0, dry: bool = False) -> dict:
+    """Resume the `build --tag <tag>` run whose recipe logs carry `stamp` (e.g. 20261112T162326Z). Recipes run in
+    parallel as in build(); an exception in one is logged with its traceback at once and does not wait on the others."""
+    import faulthandler
+    import signal
+    import sys
+    import traceback
+    from pipeline.ops.recipes import load_recipe
+    from pipeline.ops.recipes import RUNS
+    faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True)   # `kill -USR1 <pid>`: dump thread stacks
+    ids = [l.split()[0] for l in Path(inputs).read_text().splitlines() if l.strip() and not l.startswith("#")]
+    files = sorted(RECIPES.glob("*.yaml"))
+    store = Store()
+    t0 = time.time()
+
+    def one(f):
+        rec = load_recipe(str(f))
+        try:
+            return _resume_recipe(rec, ids, store, workers, seed, RUNS / f"{rec['name']}-{stamp}.jsonl", dry=dry)
+        except Exception as e:                                          # noqa: BLE001
+            tb = traceback.format_exc()
+            print(f"!! {rec['name']} FAILED: {type(e).__name__}: {e}\n{tb}", flush=True)
+            return {"recipe": rec["name"], "error": f"{type(e).__name__}: {e}", "trace": tb[-3000:],
+                    "log": str(RUNS / f"{rec['name']}-{stamp}.jsonl")}
+
+    with ThreadPoolExecutor(max_workers=len(files)) as ex:
+        res = dict(zip([f.stem for f in files], ex.map(one, files)))
+    out = {"tag": tag, "inputs": inputs, "n_inputs": len(ids), "seed": seed, "workers": workers, "stamp": stamp,
+           "resumed": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t0)), "seconds": round(time.time() - t0),
+           "recipes": res}
+    if not dry:
+        (OUT / f"build-{tag}.json").write_text(json.dumps(out, indent=1, default=str))
+    return out
+
+
 # Which recipe step's output is served as which arm. drop_option is not an arm (Peter, 2026-11-11: it only shrinks
 # the choice set and makes guessing easier); its earlier outputs stay on disk but never enter cells.
 ARM_STEPS = {"transfer": [("transfer", 3), ("transfer_flip", 5)], "same_domain_flip": [("same_domain_flip", 2)],
@@ -275,12 +361,21 @@ def main(argv=None):
     b.add_argument("--workers", type=int, default=6)
     b.add_argument("--arms")
     b.add_argument("--seed", type=int, default=0)
+    r = sub.add_parser("resume", help="resume a build whose recipes stopped (skips jobs already in the run logs)")
+    r.add_argument("--inputs", required=True)
+    r.add_argument("--tag", required=True)
+    r.add_argument("--stamp", required=True, help="the run logs' timestamp, e.g. 20261112T162326Z")
+    r.add_argument("--workers", type=int, default=8)
+    r.add_argument("--seed", type=int, default=0)
+    r.add_argument("--dry", action="store_true", help="only report step-1 jobs to run")
     s = sub.add_parser("assemble")
     s.add_argument("--tag", required=True)
     s.add_argument("--seed", type=int, default=0)
     a = ap.parse_args(argv)
     if a.cmd == "assemble":
         res = assemble(a.tag, a.seed)
+    elif a.cmd == "resume":
+        res = resume(a.inputs, a.tag, a.stamp, a.workers, a.seed, a.dry)
     elif a.cmd == "build":
         res = build(a.inputs, a.tag, a.workers, a.arms.split(",") if a.arms else None, a.seed)
     else:

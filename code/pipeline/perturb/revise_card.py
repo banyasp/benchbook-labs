@@ -70,8 +70,13 @@ def pick_target(X, rng, tally: Counter | dict | None = None, cap: float | None =
 
 def target_tally(store) -> Counter:
     """Moves of the targets of every revise_card scenario already in the store (batch balance across invocations)."""
+    # 2026-11-13: read only files named *-revise* (every revise_card output is; checked over the store: 269 of 269).
+    # Parsing all ~7,200 scenarios per call took ~90 s and, in 8 threads under the GIL, starved every other recipe of
+    # the full pairs-v1 build (four recipes stalled 3.5 h between steps).
+    from bench.schema.pipeline import Scenario
     t: Counter = Counter()
-    for s in store.scenarios():
+    for p in sorted((store.root / "scenarios").glob("*/*-revise*@v1.yaml")):
+        s = Scenario.load(p)
         if s.lineage.operator == "revise_card":
             t[s.case.options[s.case.verdict.choice].move] += 1
     return t
