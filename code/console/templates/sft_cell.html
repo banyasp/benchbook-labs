@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% block content %}
+{% set c = d.cell %}
+<h1>{{ c.cell }} · {{ c.arm }}</h1>
+<p class="mono small">X1 (live) <a href="/scenario/{{ c.x1|q }}">{{ c.x1 }}</a> (<a href="/scenario/{{ c.x1|q }}/trace">trace</a>) · X2 (served) <a href="/scenario/{{ c.x2|q }}">{{ c.x2 }}</a> · chain {{ c.chain|join(' → ') }}</p>
+{% if d.error %}<p class="badge bad">could not rebuild the prompts: {{ d.error }}</p>{% endif %}
+{% if d.gold %}<p>Gold: relation <b>{{ d.gold.relation }}</b>, choice <b class="mono">{{ d.gold.choice }}</b>{% if d.gold.via %}, via <span class="mono">{{ d.gold.via|join(', ') }}</span>{% endif %}, governs {{ d.gold.governs }} · map strategy <span class="mono small">{{ d.gold.strategy }}</span></p>
+{% if d.gold.warnings or d.gold.notes %}<p class="small muted">{{ (d.gold.warnings + d.gold.notes)|join(' · ') }}</p>{% endif %}{% endif %}
+
+<h2>Prompts (rebuilt with the current code)</h2>
+{% set pg = d.prompts.get('granite') %}
+{% if pg %}<h3>Granite, chosen pipeline: notes + case_approach guidance</h3>
+<p class="small">{{ pg.what }}</p>
+<p class="small"><b>Appended to the student prompt's last user message:</b></p><pre class="wrap prompttext">{{ pg.added }}</pre>
+<details><summary>Assistant prefill (documents through applicability)</summary><pre class="wrap prompttext">{{ pg.prefill }}</pre></details>
+<details><summary>Full assembled messages</summary><pre class="wrap prompttext">{{ pg.text }}</pre></details>{% endif %}
+{% if d.prompts.get('nocase') %}<h3>Random arm: no-case W and V</h3><p class="small">{{ d.prompts.nocase.what }}</p>{% endif %}
+{% if d.prompts.get('training') %}<details><summary>SFT training prompt (what the model is trained on)</summary><p class="small">{{ d.prompts.training.what }}</p><pre class="wrap prompttext">{{ d.prompts.training.text }}</pre></details>{% endif %}
+{% if d.prompts.get('writer') %}<details><summary>Luna writer prompt</summary><p class="small">{{ d.prompts.writer.what }}</p><pre class="wrap prompttext">{{ d.prompts.writer.text }}</pre></details>{% endif %}
+
+<h2>Outputs</h2>
+<h3>Luna's target {% if d.write.accepted %}<span class="badge ok">passes structure check</span>{% elif d.write %}<span class="badge bad">fails</span>{% endif %}</h3>
+{% if d.write.reasons %}<p class="small">{{ d.write.reasons|join('; ') }}</p>{% endif %}
+<details{% if not d.guided_ca %} open{% endif %}><summary>Luna target text</summary><pre class="wrap prompttext">{{ d.write.text }}</pre></details>
+
+{% for name, ss in [('Granite with notes + case_approach guidance (chosen)', d.guided_ca), ('Granite with notes', d.guided)] %}{% if ss %}
+<h3>{{ name }}</h3>
+{% for s in ss %}<details{% if loop.first and loop.index == 1 and name.endswith('(chosen)') %} open{% endif %}><summary>sample {{ s.i }}: {% if s.accepted %}<span class="badge ok">pass</span>{% else %}<span class="badge bad">fail</span>{% endif %} choice {{ s.choice }} · {{ s.relation }}
+{% if s.gate %} · supports {{ s.gate.supports }} (p {{ s.gate.p_gold }}) · same argument {{ s.gate.same_argument }} (p {{ s.gate.p_same }}){% endif %}
+{% if s.ca %} · case_approach P {{ s.ca.p_case_account }}, REF1 ids {{ s.ca.ref_ids }}, {{ s.ca.words }} words{% endif %}
+{% if s.lik %} · logprob/token {{ s.lik.mean_logprob }}{% endif %}</summary>
+{% if s.reasons %}<p class="small">{{ s.reasons|join('; ') }}</p>{% endif %}<pre class="wrap prompttext">{{ s.text }}</pre></details>{% endfor %}{% endif %}{% endfor %}
+
+{% if d.granite.granite_rs %}<h3>Granite alone after gold prefill (no notes)</h3>
+{% for s in d.granite.granite_rs %}<details><summary>sample {{ s.i }}: {% if s.accepted %}<span class="badge ok">pass</span>{% else %}<span class="badge bad">fail</span>{% endif %} choice {{ s.choice }} · {{ s.relation }}</summary>{% if s.reasons %}<p class="small">{{ s.reasons|join('; ') }}</p>{% endif %}<pre class="wrap prompttext">{{ s.text }}</pre></details>{% endfor %}{% endif %}
+{% if d.granite.restate %}<details><summary>Granite restate (retired){% if d.granite.restate.gate %} · supports {{ d.granite.restate.gate.supports }} · same argument {{ d.granite.restate.gate.same_argument }}{% endif %}</summary><pre class="wrap prompttext">{{ d.granite.restate.text }}</pre></details>{% endif %}
+{% if d.granite.nocase %}<h3>No-case W + V (random arm)</h3>
+{% for s in d.granite.nocase %}<details><summary>sample {{ s.i }}: {% if s.text %}<span class="badge ok">spliced</span> choice {{ (s.verdict or {}).get('choice') }}{% if s.gate %} · supports own choice {{ s.gate.supports }}{% endif %}{% else %}<span class="badge bad">no reasoning+verdict</span>{% endif %}</summary><pre class="wrap prompttext">{{ s.text or s.raw }}</pre></details>{% endfor %}{% endif %}
+{% endblock %}

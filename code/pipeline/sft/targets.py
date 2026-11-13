@@ -40,7 +40,8 @@ from pipeline.solve.structure import GoldStructure, local
 from .pairgold import Built, pair_gold
 
 HERE = Path(__file__).parent
-WRITER_PROMPT = HERE / "prompts" / "writer.v1.md"
+PROMPTS = HERE / "prompts"          # every prompt of the SFT operator is a file here (console /prompts)
+WRITER_PROMPT = PROMPTS / "writer.v1.md"
 ORDER = ["fact_enumeration", "fact_mapping", "consideration_enumeration", "consideration_mapping", "applicability",
          "reasoning", "verdict"]
 GRANITE = "granite-4.2-8b"
@@ -284,24 +285,7 @@ def w_text(docs: list[dict]) -> str:
 
 
 # ============================================================================================== restate (Granite)
-RESTATE = """Below is a decision record that someone else wrote for the situation you were working on, followed by
-numbered passages taken from it. Restate each numbered passage in your own words, the way you would write it yourself.
-
-Rules: keep every claim, every condition and every conclusion of the passage; add nothing and drop nothing; keep every
-id exactly as written (LIVE-F3, LIVE-C2, REF1-C1, REF1-flip2, ...); keep each passage about as long as the original;
-plain sentences, first person where the original speaks for the agent.
-
-<record>
-{record}
-</record>
-
-Passages:
-{passages}
-
-There are {n} passages. Answer with exactly {n} lines, one per passage, in order: each line is the passage number in
-square brackets followed by your restatement of that passage, on one line. The first line starts with [1] and the last
-line starts with [{n}]. Write nothing else.
-"""
+RESTATE = (PROMPTS / "restate.v1.md").read_text()      # retired 2026-11-13 (M13: Granite copied); kept for the record
 
 
 def restate(p: Prep, text: str, call=None, tries: int = 2) -> dict:
@@ -335,11 +319,8 @@ def restate(p: Prep, text: str, call=None, tries: int = 2) -> dict:
 
 
 # ============================================================================================== gates (Jev)
-SUPPORTS_Q = ("Which course of action does this reasoning conclude the agent should take? Judge only from the "
-              "reasoning; pick 'None of these' if it does not reach one of them.")
-SAME_ARG_Q = ("Does the candidate make the same argument as the reference: the same considerations, the same weighing "
-              "of them, the same conditions cited, and the same conclusion, with no significant deviation? Wording may "
-              "differ.")
+_GATES = yaml.safe_load((PROMPTS / "jev_gates.v1.yaml").read_text())
+SUPPORTS_Q, SAME_ARG_Q = _GATES["supports"], _GATES["same_argument"]
 
 
 def gate(p: Prep, text: str, judge, reference: str | None = None, choice: str | None = None) -> dict:
@@ -426,22 +407,22 @@ def splice_random(writer_text: str, r: dict, v: dict, g: GoldStructure) -> str:
 
 
 # ============================================================================================== Granite W+V guided by notes
-NOTES = ("\n\nNotes from a senior reviewer on how to reason about this decision (use them as guidance; write the "
-         "reasoning and verdict yourself, in your own words, keeping the ids you cite):\n<notes>\n{notes}</notes>")
+NOTES = "\n\n" + (PROMPTS / "notes.v1.md").read_text()      # appended to the student's last user message
 
 
-CASE_APPROACH_GUIDE = """
+CASE_APPROACH_GUIDE = "\n\n" + (PROMPTS / "case_approach_guide.v1.md").read_text()   # generation-only (M13 addendum)
 
-What to write in `case_approach`, the first field of your reasoning document. It is an account of how the case,
-REF1, was decided, written about the case alone, before you turn to your own decision:
-- Name the case's decisive considerations by their REF1 ids and the condition each one depended on: what had to be true
-  in the case for it to carry the weight it did.
-- Say which of the case's considerations it treated as weaker or set aside, and why.
-- Say what the case chose, and what its would_change items say would have changed that choice.
-- State the case's reasoning as a rule about conditions that could carry over to another situation, not as a retelling
-  of its setting (names, places, dates).
-- Do not mention your own facts, considerations or options in `case_approach`, and do not say what to do now: comparing
-  the case with your situation is the job of `weighing`, and deciding is the job of the verdict."""
+
+def guided_episode(p: Prep, writer_text: str, guide: bool = False):
+    """(episode, prefill) exactly as guided_rs sends them: the student prompt + the writer's reasoning and verdict as
+    notes (+ the case_approach guidance), and the writer's documents through applicability as the assistant prefill.
+    Generation only: the SFT row's prompt is the plain student prompt (p.ep)."""
+    from pipeline.solve.rs import _rerender
+    docs = list(yaml.safe_load_all(writer_text))
+    notes = emit([d for d in docs if d["kind"] in ("reasoning", "verdict")])
+    msgs = [dict(m) for m in p.ep.messages]
+    msgs[-1]["content"] = msgs[-1]["content"] + NOTES.format(notes=notes) + (CASE_APPROACH_GUIDE if guide else "")
+    return _rerender(p.ep, msgs, p.settings), prefix_through_applicability(writer_text)
 
 
 def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100, guide: bool = False) -> list[dict]:
@@ -449,13 +430,7 @@ def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100, guide: bo
     Granite writes W and V after the gold prefill (F..applicability). Kept iff the reply passes check_reply."""
     from concurrent.futures import ThreadPoolExecutor
     from harness.client import continue_episode
-    from pipeline.solve.rs import _rerender
-    docs = list(yaml.safe_load_all(writer_text))
-    notes = emit([d for d in docs if d["kind"] in ("reasoning", "verdict")])
-    msgs = [dict(m) for m in p.ep.messages]
-    msgs[-1]["content"] = msgs[-1]["content"] + NOTES.format(notes=notes) + (CASE_APPROACH_GUIDE if guide else "")
-    ep = _rerender(p.ep, msgs, p.settings)
-    partial = prefix_through_applicability(writer_text)
+    ep, partial = guided_episode(p, writer_text, guide)
     with ThreadPoolExecutor(k) as ex:
         comps = list(ex.map(lambda i: continue_episode(ep, p.settings.with_(seed=seed0 + i), partial, role="policy",
                                                        seed=seed0 + i), range(k)))
@@ -472,9 +447,7 @@ def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100, guide: bo
 
 
 # ============================================================================================== case_approach quality
-CA_Q = ("Is the candidate an account of how the reference case was decided (which considerations were decisive and the "
-        "conditions they depended on, consistent with the reference), rather than instructions or a plan for a new "
-        "decision?")
+CA_Q = _GATES["case_account"]
 DIRECTIVE = re.compile(r"^(weigh|weight|request|identify|continue|treat|consider|assess|determine|ensure|use|apply|"
                        r"check|keep|give|prioriti[sz]e|balance|evaluate|compare|focus|first)\b", re.I)
 

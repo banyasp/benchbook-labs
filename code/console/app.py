@@ -19,6 +19,7 @@ from markupsafe import Markup
 from pipeline.ops import queue as Q
 
 from . import data as D
+from . import sft as SFTD
 
 HERE = Path(__file__).parent
 app = FastAPI(title="Benchbook console", docs_url=None, redoc_url=None, openapi_url=None)
@@ -338,3 +339,28 @@ def batch(bid: str, n: int = 8, seed: int = 0):
     b = D.batch_detail(bid, n, seed)
     return page("batch.html", [("Batches", "/batches"), (bid, None)], b=b, n=n, seed=seed,
                 _signoff=("batch", bid, D.signoff_of("batch", bid)))
+
+
+# ---------------------------------------------------------------- SFT target generation (2026-11-13)
+@app.get("/sft", response_class=HTMLResponse)
+def sft_runs():
+    return page("sft_runs.html", [("SFT", None)], runs=SFTD.runs())
+
+
+@app.get("/sft/run", response_class=HTMLResponse)
+def sft_run(run: str):
+    if not run.startswith("results/sft/") or not (SFTD.ROOT / run / "cells.json").exists():
+        raise HTTPException(404, f"no SFT run at {run}")
+    return page("sft_run.html", [("SFT", "/sft"), (run, None)], d=SFTD.run_overview(run))
+
+
+@app.get("/sft/cell", response_class=HTMLResponse)
+def sft_cell(run: str, cell: str):
+    if not run.startswith("results/sft/") or not (SFTD.ROOT / run / "cells.json").exists():
+        raise HTTPException(404, f"no SFT run at {run}")
+    try:
+        d = SFTD.cell_detail(run, cell)
+    except StopIteration:
+        raise HTTPException(404, f"no cell {cell} in {run}")
+    return page("sft_cell.html", [("SFT", "/sft"), (run, f"/sft/run?run={quote(run, safe='')}"), (cell, None)], d=d)
+
