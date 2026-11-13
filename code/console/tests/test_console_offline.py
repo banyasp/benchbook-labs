@@ -102,7 +102,7 @@ def test_app_routes(tmp_path, monkeypatch):
     c = TestClient(app)
     for u in ["/", "/funnel", "/scenarios?op=permute", f"/scenario/{ANCHOR}", f"/scenario/{ANCHOR}/trace",
               "/runs", f"/run?run={RUN}", "/measurements", "/prompts", "/operators", "/queue", "/signoff",
-              "/batches", "/outstanding", "/search?q=CHILCOT"]:
+              "/batches", "/outstanding", "/search?q=CHILCOT", "/results"]:
         assert c.get(u).status_code == 200, u
     r = c.post("/signoff", data={"target_kind": "run", "target_id": RUN, "decision": "approve", "note": "t",
                                  "back": "/runs"}, follow_redirects=False)
@@ -130,3 +130,19 @@ def test_dataset_pages_data():
     for arm in a["arms"]:
         for s in arm["served"]:
             assert s["cell"]["x1"] == o["anchors"][0] and len(s["hops"]) == len(s["cell"]["chain"]) - 1
+
+
+def test_results_summary():
+    """The results explorer reproduces the tensor method (M11: Granite free, no case = 50%) and labels every arm."""
+    import math
+    from console import results as R
+    s = R.summary()
+    if not s["rows"]:
+        return
+    assert all(r["arm"] in R.ARMS for r in s["rows"])
+    for r in s["rows"]:
+        for m in r["metrics"].values():
+            assert m is None or (0 <= m["lo"] <= m["m"] <= m["hi"] <= 1 and not math.isnan(m["m"]))
+    g = [r for r in s["rows"] if r["policy"] == "granite-4.2-8b" and r["scaffold"] == "free" and r["arm"] == "control"]
+    if g:
+        assert round(100 * g[0]["metrics"]["correct"]["m"]) == 50

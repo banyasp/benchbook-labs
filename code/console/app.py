@@ -19,6 +19,7 @@ from markupsafe import Markup
 from pipeline.ops import queue as Q
 
 from . import data as D
+from . import results as RES
 from . import sft as SFTD
 
 HERE = Path(__file__).parent
@@ -159,6 +160,11 @@ def run_sample(run: str, sid: str, prompt: int = 0):
 
 
 # ---------------------------------------------------------------- documents
+@app.get("/results", response_class=HTMLResponse)
+def results():
+    return page("results.html", [("Results explorer", None)], d=RES.summary())
+
+
 @app.get("/measurements", response_class=HTMLResponse)
 def measurements():
     return page("measurements.html", [("Measurements", None)], m=D.measurements())
