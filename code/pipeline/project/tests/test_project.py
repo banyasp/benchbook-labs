@@ -97,7 +97,7 @@ def test_sft_export_mode_c_meta_and_plain_prompt(tmp_path):
     st, p = v24_pair(flip_pair, tmp_path, split="train", tags=("rationalized",))
     m = project_all(st, "v1", mode="C")
     out = st.exports / "v1"
-    assert m["mode"] == "C" and m["counts"] == {"sft": 1, "dev": 0, "rl": 1, "eval": 0}
+    assert m["mode"] == "C" and m["counts"] == {"sft": 1, "val": 0, "rl": 1, "eval": 0}
     r = json.loads((out / "sft" / "sft.jsonl").read_text())
     meta = r["meta"]
     for k in ("arm", "card_view", "AR", "writer", "rationalized", "d", "realization", "tier", "intent", "family", "split"):

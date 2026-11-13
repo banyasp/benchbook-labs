@@ -63,15 +63,15 @@ def families(sources: list[dict]) -> list[str]:
 
 
 def assign_splits(fams: list[str]) -> dict[str, str]:
-    """Deterministic per-family split. Order families by sha256(family); the first is `test`, the second `dev`,
+    """Deterministic per-family split. Order families by sha256(family); the first is `test`, the second `val`,
     the rest `train` (needs >= 3 families; with fewer, everything is train and the caller must say so)."""
     order = sorted(set(fams), key=lambda f: hashlib.sha256(f.encode()).hexdigest())
     if len(order) < 3:
         return {f: "train" for f in order}
-    return {f: ("test" if i == 0 else "dev" if i == 1 else "train") for i, f in enumerate(order)}
+    return {f: ("test" if i == 0 else "val" if i == 1 else "train") for i, f in enumerate(order)}
 
 
-SPLIT_RULE_V1 = ("families sorted by sha256(family id); first -> test, second -> dev, remaining -> train; "
+SPLIT_RULE_V1 = ("families sorted by sha256(family id); first -> test, second -> val, remaining -> train; "
               "fewer than 3 families -> all train. Splits are per family, assigned before any perturbation.")
 
 
@@ -80,7 +80,7 @@ TEST_FRAC, DEV_FRAC, MIN_TEST = 0.2, 0.1, 5
 
 SPLIT_RULE = ("v2 (design v2.4.1 §13.5, brief W4a): family = source document (all its episodes share it); per domain, "
               "families sorted by sha256(family id); the first ~20% go to test (at least 5 when the domain has >= 15 "
-              "families, else at least 1 once it has 3), the next ~10% to dev, the rest to train; every family of a "
+              "families, else at least 1 once it has 3), the next ~10% to val, the rest to train; every family of a "
               f"held-out domain ({', '.join(HELD_OUT_DOMAINS)}) goes to test; pilot imports stay eval-only. "
               "Assigned before any perturbation; derived scenarios inherit their root's split.")
 
@@ -107,7 +107,7 @@ def assign_splits_v2(fam_domain: dict[str, str], held_out: tuple[str, ...] = HEL
         nt, nd = n_test_dev(len(order))
         if nt < MIN_TEST:
             warn.append(f"domain `{d}`: {len(order)} families -> {nt} test (< {MIN_TEST}); add sources")
-        out.update({f: "test" if i < nt else "dev" if i < nt + nd else "train" for i, f in enumerate(order)})
+        out.update({f: "test" if i < nt else "val" if i < nt + nd else "train" for i, f in enumerate(order)})
     return out, warn
 
 

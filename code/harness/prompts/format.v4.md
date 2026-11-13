@@ -79,8 +79,13 @@ Meaning of the fields.
   case's facts in exactly one of matched, corresponding, case_only. The same holds for considerations.
 - verdict.choice is the option you will carry out. `via` is null unless relation is flips; with flips, `via` lists the
   case's would_change ids that fired, and your choice is that item's `then`.
-- relation: follows (you reach the case's choice by its reasoning), flips (a case would_change condition holds here
-  and moves you to its alternative), distinguished (the case governs, but a difference between the situations
-  leads you to a different choice), not_governed (the case does not govern; then write the `reasoning` document without
-  `case_approach`, weighing your own considerations as you would with no case, and decide).
+- relation compares your choice with the case's own choice (the option the case chose, through the options map):
+  - follows: your choice corresponds to the case's choice, reached by the case's reasoning.
+  - flips: one of the case's would_change conditions holds here, so your choice is that item's `then`, which differs
+    from the case's choice. This is flips even when you apply the case's own rule: if the case chose X, and its
+    would_change condition that holds here leads to Y, the relation is flips, not follows.
+  - distinguished: the case governs, but a difference between the situations that its would_change items do not
+    cover leads you to a choice other than the case's.
+  - not_governed: the case does not govern; then write the `reasoning` document without `case_approach`, weighing
+    your own considerations as you would with no case, and decide.
 - This reply is your reasoning step: it contains only these documents. Do not call any tools in it; your tool calls come afterwards.

@@ -30,7 +30,7 @@ from bench.schema.pipeline import Scenario
 from pipeline.store import DATA, Store, write_yaml
 
 OPT = re.compile(r"\bO(\d+)\b")
-EVAL = {"dev", "test"}
+EVAL = {"val", "dev", "test"}
 
 
 def permutation(n: int, winner: int, target: int) -> dict[str, str]:

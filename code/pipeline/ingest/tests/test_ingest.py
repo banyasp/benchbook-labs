@@ -21,7 +21,7 @@ def test_seed_registry_valid_and_splits():
     assert len(src) >= 4
     fd = {registry.family_of(s, e): s["domain"] for s in src for e in s["episodes"]}
     sp, _ = registry.assign_splits_v2(fd)
-    assert "dev" in sp.values() and "test" in sp.values() and "train" in sp.values()
+    assert "val" in sp.values() and "test" in sp.values() and "train" in sp.values()
     assert sp == registry.assign_splits_v2(dict(reversed(list(fd.items()))))[0]      # deterministic
     assert len({e["n"] for s in src for e in s["episodes"]}) >= 1
 
@@ -113,10 +113,10 @@ def test_extract_with_retry_and_gate(tmp_path):
         real_holder["real"] = real
         return a_reply(real)
     mock = make_mock([fq_reply(bad=True), fq_reply(), a_fn])
-    s = extract.extract_episode(SRC, SRC["episodes"][0], SPANS, SHA, "dev", mock, data=tmp_path)
+    s = extract.extract_episode(SRC, SRC["episodes"][0], SPANS, SHA, "val", mock, data=tmp_path)
     assert [c[0] for c in mock.calls] == ["extract.FQ", "extract.FQ", "extract.A"]        # one retry on FQ
     assert "unknown span" in mock.calls[1][1][-1]["content"]                                 # errors fed back
-    assert s.id == "DR-FAM@v1" and s.split == "dev" and s.verdict_tier == "source-endorsed" and s.basis
+    assert s.id == "DR-FAM@v1" and s.split == "val" and s.verdict_tier == "source-endorsed" and s.basis
     assert s.case.verdict.choice == real_holder["real"]
     assert len(s.grounded_facts()) == 6 and s.provenance.steps[0].params["attempts"] == 2
     assert "flip-conditions-authored" in s.tags and "case.flip_conditions.flip1" in s.provenance.authored

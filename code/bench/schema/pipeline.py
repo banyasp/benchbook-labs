@@ -23,16 +23,20 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import Field, field_validator, model_validator
+from pydantic import BeforeValidator, Field, field_validator, model_validator
 
 from .case import Case, CardView
 from .common import Relation, Strict
 
 GoldTier = Literal["by-construction", "source-endorsed", "model-solved"]
-Split = Literal["train", "dev", "test", "eval-only"]
+def _legacy_split(v):
+    return "val" if v == "dev" else v       # the split was called `dev` until 2026-11-13 (Peter: train / val / test)
+
+
+Split = Annotated[Literal["train", "val", "test", "eval-only"], BeforeValidator(_legacy_split)]
 Status = Literal["extracted", "derived", "needs_review", "reviewed", "rejected"]
 Realization = Literal["stated", "paraphrased", "implied", "split"]
 Intent = Literal["restyle", "flip", "add_fact", "decoy", "revised", "pilot", "reverse_restyle", "augmented", "self",

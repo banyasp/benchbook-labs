@@ -79,11 +79,12 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   the same example with older names: `discretization`, `altered`, `carried/revised`, plus `confidence`/`via`.)
   Extracting facts before seeing cases is future work.
 - Relations: `follows | flips | distinguished | not_governed`. Governance is decided on considerations, not fact
-  overlap. **Scoring after `not_governed` (Peter, 2026-11-12; supersedes "nothing after not_governed is rewarded or
-  punished"):** a reply gets credit if (1) it says not_governed and (2) its final choice matches the choice the model
-  makes when it sees no case (he is still not training judgment independent of the case; the reference no-case verdict
-  must be fixed before RL, R97). The reply format therefore needs a reasoning + verdict after not_governed (format.v1
-  says to skip the reasoning document; to be changed with the SFT format).
+  overlap. **Scoring after `not_governed` (Peter, 2026-11-13; supersedes his 2026-11-12 rule, which keyed (2) to the
+  model's own no-case choice, and the older "nothing after not_governed is rewarded or punished"):** a reply gets
+  credit if (1) it says not_governed and (2) its final choice matches the answer key (X1's gold). **General rule
+  (Peter, 2026-11-13): SFT targets and RL rewards always use the correct answer key, never a model's own choices**
+  (SFT/RL steer the model hard in a domain where it has little other data). The reply format has a reasoning + verdict
+  after not_governed (format v3 and later).
 - **No numeric `confidence` in the verdict** (matches the PDF), so the reward has no calibration term.
 - **The decision is scored from the verdict's `choice`** (PDF; Peter confirmed 2026-10-25). Tool calls and
   says/does consistency are future work: they test whether a model does what it says, not analogical reasoning.
@@ -124,6 +125,10 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   deterministic checks plus narrow judge calls (Jev Choice to align facts, Jev_Noul for free-text fields like
   frame and course); reasoning prose and applicability-why are never scored. One scorer package shared by TRL
   (training) and Inspect (eval).
+- **Splits are train / val / test** (+ eval-only; Peter, 2026-11-13). The validation split was called `dev` until
+  2026-11-13; the store, registry and code now say `val` (rename log `results/ops/split-rename-dev-to-val-20261113.json`;
+  the schema still reads a legacy `dev` as `val`). "dev" in older briefs and design docs means val. SFT's validation
+  loss uses the val-split cells (`results/sft/gen-val`).
 - **No artificial recommendations in traces** (Peter, 2026-11-09, overrides design v2.4 §8.2's 50% default):
   `RECOMMEND_SHARE = 0`; nobody in a trace urges an option (the render gate rejects any course introduced with a
   directive or graded word). The

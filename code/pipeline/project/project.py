@@ -1,7 +1,7 @@
 """project (code only, v2.4): PairRecord (+ trace record, accepted solve sample) -> SFT jsonl, RLVR jsonl, Inspect samples.
 
     data/exports/<version>/sft/sft.jsonl       train pairs: golden records (training.sft_data format) + chat `messages`
-    data/exports/<version>/sft/dev.jsonl       dev pairs, same format (validation)
+    data/exports/<version>/sft/val.jsonl       val pairs, same format (validation)
     data/exports/<version>/rl/rlvr.jsonl       train pairs: TRL rows (prompt, answer_key, served, gold, tables)
     data/exports/<version>/eval/inspect.jsonl  test / eval-only pairs: one Inspect sample per (pair, arm, card view, AR,
                                                equities cell) + G (answer_key); `cell` says which cell it is
@@ -239,7 +239,7 @@ def pair_index(pairs: list[PairRecord]) -> dict:
 
 
 def check_no_lineage_leak(train: list[PairRecord], evals: list[PairRecord], store: Store) -> list[str]:
-    """Design §13.5: no eval trace (or served card) shares a family (lineage root) with a train/dev pair. -> offending eval pair ids."""
+    """Design §13.5: no eval trace (or served card) shares a family (lineage root) with a train/val pair. -> offending eval pair ids."""
     cache: dict[str, str] = {}
 
     def fam(sid):
@@ -309,18 +309,18 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
     out = store.exports / version
     idx = pair_index(pairs)
     train = [p for p in pairs if p.split == "train" and p.arm in TRAIN_ARMS]
-    dev = [p for p in pairs if p.split == "dev" and p.arm in TRAIN_ARMS]
+    val = [p for p in pairs if p.split == "val" and p.arm in TRAIN_ARMS]
     evals = [p for p in pairs if p.split in EVAL_SPLITS]
-    bad = check_no_lineage_leak(train + dev, evals, store)
+    bad = check_no_lineage_leak(train + val, evals, store)
     if bad:
-        raise ValueError(f"eval pairs share a family with train/dev pairs: {bad[:10]} ({len(bad)} in all)")
-    rows = {"sft": [], "dev": [], "rl": [], "eval": []}
+        raise ValueError(f"eval pairs share a family with train/val pairs: {bad[:10]} ({len(bad)} in all)")
+    rows = {"sft": [], "val": [], "rl": [], "eval": []}
     skipped, warns, hashes, leaks = list(pre_skipped), {}, {}, []
 
     def inputs(p):
         return sha256_obj({"pair": p.dump(), "trace": json.loads(trace_path(p, store).read_text())["messages"]})
 
-    for p in train + dev:
+    for p in train + val:
         try:
             if p.split == "train":
                 rows["rl"].append(rl_row(p, store, settings))        # RL needs no written reply
@@ -334,7 +334,7 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
         if r is None:
             skipped.append({"pair": p.id, "reason": "no accepted sample"})
             continue
-        rows["sft" if p.split == "train" else "dev"].append(r)
+        rows["sft" if p.split == "train" else "val"].append(r)
         hashes[p.id] = inputs(p)
     for p in evals:
         rows["eval"] += eval_rows(p, store, settings, eval_cells_, index=idx, leaks=leaks)
@@ -342,7 +342,7 @@ def project_all(store: Store, version: str, pairs: list[PairRecord] | None = Non
     if leaks:
         import sys
         print(f"WARNING: {len(leaks)} thin-view leak(s); those cells were NOT exported: {leaks[:3]}", file=sys.stderr)
-    files = {"sft": out / "sft" / "sft.jsonl", "dev": out / "sft" / "dev.jsonl", "rl": out / "rl" / "rlvr.jsonl",
+    files = {"sft": out / "sft" / "sft.jsonl", "val": out / "sft" / "val.jsonl", "rl": out / "rl" / "rlvr.jsonl",
              "eval": out / "eval" / "inspect.jsonl"}
     for kind, path in files.items():
         _write_jsonl(path, rows[kind])

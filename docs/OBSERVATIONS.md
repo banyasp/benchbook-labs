@@ -10,6 +10,16 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O27 · 2026-11-13 · Granite read `follows` as "I follow the case's rule"; spelling out the definition fixes much of it
+In the gen1 cells where no Granite sample passed, 233 of 324 failed samples had the gold choice and only the relation
+label wrong. Granite labelled flips as `follows` because the case's *rule* ("share externally unless an exception
+holds") was being followed, though the case's *choice* differed (e.g. PV1-full-00632). With format v4's relation
+definitions spelled out against the case's choice ("flips even when you apply the case's own rule"), `flips` rose from
+6 to 53 samples on the same cells and 37/81 cells got a passing target. A base-model eval artefact as much as an SFT
+one: relation scores of untrained models under v1-v3 understate their grasp of flips.
+- Sources: `results/sft/gen1/wv.v2-before-relexp1-merge.jsonl` (rounds of the 81 cells), `results/sft/relexp1/wv.jsonl`;
+  prompt diff `code/harness/prompts/versions/format.v4.v0-before-relation-clarified.md` vs `format.v4.md`. M15 addendum.
+
 ### O26 · 2026-11-13 · Even with Luna's notes, Granite will not say `flips` on about 1 in 9 flip cells
 At scale (M15) the M13 finding persists in a smaller form: with notes that say the relation is flips and name `via`,
 Granite still writes `follows` or `distinguished` in 361 of the structure rejections. 86 of 509 cells on flip arms

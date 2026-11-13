@@ -13,7 +13,7 @@ def test_split_fractions_and_held_out():
     fd = {f"OHA-{i}": "psa" for i in range(40)} | {f"NS-{i}": "military-operational" for i in range(10)}
     sp, warn = R.assign_splits_v2(fd)
     oha = [sp[f"OHA-{i}"] for i in range(40)]
-    assert oha.count("test") == 8 and oha.count("dev") == 4 and oha.count("train") == 28
+    assert oha.count("test") == 8 and oha.count("val") == 4 and oha.count("train") == 28
     assert all(sp[f"NS-{i}"] == "test" for i in range(10)) and not warn
 
 

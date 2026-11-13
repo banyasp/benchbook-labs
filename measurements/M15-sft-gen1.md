@@ -1,6 +1,6 @@
 # M15 · 2026-11-13 · SFT target generation, full train set (gen1)
 
-**Status: COMPLETE** (generation). The random-arm flip-condition defect below awaits Peter's decision.
+**Status: COMPLETE** (generation; defect resolved 2026-11-13, see the addendum).
 
 ## Question
 
@@ -94,3 +94,41 @@ use is Peter's call.
 - Base Granite 4.2 8B on local vLLM: guided W/V (4,350 samples), no-case W/V (856 samples).
 - TypeSafe Jev 1.14 (OpenRouter): supports, same argument and case_account gates.
 - Claude: the four-row read above, and the counts (scripts run ad hoc over `wv.jsonl` / `sft.jsonl`).
+
+## Addendum 2026-11-13 (afternoon): Peter's rulings applied; final gen1 and the val set
+
+Peter's rulings (CLAUDE.md):
+- SFT and RL always use the answer key, never a model's own choices.
+- Format v4: the verdict has no `flip_conditions`.
+- The `follows` definition may be clarified.
+- The split is `val`, not `dev`.
+
+| | before | after |
+|---|---|---|
+| random-arm targets | Granite's own no-case choice (45/211 ≠ gold) | Luna writes no-case W+V to gold (writer v2); Granite rewrites them without the case (`targets.guided_nocase`); same gates. 211 Granite, 3 Luna, **214/214 gold** |
+| verdict flip_conditions | X1's gold copied in | removed (format v4); W/V of non-random cells reused, the field dropped at assembly (`targets.drop_flips`); not regenerated (Peter: no need) |
+| relation definitions | one line each | spelled out against the case's choice; "flips even when you apply the case's own rule" |
+| Luna fallbacks | 100 | **63** |
+
+**Relation-definition test** (`results/sft/relexp1`):
+- Cells: the 81 cells with no structure-passing Granite sample (gen1), at the same seeds.
+- Before: 0/324 samples passed (selection), and Granite wrote `flips` in 6 of the samples on gold-flips cells.
+- With the clarified definition: 56/278 samples pass structure; Granite writes `flips` in 53/264 samples on gold-flips cells (`follows` 130, `distinguished` 69). **37/81 cells now have a gate-passing Granite target** (37/37 pass both gates); merged into gen1 (`wv.v2-before-relexp1-merge.jsonl` keeps the previous records).
+- Caveat: vLLM batching is not bit-exact, so the same seeds are not a perfect control; the 6 → 53 shift in `flips` is far beyond resampling noise.
+
+**Final gen1** (`results/sft/gen1/golden.jsonl`, the trainer's format):
+- 2,210 rows: 1,936 Granite guided, 211 Granite no-case (random), 63 Luna.
+- Every row reaches the gold choice. 0 completions contain `flip_conditions`.
+- One Granite target's uncertainty field referred to "flip_conditions"; that sentence was removed (PV1-full-04379, `edits` in `wv.jsonl`).
+- Prompts: format v4 with the clarified relation definitions.
+- 5.11M trained tokens; longest row 11,350 tokens.
+
+**Val set** (`results/sft/gen-val`, created as gen-dev before the rename):
+- 296 val-split cells (only 3 random: the served anchor must also be val).
+- 283 Granite guided, 3 Granite no-case, 10 Luna; all gold.
+- 0.70M tokens.
+
+**Mixed provenance in gen1, by design:**
+- Non-random cells: written by writer v1, with Granite prompted under format v3 at generation.
+- Random cells and the 37 relexp1 cells: writer v2 / format v4.
+- Training prompts are all v4 (rebuilt at assembly).

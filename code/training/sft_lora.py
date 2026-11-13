@@ -42,7 +42,7 @@ def sft_args(cfg: dict, out: str, smoke: bool = False):
 
 
 def train(cfg: dict, examples, model, tokenizer, out: str, smoke: bool = False, eval_examples=None):
-    """eval_examples: a held-out set (e.g. dev-split cells) scored for loss every `eval_steps` (validation curve)."""
+    """eval_examples: a held-out set (e.g. val-split cells) scored for loss every `eval_steps` (validation curve)."""
     from trl import SFTTrainer
     ds = sft_data.to_hf_dataset(examples)
     ev = sft_data.to_hf_dataset(eval_examples) if eval_examples else None
@@ -89,7 +89,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", default=str(DEFAULT_CONFIG))
     ap.add_argument("--data", help="golden JSONL (prompt_text/completion/prefill) built from harness runs")
-    ap.add_argument("--eval-data", help="held-out golden JSONL for the validation loss (e.g. dev-split cells)")
+    ap.add_argument("--eval-data", help="held-out golden JSONL for the validation loss (e.g. val-split cells)")
     ap.add_argument("--out", default="results/sft/run")
     ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args(argv)

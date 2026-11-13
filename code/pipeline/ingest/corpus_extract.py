@@ -142,7 +142,7 @@ def select(n_total: int = 500, seed: int = 0) -> dict:
     prev_src_split = defaultdict(set)
     for e in prev:
         prev_src_split[e["source"]].add(e["split"])
-    locked = lambda e: bool(({prev_split.get(e["family"])} | prev_src_split.get(e["source"], set())) & {"train", "dev"})
+    locked = lambda e: bool(({prev_split.get(e["family"])} | prev_src_split.get(e["source"], set())) & {"train", "val", "dev"})
     n0 = len(cands)
     cands = [e for e in cands if not (e["bucket"] == "targeting" and locked(e))]   # could not be held out
     if n0 - len(cands):

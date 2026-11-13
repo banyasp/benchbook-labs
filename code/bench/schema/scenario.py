@@ -8,10 +8,10 @@ so distance weighting can be applied later without regenerating anything (DECISI
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 import yaml
-from pydantic import Field, model_validator
+from pydantic import BeforeValidator, Field, model_validator
 
 from .answer_key import AnswerKey
 from .common import Strict
@@ -52,7 +52,7 @@ class ArmSpec(Strict):
 class LiveScenario(Strict):
     id: str
     family: str
-    split: Literal["train", "dev", "test", "pilot"] = "pilot"
+    split: Annotated[Literal["train", "val", "test", "pilot"], BeforeValidator(lambda v: "val" if v == "dev" else v)] = "pilot"
     domain: str | None = None
     trace: str                                        # path to the trace json (repo-relative)
     equities: str                                     # equities set id (data/registry/equities/<id>.yaml)
