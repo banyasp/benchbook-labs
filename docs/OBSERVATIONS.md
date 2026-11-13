@@ -10,6 +10,14 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O26 · 2026-11-13 · Even with Luna's notes, Granite will not say `flips` on about 1 in 9 flip cells
+At scale (M15) the M13 finding persists in a smaller form: with notes that say the relation is flips and name `via`,
+Granite still writes `follows` or `distinguished` in 361 of the structure rejections. 86 of 509 cells on flip arms
+(transfer_flip, same_domain_flip) had no gate-passing sample in 4 tries and fell back to Luna's text. Base Granite's
+prior against "the case's would_change condition fired" is strong. That is what SFT on these arms has to move.
+- Sources: `results/sft/gen1/wv.jsonl` (`rounds[*][*].reasons`, `relation`), rows with `source: luna`, e.g.
+  PV1-full-02856. Measurement M15.
+
 ### O24 · 2026-11-12 · Asked to restate a passage, Granite copies it; given it as notes, Granite rewrites it
 In the SFT W experiment (M13), base Granite restating Luna's reasoning passage by passage kept most of the wording
 (median per-field similarity 0.83, 12/105 fields verbatim) and the result was no more likely under Granite than Luna's

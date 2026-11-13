@@ -41,6 +41,8 @@ Each `M<nn>-*.md` file answers:
 | [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema, Granite and Luna, all arms | COMPLETE |
 | [M12](M12-option-length-and-support-cues.md) | 2026-11-11 | Shortcut cues: gold option length and fact support in the store | COMPLETE (corrected 2026-11-11: no cue in anchors; cue in transfer sisters) |
 | [M13](M13-sft-w-experiment.md) | 2026-11-12 | SFT W experiment: Luna + Granite restate vs Granite alone vs Granite guided by Luna's notes (24 pairs-v1 cells) | COMPLETE |
+| [M14](M14-pairs-v1-full-build.md) | 2026-11-13 | pairs-v1 full build: 5,264 cells over 878 anchors, yields per arm | COMPLETE |
+| [M15](M15-sft-gen1.md) | 2026-11-13 | SFT targets at scale (gen1): 2,207 rows, 86% Granite-guided, 4.4% Luna fallback (flip arms); random-arm flip-condition defect | COMPLETE (defect open) |
 
 ## Datasets, the run registry and the tensor
 
