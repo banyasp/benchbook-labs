@@ -206,6 +206,10 @@ See `context/PDF-RECONCILIATION-2026-10-25.md` for the full list. In short:
 - AWS EC2 `g6e.2xlarge` (1× NVIDIA L40S, 48 GB) in us-east-1, Elastic IP 18.211.62.112, name "firo". The Firo Labs
   repo on this box (Peter's LLM-training lab series) likely already has a working torch/vLLM/TRL environment;
   reuse it if so, but keep Benchbook code in this repo.
+- **Experiment tracking: Weights & Biases** (Peter, 2026-11-13), project `benchbook`, login from `~/.netrc`.
+  `training.sft_lora` and `training.grpo` log by default (`--no-wandb` to opt out) through `code/training/tracking.py`:
+  metrics plus run metadata (config, data sha256 and counts, git commit). Prompts, targets, completions and weights
+  never go to wandb. `training.wandb_tail` streams a job started without wandb (used for `results/sft/run-gen1`).
 - Git remote: `https://github.com/banyasp/benchbook-labs` (private). The Mac copy is at
   `~/Desktop/AI/benchbook-labs`. Commit and push from this box often so the Mac and Peter's claude.ai sessions
   see the same code. `.gitignore` keeps `papers/` (PDFs), zips and .docx out.

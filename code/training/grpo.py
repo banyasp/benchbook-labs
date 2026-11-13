@@ -24,7 +24,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable
 
-from . import common
+from . import common, tracking
 
 DEFAULT_CONFIG = common.HERE / "configs" / "grpo.v1.yaml"
 RewardFn = Callable[[str, str, dict], "float | None"]
@@ -78,7 +78,7 @@ def placeholder_choice_reward(lib, judge, backend, settings_extra=None) -> Rewar
     return fn
 
 
-def grpo_config(cfg: dict, out: str, smoke: bool = False):
+def grpo_config(cfg: dict, out: str, smoke: bool = False, report_to: str = "none"):
     from trl import GRPOConfig
     from bench.models import role
     g = dict(cfg["grpo"])
@@ -89,7 +89,8 @@ def grpo_config(cfg: dict, out: str, smoke: bool = False):
         g["temperature"] = r.get("temperature", 1.0)
     if g.get("top_p") is None:
         g["top_p"] = r.get("top_p", 1.0)
-    kw = dict(output_dir=out, report_to="none", **g)
+    g.pop("report_to", None)                     # set by tracking.start (wandb), never by the config
+    kw = dict(output_dir=out, report_to=report_to, **g)
     if smoke:
         kw.update(max_steps=2, num_train_epochs=1, bf16=False, use_cpu=True, gradient_checkpointing=False, use_vllm=False,
                   per_device_train_batch_size=8, gradient_accumulation_steps=1, max_completion_length=12,
@@ -99,11 +100,11 @@ def grpo_config(cfg: dict, out: str, smoke: bool = False):
 
 
 def build_trainer(cfg: dict, model, tokenizer, dataset, reward_fn: RewardFn | None, out: str, smoke: bool = False,
-                  peft_config=None):
+                  peft_config=None, report_to: str = "none"):
     """`model`: a PeftModel holding the SFT adapter (trainable) -> KL to SFT; or a base model + `peft_config`
     (fresh LoRA, then KL is to the base model). Dataset rows need a `prompt` string (the rendered prompt)."""
     from trl import GRPOTrainer
-    return GRPOTrainer(model=model, reward_funcs=trl_reward(reward_fn), args=grpo_config(cfg, out, smoke),
+    return GRPOTrainer(model=model, reward_funcs=trl_reward(reward_fn), args=grpo_config(cfg, out, smoke, report_to=report_to),
                        train_dataset=dataset, processing_class=tokenizer, peft_config=peft_config)
 
 
@@ -164,6 +165,8 @@ def main(argv=None):
     ap.add_argument("--data-root", default="data")
     ap.add_argument("--judge", choices=["jev", "stub"], default="jev")
     ap.add_argument("--out", default="results/grpo/run")
+    ap.add_argument("--no-wandb", action="store_true", help="do not log to Weights & Biases (default: log metrics)")
+    ap.add_argument("--wandb-project", help="wandb project (default WANDB_PROJECT or benchbook)")
     a = ap.parse_args(argv)
     cfg = common.load_config(a.config)
     if a.smoke:
@@ -208,9 +211,15 @@ def main(argv=None):
         c = cfg["lora"]
         peft_config = LoraConfig(r=c["r"], lora_alpha=c["alpha"], lora_dropout=c["dropout"],
                                  target_modules=c["target_modules"], task_type="CAUSAL_LM")
-    tr = build_trainer(cfg, model, tok, ds, reward_fn, a.out, peft_config=peft_config)
-    tr.train()
-    tr.save_model(str(Path(a.out) / "adapter"))
+    report_to = tracking.start("grpo", cfg, a.out, extra={"config_file": a.config, "sft_adapter": a.sft_adapter,
+                                                          "n_prompts": len(rows), "placeholder_reward": a.placeholder_reward},
+                               enabled=not a.no_wandb, project=a.wandb_project)
+    try:
+        tr = build_trainer(cfg, model, tok, ds, reward_fn, a.out, peft_config=peft_config, report_to=report_to)
+        tr.train()
+        tr.save_model(str(Path(a.out) / "adapter"))
+    finally:
+        tracking.finish()
     return 0
 
 

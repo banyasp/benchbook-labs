@@ -18,7 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from . import common, sft_data
+from . import common, sft_data, tracking
 
 DEFAULT_CONFIG = common.HERE / "configs" / "sft_lora.v2-mode-c-v1-export.yaml"
 
@@ -29,10 +29,11 @@ def lora_config(c: dict):
                       task_type="CAUSAL_LM")
 
 
-def sft_args(cfg: dict, out: str, smoke: bool = False):
+def sft_args(cfg: dict, out: str, smoke: bool = False, report_to: str = "none"):
     from trl import SFTConfig
     t = dict(cfg["train"])
-    kw = dict(output_dir=out, report_to="none", dataset_kwargs={"skip_prepare_dataset": True},
+    t.pop("report_to", None)                     # set by tracking.start (wandb), never by the config
+    kw = dict(output_dir=out, report_to=report_to, dataset_kwargs={"skip_prepare_dataset": True},
               remove_unused_columns=False, **t)
     if smoke:
         kw.update(max_steps=2, warmup_steps=0, num_train_epochs=1, bf16=False, use_cpu=True, gradient_checkpointing=False,
@@ -41,12 +42,13 @@ def sft_args(cfg: dict, out: str, smoke: bool = False):
     return SFTConfig(**kw)
 
 
-def train(cfg: dict, examples, model, tokenizer, out: str, smoke: bool = False, eval_examples=None):
+def train(cfg: dict, examples, model, tokenizer, out: str, smoke: bool = False, eval_examples=None,
+          report_to: str = "none"):
     """eval_examples: a held-out set (e.g. val-split cells) scored for loss every `eval_steps` (validation curve)."""
     from trl import SFTTrainer
     ds = sft_data.to_hf_dataset(examples)
     ev = sft_data.to_hf_dataset(eval_examples) if eval_examples else None
-    args = sft_args(cfg, out, smoke)
+    args = sft_args(cfg, out, smoke, report_to=report_to)
     if ev is None:
         args.eval_strategy = "no"
     trainer = SFTTrainer(model=model, args=args, train_dataset=ds, eval_dataset=ev, processing_class=tokenizer,
@@ -91,6 +93,8 @@ def main(argv=None):
     ap.add_argument("--data", help="golden JSONL (prompt_text/completion/prefill) built from harness runs")
     ap.add_argument("--eval-data", help="held-out golden JSONL for the validation loss (e.g. val-split cells)")
     ap.add_argument("--out", default="results/sft/run")
+    ap.add_argument("--no-wandb", action="store_true", help="do not log to Weights & Biases (default: log metrics)")
+    ap.add_argument("--wandb-project", help="wandb project (default WANDB_PROJECT or benchbook)")
     ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args(argv)
     cfg = common.load_config(a.config)
@@ -135,9 +139,16 @@ def main(argv=None):
                                              cfg["data"]["verify_format"], max_len)
         (Path(a.out) / "eval_rejects.json").write_text(json.dumps(ev_rej, indent=1))
         print(f"{len(ev)} eval examples ({len(ev_rej)} rejected)", file=sys.stderr)
+    report_to = tracking.start("sft", cfg, a.out, data_files=[data, a.eval_data or cfg["data"].get("eval_path")],
+                               extra={"config_file": a.config, "n_train": len(ex), "n_eval": len(ev or []),
+                                      "train_tokens": sum(e.n_completion for e in ex)},
+                               enabled=not a.no_wandb, project=a.wandb_project)
     model = AutoModelForCausalLM.from_pretrained(name, **kw)
-    tr = train(cfg, ex, model, tok, a.out, eval_examples=ev)
-    (Path(a.out) / "log_history.json").write_text(json.dumps(tr.state.log_history, indent=1))
+    try:
+        tr = train(cfg, ex, model, tok, a.out, eval_examples=ev, report_to=report_to)
+        (Path(a.out) / "log_history.json").write_text(json.dumps(tr.state.log_history, indent=1))
+    finally:
+        tracking.finish()
     tr.save_model(str(Path(a.out) / "adapter"))
     return 0
 

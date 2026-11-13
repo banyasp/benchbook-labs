@@ -186,7 +186,8 @@ passes) and schema YAML-in-think (M07).
 ## Size-class comparison: four more local models (PARTIAL, started 2026-11-12)
 
 Peter, 2026-11-12: is Granite's schema cost common to models of its size class? Same data (pilot 2: 28 X1s, 151
-prompts), same three scaffolds, k=4, thinking first. Status: **running** (`logs/scaffold-compare-chain.log`).
+prompts), same three scaffolds, k=4, thinking first. Status: **Qwen, Olmo, Ministral COMPLETE (2026-11-13); Gemma 4
+pending** (vLLM 0.27.1 could not load it; a separate venv with vLLM 0.33.0 now serves it; run after the SFT training).
 
 | Key | Model (HF) | Sampling (model card, thinking mode) |
 |---|---|---|
@@ -209,3 +210,49 @@ prompts), same three scaffolds, k=4, thinking first. Status: **running** (`logs/
   every scaffold (measured 2026-11-12 on the M11 runs). Check this rate per model before reading the schema rows; a
   course-text fallback in the scorer would be a scoring change applied to all runs (not done).
 - LLMs: the four policies above (local); judge Jev Choice (OpenRouter) as in M11.
+
+### Results (2026-11-13; Gemma 4 pending)
+
+Accuracy against X1's key, per arm (X1-averaged, idx 0-3). "As scored" counts an unreadable reply as wrong;
+"readable" keeps only replies with a verdict whose choice maps to an option (selection-biased: unreadable replies
+may be the harder items; read it as an indication, not an estimate). Granite's schema row is M09 (mode line v1.A,
+first four samples).
+
+| Model | Scaffold | No case | Own case | Transferred | Flipped (copies) | Other anchor | Readable | Readable only: no case / own / transf / flip / other |
+|---|---|---|---|---|---|---|---|---|
+| Granite 4.2 8B | free | 50 | 95 | 81 | 28 (49%) | 50 | 95% | 55 / 96 / 82 / 29 / 54 |
+| | guided | 53 | 96 | 82 | 29 (48%) | 47 | 94% | 57 / 96 / 86 / 30 / 59 |
+| | schema | 45 | 88 | 76 | 31 (48%) | 48 | 88% | 53 / 96 / 86 / 32 / 57 |
+| Qwen3.5 9B | free | 50 | 93 | 88 | 33 (36%) | 55 | 92% | 59 / 96 / 91 / 37 / 65 |
+| | guided | 59 | 89 | 91 | 54 (24%) | 59 | 90% | 70 / 95 / 95 / 60 / 70 |
+| | schema | 29 | 40 | 45 | 23 (23%) | 33 | **48%** | 63 / 93 / 94 / 49 / 62 |
+| Olmo 3 7B Think | free | 59 | 82 | 78 | 16 (69%) | 39 | 83% | 65 / 96 / 92 / 20 / 59 |
+| | guided | 54 | 92 | 91 | 21 (69%) | 50 | 91% | 60 / 96 / 96 / 24 / 60 |
+| | schema | 8 | 38 | 34 | 5 (42%) | 21 | **37%** | 55 / 94 / 88 / 11 / 51 |
+| Ministral 3 14B | free | 37 | 81 | 78 | 26 (50%) | 46 | 80% | 56 / 96 / 89 / 28 / 66 |
+| | guided | 45 | 79 | 64 | 30 (31%) | 32 | 71% | 62 / 95 / 85 / 39 / 57 |
+| | schema | 54 | 80 | 73 | 23 (49%) | 41 | 77% | 64 / 93 / 96 / 30 / 65 |
+| GPT-6 Luna (k=8) | free / guided / schema | 73 / 67 / 71 | 95 / 93 / 94 | 93 / 88 / 88 | 70 / 77 / 80 (10-11%) | 71 / 72 / 75 | 95-96% | — |
+
+Unreadable replies, by cause (Claude-checked from `samples.jsonl` and raw replies):
+- **Qwen and Olmo, schema:** off-menu in 47% / 49% of replies. They give a choice id (LIVE-O1…) but leave the
+  `options` list out of `fact_enumeration` (options found = 0 in ~95% of their off-menu replies), so the id cannot be
+  mapped and is scored wrong. The smoke-test problem, at scale. Olmo also has no verdict in 14%.
+- **Ministral, every scaffold:** no verdict in 14% (free), 23% (guided), 19% (schema). It often writes the verdict
+  as Markdown (`**choice:** O2`, `**course:** …`) instead of the YAML block.
+
+**Reading (size class, Claude; Gemma 4 pending).**
+- **The case benefit is universal.** Own case reaches 93-96% (readable) for every model under every scaffold, from
+  50-70% with no case. A transferred sister gives +20 to +38 points.
+- **The flip weakness is shared by the small models.** Flipped accuracy 11-39% (readable), against Luna's 70-80%. The
+  small models copy the flipped sister's verdict 23-69% of the time (Olmo worst, 69%), against Luna's 10-11%. One
+  exception: Qwen guided reaches 54% (60% readable), +21 over Qwen free, like Luna's +7 from guidance. Worth a look.
+- **"Schema cost" is mostly a format-compliance cost, not a reasoning cost.** As scored, the schema is catastrophic
+  for Qwen and Olmo (−20 to −55 points) because half their replies cannot be mapped. On readable replies the schema
+  is within a few points of guided for every small model, Granite included (its 6-9 point cost as scored comes with
+  readability falling from 94% to 88%). This revises the Granite reading above: the schema costs points mainly by
+  making replies unscorable.
+- **Guidance vs free: no consistent effect.** Qwen gains (no case +9, flip +21), Olmo gains on own/transferred
+  (+10/+13, but its free run truncates and goes off-menu more), Ministral loses (its no-verdict rate rises).
+- Caveats: 28 X1s, k=4; intervals about ±10-15 points; readable-only is selection-biased; the four comparison models
+  run through the chat endpoint, Granite through raw completions.
