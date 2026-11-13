@@ -15,7 +15,9 @@ Target = the reply documents  F,Q | M_F | K | M_K | applicability | W | V  for X
                applicability as a prefill and writes W and V itself; kept iff the full reply passes check_reply.
     random     (arm random, relation not_governed) W and V come from base Granite WITHOUT the case: the no-case prompt
                for X1, prefilled with the fixed F and K documents; its reasoning and verdict are spliced in after the
-               applicability document (relation not_governed, via null). Peter's design, 2026-11-12.
+               applicability document (relation not_governed, via null). Peter's design, 2026-11-12. Since 2026-11-13
+               (Peter: use the answer key) the writer's reasoning and verdict to X1's gold are given as notes and the
+               spliced reply must reach the gold choice (guided_nocase). Format v4: no verdict flip_conditions.
 
 Every target is emitted by `emit()` in one layout (format.v1 style: block keys, one flow mapping per list item).
 """
@@ -41,7 +43,7 @@ from .pairgold import Built, pair_gold
 
 HERE = Path(__file__).parent
 PROMPTS = HERE / "prompts"          # every prompt of the SFT operator is a file here (console /prompts)
-WRITER_PROMPT = PROMPTS / "writer.v1.md"
+WRITER_PROMPT = PROMPTS / "writer.v2.md"      # v2 (2026-11-13): no flip_conditions; not_governed gets W+V to gold
 ORDER = ["fact_enumeration", "fact_mapping", "consideration_enumeration", "consideration_mapping", "applicability",
          "reasoning", "verdict"]
 GRANITE = "granite-4.2-8b"
@@ -130,7 +132,7 @@ def prepare(store, cell: dict, mode: str = "B", call=None, aligned: dict | None 
     """aligned: a stored aligner output for this cell (reuse it: the aligner is an LLM and can differ run to run)."""
     b = pair_gold(store, cell, call=call, aligned=aligned)
     g, _ = gold_for(b.pair, store, C=b.C, T=b.T)
-    settings = HarnessSettings(mode=mode, model=GRANITE, max_tokens=6000, format_spec="v3")   # v3: reasoning after not_governed (Peter 2026-11-12)
+    settings = HarnessSettings(mode=mode, model=GRANITE, max_tokens=6000, format_spec="v4")   # v3: reasoning after not_governed (Peter 2026-11-12); v4: no verdict flip_conditions (Peter 2026-11-13)
     ep = student_episode(b.pair, store, settings=settings, C=b.C)
     try:
         q = trace_quotes(b.pair, store, g)
@@ -166,13 +168,9 @@ def normalize(docs: dict[str, dict], g: GoldStructure) -> list[dict]:
             continue
         d = dict(docs[k])
         d["kind"] = k
-        if k == "verdict":
-            fl = g.flips_live()
+        if k == "verdict":          # no flip_conditions (format v4, Peter 2026-11-13: the reply ends at the decision)
             d = {"kind": "verdict", "choice": d.get("choice"), "course": d.get("course"), "relation": d.get("relation"),
-                 "via": d.get("via"), "decisive": d.get("decisive"), "now": d.get("now"),
-                 "flip_conditions": {"would_change": [{"id": w["id"], "if": w["if"], "then": w["then"], "why": w["why"]}
-                                                      for w in fl["would_change"]],
-                                     "would_not_change": fl["would_not_change"], "watch_for": fl["watch_for"]}}
+                 "via": d.get("via"), "decisive": d.get("decisive"), "now": d.get("now")}
         out.append({"kind": k, **{kk: vv for kk, vv in d.items() if kk != "kind"}})
     return out
 
@@ -182,8 +180,10 @@ def writer_messages(p: Prep) -> list[dict]:
     system = prompt_ref(WRITER_PROMPT)[0]
     student = "\n\n".join(f"[{m['role']}]\n{m['content']}" for m in p.ep.messages)
     brief = gold_brief(p.g, p.quotes)
+    brief.pop("live_flip_conditions", None)       # the reply has no flip conditions (format v4)
     if p.g.pair.relation == "not_governed":
-        brief["note"] = "The case does not govern: write the documents through `applicability` and stop (A3)."
+        brief["note"] = ("The case does not govern: after `applicability`, write the reasoning without case_approach, "
+                         "weighing the live considerations on their own, and the verdict with the gold choice (A3).")
     fixed = emit(list(fixed_docs(p.g).values()))
     user = ("STUDENT PROMPT (everything the student sees)\n<student_prompt>\n" + student + "\n</student_prompt>\n\n"
             "GOLD STRUCTURE (fixed; the student does not see it)\n<gold>\n"
@@ -200,24 +200,12 @@ def write(p: Prep, tries: int = 2, call=None) -> dict:
         raw = (call or (lambda m: complete("sft_writer", m, stage="sft-write")))(msgs) or ""
         docs = parse_docs(raw)
         text = emit(normalize(docs, p.g))
-        chk = check_reply(text, p.g) if p.g.pair.relation != "not_governed" else _check_through_applicability(text, p.g)
+        chk = check_reply(text, p.g)
         last = {"try": t, "raw": raw, "text": text, "accepted": chk["accepted"], "reasons": chk["reasons"],
                 "flags": chk["flags"]}
         if chk["accepted"]:
             break
     return last
-
-
-def _check_through_applicability(text: str, g: GoldStructure) -> dict:
-    """Random arm: the writer stops at applicability. Check what is there with a placeholder verdict appended."""
-    stub = text.rstrip() + "\n---\n" + emit([{"kind": "verdict", "choice": g.choice, "course": "x", "relation":
-                                               "not_governed", "via": None, "decisive": [], "now": ["x"],
-                                               "flip_conditions": {"would_change": [], "would_not_change": [],
-                                                                   "watch_for": []}}])
-    c = check_reply(stub, g)
-    c["reasons"] = [r for r in c["reasons"] if not r.startswith("choice")]
-    c["accepted"] = not c["reasons"]
-    return c
 
 
 # ============================================================================================== prose fields
@@ -347,6 +335,15 @@ def gate(p: Prep, text: str, judge, reference: str | None = None, choice: str | 
 
 
 # ============================================================================================== Granite W+V (gold-conditioned)
+def drop_flips(text: str) -> str:
+    """A target written under format v3 -> format v4: the verdict loses flip_conditions; nothing else changes."""
+    docs = list(yaml.safe_load_all(text))
+    for d in docs:
+        if d.get("kind") == "verdict":
+            d.pop("flip_conditions", None)
+    return emit(docs)
+
+
 def prefix_through_applicability(text: str) -> str:
     docs = [d for d in yaml.safe_load_all(text) if d["kind"] in ORDER[:5]]
     return emit(docs) + "---\nkind: reasoning\n"
@@ -394,15 +391,13 @@ def nocase_wv(store, p: Prep, k: int = 4, seed0: int = 0) -> list[dict]:
 
 
 def splice_random(writer_text: str, r: dict, v: dict, g: GoldStructure) -> str:
+    """Writer's documents through applicability (not_governed) + Granite's no-case reasoning and verdict. No
+    case_approach after not_governed (Peter, 2026-11-12); no flip_conditions (format v4, Peter 2026-11-13)."""
     docs = [d for d in yaml.safe_load_all(writer_text) if d["kind"] in ORDER[:5]]
-    # no case_approach after not_governed: the case was judged irrelevant (Peter, 2026-11-12; reply schema relaxed)
     reasoning = {"kind": "reasoning", "case": _served_id(g),
                  **{k: x for k, x in r.items() if k not in ("kind", "case", "case_approach")}}
-    fl = g.flips_live()                       # V's flip conditions are X1's gold, as on every other arm
     verdict = {"kind": "verdict", "choice": v.get("choice"), "course": v.get("course"), "relation": "not_governed",
-               "via": None, "decisive": v.get("decisive"), "now": v.get("now"),
-               "flip_conditions": {"would_change": fl["would_change"], "would_not_change": fl["would_not_change"],
-                                   "watch_for": fl["watch_for"]}}
+               "via": None, "decisive": v.get("decisive"), "now": v.get("now")}
     return emit(docs + [reasoning, verdict])
 
 
@@ -443,6 +438,45 @@ def guided_rs(p: Prep, writer_text: str, k: int = 2, seed0: int = 100, guide: bo
         out.append({"i": i, "raw": c.raw_text, "text": text, "accepted": chk["accepted"], "reasons": chk["reasons"],
                     "finish": c.finish_reason, "choice": (d2.get("verdict") or {}).get("choice"),
                     "relation": (d2.get("verdict") or {}).get("relation")})
+    return out
+
+
+def guided_nocase(store, p: Prep, writer_text: str, k: int = 2, seed0: int = 100) -> list[dict]:
+    """Random arm with the answer key (Peter, 2026-11-13): base Granite on X1 WITHOUT the case (the -noref prompt, his
+    2026-11-12 design: T(X1) + E, no C(X2)), with the writer's not_governed reasoning and verdict as notes (relation
+    and via removed: the no-case format has neither), prefilled with the fixed F and K documents. Its reasoning and
+    verdict are spliced in after the writer's not_governed applicability; kept iff the spliced reply passes
+    check_reply (gold choice included)."""
+    from concurrent.futures import ThreadPoolExecutor
+    from eval.allpairs import none_pair
+    from harness.client import continue_episode
+    from pipeline.solve.rs import _rerender
+    docs = list(yaml.safe_load_all(writer_text))
+    keep = []
+    for d in docs:
+        if d["kind"] == "reasoning":
+            keep.append({kk: vv for kk, vv in d.items() if kk not in ("case", "case_approach")})
+        elif d["kind"] == "verdict":
+            keep.append({kk: vv for kk, vv in d.items() if kk not in ("relation", "via", "flip_conditions")})
+    ep0 = student_episode(none_pair(store, p.cell["x1"], p.built.pair.equities), store, settings=p.settings)
+    msgs = [dict(m) for m in ep0.messages]
+    msgs[-1]["content"] = msgs[-1]["content"] + NOTES.format(notes=emit(keep))
+    ep = _rerender(ep0, msgs, p.settings)
+    partial = emit(list(fixed_docs(p.g).values())) + "---\nkind: reasoning\n"
+    with ThreadPoolExecutor(k) as ex:
+        comps = list(ex.map(lambda i: continue_episode(ep, p.settings.with_(seed=seed0 + i), partial, role="policy",
+                                                       seed=seed0 + i), range(k)))
+    out = []
+    for i, c in enumerate(comps):
+        d2 = parse_docs(c.raw_text.split("</think>", 1)[-1])
+        r, v = d2.get("reasoning"), d2.get("verdict")
+        rec = {"i": i, "raw": c.raw_text, "finish": c.finish_reason, "choice": (v or {}).get("choice"),
+               "relation": "not_governed", "accepted": False, "reasons": ["no reasoning/verdict parsed"], "text": None}
+        if r and v:
+            text = splice_random(writer_text, r, v, p.g)
+            chk = check_reply(text, p.g)
+            rec.update(text=text, accepted=chk["accepted"], reasons=chk["reasons"])
+        out.append(rec)
     return out
 
 

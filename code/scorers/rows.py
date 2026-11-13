@@ -510,6 +510,8 @@ def verdict_flip_conditions(ctx: ScoringContext, **w) -> dict | None:
     option alignment), averaged over the gold flips that have a then."""
     if ctx.key.flip_conditions is None or ctx.agent_not_governed:
         return None
+    if "flip_conditions" not in ctx.step("verdict"):     # format v4 has none (Peter, 2026-11-13): not scored
+        return None
     gold_flips = ctx.key.flip_conditions
     include_noflip = any(f.then is None for f in gold_flips)
     agent = _agent_flips(ctx, include_noflip)

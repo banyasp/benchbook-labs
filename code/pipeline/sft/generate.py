@@ -8,9 +8,11 @@ Per cell (pairs-v1, X1 = anchor with a trace, X1 and every served anchor in the 
              guidance, after the gold prefill F..applicability (targets.guided_rs, guide=True), k=2 per round, up to
              ROUNDS rounds. A sample is kept iff it passes check_reply AND Jev says its W supports the gold choice AND
              makes the same argument as Luna's. No sample kept -> Luna's own target (source "luna").
-             random (not_governed): base Granite WITHOUT the case writes W and V (targets.nocase_wv), spliced after the
-             not_governed applicability (no case_approach). Kept iff the spliced reply parses, its choice is a live
-             option and Jev says W supports Granite's own choice. None kept -> the cell is dropped (no fallback).
+             random (not_governed): the same, except Granite gets the no-case prompt (T(X1) + E, no C(X2)) with
+             Luna's no-case reasoning + verdict as notes and the F, K prefill; its W and V are spliced after the
+             not_governed applicability (no case_approach). Same acceptance: gold choice, both gates, else Luna.
+             (Until 2026-11-13 the random arm used Granite's own no-case choice; Peter: follow the answer key.)
+    format   v4 (Peter, 2026-11-13): the verdict has no flip_conditions; the reply ends at the decision.
     assemble sft.jsonl rows: the exact model input (generation prompt, mode B, ends with the empty think block) and the
              completion (the target documents), plus chat messages, provenance and a sha256 per row.
 
@@ -40,7 +42,6 @@ from bench.models import ROOT
 ARMS = ["self", "transfer", "transfer_flip", "same_domain_flip", "noflip", "neighbor", "random"]   # no revised (Peter)
 ROUNDS = 2              # guided rounds of k=2 before falling back to Luna's text
 K = 2
-K_RANDOM = 4
 _lock = threading.Lock()
 
 
@@ -75,8 +76,8 @@ def select(run: Path, cells_file: str, splits: list[str]) -> list[dict]:
     run.mkdir(parents=True, exist_ok=True)
     (run / "cells.json").write_text(json.dumps(out, indent=1))
     (run / "config.json").write_text(json.dumps({
-        "cells_file": cells_file, "splits": splits, "arms": ARMS, "rounds": ROUNDS, "k": K, "k_random": K_RANDOM,
-        "pipeline": "M13 G+notes+guide (Peter 2026-11-13); random arm no-case W+V; format v3, mode B",
+        "cells_file": cells_file, "splits": splits, "arms": ARMS, "rounds": ROUNDS, "k": K,
+        "pipeline": "M13 G+notes+guide (Peter 2026-11-13); random arm no-case W+V to the gold; format v4, mode B",
         "created": _now(), "by_arm": dict(Counter(c["arm"] for c in out))}, indent=1))
     return out
 
@@ -113,46 +114,22 @@ def write_stage(run: Path, workers: int):
 
 
 # ---------------------------------------------------------------------------------------------- W + V (Granite)
-def _validate_random(text: str, p) -> list[str]:
-    from bench.schema.reply import parse_reply
-    pr = parse_reply(text)
-    why = [f"{k}: {v}" for k, v in pr.errors.items()] + [f"missing {k}" for k in pr.missing]
-    ch = str((pr.steps.get("verdict") or {}).get("choice"))
-    if ch not in p.g.option_ids:
-        why.append(f"choice {ch} is not a live option")
-    return why
-
-
 def wv_one(store, judge, c: dict, w: dict) -> dict:
+    """Granite writes W and V guided by Luna's notes, k=K per round, up to ROUNDS rounds; the first sample that passes
+    check_reply (gold structure and choice) and both Jev gates (supports the gold choice; same argument as Luna's) is
+    the target, else Luna's own text. Non-random: the student prompt with the case (targets.guided_rs). Random
+    (not_governed): the no-case prompt, spliced after the not_governed applicability (targets.guided_nocase; Peter
+    2026-11-13: random-arm targets follow the answer key, not Granite's own choice)."""
     from pipeline.sft import targets as T
     p = T.prepare(store, c, aligned=w.get("aligner"))
+    nocase = p.g.pair.relation == "not_governed"
     rec = {"cell": c["cell"], "arm": c["arm"], "x1": c["x1"], "x2": c["x2"], "relation": p.g.pair.relation,
-           "choice": p.g.choice}
-    if p.g.pair.relation == "not_governed":
-        ss = T.nocase_wv(store, p, k=K_RANDOM)
-        chosen = None
-        for s in ss:
-            if not (s["reasoning"] and s["verdict"]):
-                s["why"] = ["no reasoning/verdict parsed"]
-                continue
-            s["text"] = T.splice_random(w["text"], s["reasoning"], s["verdict"], p.g)
-            s["why"] = _validate_random(s["text"], p)
-            if s["why"]:
-                continue
-            s["gate"] = T.gate(p, s["text"], judge, choice=str(s["verdict"].get("choice")))
-            if s["gate"].get("supports"):
-                chosen = s
-                break
-        rec["samples"] = ss
-        if chosen:
-            rec.update(source="granite_nocase", target=chosen["text"], sample=chosen["i"],
-                       target_choice=str(chosen["verdict"].get("choice")), gate=chosen["gate"])
-        else:
-            rec.update(source=None, target=None)
-        return rec
+           "choice": p.g.choice, "format": "v4"}
     rounds, chosen = [], None
     for r in range(ROUNDS):
-        ss = T.guided_rs(p, w["text"], k=K, seed0=100 + K * r, guide=True)
+        seed0 = 100 + K * r
+        ss = (T.guided_nocase(store, p, w["text"], k=K, seed0=seed0) if nocase
+              else T.guided_rs(p, w["text"], k=K, seed0=seed0, guide=True))
         for s in ss:
             if s["accepted"]:
                 s["gate"] = T.gate(p, s["text"], judge, reference=w["text"])
@@ -163,12 +140,14 @@ def wv_one(store, judge, c: dict, w: dict) -> dict:
             break
     rec["rounds"] = rounds
     if chosen:
-        rec.update(source="granite_guided", target=chosen["text"], sample=[len(rounds) - 1, chosen["i"]],
-                   target_choice=str(chosen.get("choice")), gate=chosen["gate"],
-                   ca=T.case_approach_quality(p, chosen["text"], judge))
+        rec.update(source="granite_nocase" if nocase else "granite_guided", target=chosen["text"],
+                   sample=[len(rounds) - 1, chosen["i"]], target_choice=str(chosen.get("choice")), gate=chosen["gate"])
+        if not nocase:
+            rec["ca"] = T.case_approach_quality(p, chosen["text"], judge)
     else:
-        rec.update(source="luna", target=w["text"], target_choice=p.g.choice,
-                   ca=T.case_approach_quality(p, w["text"], judge))
+        rec.update(source="luna", target=w["text"], target_choice=p.g.choice)
+        if not nocase:
+            rec["ca"] = T.case_approach_quality(p, w["text"], judge)
     return rec
 
 
@@ -217,18 +196,25 @@ def assemble(run: Path) -> dict:
             continue
         c, w = cells[cid], W[cid]
         p = T.prepare(store, c, aligned=w.get("aligner"))
-        prompt = p.ep.generation_prompt                 # mode B: ends with the empty think block
+        prompt = p.ep.generation_prompt                 # mode B: ends with the empty think block (format v4)
+        target = T.drop_flips(v["target"])              # targets generated under v3 lose verdict flip_conditions
         row = {"id": f"sft-{cid}", "cell": cid, "arm": c["arm"], "x1": c["x1"], "x2": c["x2"], "chain": c["chain"],
                "relation": v["relation"], "gold_choice": v["choice"], "target_choice": v.get("target_choice"),
-               "source": v["source"], "gate": v.get("gate"), "format": "v3", "mode": "B", "policy": T.GRANITE,
-               "prompt": prompt, "completion": v["target"],
-               "messages": [*p.ep.messages, {"role": "assistant", "content": p.ep.opener + v["target"]}],
+               "source": v["source"], "gate": v.get("gate"), "format": "v4", "mode": "B", "policy": T.GRANITE,
+               "prompt": prompt, "completion": target,
+               "messages": [*p.ep.messages, {"role": "assistant", "content": p.ep.opener + target}],
                "tools": p.ep.tools}
-        row["sha256"] = hashlib.sha256((prompt + "\x00" + v["target"]).encode()).hexdigest()
+        row["sha256"] = hashlib.sha256((prompt + "\x00" + target).encode()).hexdigest()
         rows.append(row)
     with open(run / "sft.jsonl", "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    with open(run / "golden.jsonl", "w") as f:        # the trainer's record format (training.sft_data)
+        for r in rows:
+            f.write(json.dumps({"id": r["id"], "prompt_text": r["prompt"], "completion": r["completion"], "prefill": "",
+                                "meta": {"mode": r["mode"], "format": r["format"], "arm": r["arm"],
+                                         "source": r["source"], "cell": r["cell"], "sha256": r["sha256"]}},
+                               ensure_ascii=False) + "\n")
     rep = report(run)
     return {"rows": len(rows), "report": rep}
 

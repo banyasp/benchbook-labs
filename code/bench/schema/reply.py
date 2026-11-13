@@ -189,7 +189,7 @@ class Verdict(Strict):
     via: list[str] | None = None     # served case would_change id(s) that fired; required iff relation is flips
     decisive: list[str]
     now: list[str]
-    flip_conditions: VerdictFlips
+    flip_conditions: VerdictFlips | None = None   # dropped from format v4 (Peter, 2026-11-13); older replies still parse
 
     @field_validator("via", mode="before")
     @classmethod

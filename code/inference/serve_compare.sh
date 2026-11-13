@@ -17,7 +17,9 @@ export HF_HOME="${HF_HOME:-/data/hf}"
 case "${1:-}" in
   --stop) tmux kill-session -t "$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION not running"; exit 0 ;;
   qwen35)     MODEL=Qwen/Qwen3.5-9B;                         NAME=qwen3.5-9b;                PARSER=qwen3;   EXTRA_M="" ;;
-  gemma4)     MODEL=google/gemma-4-12B-it;                   NAME=gemma-4-12b-it;            PARSER=gemma4;  EXTRA_M="--limit-mm-per-prompt '{\"image\":0,\"audio\":0}'" ;;
+  gemma4)     MODEL=google/gemma-4-12B-it;                   NAME=gemma-4-12b-it;            PARSER=gemma4;  EXTRA_M="--limit-mm-per-prompt '{\"image\":0,\"audio\":0}'"
+              # vLLM 0.27.1 (main venv) cannot read Gemma 4's per-layer config; a separate venv has vLLM 0.33.0 (2026-11-13)
+              VENV="${VENV_GEMMA4:-$(cd ../.. && pwd)/.venv-gemma4}" ;;
   olmo3)      MODEL=allenai/Olmo-3-7B-Think;                 NAME=olmo-3-7b-think;           PARSER=olmo3;   EXTRA_M="" ;;
   ministral3) MODEL=mistralai/Ministral-3-14B-Reasoning-2512; NAME=ministral-3-14b-reasoning; PARSER=mistral; EXTRA_M="--tokenizer-mode mistral --config-format mistral --load-format mistral --limit-mm-per-prompt '{\"image\":0}'" ;;
   *) echo "usage: $0 qwen35|gemma4|olmo3|ministral3|--stop" >&2; exit 2 ;;

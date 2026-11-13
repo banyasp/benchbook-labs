@@ -41,10 +41,15 @@ def sft_args(cfg: dict, out: str, smoke: bool = False):
     return SFTConfig(**kw)
 
 
-def train(cfg: dict, examples, model, tokenizer, out: str, smoke: bool = False):
+def train(cfg: dict, examples, model, tokenizer, out: str, smoke: bool = False, eval_examples=None):
+    """eval_examples: a held-out set (e.g. dev-split cells) scored for loss every `eval_steps` (validation curve)."""
     from trl import SFTTrainer
     ds = sft_data.to_hf_dataset(examples)
-    trainer = SFTTrainer(model=model, args=sft_args(cfg, out, smoke), train_dataset=ds, processing_class=tokenizer,
+    ev = sft_data.to_hf_dataset(eval_examples) if eval_examples else None
+    args = sft_args(cfg, out, smoke)
+    if ev is None:
+        args.eval_strategy = "no"
+    trainer = SFTTrainer(model=model, args=args, train_dataset=ds, eval_dataset=ev, processing_class=tokenizer,
                          peft_config=lora_config(cfg["lora"]))
     trainer.train()
     return trainer
@@ -84,6 +89,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", default=str(DEFAULT_CONFIG))
     ap.add_argument("--data", help="golden JSONL (prompt_text/completion/prefill) built from harness runs")
+    ap.add_argument("--eval-data", help="held-out golden JSONL for the validation loss (e.g. dev-split cells)")
     ap.add_argument("--out", default="results/sft/run")
     ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args(argv)
@@ -123,8 +129,15 @@ def main(argv=None):
     kw = {"dtype": torch.bfloat16 if cfg["train"].get("bf16") else None}
     if (cfg.get("model") or {}).get("attn_implementation"):
         kw["attn_implementation"] = cfg["model"]["attn_implementation"]
+    ev = None
+    if a.eval_data or cfg["data"].get("eval_path"):
+        ev, ev_rej = sft_data.build_examples(sft_data.load_jsonl(a.eval_data or cfg["data"]["eval_path"]), tok,
+                                             cfg["data"]["verify_format"], max_len)
+        (Path(a.out) / "eval_rejects.json").write_text(json.dumps(ev_rej, indent=1))
+        print(f"{len(ev)} eval examples ({len(ev_rej)} rejected)", file=sys.stderr)
     model = AutoModelForCausalLM.from_pretrained(name, **kw)
-    tr = train(cfg, ex, model, tok, a.out)
+    tr = train(cfg, ex, model, tok, a.out, eval_examples=ev)
+    (Path(a.out) / "log_history.json").write_text(json.dumps(tr.state.log_history, indent=1))
     tr.save_model(str(Path(a.out) / "adapter"))
     return 0
 

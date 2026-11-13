@@ -29,7 +29,7 @@ anchors (74%), so a model-solved gold may depart from what a practitioner would 
 | Semantic no-op check for `target_f` | The smoke run produced a near-restatement ("concerns" → "continued to have concerns") that the strict pre-check passed; word-overlap distance cannot catch it. | Found in the smoke run; not yet built. | A cheap LLM check, "does the edited fact assert anything the original did not?", as an annotation. |
 | Console: run-over-run trend charts | The console shows each run and batch; it has no charts of a metric across runs or batches over time. | First version is tables only. | Add when there are enough batches to trend. |
 | SFT: full-scale target generation | Run the chosen pipeline (Luna writes; Granite writes W+V with notes + guidance; gates) over pairs-v1 full. | **Running** (2026-11-13): `results/sft/gen1`, 2,217 train cells, no revised arm (Peter). | `pipeline.sft.generate` write -> wv -> assemble; then M15. |
-| pairs-v1 evals on format v3 | SFT targets use `format.v3` (reasoning after not_governed, no case_approach there); evals of trained models must use the same prompt. | Decided 2026-11-13. | Pass `format_spec v3` in eval.allpairs runs on pairs-v1. |
+| pairs-v1 evals on format v4 | SFT targets use `format.v4` (v3's reasoning after not_governed, no case_approach there; no verdict flip_conditions, Peter 2026-11-13); evals of trained models must use the same prompt. | Decided 2026-11-13. | Pass `format_spec v4` in eval.allpairs runs on pairs-v1. |
 | `surface_edit` `match_options` | Rewrite all options as a matched set (similar length and texture) with K and V held, so option form carries no cue (R6, R70). | Being built (2026-11-11). | — |
 
 ## 3. Deferred (later, by decision)

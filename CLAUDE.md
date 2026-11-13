@@ -108,7 +108,13 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   `format.v3`). **Scope (Peter, 2026-11-13):** no revised-arm cells in SFT (from SFT's point of view revised is the
   same as self); only train-split anchors, and the served anchor of a random cell must be train too, so no eval
   scenario appears in a training prompt. Runner: `code/pipeline/sft/generate.py`. SFT generation has the GPU before
-  the comparison-model runs.
+  the comparison-model runs. **Random arm follows the answer key (Peter, 2026-11-13):** not Granite's own no-case
+  choice (wrong ~20% of the time; SFT steers the model hard in a domain where it has little other data). Luna writes
+  the not_governed reasoning and verdict to X1's gold; Granite rewrites them without the case, guided by Luna's notes;
+  same gates as the other arms. **Format v4 (Peter, 2026-11-13): the verdict has no `flip_conditions`.** The reply
+  ends once the decision is made; flip conditions live in the cases (from the corpus), not in the agent's reply. The
+  PDF's Fig. 3 verdict field and the scorer's flip_conditions row are dropped for v4 replies (the scorer returns None
+  when the verdict has none). Evals of SFT-trained models use format v4.
   Earlier ruling: **SFT targets come from rejection sampling the base model** (Peter, evening of 2026-10-25 — back in line with
   the PDF): Granite generates replies with two worked examples in the prompt and *no gold answer*; only samples
   that match gold structure (verdict, relation, `via`, applicability, mapping buckets) are kept. SFT is a warm
