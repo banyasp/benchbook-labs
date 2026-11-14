@@ -65,7 +65,12 @@ MODE = "C"
 #   free:   no step guidance and no method prompt; "decide", verdict block at the end
 SCAFFOLDS = {"schema": dict(format_spec="v1", modes_version="v1", analogical=True),
              "guided": dict(format_spec="v2guided", modes_version="v2", analogical=True),
-             "free": dict(format_spec="v2free", modes_version="v2", analogical=False)}
+             "free": dict(format_spec="v2free", modes_version="v2", analogical=False),
+             # the SFT format (Peter 2026-11-12/13): v3's YAML documents, reasoning after not_governed, no verdict
+             # flip_conditions. With --mode B and equities pilot2 the prompt is byte-identical to the SFT training
+             # prompts (pipeline.sft.targets, checked 2026-11-14 on one gen-val cell per arm), so base vs SFT compare
+             # on the trained prompt.
+             "v4": dict(format_spec="v4", modes_version="v1", analogical=True)}
 API_START_PROSE = ("\n\nYour reply is the written decision record specified above, for the deployer (your private chain "
                    "of thought stays hidden). End it with the verdict block exactly as specified.")
 SECONDARY = ("facts_enum", "facts_enum.found", "facts_enum.n_gold", "options_enum", "options_enum.found",
@@ -430,7 +435,7 @@ def main(argv=None):
     ap.add_argument("--x1", help="file of X1 scenario ids (need traces); stored in the run dir on first use")
     ap.add_argument("--x2", help="file of X2 scenario ids (default: the X1 list)")
     ap.add_argument("--model", default="base", choices=list(MODELS))
-    ap.add_argument("--mode", default=MODE, choices=["A", "C"],
+    ap.add_argument("--mode", default=MODE, choices=["A", "B", "C"],
                     help="C: the structured reply is the thinking (prefilled); A: free thinking first, then the reply "
                          "(2026-11-10 ablation: does Granite copy because the format leaves no room to reason?)")
     ap.add_argument("--scaffold", default="schema", choices=list(SCAFFOLDS),
@@ -483,7 +488,7 @@ def main(argv=None):
     ctx.modes_version = cfg.get("modes_version")
     if ctx.modes_version == "v2" and ctx.mode not in ("A", "B"):
         raise SystemExit("modes.v2 defines only A and B (no structure inside <think>): use --mode A")
-    if ctx.scaffold != "schema" and ctx.model not in API_ROLES and ctx.mode != "A":
+    if ctx.scaffold in ("guided", "free") and ctx.model not in API_ROLES and ctx.mode != "A":
         raise SystemExit("--scaffold guided/free has no structure to put inside <think>: use --mode A for Granite")
     if a.phase == "rescore":
         print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))

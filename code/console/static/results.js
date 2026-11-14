@@ -16,18 +16,20 @@
   const rows = D.rows.map(r => ({ ...r, rel: r.relationship }));
 
   // ---- state (kept in the URL hash so a view can be linked) ----
-  const S = { metric: 'correct', compare: 'policy', pol: new Set(POL.filter(p => rows.some(r => r.policy === p))),
+  const DS = Object.keys(D.datasets || {});
+  const S = { ds: DS.includes('pilot2') ? 'pilot2' : DS[0], metric: 'correct', compare: 'policy', pol: new Set(POL.filter(p => rows.some(r => r.policy === p))),
               scf: new Set(SCF), rel: new Set(RELS), ci: true, earlier: false };
   try {
     const h = new URLSearchParams(location.hash.slice(1));
     if (h.get('m') && D.metrics[h.get('m')]) S.metric = h.get('m');
+    if (h.get('d') && DS.includes(h.get('d'))) S.ds = h.get('d');
     if (h.get('c')) S.compare = h.get('c') === 'scaffold' ? 'scaffold' : 'policy';
     ['pol', 'scf', 'rel'].forEach(k => { if (h.has(k)) S[k] = new Set(h.get(k).split('|').filter(Boolean)); });
     if (h.has('ci')) S.ci = h.get('ci') === '1';
     if (h.has('e')) S.earlier = h.get('e') === '1';
   } catch (e) { /* bad hash: defaults */ }
   const saveHash = () => {
-    const h = new URLSearchParams({ m: S.metric, c: S.compare, pol: [...S.pol].join('|'), scf: [...S.scf].join('|'),
+    const h = new URLSearchParams({ d: S.ds, m: S.metric, c: S.compare, pol: [...S.pol].join('|'), scf: [...S.scf].join('|'),
                                     rel: [...S.rel].join('|'), ci: S.ci ? '1' : '0', e: S.earlier ? '1' : '0' });
     history.replaceState(null, '', '#' + h.toString());
   };
@@ -35,6 +37,9 @@
   // ---- controls ----
   const msel = $('rx-metric');
   Object.entries(D.metrics).forEach(([k, v]) => { const o = document.createElement('option'); o.value = k; o.textContent = v.label; msel.appendChild(o); });
+  const dsel = $('rx-dataset');
+  DS.forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = D.datasets[k]; dsel.appendChild(o); });
+  dsel.value = S.ds; dsel.addEventListener('change', () => { S.ds = dsel.value; draw(); });
   msel.value = S.metric; $('rx-compare').value = S.compare; $('rx-ci').checked = S.ci; $('rx-earlier').checked = S.earlier;
   function boxes(host, items, set, label) {
     items.forEach(it => {
@@ -52,7 +57,7 @@
   $('rx-earlier').addEventListener('change', e => { S.earlier = e.target.checked; draw(); });
 
   // ---- helpers ----
-  const filtered = () => rows.filter(r => S.pol.has(r.policy) && S.scf.has(r.scaffold) && S.rel.has(r.rel) &&
+  const filtered = () => rows.filter(r => r.cells === S.ds && S.pol.has(r.policy) && S.scf.has(r.scaffold) && S.rel.has(r.rel) &&
                                          (S.earlier || r.variant !== 'earlier'));
   const variantTag = r => r.variant === 'earlier' ? ` (${r.thinking === 'in_structure' ? 'YAML in thinking' : 'mode ' + r.mode_line})` : '';
   const seriesOf = r => S.compare === 'policy'

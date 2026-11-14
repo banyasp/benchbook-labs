@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% block title %}Results explorer · Benchbook{% endblock %}{% block content %}
+<link rel="stylesheet" href="/static/results.css">
+<h1>Results explorer</h1>
+<p class="muted small">Choice accuracy and reply diagnostics for every registered run, broken down by the relationship
+between the served case and the live trace. Each number is the mean over live scenarios (X1) of each X1's mean; the
+whiskers and brackets are 95% bootstrap intervals that resample scenario families. Source:
+<a href="/file?path={{ d.tensor|q }}">{{ d.tensor }}</a> (built {{ d.built }}) from
+<a href="/file?path=measurements/runs.yaml">runs.yaml</a>; method and readings in
+<a href="/doc?path=measurements/M11-scaffold-ablation.md">M11</a>.</p>
+
+{% if d.missing %}<p class="bad">No tensor yet: run <code>python -m eval.analysis.tensor build</code>.</p>{% else %}
+
+<div class="rx-cover">
+  <div><span class="rx-k">Relationships measured</span>
+    {% for r in d.relationships if r.measured %}<span class="badge ok" title="{{ r.what }}">{{ r.label }}</span> {% endfor %}</div>
+  <div><span class="rx-k">Not yet measured</span>
+    {% for r in d.relationships if not r.measured %}<span class="badge" title="{{ r.what }}">{{ r.label }}</span> {% endfor %}
+    <span class="small muted">(pairs-v1 has these arms; its evals are outstanding)</span></div>
+  {% if d.pending %}<div><span class="rx-k">Runs pending</span>
+    {% for p in d.pending %}<span class="badge warn">{{ p.model }} · {{ p.scaffold }}</span> {% endfor %}</div>{% endif %}
+</div>
+
+<form class="rx-filters" id="rx-filters" onsubmit="return false">
+  <label>Metric <select id="rx-metric"></select></label>
+  <label>Bars <select id="rx-compare">
+    <option value="policy">models (one panel per scaffold)</option>
+    <option value="scaffold">scaffolds (one panel per model)</option></select></label>
+  <fieldset><legend>Models</legend><span id="rx-policies"></span></fieldset>
+  <fieldset><legend>Scaffolds</legend><span id="rx-scaffolds"></span></fieldset>
+  <fieldset><legend>Relationships</legend><span id="rx-arms"></span></fieldset>
+  <label class="rx-tog"><input type="checkbox" id="rx-ci" checked> intervals</label>
+  <label class="rx-tog" title="Granite schema with YAML inside thinking (M07) and Luna schema with the v1 mode-C line (M06); not part of the size-class comparison"><input type="checkbox" id="rx-earlier"> earlier variants</label>
+</form>
+
+<p class="small muted" id="rx-help"></p>
+<div class="rx-legend" id="rx-legend" aria-label="legend"></div>
+<div class="rx-panels" id="rx-panels"></div>
+<div class="rx-tip" id="rx-tip" role="status" hidden></div>
+
+<h2>Table: <span id="rx-pivot-title"></span></h2>
+<p class="small muted">Rows follow the filters above. Each cell: value, 95% interval, replies. Hover a cell for the X1
+count; click a row's run to open it.</p>
+<div class="rx-scroll"><table class="grid rx-pivot" id="rx-pivot"></table></div>
+
+<h2>All numbers</h2>
+<p class="small muted">Every metric for the filtered rows. Click a header to sort. <button type="button" id="rx-csv">Download CSV</button></p>
+<div class="rx-scroll"><table class="grid sortable rx-long" id="rx-long"></table></div>
+
+<h2>Relationships</h2>
+<table class="grid"><tr><th>Relationship</th><th>Served case</th><th>Expected relation</th><th>Arm names</th><th>Measured</th></tr>
+{% for r in d.relationships %}<tr><td>{{ r.label }}</td><td>{{ r.what }}</td><td><code>{{ r.relation or '—' }}</code></td>
+<td class="mono small">{{ r.arms|join(', ') }}</td><td>{% if r.measured %}<span class="ok">yes</span>{% else %}<span class="muted">not yet</span>{% endif %}</td></tr>{% endfor %}</table>
+
+<script type="application/json" id="rx-data">{{ d|js }}</script>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/results.js"></script>{% endblock %}

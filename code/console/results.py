@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TENSOR = ROOT / "results" / "tensor" / "replies.parquet"
 CACHE = ROOT / "results" / "tensor" / "summary.json"
-VERSION = 4                                    # bump when the summary's fields change (invalidates the cache)
+VERSION = 5                                    # bump when the summary's fields change (invalidates the cache)
 
 # arm -> (relationship label, what the served case is, expected relation). Order = display order.
 ARMS = {
@@ -52,8 +52,11 @@ POLICIES = {
     "olmo-3-7b-think": "Olmo 3 7B Think",
     "ministral-3-14b-reasoning": "Ministral 3 14B",
     "gemma-4-12b-it": "Gemma 4 12B",
+    "granite-4.2-8b+sft-gen1": "Granite SFT gen1",
+    "granite-4.2-8b+sft-gen1-ckpt300": "Granite SFT gen1 (step 300)",
 }
-SCAFFOLDS = ["free", "guided", "schema"]
+DATASETS = {"pilot2": "pilot 2 (28 X1s; M06-M11)", "pv1-val": "pairs-v1 val (61 X1s)", "pv1-test": "pairs-v1 test"}
+SCAFFOLDS = ["free", "guided", "schema", "v4"]
 
 # The size-class comparison (M11) uses the v2 mode-A line everywhere except Granite schema, whose think-first run
 # is M09 (mode line v1.A). The two older schema runs (Granite YAML-in-thinking M07, Luna with the v1 mode-C line M06)
@@ -130,7 +133,7 @@ def _build() -> dict:
             "run": run, "policy": f["policy"], "model": POLICIES.get(f["policy"], f["policy"]),
             "scaffold": f["scaffold"], "thinking": f["thinking"], "mode_line": f["mode_line"],
             "measurement": f.get("measurement"), "status": f["status"], "variant": "earlier" if run in EARLIER else "main",
-            "arm": arm, "relationship": ARMS.get(arm, (arm,))[0], "k": int(g["idx"].max()) + 1,
+            "cells": f["cells"], "arm": arm, "relationship": ARMS.get(arm, (arm,))[0], "k": int(g["idx"].max()) + 1,
             "metrics": {k: _boot(g, k) for k in METRICS},
         })
     return {"version": VERSION, "tensor_mtime": TENSOR.stat().st_mtime, "rows": rows}
@@ -168,6 +171,7 @@ def summary() -> dict:
         pass
     return {**s, "arm_order": ARM_ORDER, "relationships": rels, "policies": POLICIES, "scaffolds": SCAFFOLDS,
             "metrics": {k: {"label": v[0], "help": v[1]} for k, v in METRICS.items()}, "pending": pending,
+            "datasets": {k: DATASETS.get(k, k) for k in dict.fromkeys(r["cells"] for r in s["rows"])},
             "tensor": str(TENSOR.relative_to(ROOT)), "built": _iso(s.get("tensor_mtime"))}
 
 
