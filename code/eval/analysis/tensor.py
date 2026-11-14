@@ -45,6 +45,10 @@ OUT = Path("results/tensor/replies.parquet")
 FACTORS = ["policy", "scaffold", "thinking", "max_tokens", "mode_line", "cells", "traces", "equities", "card_view",
            "scoring", "run", "status"]
 ARM_ORDER = ["control", "self", "transfer", "flip", "decoy"]
+# arms whose served case has its own verdict to copy (pilot-2 names + pairs-v1 names, 2026-11-14). On the flip arms
+# copying is the error; on the follows arms it coincides with being right.
+COPY_ARMS = {"transfer", "flip", "transfer_flip", "same_domain_flip", "flip_neighbor", "neighbor", "noflip",
+             "xd_neighbor", "xd_noflip"}
 
 
 def _ok(v):
@@ -72,7 +76,7 @@ def build(registry: Path = REGISTRY, out: Path = OUT, contamination: bool = True
         for r in S:
             arm = r["phase"]
             copied = math.nan
-            if arm in ("transfer", "flip") and r.get("x2"):
+            if arm in COPY_ARMS and r.get("x2"):
                 cv.setdefault(r["x2"], case_verdict_as_x1(store, r["x2"]))
                 copied = float(r.get("translated_choice") == cv[r["x2"]])
             contam = math.nan
