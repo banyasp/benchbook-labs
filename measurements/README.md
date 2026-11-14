@@ -38,7 +38,7 @@ Each `M<nn>-*.md` file answers:
 | [M08](M08-flip-arm-mechanism.md) | 2026-11-10 | Flip arm: relation, via, mapping buckets, contamination | COMPLETE (pilot 2 C vs Luna) |
 | [M09](M09-transfer-pilot2-granite-modeA.md) | 2026-11-10 | Transfer pilot 2, Granite thinks first (mode A) | COMPLETE (k=8) |
 | [M10](M10-earlier-and-stopped-sets.md) | various | Earlier measurement sets and the stopped B2 grid (pointers only) | — |
-| [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema; Granite, Luna, Qwen 3.5, Olmo 3, Ministral 3 (Gemma 4 pending) | COMPLETE (size class partial) |
+| [M11](M11-scaffold-ablation.md) | 2026-11-10 | Scaffold ablation: free vs guided vs schema; Granite, Luna, Qwen 3.5, Olmo 3, Ministral 3, Gemma 4 | COMPLETE |
 | [M12](M12-option-length-and-support-cues.md) | 2026-11-11 | Shortcut cues: gold option length and fact support in the store | COMPLETE (corrected 2026-11-11: no cue in anchors; cue in transfer sisters) |
 | [M13](M13-sft-w-experiment.md) | 2026-11-12 | SFT W experiment: Luna + Granite restate vs Granite alone vs Granite guided by Luna's notes (24 pairs-v1 cells) | COMPLETE |
 | [M14](M14-pairs-v1-full-build.md) | 2026-11-13 | pairs-v1 full build: 5,264 cells over 878 anchors, yields per arm | COMPLETE |

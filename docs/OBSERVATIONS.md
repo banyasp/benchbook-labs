@@ -10,6 +10,17 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O29 · 2026-11-14 · Gemma 4 12B copies a flipped case far less than the other small models
+On pilot 2's flip-transfer arm, Gemma 4 12B (thinking on, model-card sampling) copies the flipped sister's verdict in
+35% (free), 22% (guided) and 29% (schema) of replies and scores 42 / 61 / 55 against the key, where Granite copies
+49% / 48% / 49% and scores 28 / 29 / 31, and Olmo copies 69%. Luna copies 10-11% and scores 70 / 77 / 80. Gemma also
+keeps its format under the schema (96% readable vs Qwen 48%, Olmo 37%) and thinks longer (median 6.3k-10.0k
+characters). A 12B open model gets about halfway from Granite to Luna on the flip, so the flip weakness is not a fixed
+property of the size class. Worth reading a sample of Gemma's guided flip replies to see what it does that Granite
+does not (it may be the check of whether the flip condition holds in the live trace).
+- Sources: runs `results/transfer/pilot2-gemma4-{free,guided,schemaA}` (`samples.jsonl`, `raw/`), M11 size-class table,
+  console `/results` (dataset pilot2, metric "Copied the case's verdict").
+
 ### O28 · 2026-11-14 · An unrelated case moves no model beyond its own sampling noise (pilot 2)
 Scored as Peter asked for the unrelated arm (agreement with the model's own no-case choice on the same X1, not the
 answer key), another anchor's case leaves every model where it was. The chance that an unrelated-arm reply matches a

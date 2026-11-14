@@ -183,11 +183,12 @@ passes) and schema YAML-in-think (M07).
   accuracy. Base numbers reported with the schema scaffold should say so, or be paired with the free-scaffold number.
 
 
-## Size-class comparison: four more local models (PARTIAL, started 2026-11-12)
+## Size-class comparison: four more local models (COMPLETE, 2026-11-12 to 2026-11-14)
 
 Peter, 2026-11-12: is Granite's schema cost common to models of its size class? Same data (pilot 2: 28 X1s, 151
 prompts), same three scaffolds, k=4, thinking first. Status: **Qwen, Olmo, Ministral COMPLETE (2026-11-13); Gemma 4
-pending** (vLLM 0.27.1 could not load it; a separate venv with vLLM 0.33.0 now serves it; run after the SFT training).
+COMPLETE (2026-11-14 01:02-06:05Z)** (vLLM 0.27.1 could not load it; served from `.venv-gemma4` with vLLM 0.33.0, after
+the SFT training).
 
 | Key | Model (HF) | Sampling (model card, thinking mode) |
 |---|---|---|
@@ -211,7 +212,7 @@ pending** (vLLM 0.27.1 could not load it; a separate venv with vLLM 0.33.0 now s
   course-text fallback in the scorer would be a scoring change applied to all runs (not done).
 - LLMs: the four policies above (local); judge Jev Choice (OpenRouter) as in M11.
 
-### Results (2026-11-13; Gemma 4 pending)
+### Results (2026-11-13; Gemma 4 added 2026-11-14)
 
 Accuracy against X1's key, per arm (X1-averaged, idx 0-3). "As scored" counts an unreadable reply as wrong;
 "readable" keeps only replies with a verdict whose choice maps to an option (selection-biased: unreadable replies
@@ -232,6 +233,9 @@ first four samples).
 | Ministral 3 14B | free | 37 | 81 | 78 | 26 (50%) | 46 | 80% | 56 / 96 / 89 / 28 / 66 |
 | | guided | 45 | 79 | 64 | 30 (31%) | 32 | 71% | 62 / 95 / 85 / 39 / 57 |
 | | schema | 54 | 80 | 73 | 23 (49%) | 41 | 77% | 64 / 93 / 96 / 30 / 65 |
+| Gemma 4 12B | free | 63 | 98 | 91 | 42 (35%) | 60 | 95% | 69 / 98 / 93 / 44 / 65 |
+| | guided | 60 | 97 | 92 | 61 (22%) | 60 | 95% | 65 / 98 / 94 / 61 / 64 |
+| | schema | 59 | 96 | 91 | 55 (29%) | 62 | 96% | 62 / 97 / 93 / 56 / 63 |
 | GPT-6 Luna (k=8) | free / guided / schema | 73 / 67 / 71 | 95 / 93 / 94 | 93 / 88 / 88 | 70 / 77 / 80 (10-11%) | 71 / 72 / 75 | 95-96% | — |
 
 Unreadable replies, by cause (Claude-checked from `samples.jsonl` and raw replies):
@@ -241,7 +245,55 @@ Unreadable replies, by cause (Claude-checked from `samples.jsonl` and raw replie
 - **Ministral, every scaffold:** no verdict in 14% (free), 23% (guided), 19% (schema). It often writes the verdict
   as Markdown (`**choice:** O2`, `**course:** …`) instead of the YAML block.
 
-**Reading (size class, Claude; Gemma 4 pending).**
+Gemma 4 diagnostics: off-menu 4.5% / 4.6% / 3.8% (free / guided / schema), no verdict ≤0.3%, truncated ≤0.2%;
+median completion 1,774 / 2,751 / 4,352 tokens with 6.3k / 8.8k / 10.0k characters of thinking. Source: tensor
+rebuilt 2026-11-14 06:10Z (`results/tensor/replies.parquet`, 15,704 rows), numbers from `console.results.summary()`
+(the `/results` page; same X1-averaged method). Intervals for Gemma (95% family bootstrap, as scored): no case
+63 [49, 78] / 60 [46, 75] / 59 [45, 74]; own 98 [94, 100] / 97 [94, 100] / 96 [88, 100]; transferred 91 [80, 98] /
+92 [81, 98] / 91 [81, 98]; flipped 42 [26, 58] / 61 [44, 78] / 55 [34, 72]; other anchor 60 [46, 73] / 60 [44, 76] /
+62 [50, 76].
+
+**Unrelated case: agreement with the model's own no-case choice** (Peter, 2026-11-13: the unrelated arm is read as
+"does the case move the model?", not against the key). For each readable reply, the share of the same model's
+readable no-case replies on that X1 (same scaffold) that chose the same option; X1-averaged, 95% family bootstrap.
+The no-case row is the baseline: the same measure for a no-case reply against the model's other no-case replies
+(leave-one-out), i.e. the model's own sampling consistency.
+
+| Model | Scaffold | No case vs no case (baseline) | Unrelated case vs no case | Difference |
+|---|---|---|---|---|
+| Granite 4.2 8B | free | 87 [79, 95] | 86 [79, 93] | −1 |
+| | guided | 83 [74, 92] | 83 [73, 91] | 0 |
+| | schema (M09) | 77 [67, 85] | 78 [70, 87] | +1 |
+| Qwen3.5 9B | free | 80 [66, 92] | 82 [73, 91] | +2 |
+| | guided | 89 [80, 97] | 89 [82, 95] | 0 |
+| | schema | 80 [60, 97] | 77 [65, 88] | −3 |
+| Olmo 3 7B Think | free | 72 [61, 83] | 71 [58, 83] | −1 |
+| | guided | 68 [57, 81] | 61 [50, 71] | −7 |
+| | schema | 100 [100, 100] (15% readable) | 68 [45, 90] | n/a |
+| Ministral 3 14B | free | 65 [49, 80] | 69 [58, 80] | +4 |
+| | guided | 68 [52, 83] | 63 [51, 76] | −5 |
+| | schema | 73 [60, 85] | 73 [61, 84] | 0 |
+| Gemma 4 12B | free | 90 [81, 96] | 84 [76, 92] | −6 |
+| | guided | 86 [77, 95] | 85 [77, 92] | −1 |
+| | schema | 84 [72, 94] | 82 [73, 91] | −2 |
+| GPT-6 Luna (k=8) | free | 96 [93, 99] | 90 [83, 97] | −6 |
+| | guided | 86 [78, 94] | 86 [78, 94] | 0 |
+| | schema | 89 [82, 97] | 89 [80, 96] | 0 |
+
+- An unrelated case moves no model beyond its own sampling noise: every difference is inside the intervals (O28).
+  Olmo schema's baseline rests on the 15% of no-case replies that are readable and is not interpretable.
+- The "% labelled not_governed" half of the unrelated-arm metric is not reported for pilot 2: these replies use the
+  pilot-2 formats, whose relation field is not comparable across scaffolds (free has none). It is reported for the
+  pairs-v1 format-v4 evals (M17).
+
+**Reading (size class, Claude; written 2026-11-13, Gemma 4 added 2026-11-14).**
+- **Gemma 4 12B is the strongest small model and the only one that resists the flip.** Flipped accuracy as scored
+  42 (free), 61 (guided), 55 (schema), copying the flipped sister's verdict in 35%, 22% and 29% of replies; Granite
+  scores 28 / 29 / 31 with copy rates 49% / 48% / 49%. Gemma guided's flip score (61 [44, 78]) is 16 points below
+  Luna guided (77) and 32 above Granite guided (29). Own case 98 / 97 / 96 and transferred 91 / 92 / 91 match Luna
+  (95 / 93 / 94 and 93 / 88 / 88). No case 63 / 60 / 59, against Granite's 50 / 53 / 45 and Luna's 73 / 67 / 71.
+- **Gemma has no schema cost at all:** 96% of its schema replies are readable (free 95%, guided 95%), and its schema
+  scores are within 1 point of free on own and transferred. Like Qwen, guidance helps its flip score (+19 over free).
 - **The case benefit is universal.** Own case reaches 93-96% (readable) for every model under every scaffold, from
   50-70% with no case. A transferred sister gives +20 to +38 points.
 - **The flip weakness is shared by the small models.** Flipped accuracy 11-39% (readable), against Luna's 70-80%. The
