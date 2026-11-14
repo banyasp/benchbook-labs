@@ -26,4 +26,13 @@ give the best model, found by an autoresearch-style loop (Karpathy) while the GP
 
 ## Results
 
-(pending)
+Validation loss after one epoch on the q1 subset (lower is better). Full rows: `code/training/autoresearch/results.tsv`.
+
+| Trial | Change | val loss | val token acc | train loss | min |
+|---|---|---|---|---|---|
+| ar-000 | baseline (lr 1e-4, r 16, alpha 32, eff. batch 8, cosine, warmup 0.05) | 0.45964 | 0.86483 | 0.52722 | 63.1 |
+| ar-001 | baseline, seed 1 | 0.45873 | 0.86527 | 0.52546 | 63.2 |
+
+**Noise floor (seed):** the two baseline seeds differ by 0.00091 in validation loss. One pair is a thin estimate, so a
+change is counted only if it beats the better baseline (0.45873) by at least 0.002 (about twice the seed gap);
+anything closer needs a second seed before it is adopted.
