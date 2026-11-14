@@ -43,6 +43,7 @@ Each `M<nn>-*.md` file answers:
 | [M13](M13-sft-w-experiment.md) | 2026-11-12 | SFT W experiment: Luna + Granite restate vs Granite alone vs Granite guided by Luna's notes (24 pairs-v1 cells) | COMPLETE |
 | [M14](M14-pairs-v1-full-build.md) | 2026-11-13 | pairs-v1 full build: 5,264 cells over 878 anchors, yields per arm | COMPLETE |
 | [M15](M15-sft-gen1.md) | 2026-11-13 | SFT targets at scale (gen1): 2,210 rows, all to the answer key; 88% Granite-guided, 2.9% Luna; format v4; relation-definition fix; val set 296 | COMPLETE |
+| [M16](M16-sft-run-gen1.md) | 2026-11-14 | LoRA SFT of Granite on gen1: val loss 0.465 -> 0.4134, flat in epoch 2, no overfitting; evaluate final adapter + checkpoint-300 | COMPLETE (training) |
 
 ## Datasets, the run registry and the tensor
 
