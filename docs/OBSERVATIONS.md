@@ -10,6 +10,19 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O28 · 2026-11-14 · An unrelated case moves no model beyond its own sampling noise (pilot 2)
+Scored as Peter asked for the unrelated arm (agreement with the model's own no-case choice on the same X1, not the
+answer key), another anchor's case leaves every model where it was. The chance that an unrelated-arm reply matches a
+random no-case reply equals the no-case replies' own leave-one-out agreement, within the intervals, for all five
+models and three scaffolds: e.g. Granite free 0.86 vs 0.87, Luna schema 0.89 vs 0.89, Qwen guided 0.89 vs 0.89,
+Ministral guided 0.63 vs 0.68, Olmo guided 0.61 vs 0.68 (Olmo schema 0.68 vs 1.00 rests on the few readable replies).
+So the small models' lower accuracy on the unrelated arm is their no-case accuracy, not distraction. Caveat: the pilot-2
+"unrelated" case is a cross-domain sister of another anchor chosen to share few equities, so it is easy to set aside;
+pairs-v1's random arm draws any other anchor.
+- Sources: `results/tensor/replies.parquet` (rebuilt 2026-11-14 with a `choice` column), console `/results` metrics
+  "Agrees with own no-case choice" / "Matches modal no-case choice" (`code/console/results.py`), arms `control` and
+  `decoy` of the M11 runs in `measurements/runs.yaml`.
+
 ### O27 · 2026-11-13 · Granite read `follows` as "I follow the case's rule"; spelling out the definition fixes much of it
 In the gen1 cells where no Granite sample passed, 233 of 324 failed samples had the gold choice and only the relation
 label wrong. Granite labelled flips as `follows` because the case's *rule* ("share externally unless an exception

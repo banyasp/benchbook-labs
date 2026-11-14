@@ -14,6 +14,7 @@ Outcomes per reply:
   contamination  share of the reply's own enumerated considerations that favor the flipped sister's verdict (X1s
                  with a flip cell; schema scaffold only, since guided/free have no structured considerations), else NaN
   relation       verdict.relation (schema scaffold with a case), else None
+  choice         the verdict mapped onto X1's options (Jev translation), else None (for agreement with no case)
   truncated, completion_tokens, thinking_chars
 
 Views. A metric is aggregated as the mean over X1 of each X1's mean (X1 = the unit of inference), with a 95%
@@ -90,6 +91,7 @@ def build(registry: Path = REGISTRY, out: Path = OUT, contamination: bool = True
                          "sample_id": r["sample_id"], "correct": _ok(r.get("correct")),
                          "scored": r.get("correct") is not None, "off_menu": float(bool(r.get("off_menu"))),
                          "no_verdict": float(r.get("parsed_choice") is None), "copied": copied,
+                         "choice": r.get("translated_choice"),
                          "contamination": contam, "relation": r.get("model_relation"),
                          "truncated": float(r.get("finish_reason") == "length"),
                          "completion_tokens": t.get("completion"), "thinking_chars": t.get("thinking_chars"),

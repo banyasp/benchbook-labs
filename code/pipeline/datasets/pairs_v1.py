@@ -228,11 +228,68 @@ def resume(inputs: str, tag: str, stamp: str, workers: int = 8, seed: int = 0, d
     return out
 
 
+# Extension arms (Peter, 2026-11-13): recipes in pairs_v1_ext/ take the served cases of an existing arm as input (not
+# anchors), so their chain is anchor -> earlier arm -> extension. recipe stem -> the arm whose X2s are its inputs.
+RECIPES_EXT = ROOT / "code" / "pipeline" / "ops" / "recipes" / "pairs_v1_ext"
+EXT = {"xd_neighbor": "transfer", "xd_noflip": "transfer", "flip_neighbor": "same_domain_flip"}
+
+
+def extend(tag: str, batch: str, anchors_file: str | None = None, exclude_file: str | None = None, workers: int = 8,
+           seed: int = 0, recipes: list[str] | None = None, stamp: str | None = None, dry: bool = False) -> dict:
+    """Run the extension recipes on the X2s of `cells-<tag>.json` (by EXT), for the anchors in `anchors_file` (default:
+    all) minus those in `exclude_file`. Each batch has its own run logs (balanced permutes balance within a batch) and
+    its own build file, build-<tag>-ext-<batch>.json, which assemble() merges. Resumable: pass the batch's stamp."""
+    import faulthandler
+    import signal
+    import sys
+    import traceback
+    from pipeline.ops.recipes import RUNS, load_recipe
+    faulthandler.register(signal.SIGUSR1, file=sys.stderr, all_threads=True)
+    rd = lambda f: {l.split()[0] for l in Path(f).read_text().splitlines() if l.strip() and not l.startswith("#")}
+    cells = json.loads((OUT / f"cells-{tag}.json").read_text())
+    keep = rd(anchors_file) if anchors_file else {c["x1"] for c in cells}
+    keep -= rd(exclude_file) if exclude_file else set()
+    stamp = stamp or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    store = Store()
+    files = [RECIPES_EXT / f"{n}.yaml" for n in EXT if not recipes or n in recipes]
+    t0 = time.time()
+    inputs = {}
+    for f in files:
+        ids = sorted({c["x2"] for c in cells if c["arm"] == EXT[f.stem] and c["x1"] in keep})
+        p = OUT / "ext-inputs" / f"{tag}-{batch}-{f.stem}.txt"
+        p.parent.mkdir(exist_ok=True)
+        p.write_text(f"# {f.stem} inputs: {EXT[f.stem]} X2s of cells-{tag}.json, batch {batch}\n" + "\n".join(ids) + "\n")
+        inputs[f.stem] = {"file": str(p.relative_to(ROOT)), "n": len(ids), "anchors": len(keep)}
+
+    def one(f):
+        rec = load_recipe(str(f))
+        ids = [l for l in (ROOT / inputs[f.stem]["file"]).read_text().splitlines() if l and not l.startswith("#")]
+        try:
+            return _resume_recipe(rec, ids, store, workers, seed, RUNS / f"{rec['name']}-{batch}-{stamp}.jsonl", dry=dry)
+        except Exception as e:                                          # noqa: BLE001
+            tb = traceback.format_exc()
+            print(f"!! {rec['name']} FAILED: {type(e).__name__}: {e}\n{tb}", flush=True)
+            return {"recipe": rec["name"], "error": f"{type(e).__name__}: {e}", "trace": tb[-3000:],
+                    "log": str(RUNS / f"{rec['name']}-{batch}-{stamp}.jsonl")}
+
+    with ThreadPoolExecutor(max_workers=len(files)) as ex:
+        res = dict(zip([f.stem for f in files], ex.map(one, files)))
+    out = {"tag": tag, "batch": batch, "stamp": stamp, "inputs": inputs, "seed": seed, "workers": workers,
+           "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t0)), "seconds": round(time.time() - t0),
+           "recipes": res}
+    if not dry:
+        (OUT / f"build-{tag}-ext-{batch}.json").write_text(json.dumps(out, indent=1, default=str))
+    return out
+
+
 # Which recipe step's output is served as which arm. drop_option is not an arm (Peter, 2026-11-11: it only shrinks
 # the choice set and makes guessing easier); its earlier outputs stay on disk but never enter cells.
 ARM_STEPS = {"transfer": [("transfer", 3), ("transfer_flip", 5)], "same_domain_flip": [("same_domain_flip", 2)],
-             "noflip": [("noflip", 2)], "revised": [("revised", 2)], "neighbor": [("neighbor", 3)]}
+             "noflip": [("noflip", 2)], "revised": [("revised", 2)], "neighbor": [("neighbor", 3)],
+             "xd_neighbor": [("xd_neighbor", 3)], "xd_noflip": [("xd_noflip", 2)],
+             "flip_neighbor": [("flip_neighbor", 3)]}
 ARMS = ["self", "transfer", "transfer_flip", "same_domain_flip", "noflip", "revised", "neighbor", "random"]
+EXT_ARMS = ["xd_neighbor", "xd_noflip", "flip_neighbor"]
 
 
 def _step_outputs(rows: list[dict], steps: list[dict], k: int) -> list[dict]:
@@ -347,6 +404,81 @@ def assemble(tag: str, seed: int = 0) -> dict:
     return man
 
 
+def assemble_ext(tag: str) -> dict:
+    """Extension arms -> cells-<tag>-ext.json (ids PV1-<tag>-x00000...), leaving cells-<tag>.json and its cell ids
+    untouched (SFT targets and eval runs refer to them). X1 = the anchor reached through the parent chain (extension
+    log -> earlier arm's log -> anchor); the key is X1's gold, as for every arm but revised. phi = the flip / noflip item
+    from the chain's structural_edit (flip_neighbor: the flip's item, kept by the neighbor writer; xd_noflip: the
+    noflip item)."""
+    from pipeline.ops.recipes import load_recipe
+    store = Store()
+    base = json.loads((OUT / f"cells-{tag}.json").read_text())
+    anchors_set = {c["x1"] for c in base}
+    b = json.loads((OUT / f"build-{tag}.json").read_text())
+    logs = {name: [json.loads(l) for l in Path(v["log"]).read_text().splitlines() if l.strip()]
+            for name, v in b["recipes"].items()}
+    ext_logs, ext_builds = defaultdict(list), sorted(OUT.glob(f"build-{tag}-ext-*.json"))
+    for eb in ext_builds:
+        for name, v in json.loads(eb.read_text())["recipes"].items():
+            if v.get("log") and Path(v["log"]).exists():
+                ext_logs[name] += [json.loads(l) for l in Path(v["log"]).read_text().splitlines() if l.strip()]
+    rows_all = [r for rs in list(logs.values()) + list(ext_logs.values()) for r in rs]
+    parent = {r["id"]: r["parent"] for r in rows_all if r.get("id")}
+    by_id = {r["id"]: r for r in rows_all if r.get("id")}
+
+    def chain_of(x):
+        ch, seen = [x], 0
+        while ch[-1] not in anchors_set and ch[-1] in parent and seen < 30:
+            ch.append(parent[ch[-1]]); seen += 1
+        return list(reversed(ch)) if ch[-1] in anchors_set else None
+
+    cells, attempts = [], []
+    for name, rs in ext_logs.items():
+        steps = load_recipe(str(RECIPES_EXT / f"{name}.yaml"))["steps"]
+        for r in rs:
+            ch = chain_of(r["parent"])
+            attempts.append({"recipe": name, "anchor": ch[0] if ch else None, "step": int(r["recipe_step"]),
+                             "op": r["op"], "mode": r.get("mode"), "parent": r["parent"], "id": r.get("id"),
+                             "bucket": r["bucket"], "why": r.get("why"),
+                             "args": {k: v for k, v in (r.get("args") or {}).items()
+                                      if k in ("mode", "phi", "target", "order", "option", "realization")}})
+        for arm, k in ARM_STEPS[name]:
+            for o in _step_outputs(rs, steps, k):
+                ch = chain_of(o["x2"])
+                if not ch:
+                    continue
+                st = [by_id[x] for x in ch if x in by_id and by_id[x]["op"] == "structural_edit"]
+                tgt = ((st[-1].get("args") or {}).get("target")) if st else None
+                cells.append({"arm": arm, "x1": ch[0], "x2": o["x2"], "chain": ch,
+                              "phi": tgt.get("phi") if isinstance(tgt, dict) else None})
+    gold = {}
+    for c in cells:
+        for x in (c["x1"], c["x2"]):
+            if x not in gold:
+                gold[x] = store.scenario(x).case.verdict.choice
+        c["x1_gold"], c["x2_gold"] = gold[c["x1"]], gold[c["x2"]]
+        c["x1_has_trace"] = store.has_trace(c["x1"])
+        c["key"], c["key_source"] = c["x1_gold"], "x1_gold"
+    cells.sort(key=lambda c: (c["x1"], EXT_ARMS.index(c["arm"]), c["x2"]))
+    for i, c in enumerate(cells):
+        c["cell"] = f"PV1-{tag}-x{i:05d}"
+    (OUT / f"cells-{tag}-ext.json").write_text(json.dumps(cells, indent=1))
+    with open(OUT / f"attempts-{tag}-ext.jsonl", "w") as fh:
+        for a in attempts:
+            fh.write(json.dumps(a, ensure_ascii=False) + "\n")
+    man = {"dataset": "pairs-v1 extension arms", "tag": tag, "built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+           "ext_builds": [str(p.relative_to(ROOT)) for p in ext_builds], "cells": len(cells),
+           "by_arm": {a: sum(c["arm"] == a for c in cells) for a in EXT_ARMS},
+           "anchors": len({c["x1"] for c in cells}), "with_trace": sum(c["x1_has_trace"] for c in cells),
+           "attempts_by_recipe_bucket": {n: dict(Counter(f"step{a['step']}:{a['bucket']}" for a in attempts if a["recipe"] == n))
+                                         for n in ext_logs},
+           "rules": ["inputs: xd_neighbor, xd_noflip <- transfer X2s; flip_neighbor <- same_domain_flip X2s (Peter 2026-11-13)",
+                     "neighbor: F changes slightly, K and V fixed (Peter 2026-11-13)",
+                     "key: X1 gold", "cells-<tag>.json ids untouched"]}
+    (OUT / f"manifest-{tag}-ext.json").write_text(json.dumps(man, indent=1))
+    return man
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="pipeline.datasets.pairs_v1")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -368,12 +500,28 @@ def main(argv=None):
     r.add_argument("--workers", type=int, default=8)
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--dry", action="store_true", help="only report step-1 jobs to run")
+    x = sub.add_parser("extend", help="run the extension recipes (pairs_v1_ext/) on an earlier arm's X2s")
+    x.add_argument("--tag", required=True)
+    x.add_argument("--batch", required=True, help="batch name, e.g. pilot or rest")
+    x.add_argument("--anchors", help="only X2s of these anchors (file of ids)")
+    x.add_argument("--exclude", help="minus the X2s of these anchors (file of ids)")
+    x.add_argument("--recipes", help="comma-separated recipe stems (default: all in EXT)")
+    x.add_argument("--stamp", help="resume the batch whose logs carry this stamp")
+    x.add_argument("--workers", type=int, default=8)
+    x.add_argument("--seed", type=int, default=0)
+    x.add_argument("--dry", action="store_true")
+    sub.add_parser("assemble-ext", help="extension arms -> cells-<tag>-ext.json").add_argument("--tag", required=True)
     s = sub.add_parser("assemble")
     s.add_argument("--tag", required=True)
     s.add_argument("--seed", type=int, default=0)
     a = ap.parse_args(argv)
     if a.cmd == "assemble":
         res = assemble(a.tag, a.seed)
+    elif a.cmd == "assemble-ext":
+        res = assemble_ext(a.tag)
+    elif a.cmd == "extend":
+        res = extend(a.tag, a.batch, a.anchors, a.exclude, a.workers, a.seed,
+                     a.recipes.split(",") if a.recipes else None, a.stamp, a.dry)
     elif a.cmd == "resume":
         res = resume(a.inputs, a.tag, a.stamp, a.workers, a.seed, a.dry)
     elif a.cmd == "build":

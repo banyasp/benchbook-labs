@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TENSOR = ROOT / "results" / "tensor" / "replies.parquet"
 CACHE = ROOT / "results" / "tensor" / "summary.json"
-VERSION = 1                                    # bump when the summary's fields change (invalidates the cache)
+VERSION = 4                                    # bump when the summary's fields change (invalidates the cache)
 
 # arm -> (relationship label, what the served case is, expected relation). Order = display order.
 ARMS = {
@@ -28,8 +28,14 @@ ARMS = {
     "neighbor": ("In-domain neighbor", "same sub-domain, a different situation, same K and V", "follows"),
     "transfer": ("Cross-domain transfer", "K and V carried into another national-security domain, F rebuilt",
                  "follows"),
+    "xd_neighbor": ("Cross-domain neighbor", "a neighbor of a cross-domain transfer: F changes slightly, K and V fixed",
+                    "follows"),
     "noflip": ("Non-flip edit", "a would-not-change condition made true: facts change, V holds", "follows"),
+    "xd_noflip": ("Cross-domain non-flip edit", "a cross-domain transfer with a would-not-change condition made true",
+                  "follows"),
     "same_domain_flip": ("In-domain flip", "a would-change condition made true in X1's own domain", "flips"),
+    "flip_neighbor": ("Flip-neighbor", "a neighbor of an in-domain flip: F changes slightly, the flipped K and V fixed",
+                      "flips"),
     "flip": ("Flip-transfer", "a cross-domain transfer with a would-change condition made true", "flips"),
     "transfer_flip": ("Flip-transfer", "a cross-domain transfer with a would-change condition made true", "flips"),
     "revised": ("Revised case", "the case's judgment edited (C')", "follows"),
@@ -62,6 +68,13 @@ METRICS = {
     "readable": ("Readable share", "Replies with a parsable verdict that maps to one of X1's options."),
     "copied": ("Copied the served verdict", "Transfer / flip arms: the choice equals the served case's verdict, "
                "mapped onto X1's options. On a flip arm, copying is the error."),
+    "agree_nocase": ("Agrees with own no-case choice",
+                     "Chance that this reply's choice equals a random no-case reply of the same model, scaffold and X1 "
+                     "(readable replies on both sides). The headline for the unrelated arm (Peter, 2026-11-13): an "
+                     "irrelevant case should not move the model. On other arms it shows how far the case moved it."),
+    "modal_nocase": ("Matches modal no-case choice",
+                     "The reply's choice is the model's most common no-case choice on the same X1 (readable replies; "
+                     "a no-case reply is compared with the other no-case replies)."),
     "off_menu": ("Off-menu", "A verdict was given but maps to none of X1's options."),
     "no_verdict": ("No verdict", "No parsable verdict choice."),
     "truncated": ("Truncated", "Generation hit max_tokens."),
@@ -87,6 +100,29 @@ def _build() -> dict:
     t["run"] = t["run"].astype(str).str.rstrip("/")
     t["readable"] = (t["scored"].astype(bool) & (t["off_menu"] == 0) & (t["no_verdict"] == 0)).astype(float)
     t["correct_readable"] = t["correct"].where(t["readable"] == 1)
+    # agreement with the same run's no-case replies on the same X1 (readable choices only). A no-case reply is compared
+    # with the OTHER no-case replies (leave-one-out), so the control row is the model's own sampling consistency: the
+    # baseline the other arms are read against.
+    nc = t[(t["arm"] == "control") & (t["readable"] == 1) & t["choice"].notna()]
+    counts = {k: g["choice"].value_counts().to_dict() for k, g in nc.groupby(["run", "x1"])}
+
+    def _agree(r, modal):
+        cnt = counts.get((r["run"], r["x1"]))
+        if cnt is None or r["readable"] != 1 or r["choice"] is None:
+            return float("nan")
+        cnt = dict(cnt)
+        if r["arm"] == "control":
+            cnt[r["choice"]] -= 1
+        n = sum(cnt.values())
+        if n <= 0:
+            return float("nan")
+        if modal:
+            top = max(cnt.values())
+            return float(cnt.get(r["choice"], 0) == top and top > 0)
+        return cnt.get(r["choice"], 0) / n
+    recs = t.to_dict("records")
+    t["agree_nocase"] = [_agree(r, False) for r in recs]
+    t["modal_nocase"] = [_agree(r, True) for r in recs]
     rows = []
     for (run, arm), g in t.groupby(["run", "arm"], sort=False):
         f = g.iloc[0]

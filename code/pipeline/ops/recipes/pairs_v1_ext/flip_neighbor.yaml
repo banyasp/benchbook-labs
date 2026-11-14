@@ -1,0 +1,15 @@
+# pairs-v1 extension (Peter, 2026-11-13: "add neighbor of flip too as well as cross-domain neighbor and cross-domain
+# non-flip"). Input: served cases of an existing pairs-v1 arm (see pipeline.datasets.pairs_v1 EXT), not anchors, so
+# the chain is anchor -> earlier arm -> this recipe. Every permute balances the gold position over the batch.
+# Input: same_domain_flip X2s. A neighbor of the flipped case: same sub-domain, a different situation, the flipped
+# case's K and V held; flip-condition ids and their `then` options are kept by the writer, so via is unchanged.
+name: pairs_v1_flip_neighbor
+steps:
+  - op: surface_edit
+    args: {mode: neighbor, setting: propose, annotate: true}
+  - op: surface_edit
+    args: {mode: match_options}
+    pass_skipped: true
+  - op: permute
+    args: {target: options, order: balance}
+    pass_skipped: true

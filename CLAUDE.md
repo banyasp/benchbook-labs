@@ -154,6 +154,19 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   (the PDF's: case facts altered so its conclusion flips = a reversed flip pair) / revised C′ (judgment edited) /
   decoy / none / self, with augmented and revised in both training and eval; natural pairs and the near-neighbor
   arm are v2; refusal-prone in-scope content is tagged (`content_domain`, `refusal_sensitivity`), not dropped.
+- **Case-trace relationships (Peter, 2026-11-13).** Each relationship asks the model to read the served case
+  differently, so each is generated, trained and evaluated separately, and **every result is reported per
+  relationship** (exact numbers per model x scaffold, never ranges; the console's `/results` page). The set: own case
+  (identity), in-domain neighbor (F changes slightly, **K and V fixed**), cross-domain transfer (K into another domain,
+  F rebuilt), cross-domain neighbor, non-flip edit (a would_not_change condition made true; V holds), cross-domain
+  non-flip edit, in-domain flip, flip-neighbor, flip-transfer, revised C' (expected to match own case, each against its
+  own key), unrelated (random) case, and no case. Arms: pairs-v1 `self`, `neighbor`, `transfer`, `noflip`,
+  `same_domain_flip`, `transfer_flip`, `revised`, `random`; extension arms `xd_neighbor`, `xd_noflip`, `flip_neighbor`
+  (`code/pipeline/ops/recipes/pairs_v1_ext/`, cells in `cells-full-ext.json`). **Unrelated case, eval metric:**
+  agreement with the same model's own no-case choice on the same X1 (and % labelled not_governed), not % matching the
+  answer key; training still uses the answer key. **Distinguished** (the case governs, but a difference its
+  would_change items do not cover leads to another choice) needs its own arm; its design and metric are open (to
+  settle with Peter, 2026-11-14).
 - **Eval infrastructure: UK AISI Inspect (`inspect_ai`).**
 - **Headline experiment:** alignment (action) accuracy vs. distance from the live scenario to the nearest
   reference case, one curve per arm (base / harness / SFT / SFT+RL), showing alignment generalizes and the arms
