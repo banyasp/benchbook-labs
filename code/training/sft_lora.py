@@ -33,6 +33,9 @@ def sft_args(cfg: dict, out: str, smoke: bool = False, report_to: str = "none"):
     from trl import SFTConfig
     t = dict(cfg["train"])
     t.pop("report_to", None)                     # set by tracking.start (wandb), never by the config
+    # Keep every checkpoint so any step can be rolled back to (Peter, 2026-11-14): a limit would make the Trainer
+    # delete the oldest ones. Overridden here so an old config with save_total_limit cannot turn deletion back on.
+    t["save_total_limit"] = None
     kw = dict(output_dir=out, report_to=report_to, dataset_kwargs={"skip_prepare_dataset": True},
               remove_unused_columns=False, **t)
     if smoke:

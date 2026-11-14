@@ -57,6 +57,9 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
   aborted / superseded), the data it covers (pointers), the exact command and code that produced it, and every LLM in
   the loop (policy, judge, or Claude-read: numbers Claude produced by reading or by an unsaved ad-hoc query). Update a
   PARTIAL entry when its run completes.
+- **Keep every training checkpoint** (Peter, 2026-11-14) so any step can be rolled back to. `training.sft_lora` and
+  `training.grpo` force `save_total_limit: None` (the Trainer never deletes old checkpoints); finished runs' adapter and
+  checkpoint folders are made read-only (`chmod -R a-w`). No off-box backup copy is needed (Peter, same day).
 - **Log risks as you find them.** `docs/RISK-REGISTER.md` records every assumption, risk and inference (and how
   to observe it). When you hit a new one — a shortcut cue, a data artifact, a judge failure — append an entry the
   same day. Never delete entries.

@@ -90,6 +90,7 @@ def grpo_config(cfg: dict, out: str, smoke: bool = False, report_to: str = "none
     if g.get("top_p") is None:
         g["top_p"] = r.get("top_p", 1.0)
     g.pop("report_to", None)                     # set by tracking.start (wandb), never by the config
+    g["save_total_limit"] = None                 # keep every checkpoint for rollback (Peter, 2026-11-14)
     kw = dict(output_dir=out, report_to=report_to, **g)
     if smoke:
         kw.update(max_steps=2, num_train_epochs=1, bf16=False, use_cpu=True, gradient_checkpointing=False, use_vllm=False,
