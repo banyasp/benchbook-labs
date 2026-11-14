@@ -282,9 +282,27 @@ The no-case row is the baseline: the same measure for a no-case reply against th
 
 - An unrelated case moves no model beyond its own sampling noise: every difference is inside the intervals (O28).
   Olmo schema's baseline rests on the 15% of no-case replies that are readable and is not interpretable.
-- The "% labelled not_governed" half of the unrelated-arm metric is not reported for pilot 2: these replies use the
-  pilot-2 formats, whose relation field is not comparable across scaffolds (free has none). It is reported for the
-  pairs-v1 format-v4 evals (M17).
+
+**Relation labels (schema scaffold only; free and guided replies have no relation field).** Share of replies with a
+verdict whose relation is the one the arm expects (own and transferred: follows; flipped: flips; unrelated:
+not_governed). X1-averaged, 95% family bootstrap. Console metric "Relation label correct" (added 2026-11-14).
+
+| Model | Own case (follows) | Transferred (follows) | Flipped (flips) | Unrelated (not_governed) |
+|---|---|---|---|---|
+| Granite 4.2 8B (M09) | 96 [88, 100] | 92 [84, 98] | 9 [3, 16] | 8 [5, 12] |
+| Qwen3.5 9B | 96 [88, 100] | 93 [85, 99] | 33 [22, 44] | 21 [13, 29] |
+| Olmo 3 7B Think | 96 [88, 100] | 92 [84, 99] | 13 [5, 23] | 0 [0, 0] |
+| Ministral 3 14B | 82 [72, 91] | 82 [73, 90] | 7 [0, 16] | 27 [17, 40] |
+| Gemma 4 12B | 97 [91, 100] | 94 [84, 100] | 50 [33, 67] | 37 [24, 49] |
+| GPT-6 Luna | 96 [89, 100] | 89 [79, 97] | 55 [39, 71] | 100 [100, 100] |
+
+- **Small models do not say an unrelated case is irrelevant, yet it does not move their choice.** On the unrelated arm
+  Granite labels 105 of 224 replies `follows`, 84 `distinguished`, 17 `not_governed` (18 no verdict); Olmo never says
+  `not_governed` (78 follows, 15 distinguished, 6 flips). Luna says `not_governed` in 223 of 224. The agreement table
+  above shows the choices stay at the no-case level all the same, so the label is wrong while the decision is not:
+  the small models file an unrelated case as "followed" or "distinguished" and then decide on the live facts.
+  (`distinguished` is the natural fallback label for them; relevant to the distinguished-arm design.)
+- Flipped: Gemma (50) and Luna (55) label about half their flip replies `flips`; Granite, Olmo and Ministral 7-13.
 
 **Reading (size class, Claude; written 2026-11-13, Gemma 4 added 2026-11-14).**
 - **Gemma 4 12B is the strongest small model and the only one that resists the flip.** Flipped accuracy as scored

@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TENSOR = ROOT / "results" / "tensor" / "replies.parquet"
 CACHE = ROOT / "results" / "tensor" / "summary.json"
-VERSION = 5                                    # bump when the summary's fields change (invalidates the cache)
+VERSION = 6                                    # bump when the summary's fields change (invalidates the cache)
 
 # arm -> (relationship label, what the served case is, expected relation). Order = display order.
 ARMS = {
@@ -78,6 +78,14 @@ METRICS = {
     "modal_nocase": ("Matches modal no-case choice",
                      "The reply's choice is the model's most common no-case choice on the same X1 (readable replies; "
                      "a no-case reply is compared with the other no-case replies)."),
+    "relation_ok": ("Relation label correct",
+                    "The verdict's relation (follows / flips / distinguished / not_governed) is the one the arm "
+                    "expects (see the Relationships table). Over replies with a verdict; formats with a relation field "
+                    "only (schema, v4). A missing label counts as wrong."),
+    "said_not_governed": ("Labelled not_governed",
+                          "Share of replies with a verdict whose relation is not_governed. On the unrelated arm it is "
+                          "the second half of Peter's metric (2026-11-13); on the other arms it is a wrong refusal of "
+                          "a relevant case."),
     "off_menu": ("Off-menu", "A verdict was given but maps to none of X1's options."),
     "no_verdict": ("No verdict", "No parsable verdict choice."),
     "truncated": ("Truncated", "Generation hit max_tokens."),
@@ -123,6 +131,13 @@ def _build() -> dict:
             top = max(cnt.values())
             return float(cnt.get(r["choice"], 0) == top and top > 0)
         return cnt.get(r["choice"], 0) / n
+    # relation labels: only for formats that ask for one (schema, v4) and arms that serve a case
+    has_rel = t["scaffold"].isin(["schema", "v4"]) & (t["arm"] != "control") & t["scored"].astype(bool) \
+        & (t["no_verdict"] == 0)
+    expect = t["arm"].map(lambda a: ARMS.get(a, (None, None, None))[2])
+    rel = t["relation"].fillna("")
+    t["relation_ok"] = (rel == expect).astype(float).where(has_rel & expect.notna())
+    t["said_not_governed"] = (rel == "not_governed").astype(float).where(has_rel)
     recs = t.to_dict("records")
     t["agree_nocase"] = [_agree(r, False) for r in recs]
     t["modal_nocase"] = [_agree(r, True) for r in recs]
