@@ -25,8 +25,9 @@ DEFAULT_CONFIG = common.HERE / "configs" / "sft_lora.v2-mode-c-v1-export.yaml"
 
 def lora_config(c: dict):
     from peft import LoraConfig
+    extra = {k: c[k] for k in ("use_rslora", "use_dora", "init_lora_weights") if k in c}   # optional (autoresearch)
     return LoraConfig(r=c["r"], lora_alpha=c["alpha"], lora_dropout=c["dropout"], target_modules=c["target_modules"],
-                      task_type="CAUSAL_LM")
+                      task_type="CAUSAL_LM", **extra)
 
 
 def sft_args(cfg: dict, out: str, smoke: bool = False, report_to: str = "none"):
