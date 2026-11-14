@@ -58,6 +58,10 @@ Does LoRA SFT on the gen1 targets (M15) fit without overfitting, and which check
   as the comparison, checkpoint-300 (end of epoch 1). Validation loss cannot separate them; choice accuracy per
   relationship will.
 
+**Decision (Peter, 2026-11-14):** later SFT runs train one epoch (`sft_lora.v4-1epoch.yaml`). Read from the loss
+curves above: epoch 2 cut training loss ~0.05 and validation loss ~0.004, with a step drop in training loss at the
+epoch boundary (step 277), the sign of seeing rows again.
+
 ## Caveats
 
 - Validation loss measures imitation of the targets, not decision quality. The targets were written by Granite with

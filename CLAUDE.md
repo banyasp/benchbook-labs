@@ -60,6 +60,8 @@ LoRA adapter. Full plan: `context/Benchbook-Research-Plan-v0.4.pdf`.
 - **Keep every training checkpoint** (Peter, 2026-11-14) so any step can be rolled back to. `training.sft_lora` and
   `training.grpo` force `save_total_limit: None` (the Trainer never deletes old checkpoints); finished runs' adapter and
   checkpoint folders are made read-only (`chmod -R a-w`). No off-box backup copy is needed (Peter, same day).
+- **SFT trains one epoch** (Peter, 2026-11-14, after M16: epoch 2 of gen1 mostly refit the training rows). Config
+  `code/training/configs/sft_lora.v4-1epoch.yaml` (checkpoints every 50 steps); gen1's v3 config stays as the record.
 - **Log risks as you find them.** `docs/RISK-REGISTER.md` records every assumption, risk and inference (and how
   to observe it). When you hit a new one — a shortcut cue, a data artifact, a judge failure — append an entry the
   same day. Never delete entries.

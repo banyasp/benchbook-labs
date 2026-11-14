@@ -1,0 +1,54 @@
+# LoRA SFT, v4 (2026-11-14): the defaults for gen2 and later. Same as v3 (gen1) except:
+#   - ONE epoch (Peter, 2026-11-14): each training row is seen once. In gen1 (M16) epoch 2 cut the training loss by
+#     ~0.05 but validation loss by only ~0.004, and validation entropy kept falling: the second pass mostly fit the
+#     training rows again.
+#   - checkpoints every 50 steps (each validation point has a checkpoint), all kept (no save_total_limit).
+#   - no data path: pass --data (and --eval-data if the val targets change) for the generation being trained.
+# The cosine schedule now decays to 0 over one epoch, so a one-epoch run is not the same model as gen1's checkpoint-300
+# (whose learning rate was still ~half its peak at step 300).
+#
+#   PYTHONPATH=code .venv/bin/python -m training.sft_lora --config code/training/configs/sft_lora.v4-1epoch.yaml \
+#       --data results/sft/<gen>/golden.jsonl --out results/sft/run-<gen>
+#
+# Sizing: rows are <= ~11.4k tokens (prompt ~6.3k median, reply ~2.5k median), so the logits (11.4k x 100k vocab) are
+# ~2.3 GB bf16 + the fp32 upcast; fine without liger-kernel at batch 1 with gradient checkpointing.
+policy_role: policy
+hf_ids:
+  granite-4.2-8b: ibm-granite/granite-4.2-8b
+
+model:
+  attn_implementation: sdpa
+
+data:
+  path: null                   # pass --data
+  eval_path: results/sft/gen-val/golden.jsonl
+  require_mode: B              # targets have no thinking block (Peter, 2026-11-13)
+  max_length: 16000            # longer rows are DROPPED (never truncated) and logged
+  verify_format: true
+  drop_report_share_fail: 0.02
+
+lora:
+  r: 16                        # serve.sh LORA_RANK must be >= r
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  learning_rate: 1.0e-4
+  num_train_epochs: 1          # one pass over the data (Peter, 2026-11-14)
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_steps: 0.05
+  lr_scheduler_type: cosine
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  use_liger_kernel: false
+  logging_steps: 5
+  eval_strategy: steps
+  eval_steps: 50
+  save_strategy: steps
+  save_steps: 50
+  save_total_limit: null   # keep every checkpoint (Peter, 2026-11-14)
+  seed: 0
