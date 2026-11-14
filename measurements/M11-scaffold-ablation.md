@@ -302,7 +302,7 @@ not_governed). X1-averaged, 95% family bootstrap. Console metric "Relation label
   above shows the choices stay at the no-case level all the same, so the label is wrong while the decision is not:
   the small models file an unrelated case as "followed" or "distinguished" and then decide on the live facts.
   (`distinguished` is the natural fallback label for them; relevant to the distinguished-arm design.)
-- Flipped: Gemma (50) and Luna (55) label about half their flip replies `flips`; Granite, Olmo and Ministral 7-13.
+- Flipped: Gemma (50) and Luna (55) label about half their flip replies `flips`; Granite 9, Olmo 13, Ministral 7.
 
 **Reading (size class, Claude; written 2026-11-13, Gemma 4 added 2026-11-14).**
 - **Gemma 4 12B is the strongest small model and the only one that resists the flip.** Flipped accuracy as scored
