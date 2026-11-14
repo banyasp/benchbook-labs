@@ -10,6 +10,18 @@ Paths below are relative to the repo root on the box (`/home/ubuntu/benchbook-la
 
 ---
 
+### O30 · 2026-11-14 · SFT Granite copies the served case's option list into its own enumeration
+After SFT gen1, Granite's `fact_enumeration.options` repeats X1's option texts word for word in 95-98% of replies when
+the served case is in-domain (own case, revised, non-flip edit, in-domain flip), where the served case's options have
+the same text as the live ones, but in only 2-17% when the case is cross-domain or a neighbor (rewritten options). It
+numbers them in the served case's order (the case is often a permuted copy), so in 40-58% of those replies the reply's
+LIVE-O1 is the key's LIVE-O2. Base Granite paraphrases the options from the trace (0-3% verbatim). So the adapter
+reads the live options partly off the case rather than the trace; harmless for the choice (text-corrected own-case
+accuracy 98.8%) but it breaks the option judge (R98), and on cross-domain pairs it has to read them from the trace.
+- Sources: `results/pairs-v1/eval-val/{base,sft-final,sft-ckpt300}-v4B/` (`samples.jsonl`, `raw/`, `details/`), e.g.
+  `sft|revised|DR-CORPUS-NX-0bd11643-E1@v1|DR-CORPUS-NX-0bd11643-revise1@v1|0`; tables in
+  `results/pairs-v1/eval-val/m17-report.md`; M17.
+
 ### O29 · 2026-11-14 · Gemma 4 12B copies a flipped case far less than the other small models
 On pilot 2's flip-transfer arm, Gemma 4 12B (thinking on, model-card sampling) copies the flipped sister's verdict in
 35% (free), 22% (guided) and 29% (schema) of replies and scores 42 / 61 / 55 against the key, where Granite copies

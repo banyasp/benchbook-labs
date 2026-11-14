@@ -51,6 +51,30 @@ COPY_ARMS = {"transfer", "flip", "transfer_flip", "same_domain_flip", "flip_neig
              "xd_neighbor", "xd_noflip"}
 
 
+def served_verdict_live(store, cell: dict, keys: dict) -> str | None:
+    """pairs-v1 (2026-11-14): the served case's verdict as an X1 LIVE option id, traced back along the cell's
+    operator chain (pairgold.compose: X1-local -> X2-local option map). `case_verdict_as_x1` assumes X2 is X1
+    permuted once (pilot 2) and is wrong for chained pairs-v1 cells (it read 45% copying on a 95%-correct follows arm).
+    Checked on the 333 val cells of the copy arms: every follows-arm verdict maps to the key, every flip-arm one not."""
+    from pipeline.sft.pairgold import compose
+    from pipeline.project.project import gold_for
+    from eval.allpairs import none_pair
+    om = compose(store, cell["chain"])["O"]
+    if om is None:
+        return None
+    inv = {j: a for a, (j, _b) in om.items()}
+    local = inv.get(store.scenario(cell["x2"]).case.verdict.choice)
+    if local is None:
+        return None
+    x1 = cell["x1"]
+    if x1 not in keys:
+        keys[x1] = gold_for(none_pair(store, x1, "pilot2"), store)[1]
+    key, opt = keys[x1], store.scenario(x1).case.options[local]
+    hit = [g for g, o in key.options.items() if o.source_id == local] or \
+          [g for g, o in key.options.items() if o.do.strip() == opt.do.strip()]
+    return hit[0] if len(hit) == 1 else None
+
+
 def _ok(v):
     return 0.0 if v is None else float(v)
 
@@ -61,13 +85,19 @@ def build(registry: Path = REGISTRY, out: Path = OUT, contamination: bool = True
     from eval.core import read_samples
     from eval.transfer_report import case_verdict_as_x1
     reg = yaml.safe_load(registry.read_text())
-    store, cv, rows = Store(), {}, []
+    store, cv, rows, keys = Store(), {}, [], {}
     for ent in reg["runs"]:
         f = {**reg.get("defaults", {}), **ent}
         d = Path(f["run"])
         if not (d / "samples.jsonl").exists():
             continue
         S = read_samples(d / "samples.jsonl")
+        cellmap = {}                              # pairs-v1 runs keep their cells (with chains) in config.json
+        if (d / "config.json").exists():
+            cfgj = json.loads((d / "config.json").read_text())
+            if isinstance(cfgj.get("cells"), list) and cfgj["cells"] and isinstance(cfgj["cells"][0], dict) \
+                    and "chain" in cfgj["cells"][0]:
+                cellmap = {(c["arm"], c["x1"], c["x2"]): c for c in cfgj["cells"]}
         flipopt: dict[str, set] = {}
         for r in S:
             if r["phase"] == "flip" and r.get("x2"):
@@ -77,8 +107,16 @@ def build(registry: Path = REGISTRY, out: Path = OUT, contamination: bool = True
             arm = r["phase"]
             copied = math.nan
             if arm in COPY_ARMS and r.get("x2"):
-                cv.setdefault(r["x2"], case_verdict_as_x1(store, r["x2"]))
-                copied = float(r.get("translated_choice") == cv[r["x2"]])
+                cell = cellmap.get((arm, r["x1"], r["x2"]))
+                if cell is not None:
+                    ck = ("pv1", arm, r["x1"], r["x2"])
+                    if ck not in cv:
+                        cv[ck] = served_verdict_live(store, cell, keys)
+                    target = cv[ck]
+                else:
+                    cv.setdefault(r["x2"], case_verdict_as_x1(store, r["x2"]))
+                    target = cv[r["x2"]]
+                copied = math.nan if target is None else float(r.get("translated_choice") == target)
             contam = math.nan
             if contamination and f["scaffold"] == "schema" and r["x1"] in flipopt and r.get("details_path") \
                     and (d / r["details_path"]).exists():
