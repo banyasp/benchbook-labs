@@ -36,6 +36,7 @@ Validation loss after one epoch on the q1 subset (lower is better). Full rows: `
 | ar-003 | lr 4e-4 | 0.44134 | 0.86876 | 0.50781 | 63.2 |
 | ar-004 | lr 5e-5 | 0.47508 | 0.86222 | 0.54579 | 63.1 |
 | ar-005 | lr 8e-4 | 0.44558 | 0.86737 | 0.51190 | 63.2 |
+| ar-006 | lr 4e-4, eff. batch 4 (135 steps) | 0.43575 | 0.86940 | 0.49195 | 63.1 |
 
 **Noise floor (seed):** the two baseline seeds differ by 0.00091 in validation loss. One pair is a thin estimate, so a
 change is counted only if it beats the better baseline (0.45873) by at least 0.002 (about twice the seed gap);
@@ -45,3 +46,6 @@ anything closer needs a second seed before it is adopted.
 (0.0174 below the better baseline); 8e-4 is 0.0042 worse than 4e-4, past the noise bar, so the optimum is between 2e-4
 and 8e-4. Short runs favor higher rates, so 4e-4 is confirmed on full data before it becomes the default. Next trials
 are at 4e-4.
+
+**Effective batch:** at lr 4e-4, batch 4 (135 optimizer steps, same rows, same time) beats batch 8 by 0.0056
+(0.43575 vs 0.44134). Next: batch 2, and batch 4 at lr 2e-4 (batch and rate interact).
