@@ -152,7 +152,10 @@ class ScoringContext:
 
     @cached_property
     def option_al(self) -> A.Alignment:
-        return A.align(self.agent_options, self.gold_options, self.judge, self.opt_threshold, instruction("option"))
+        # R98 (Peter, 2026-11-15): when every listed option repeats a key option's text exactly, align by text; the
+        # judge, seeing the same LIVE-O ids on both sides, failed on ~1/3 of replies that renumber copied options.
+        return (A.exact_text_alignment(self.agent_options, self.gold_options, self.opt_threshold)
+                or A.align(self.agent_options, self.gold_options, self.judge, self.opt_threshold, instruction("option")))
 
     @property
     def opt_threshold(self) -> float:

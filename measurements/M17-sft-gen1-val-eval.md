@@ -119,7 +119,8 @@ labelled `not_governed` more than 5.9% by the adapter (flip-transfer).
   are within them.
 - Mode B (no thinking) for both base and adapter; base Granite in M11 was evaluated with thinking.
 - The text correction applies only to replies that list X1's option texts verbatim; it changes no judge-mapped choice.
-  Adopting it in the scorer is Peter's call (R98).
+  **2026-11-15: adopted in the scorer (allpairs-scoring-v4, R98, Peter).** The three runs were rescored; their
+  as-scored accuracy now equals the text-corrected numbers above on every reply (0 differences).
 - Val only. Test stays untouched until the checkpoint and settings are fixed.
 
 ## Next

@@ -428,3 +428,22 @@ def test_smoke_reply_against_real_int301_keys():
     none = AnswerKey.load(REAL / "scenarios" / "INT-301" / "INT-301-v01.none.key.yaml")
     s0 = score_reply(parse_reply(text, noref=True), none, None, StubJudge())
     assert s0["relation"] is None and s0["governs"] is None and s0["verdict_choice"] in (0, 1)
+
+
+def test_option_exact_text_prepass_renumbered():
+    """R98: a reply that copies every key option verbatim but numbers them differently is aligned by text."""
+    from scorers.alignment import exact_text_alignment
+    gold = {"LIVE-O1": "Hold the convoy.", "LIVE-O2": "Proceed now", "LIVE-O3": "Ask HQ"}
+    gen = {"LIVE-O1": "proceed now", "LIVE-O2": "hold the convoy"}
+    al = exact_text_alignment(gen, gold)
+    assert al.method == "exact_text"
+    assert al.translation == {"LIVE-O1": "LIVE-O2", "LIVE-O2": "LIVE-O1"}
+    assert al.absent == ["LIVE-O3"] and al.extraneous == [] and al.conflated == []
+
+
+def test_option_exact_text_prepass_all_or_nothing():
+    from scorers.alignment import exact_text_alignment
+    gold = {"g1": "Hold the convoy", "g2": "Proceed now"}
+    assert exact_text_alignment({"a": "Hold the convoy", "b": "Proceed immediately"}, gold) is None   # one paraphrase
+    assert exact_text_alignment({"a": "Hold the convoy", "b": "hold the convoy."}, gold) is None      # duplicate
+    assert exact_text_alignment({}, gold) is None

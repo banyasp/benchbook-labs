@@ -37,6 +37,10 @@ Validation loss after one epoch on the q1 subset (lower is better). Full rows: `
 | ar-004 | lr 5e-5 | 0.47508 | 0.86222 | 0.54579 | 63.1 |
 | ar-005 | lr 8e-4 | 0.44558 | 0.86737 | 0.51190 | 63.2 |
 | ar-006 | lr 4e-4, eff. batch 4 (135 steps) | 0.43575 | 0.86940 | 0.49195 | 63.1 |
+| ar-007 | lr 4e-4, LoRA r 32 alpha 64 | 0.44041 | 0.86852 | — | 63 |
+| ar-008 | lr 4e-4, LoRA dropout 0 | 0.44123 | 0.86828 | — | 63 |
+| ar-009 | lr 4e-4, eff. batch 2 (275 steps) | 0.43705 | 0.86893 | — | 63 |
+| ar-010 | lr 2e-4, eff. batch 4 (135 steps) | 0.43731 | 0.86954 | — | 63 |
 
 **Noise floor (seed):** the two baseline seeds differ by 0.00091 in validation loss. One pair is a thin estimate, so a
 change is counted only if it beats the better baseline (0.45873) by at least 0.002 (about twice the seed gap);
@@ -49,3 +53,9 @@ are at 4e-4.
 
 **Effective batch:** at lr 4e-4, batch 4 (135 optimizer steps, same rows, same time) beats batch 8 by 0.0056
 (0.43575 vs 0.44134). Next: batch 2, and batch 4 at lr 2e-4 (batch and rate interact).
+
+**Rank, dropout, batch 2 (ar-007 to ar-010):** none beats ar-006 by the 0.002 bar. Rank 32 (-0.0009 vs ar-003) and
+dropout 0 (-0.0001) are within noise; batch 2 (+0.0013 vs ar-006) and lr 2e-4 at batch 4 (+0.0016) are as good as
+ar-006, within noise. Best so far: lr 2e-4 to 4e-4 at effective batch 4, 0.0230 below the baseline. The queue emptied
+2026-11-15 08:58Z; paused while Peter and Claude revisit what SFT should optimize before RL (validation loss may be the
+wrong target if SFT is only a warm start).

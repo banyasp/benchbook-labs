@@ -85,8 +85,11 @@ SECONDARY = ("facts_enum", "facts_enum.found", "facts_enum.n_gold", "options_enu
 # Every sample keeps ALL score rows and the full judge output (alignment matrices R, C, S per step: Jev Choice
 # probabilities) in details/<sample>.json, so thresholds and weights can be changed later and re-applied with
 # `rescore` (the judge cache makes that free) without generating again.
-SCORING = {"version": "allpairs-scoring-v3", "threshold": 0.5, "option_threshold": 0.5, "judge_prompts": "v2 (option instruction tuned 2026-11-09)",
-           "weights": "alignment.py defaults"}   # v2 had option_threshold 0.7 with judge prompts v1
+# v4 (2026-11-15, R98, Peter): options are aligned by exact text, without the judge, when every option the reply lists
+# repeats a key option's text (alignment.exact_text_alignment); otherwise by the judge as in v3.
+SCORING = {"version": "allpairs-scoring-v4", "threshold": 0.5, "option_threshold": 0.5, "judge_prompts": "v2 (option instruction tuned 2026-11-09)",
+           "option_exact_text": "all-or-nothing pre-pass (R98, Peter 2026-11-15)",
+           "weights": "alignment.py defaults"}   # v3 = v4 without the pre-pass; v2 had option_threshold 0.7 with judge prompts v1
 
 
 def score_full(parsed, key, judge) -> tuple[dict, dict]:
@@ -406,6 +409,8 @@ def rescore_run(run_dir: Path, store, judge, workers: int = 16) -> dict:
             return r, "kept (no raw)"
         parsed = parse_reply(rp.read_text(), noref=r["x2"] is None)
         key = keys[r["x1"]]
+        if r.get("cell_key"):                                    # R94: the revised arm is keyed to C''s verdict
+            key = cell_key(store, r["x1"], key, r["cell_key"])   # (missing before 2026-11-15: rescore used X1's key)
         rows, details, err = None, None, None
         try:
             rows, details = score_full(parsed, key, judge)

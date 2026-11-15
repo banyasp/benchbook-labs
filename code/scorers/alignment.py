@@ -34,6 +34,7 @@ SET_COMPARE weights.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 
 import numpy as np
@@ -66,6 +67,7 @@ class Alignment:
     conflating: list[str] = field(default_factory=list)
     duplicate: list[str] = field(default_factory=list)
     extraneous: list[str] = field(default_factory=list)
+    method: str = "judge"          # "judge" (two Choice passes) or "exact_text" (exact_text_alignment)
 
     @property
     def present(self) -> list[str]:
@@ -123,6 +125,41 @@ def align_from_passes(R, C, gold_ids: list[str], gen_ids: list[str], threshold: 
         duplicate=[gen_ids[j] for j in range(nl) if j not in paired_l and cover[j]],
         extraneous=[gen_ids[j] for j in range(nl) if not cover[j]],
     )
+    return al
+
+
+def norm_text(s) -> str:
+    """Lowercase, punctuation and spacing ignored: "Escalate to the CO." == "escalate to the co"."""
+    return re.sub(r"\W+", " ", str(s).lower()).strip()
+
+
+def exact_text_alignment(generated: dict[str, str], gold: dict[str, str],
+                         threshold: float = THRESHOLD) -> Alignment | None:
+    """Option pre-pass (R98; Peter, 2026-11-15): if EVERY generated item's text equals a distinct gold item's text
+    (after norm_text), pair them by text and skip the judge; otherwise None (the caller uses align()). All or
+    nothing: a reply with one paraphrased option is aligned wholly by the judge, as before. Gold items the reply
+    does not list come out absent. R and C are 1/0 matrices so every downstream count works unchanged."""
+    if not generated or not gold:
+        return None
+    gold_ids = list(gold)
+    by_text: dict[str, int] = {}
+    for i, g in enumerate(gold_ids):
+        t = norm_text(gold[g])
+        if not t or t in by_text:                 # empty or duplicate gold texts: text cannot decide
+            return None
+        by_text[t] = i
+    gen_ids = list(generated)
+    match = [by_text.get(norm_text(generated[k])) for k in gen_ids]
+    if any(m is None for m in match) or len(set(match)) != len(match):
+        return None
+    ng, nl = len(gold_ids), len(gen_ids)
+    R, C = np.zeros((ng, nl + 1)), np.zeros((ng + 1, nl))
+    for j, i in enumerate(match):
+        R[i, j] = C[i, j] = 1.0
+    for i in set(range(ng)) - set(match):
+        R[i, nl] = 1.0                            # gold option not listed: "none of these"
+    al = align_from_passes(R, C, gold_ids, gen_ids, threshold)
+    al.method = "exact_text"
     return al
 
 
