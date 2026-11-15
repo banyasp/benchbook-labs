@@ -47,6 +47,7 @@ Each `M<nn>-*.md` file answers:
 | [M17](M17-sft-gen1-val-eval.md) | 2026-11-14 | SFT gen1 vs base Granite on pairs-v1 val, per relationship: in-domain flip 3.8 -> 95.3, flip-transfer 18.4 -> 80.1, untrained extension arms gain too; option-judge failure on relabelled options (R98) | COMPLETE |
 | [M18](M18-pairs-v1-extension-arms.md) | 2026-11-14 | pairs-v1 extension arms: 1,381 cells (xd_neighbor 402, xd_noflip 283, flip_neighbor 696) over 729 anchors; domain checks pass | COMPLETE (build) |
 | [M19](M19-sft-autoresearch.md) | 2026-11-14 | Autoresearch on one-epoch LoRA SFT hyperparameters (proxy: quarter of gen1, validation loss; winners confirmed on full data and per-relationship evals) | PARTIAL |
+| [M20](M20-sft-gen1-train-nocase.md) | 2026-11-15 | Memorization check: SFT gen1 with no case on its 438 training X1s vs val. No-case accuracy train 53.5 → 64.8 (+11.3), val 51.6 → 57.8 (+6.1); gap +5.2 [−5.4, 16.2]; no dose-response | COMPLETE |
 
 ## Datasets, the run registry and the tensor
 
