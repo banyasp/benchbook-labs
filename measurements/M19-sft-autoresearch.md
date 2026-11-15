@@ -33,6 +33,7 @@ Validation loss after one epoch on the q1 subset (lower is better). Full rows: `
 | ar-000 | baseline (lr 1e-4, r 16, alpha 32, eff. batch 8, cosine, warmup 0.05) | 0.45964 | 0.86483 | 0.52722 | 63.1 |
 | ar-001 | baseline, seed 1 | 0.45873 | 0.86527 | 0.52546 | 63.2 |
 | ar-002 | lr 2e-4 | 0.44728 | 0.86730 | 0.51141 | 63.2 |
+| ar-003 | lr 4e-4 | 0.44134 | 0.86876 | 0.50781 | 63.2 |
 
 **Noise floor (seed):** the two baseline seeds differ by 0.00091 in validation loss. One pair is a thin estimate, so a
 change is counted only if it beats the better baseline (0.45873) by at least 0.002 (about twice the seed gap);
