@@ -35,7 +35,13 @@ Validation loss after one epoch on the q1 subset (lower is better). Full rows: `
 | ar-002 | lr 2e-4 | 0.44728 | 0.86730 | 0.51141 | 63.2 |
 | ar-003 | lr 4e-4 | 0.44134 | 0.86876 | 0.50781 | 63.2 |
 | ar-004 | lr 5e-5 | 0.47508 | 0.86222 | 0.54579 | 63.1 |
+| ar-005 | lr 8e-4 | 0.44558 | 0.86737 | 0.51190 | 63.2 |
 
 **Noise floor (seed):** the two baseline seeds differ by 0.00091 in validation loss. One pair is a thin estimate, so a
 change is counted only if it beats the better baseline (0.45873) by at least 0.002 (about twice the seed gap);
 anything closer needs a second seed before it is adopted.
+
+**Learning rate (proxy):** 5e-5 0.47508, 1e-4 0.45964 / 0.45873, 2e-4 0.44728, 4e-4 0.44134, 8e-4 0.44558. Best at 4e-4
+(0.0174 below the better baseline); 8e-4 is 0.0042 worse than 4e-4, past the noise bar, so the optimum is between 2e-4
+and 8e-4. Short runs favor higher rates, so 4e-4 is confirmed on full data before it becomes the default. Next trials
+are at 4e-4.
