@@ -195,13 +195,16 @@ def grid_schedule(x1s: list[str], x2s: list[str], k_control: int, run_seed: int)
     return items
 
 
-def pairs_schedule(cells: list[dict], k: int) -> list[dict]:
+def pairs_schedule(cells: list[dict], k: int, control_only: bool = False) -> list[dict]:
     """Explicit cells (transfer pilot): control k per X1, then k samples of each {x1, x2, arm}; the arm is the phase.
-    Ordered sample-major (all cells' sample 0, then sample 1, ...) so a partial run covers every cell."""
+    Ordered sample-major (all cells' sample 0, then sample 1, ...) so a partial run covers every cell.
+    control_only (2026-11-15, memorization check): only the no-case samples of the cells' X1s."""
     x1s = list(dict.fromkeys(c["x1"] for c in cells))
     items = []
     for i in range(k):
         items += [{"phase": "control", "x1": x, "x2": None, "idx": i} for x in x1s]
+        if control_only:
+            continue
         items += [{"phase": c["arm"], "x1": c["x1"], "x2": c["x2"], "idx": i,
                    **({"cell_key": c["key"], "cell": c.get("cell")} if c.get("key") and c["key"] != c.get("x1_gold") else {})}
                   for c in cells]
@@ -450,6 +453,7 @@ def main(argv=None):
                     help="mode-line file (code/harness/prompts/modes.<v>.yaml); default: the scaffold's own (schema v1, "
                          "guided/free v2). 2026-11-11: schema with v2 removes the v1 wording difference from the ablation")
     ap.add_argument("--equities", default="pilot2")
+    ap.add_argument("--control-only", action="store_true", help="with --cells: no-case samples of the cells' X1s only")
     ap.add_argument("-k", type=int, default=8, help="control samples per X1; confirm re-runs per X1")
     ap.add_argument("--concurrency", type=int, default=24)
     ap.add_argument("--max-tokens", type=int, default=8000)
@@ -473,7 +477,7 @@ def main(argv=None):
         if cells:
             x1s = list(dict.fromkeys(c["x1"] for c in cells))
         cfg = {"x1": x1s, "x2": (sorted({c["x2"] for c in cells}) if cells else (read_ids(a.x2) if a.x2 else x1s)),
-               "cells": cells, "model": a.model, "equities": a.equities,
+               "cells": cells, "control_only": a.control_only, "model": a.model, "equities": a.equities,
                "k": a.k, "max_tokens": a.max_tokens, "seed": a.seed, "mode": a.mode, "scaffold": a.scaffold,
                "ar_prompt": SCAFFOLDS[a.scaffold]["analogical"], "format_spec": SCAFFOLDS[a.scaffold]["format_spec"],
                "modes_version": a.modes_version or SCAFFOLDS[a.scaffold]["modes_version"],
@@ -499,7 +503,7 @@ def main(argv=None):
         print(json.dumps(rescore_run(run_dir, store, ctx.judge), indent=1))
         return 0
     if a.phase == "run":
-        items = (pairs_schedule(cfg["cells"], cfg["k"]) if cfg.get("cells")
+        items = (pairs_schedule(cfg["cells"], cfg["k"], cfg.get("control_only", False)) if cfg.get("cells")
                  else grid_schedule(cfg["x1"], cfg["x2"], cfg["k"], cfg["seed"]))
     else:
         items, picks = confirm_schedule(list(read_samples(run_dir / "samples.jsonl")), cfg["k"], cfg["seed"], cfg["model"])
